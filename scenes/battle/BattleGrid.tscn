@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://chpxqjve0eavy"]
+
+[ext_resource type="Script" uid="uid://bvylfdlxmsb2e" path="res://scripts/battle/battle_grid.gd" id="1_lqs4s"]
+[ext_resource type="Script" uid="uid://dg0jjul5epkv3" path="res://scripts/battle/highlight_manager.gd" id="2_bwrd3"]
+
+[node name="BattleGrid" type="Node2D" unique_id=57941334]
+script = ExtResource("1_lqs4s")
+
+[node name="GroundLayer" type="TileMapLayer" parent="." unique_id=989550146]
+
+[node name="HazardLayer" type="Node2D" parent="." unique_id=174307855]
+
+[node name="UnitLayer" type="Node2D" parent="." unique_id=1012742812]
+
+[node name="HighlightLayer" type="Node2D" parent="." unique_id=688302820 node_paths=PackedStringArray("grid")]
+script = ExtResource("2_bwrd3")
+grid = NodePath("..")

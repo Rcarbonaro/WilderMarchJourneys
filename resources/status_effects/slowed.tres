@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://cvdlkj4p02im2"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_omcce"]
+
+[resource]
+script = ExtResource("1_omcce")
+id = "slowed"
+display_name = "Slowed"
+description = "Reduces movement by 1."
+mov_modifier = -1
+metadata/_custom_type_script = "uid://gsbk18mmfnol"

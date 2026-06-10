@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://cex0ecyqllq4k"]
+
+[ext_resource type="Script" uid="uid://bbil00pq8wpri" path="res://scripts/ui/ui_manager.gd" id="1_o3edr"]
+
+[node name="BattleUI" type="CanvasLayer" unique_id=493660787]
+script = ExtResource("1_o3edr")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1918296096]
+offset_left = 47.0
+offset_top = 1393.0
+offset_right = 289.0
+offset_bottom = 1510.0
+
+[node name="AbilityBar" type="HBoxContainer" parent="VBoxContainer" unique_id=1394321121]
+custom_minimum_size = Vector2(120, 100)
+layout_mode = 2
+
+[node name="EndTurnButton" type="Button" parent="VBoxContainer" unique_id=190531212]
+layout_mode = 2
+text = "End Turn"

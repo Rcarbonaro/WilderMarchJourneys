@@ -1,0 +1,30 @@
+[gd_scene format=3 uid="uid://dfksluvm8bkq2"]
+
+[node name="EncounterScene" type="Node2D" unique_id=1559897194]
+
+[node name="Description" type="RichTextLabel" parent="." unique_id=861906969]
+offset_left = 28.0
+offset_top = 40.0
+offset_right = 1050.0
+offset_bottom = 1065.0
+text = "Description of Encounter."
+
+[node name="Choices" type="HBoxContainer" parent="." unique_id=1645719229]
+offset_left = 6.0
+offset_top = 1302.0
+offset_right = 1081.0
+offset_bottom = 1737.0
+
+[node name="Result Feedback" type="Label" parent="." unique_id=1995753110]
+offset_left = 50.0
+offset_top = 721.0
+offset_right = 1039.0
+offset_bottom = 1095.0
+text = "Something happened..."
+
+[node name="Button" type="Button" parent="." unique_id=1493812952]
+offset_left = 708.0
+offset_top = 1761.0
+offset_right = 1064.0
+offset_bottom = 1893.0
+text = "Continue"

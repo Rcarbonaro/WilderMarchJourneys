@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://kl0hrp648qp8"]
+
+[ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="1_igv4x"]
+[ext_resource type="Resource" uid="uid://frl8mp0hi700" path="res://resources/stats/guardian_stats.tres" id="1_l1w45"]
+[ext_resource type="Texture2D" uid="uid://dnpbm01sexsc4" path="res://sprites/guardian/Guardian_Sprite.png" id="2_7vgi3"]
+[ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="2_678nk"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="3_uapp7"]
+[ext_resource type="Resource" uid="uid://vg2qdfcvsdvc" path="res://resources/abilities/guardian_BasicAttack.tres" id="4_uapp7"]
+
+[resource]
+script = ExtResource("1_igv4x")
+id = "guardian"
+display_name = "Guardian"
+portrait = ExtResource("2_7vgi3")
+battle_sprite = ExtResource("2_7vgi3")
+stats_by_level = Array[ExtResource("2_678nk")]([null, null, null, ExtResource("1_l1w45")])
+base_stats = ExtResource("1_l1w45")
+starting_abilities = Array[ExtResource("3_uapp7")]([ExtResource("4_uapp7")])
+metadata/_custom_type_script = "uid://utmj7y8m802a"

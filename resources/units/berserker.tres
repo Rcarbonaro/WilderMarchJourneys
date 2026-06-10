@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://0c0cjgi1nigl"]
+
+[ext_resource type="Resource" uid="uid://6fsue6q216de" path="res://resources/abilities/Berserker_BasicAttack.tres" id="1_8hu4v"]
+[ext_resource type="Resource" uid="uid://b2j0jyxiu1ijg" path="res://resources/stats/berserker_stats.tres" id="1_enns4"]
+[ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="1_tojsx"]
+[ext_resource type="Texture2D" uid="uid://dnpbm01sexsc4" path="res://sprites/guardian/Guardian_Sprite.png" id="2_8hu4v"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_sk1er"]
+[ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_w6kuy"]
+
+[resource]
+script = ExtResource("1_tojsx")
+id = "berserker"
+display_name = "Berserker"
+portrait = ExtResource("2_8hu4v")
+battle_sprite = ExtResource("2_8hu4v")
+stats_by_level = Array[ExtResource("3_w6kuy")]([ExtResource("1_enns4")])
+abilities_by_level = {
+1: [ExtResource("1_8hu4v")]
+}
+base_stats = ExtResource("1_enns4")
+starting_abilities = Array[ExtResource("2_sk1er")]([ExtResource("1_8hu4v")])
+metadata/_custom_type_script = "uid://utmj7y8m802a"

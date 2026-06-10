@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="TileTypeData" format=3 uid="uid://t4b3unh0ed2"]
+
+[ext_resource type="Script" uid="uid://dyg7lknboanbl" path="res://scripts/data/tile_type_data.gd" id="1_mq6tv"]
+
+[resource]
+script = ExtResource("1_mq6tv")
+id = "wall"
+movement_cost = 9999
+is_wall = true
+blocks_line_of_sight = true
+metadata/_custom_type_script = "uid://dyg7lknboanbl"

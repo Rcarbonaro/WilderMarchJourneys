@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://ds2663u5231ad"]
+
+[ext_resource type="Script" uid="uid://01w1tymoafld" path="res://scripts/battle/unit_node.gd" id="1_tcakv"]
+
+[node name="UnitNode" type="Node2D" unique_id=480182318]
+script = ExtResource("1_tcakv")
+
+[node name="UnitSprite" type="Sprite2D" parent="." unique_id=81231777]
+
+[node name="HPLabel" type="Label" parent="." unique_id=798001805]
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="StatusIcons" type="Node" parent="." unique_id=951379257]

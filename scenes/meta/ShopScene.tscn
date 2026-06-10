@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://bojeyqpc82rcg"]
+
+[ext_resource type="Script" uid="uid://cfcorw371y3g2" path="res://scripts/managers/shop_manager.gd" id="1_j2r6p"]
+
+[node name="ShopScene" type="Node2D" unique_id=2082842883]
+script = ExtResource("1_j2r6p")
+
+[node name="Label" type="Label" parent="." unique_id=405149072]
+offset_left = 862.0
+offset_top = 24.0
+offset_right = 1049.0
+offset_bottom = 231.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1352691112]
+offset_left = 81.0
+offset_top = 357.0
+offset_right = 1031.0
+offset_bottom = 1429.0
+
+[node name="RefreshButton" type="Button" parent="." unique_id=177932080]
+offset_left = 7.0
+offset_top = 1730.0
+offset_right = 340.0
+offset_bottom = 1904.0
+text = "Refresh (3 Gold)"
+
+[node name="Button" type="Button" parent="." unique_id=1515844418]
+offset_left = 735.0
+offset_top = 1711.0
+offset_right = 1071.0
+offset_bottom = 1898.0
+text = "Continue"

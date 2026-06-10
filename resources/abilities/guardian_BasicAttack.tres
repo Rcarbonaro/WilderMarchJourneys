@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://vg2qdfcvsdvc"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_yontw"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_yla35"]
+
+[resource]
+script = ExtResource("2_yla35")
+id = "Basic Attack"
+min_range = 1
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"
