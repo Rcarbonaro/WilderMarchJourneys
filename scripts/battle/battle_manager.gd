@@ -21,6 +21,9 @@ enum TurnPhase { PLAYER_TURN, ENEMY_TURN, ANIMATION, GAME_OVER }
 var current_phase: TurnPhase = TurnPhase.PLAYER_TURN # The match starts on Player Turn
 var round_number: int = 1                            # Current combat round index
 
+# AOE preview cell variable
+var aoe_preview_cell: Vector2i = Vector2i(-1, -1)
+
 # TRACKING ARRAYS: Simple storage lists that hold the actual characters on the board.
 var player_units: Array = [] # List of active player heroes
 var enemy_units: Array = []  # List of active enemy monsters
@@ -295,7 +298,7 @@ func deselect_unit() -> void:
 	selected_ability = null
 	reachable_cells = {}
 	highlight.clear_highlights()
-	
+	aoe_preview_cell = Vector2i(-1, -1)
 	if ui_manager != null and ui_manager.has_method("clear_abilities"):
 		ui_manager.clear_abilities()
 
@@ -325,50 +328,90 @@ func on_ability_selected(ability: AbilityData) -> void:
 
 
 # Fires damage and cost updates.
+# res://scripts/battle/battle_manager.gd
+
 func _try_use_ability(cell: Vector2i) -> void:
 	if selected_unit == null or selected_ability == null: 
 		return
 		
-	# 1. Recalculate the valid cells for the selected ability from the unit's position
+	# 1. Recalculate the valid cast range cells from the unit's position
 	var valid_target_cells: Array = pathfinder.get_cells_in_range(
 		selected_unit.grid_position, 
 		selected_ability.min_range, 
 		selected_ability.max_range
 	)
 	
-	# 🛑 THE CRITICAL RANGE CHECK: Is the clicked tile actually within range?
+	# THE CRITICAL RANGE CHECK: Is the clicked tile actually within cast range?
 	if not cell in valid_target_cells:
-		print("❌ ATTACK FAILED: Target tile ", cell, " is out of range for ", selected_ability.display_name)
-		return # Stop execution right here!
+		print("❌ ATTACK FAILED: Target tile ", cell, " is out of range.")
+		# Reset preview if they click completely outside the cast range
+		aoe_preview_cell = Vector2i(-1, -1)
+		_refresh_ability_highlights(valid_target_cells)
+		return 
 
-	# 2. Line of Sight Check (if the ability requires it)
+	# 2. Line of Sight Check
 	if selected_ability.requires_line_of_sight:
 		if not pathfinder.has_line_of_sight(selected_unit.grid_position, cell):
 			print("❌ ATTACK FAILED: Line of sight is blocked to tile ", cell)
 			return
 
-	# 3. If it passes validation, proceed with the actual action/damage execution
-	print("⚔️ Executing ability: ", selected_ability.display_name, " on target cell: ", cell)
+	# 🟩 NEW TWO-STEP CONFIRMATION LOGIC FOR AOE
+	# Check if this ability hits multiple tiles (is not single target)
+	var is_aoe = selected_ability.has_method("get_aoe_type") or selected_ability.max_range > 0 # adjust to your data format
+	# A simple check: if the shape returns more than 1 cell, it's an AOE
+	var simulated_cells = _get_aoe_cells(cell, selected_ability)
 	
-	# Calculate structural shape areas (Single cell target, Cross shape, Straight line blast)
+	if simulated_cells.size() > 1:
+		# If they haven't clicked this specific tile yet to preview it:
+		if aoe_preview_cell != cell:
+			aoe_preview_cell = cell
+			print("🎯 Previewing AOE shape centered at: ", cell)
+			
+			# Redraw the grid: keep cast range visual, but layer the AOE preview on top
+			_draw_aoe_preview(valid_target_cells, simulated_cells)
+			return # STOP HERE! Do not execute yet. Wait for confirmation click.
+
+	# 3. CONFIRMED! If it passes preview (or is single target), proceed with execution
+	print("⚔️ Confirmed! Executing ability: ", selected_ability.display_name, " on target cell: ", cell)
+	
 	var target_cells = _get_aoe_cells(cell, selected_ability)
-	
-	# Hand variables over to execution systems to calculate deductions and play animations.
 	executor.execute_ability(selected_unit, selected_ability, target_cells)
 	selected_unit.has_acted = true
 	
-	# 🧹 Clean up targeting state after a successful attack
+	# 🧹 Clean up targeting states
 	selected_ability = null
+	aoe_preview_cell = Vector2i(-1, -1)
 	highlight.clear_highlights()
 	deselect_unit()
 	
-	# Auto-close out turn phase if your entire active team has spent their actions.
 	_check_end_player_turn()
 
+
+func _draw_aoe_preview(cast_range_cells: Array, aoe_impact_cells: Array) -> void:
+	if highlight == null:
+		return
+		
+	highlight.clear_highlights()
+	
+	# 1. 🟢 CHANGED: Use show_attack_range instead of highlight_ability_cells
+	highlight.show_attack_range(cast_range_cells)
+	
+	# 2. Overlay our orange blast shapes directly on top
+	highlight.highlight_aoe_blast_cells(aoe_impact_cells)
+
+
+# res://scripts/battle/battle_manager.gd
+
+func _refresh_ability_highlights(valid_cells: Array) -> void:
+	if highlight != null:
+		highlight.clear_highlights()
+		# 🟢 CHANGED: Use show_attack_range instead of highlight_ability_cells
+		highlight.show_attack_range(valid_cells)
 
 # Loops through active party components checking for outstanding action tokens.
 func _check_end_player_turn() -> void:
 	var all_acted = true
+	aoe_preview_cell = Vector2i(-1, -1)
 	for unit in player_units:
 		if not unit.has_acted:
 			all_acted = false
@@ -380,35 +423,93 @@ func _check_end_player_turn() -> void:
 # MATH ENGINE: Maps Area-Of-Effect shape distributions.
 func _get_aoe_cells(center: Vector2i, ability: AbilityData) -> Array:
 	var cells = []
+	var size = ability.aoe_size if "aoe_size" in ability else 1
+
 	match ability.aoe_shape:
 		"single":
 			cells = [center] # Only damages the exact tile center coordinate tapped.
+
 		"square":
 			# Nested loops drawing an outward boundary grid box layout.
-			for x in range(-ability.aoe_size + 1, ability.aoe_size):
-				for y in range(-ability.aoe_size + 1, ability.aoe_size):
+			for x in range(-size + 1, size):
+				for y in range(-size + 1, size):
 					var c = center + Vector2i(x, y)
 					if grid.is_valid_cell(c):
 						cells.append(c)
+
 		"line":
-			# Calculates heading direction and traces a straight laser beam outward.
+			# 🟢 UPDATED: Line now originates directly from the casting unit
 			if selected_unit:
-				var dir = center - selected_unit.grid_position
-				var norm_dir = Vector2i(sign(dir.x) if dir.x != 0 else 0, sign(dir.y) if dir.y != 0 else 0)
-				for i in range(1, ability.aoe_size + 1):
-					var c = selected_unit.grid_position + norm_dir * i
+				var origin = selected_unit.grid_position
+				var dir = center - origin
+				
+				# Get a clean grid step direction (1, 0), (-1, 0), etc.
+				var step = Vector2i(sign(dir.x), sign(dir.y))
+				if step.x != 0 and step.y != 0:
+					# Flatten diagonals to cardinal axes for strict straight lines
+					if abs(dir.x) >= abs(dir.y):
+						step.y = 0
+					else:
+						step.x = 0
+				
+				# If the click is exactly on the caster, default facing right
+				if step == Vector2i.ZERO:
+					step = Vector2i(1, 0)
+				
+				# Trace the laser/projectile outward step-by-step from the caster
+				for i in range(1, size + 1):
+					var c = origin + (step * i)
 					if grid.is_valid_cell(c):
 						cells.append(c)
+
 		"cross":
-			# Targets a classic plus '+' compass shape around the epicenter.
+			# Targets a plus '+' compass shape around the epicenter.
 			cells = [center]
-			for offset in [Vector2i(1,0), Vector2i(-1,0), Vector2i(0,1), Vector2i(0,-1)]:
-				var c = center + offset
-				if grid.is_valid_cell(c):
-					cells.append(c)
+			for i in range(1, size + 1):
+				var directions = [
+					center + Vector2i(i, 0),   # Right arm
+					center + Vector2i(-i, 0),  # Left arm
+					center + Vector2i(0, i),   # Down arm
+					center + Vector2i(0, -i)   # Up arm
+				]
+				for c in directions:
+					if grid.is_valid_cell(c) and not c in cells:
+						cells.append(c)
+
+		"cone":
+			# 🟢 NEW: Standard grid-based cone projecting from the caster toward the target
+			if selected_unit:
+				var origin = selected_unit.grid_position
+				var dir = center - origin
+				
+				# Identify primary direction of fire (Cardinal axis)
+				var forward = Vector2i.ZERO
+				var side = Vector2i.ZERO
+				
+				if abs(dir.x) >= abs(dir.y):
+					forward = Vector2i(sign(dir.x), 0) # Shooting horizontally
+					side = Vector2i(0, 1)              # Width expands vertically
+				else:
+					forward = Vector2i(0, sign(dir.y)) # Shooting vertically
+					side = Vector2i(1, 0)              # Width expands horizontally
+					
+				if forward == Vector2i.ZERO:
+					forward = Vector2i(1, 0) # Fallback facing right
+					side = Vector2i(0, 1)
+
+				# Row-by-row cone expansion outward
+				# Row 1 is 1 tile wide, Row 2 is 3 tiles wide, Row i is (2*i - 1) wide
+				for i in range(1, size + 1):
+					var row_center = origin + (forward * i)
+					var width_spread = i - 1 # Extends outward sideways by this many tiles on each side
+					
+					for j in range(-width_spread, width_spread + 1):
+						var c = row_center + (side * j)
+						if grid.is_valid_cell(c):
+							cells.append(c)
+
 	return cells
-
-
+	
 # Handover sequence: Shuts down player commands, updates metrics, wakes up the AI.
 func end_player_turn() -> void:
 	current_phase = TurnPhase.ENEMY_TURN
