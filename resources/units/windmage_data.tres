@@ -8,13 +8,6 @@
 [ext_resource type="Resource" uid="uid://d020c7xsebbes" path="res://resources/stats/windmage_stats.tres" id="6_1rute"]
 [ext_resource type="Resource" uid="uid://4hii3tx3d506" path="res://resources/abilities/fireball.tres" id="6_pjwqc"]
 
-[sub_resource type="Resource" id="Resource_pjwqc"]
-script = ExtResource("3_nfyw7")
-atk = 7
-matk = 16
-mdef = 8
-metadata/_custom_type_script = "uid://c3bdx4sniu017"
-
 [resource]
 script = ExtResource("1_mjyq5")
 id = "windmage"
@@ -22,6 +15,6 @@ display_name = "Wind Mage"
 portrait = ExtResource("2_nfyw7")
 battle_sprite = ExtResource("2_nfyw7")
 stats_by_level = Array[ExtResource("3_nfyw7")]([ExtResource("6_1rute")])
-base_stats = SubResource("Resource_pjwqc")
+base_stats = ExtResource("6_1rute")
 starting_abilities = Array[ExtResource("2_f3la8")]([ExtResource("5_1rute"), ExtResource("6_pjwqc")])
 metadata/_custom_type_script = "uid://utmj7y8m802a"

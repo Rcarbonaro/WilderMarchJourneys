@@ -26,7 +26,7 @@ pathfinder = NodePath("../PathfindingSystem")
 executor = NodePath("../AbilityExecutor")
 highlight = NodePath("../HightlightManager")
 ai_system = NodePath("../AISystem")
-ui_manager = NodePath("../BattleUI")
+ui_manager = NodePath("../InputHandler")
 
 [node name="PathfindingSystem" type="Node" parent="." unique_id=763641049]
 script = ExtResource("4_vvcci")

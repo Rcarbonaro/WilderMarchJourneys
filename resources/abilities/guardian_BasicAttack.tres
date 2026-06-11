@@ -5,6 +5,7 @@
 
 [resource]
 script = ExtResource("2_yla35")
-id = "Basic Attack"
+id = "basic_attack"
+display_name = "Basic Attack"
 min_range = 1
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

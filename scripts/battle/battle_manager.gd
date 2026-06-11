@@ -20,6 +20,7 @@ enum TurnPhase { PLAYER_TURN, ENEMY_TURN, ANIMATION, GAME_OVER }
 # STATE VARIABLES: These variables track the live background rules of the match.
 var current_phase: TurnPhase = TurnPhase.PLAYER_TURN # The match starts on Player Turn
 var round_number: int = 1                            # Current combat round index
+var is_battle_over: bool = false                     # Tracks if the match has concluded without conflicting with our signal name!
 
 # AOE preview cell variable
 var aoe_preview_cell: Vector2i = Vector2i(-1, -1)
@@ -43,11 +44,6 @@ var reachable_cells: Dictionary = {}
 # The '@export' keyword exposes these slots in your Inspector panel on the right.
 # You MUST drag and drop your actual scene nodes into these slots so this script 
 # knows how to communicate with them!
-# 
-# 🔴 IMPORTANT: If you get a "nil" crash on startup, it means one of these slots
-# was not filled in the Inspector. Open BattleScene.tscn, click BattleManager in
-# the scene tree, and check the Inspector on the right — every slot below must
-# have a node dragged into it.
 @export var grid: Node          # Points to BattleGrid (Handles positioning math)
 @export var pathfinder: Node    # Points to PathfindingSystem (Calculates walk ranges)
 @export var executor: Node      # Points to AbilityExecutor (Calculates damage hits)
@@ -58,13 +54,6 @@ var reachable_cells: Dictionary = {}
 
 # _ready() runs automatically the exact millisecond this node boots into the game.
 func _ready() -> void:
-	# ==============================================================================
-	# NULL SAFETY CHECKS
-	# ==============================================================================
-	# Before we touch any exported node, we verify it was actually assigned in the
-	# Inspector. If any slot is empty (null), we print a clear error message and
-	# stop here, so you know exactly what is missing instead of getting a cryptic crash.
-	
 	# Check the grid first — everything else depends on it.
 	if grid == null:
 		printerr("❌ BattleManager: 'grid' export slot is empty! Drag BattleGrid into it in the Inspector.")
@@ -81,97 +70,110 @@ func _ready() -> void:
 		return
 	
 	# All clear! Inform the pathfinder and the damage executor where our tile map lives.
-	# 'grid_ref' is a variable inside those scripts that they use to look up tile info.
 	pathfinder.grid_ref = grid
 	executor.grid_ref = grid
 	
-	# INITIALIZATION FLOW: Drop the characters onto the game board setup.
+	# ==============================================================================
+	# 📍 DEFINING WHAT UNITS SPAWN
+	# ==============================================================================
+	# These two functions handle spawning our specific battle line-up when the game starts.
 	_spawn_stage_enemies()
 	_spawn_player_party_from_run()
 
 
-# This handles reading your main menu choices and materializing your team.
+# Handles loading and materializing your player party characters
 func _spawn_player_party_from_run() -> void:
-	# Safety Check: If the global RunManager has no run active, stop here to avoid a crash.
-	if RunManager.current_run == null:
-		print("⚠️ Notice: No active RunData found in RunManager. Skipping party spawn.")
+	print("🧙‍♂️ Spawning Player Party Units...")
+	
+	# 1. Load the raw .tres data resource files for your heroes
+	var mage_data = load("res://resources/units/windmage_data.tres")
+	var guardian_data = load("res://resources/units/guardian_data.tres")
+	
+	# 2. Summon 1 WindMage (Resource, Grid Coordinate, IsPlayer = true, Level = 1)
+	if mage_data != null:
+		spawn_unit(mage_data, Vector2i(1, 7), true, 1)
+	else:
+		printerr("❌ Could not load windmage_data.tres! Check your file path.")
+
+	# 3. Summon 1 Guardian
+	if guardian_data != null:
+		spawn_unit(guardian_data, Vector2i(2, 8), true, 1)
+	else:
+		printerr("❌ Could not load guardian_data.tres! Check your file path.")
+
+
+# Handles loading and materializing your enemy monsters
+func _spawn_stage_enemies() -> void:
+	print("🐺 Spawning Monster Waves...")
+	
+	# 1. Load the raw .tres data resource file for your wolf enemy
+	var wolf_data = load("res://resources/enemies/wolf_data.tres")
+	
+	if wolf_data == null:
+		printerr("❌ Could not load wolf_data.tres! Check your file path.")
+		return
+		
+	# 2. Summon 3 separate Wolf units at unique positions on the right side of the board
+	# (Resource, Grid Coordinate, IsPlayer = false, Level = 1)
+	spawn_unit(wolf_data, Vector2i(7, 2), false, 1) # Wolf A
+	spawn_unit(wolf_data, Vector2i(8, 3), false, 1) # Wolf B
+	spawn_unit(wolf_data, Vector2i(8, 5), false, 1) # Wolf C
+	
+	print("🐺 3 Wild Wolves have surrounded the party!")
+
+
+# ==============================================================================
+# 🛠️ THE MASTER UNIFIED SPAWNING FACTORY
+# ==============================================================================
+## This function reads a character's data card, dynamically finds their matching 
+## visual .tscn scene file, materializes it, positions it, and assigns its team list.
+func spawn_unit(unit_data: UnitData, cell: Vector2i, is_player: bool, level: int = 1) -> void:
+	
+	# 1. 🟢 DYNAMIC PATH GENERATION
+	# Strip away spaces and convert the display name to pure lowercase to build our folder string.
+	# Example: "Wind Mage" -> "windmage" | "Wolf" -> "wolf"
+	var folder_name: String = unit_data.display_name.to_lower().replace(" ", "")
+	
+	# Assemble our strict layout string directory file path automatically
+	var scene_to_load: String = "res://scenes/animations/%s/%s.tscn" % [folder_name, folder_name]
+	
+	print("📂 [Spawning] Dynamic asset search path: ", scene_to_load)
+	
+	# 2. 🛡️ FILE CHECK SAFETY GATE
+	# Intercept typos before they trigger an unrecoverable hard crash inside the engine.
+	if not ResourceLoader.exists(scene_to_load):
+		printerr("❌ CRITICAL ERROR: Could not find scene file for ", unit_data.display_name, " at expected path: ", scene_to_load)
 		return
 
-	# Extract the array list of player character resources stored by the main menu.
-	var party: Array = RunManager.current_run.party
-	
-	# A list of safe coordinates on your grid where your team will physically land.
-	var spawn_tiles = [
-		Vector2i(1, 7), # Slot 1 coordinate
-		Vector2i(2, 8), # Slot 2 coordinate
-		Vector2i(1, 9)  # Slot 3 coordinate
-	]
-	
-	# Loop over every hero data card found in your party array folder list.
-	for i in range(party.size()):
-		var unit_data: UnitData = party[i]
-		
-		# If you have more heroes than spawn tile markers, stop so we don't go out of bounds!
-		if i >= spawn_tiles.size(): 
-			break
-			
-		# Look up what level this hero is. If their ID isn't found, default to level 1.
-		var level: int = RunManager.current_run.unit_levels.get(unit_data.id, 1)
-		var target_tile: Vector2i = spawn_tiles[i]
-		
-		# Summon the unit onto the grid as a player character (is_player = true).
-		spawn_unit(unit_data, target_tile, true, level)
-		
-		print("🛡️ Spawned player hero: ", unit_data.display_name, " at tile: ", target_tile)
-
-
-# Automatically pulls enemy cards from your project asset folders and spawns them.
-func _spawn_stage_enemies() -> void:
-	var wolf_resource = "res://resources/enemies/wolf_data.tres"
-	var wolf_data = load(wolf_resource)
-	var goblin_resource = "res://resources/enemies/goblin_data.tres"
-	var goblin_data = load(wolf_resource)
-	
-	if wolf_data != null:
-		# Arguments: (data card, spawn coordinates, is_player = false, level)
-		spawn_unit(wolf_data, Vector2i(7, 2), false, 1)
-		spawn_unit(wolf_data, Vector2i(8, 3), false, 1)
-		spawn_unit(goblin_data, Vector2i(8, 5), false, 1)
-		print("🐺 A wild enemy has entered the battlefield!")
-	else:
-		printerr("❌ Could not load enemy data from path: ", wolf_resource)
-
-
-# The master factory tool that instantiates character tokens out of blueprint files.
-func spawn_unit(unit_data: UnitData, cell: Vector2i, is_player: bool, level: int = 1) -> void:
-	# 1. Fetch your clean character token template scene file.
-	var unit_scene = preload("res://scenes/battle/UnitNode.tscn")
-	
-	# 2. Instantiate makes a physical clone copy of that blueprint setup in system memory.
+	# 3. 🎬 MATERIALIZE AND INITIALIZE THE SCENE NODE
+	var unit_scene = load(scene_to_load)
 	var unit = unit_scene.instantiate()
 	
-	# 3. Drop it into the active UnitLayer node folder so it displays inside your viewport.
+	# Append our new living unit instance directly inside the map grid scene tree layout
 	grid.get_node("UnitLayer").add_child(unit)
 	
-	# 4. Connect references so the unit script can check tile metrics.
+	# Pass required map metrics down to the script running on the character node
 	unit.grid_ref = grid
 	unit.setup(unit_data, level, is_player)
 	
-	# 5. Place it on its abstract grid coordinates and convert those to physical screen pixels.
+	# Sync position arrays and snap abstract map matrices into 2D camera pixels
 	unit.grid_position = cell
 	unit.position = grid.grid_to_world(cell)
 	
-	# 6. Inform the map grid that this tile coordinate is blocked because a unit is standing on it.
+	# Lock this tile coordinate completely so no other units can occupy it
 	grid.register_unit(unit, cell)
 	
-	# 7. Listen to the unit. If its health hits 0, trigger the _on_unit_died hook immediately.
+	# Connect the death signal so the referee knows immediately when this unit falls
 	unit.unit_died.connect(_on_unit_died)
 
-	# 8. Sort the character token into the appropriate referee folder list.
+	# 4. 🧭 UNIFIED SORTING
+	# Filter tracking pointer updates cleanly into Friend or Foe referee lists
 	if is_player:
 		player_units.append(unit)
+		print("🛡️ Success: Connected ", unit_data.display_name, " to the Ally Player Array.")
 	else:
 		enemy_units.append(unit)
+		print("⚔️ Success: Connected ", unit_data.display_name, " to the Enemy Monster Array.")
 
 
 # Triggers automatically whenever ANY unit emits its death alarm signal.
@@ -193,13 +195,15 @@ func _check_battle_end() -> void:
 func _battle_victory() -> void:
 	print("Victory!")
 	current_phase = TurnPhase.GAME_OVER
-	battle_ended.emit("victory") # Sends the victory notification out to listeners
+	is_battle_over = true
+	battle_ended.emit("victory") 
 
 
 func _battle_defeat() -> void:
 	print("Defeat!")
 	current_phase = TurnPhase.GAME_OVER
-	battle_ended.emit("defeat") # Sends the defeat notification out to listeners
+	is_battle_over = true
+	battle_ended.emit("defeat") 
 
 
 # ==============================================================================
@@ -208,11 +212,10 @@ func _battle_defeat() -> void:
 
 # Input gate: Triggered when you tap a grid coordinate cell on your screen.
 func on_tile_tapped(cell: Vector2i) -> void:
-	# 🟥 DIAGNOSTIC 1: Did the click actually enter the script?
 	print("🎯 Map Grid Tapped at coordinate: ", cell, " | Current Game Phase: ", current_phase)
 	
 	if current_phase != TurnPhase.PLAYER_TURN: 
-		print("❌ Click Ignored: It is not currently the Player's turn phase!")
+		print("❌ Click Ignored: Controls are locked during animations or enemy actions!")
 		return
 
 	# STATE A: You haven't clicked a character yet.
@@ -240,13 +243,36 @@ func on_tile_tapped(cell: Vector2i) -> void:
 			reachable_cells = {}
 			if ui_manager != null and ui_manager.has_method("show_unit_abilities"):
 				ui_manager.show_unit_abilities(selected_unit)
+				
 		elif reachable_cells.has(cell):
 			print("🚶 Moving unit...")
+		
+			
+			# 🟢 INPUT PROTECTION LOCK: Freeze inputs while the unit is moving
+			current_phase = TurnPhase.ANIMATION
+			
+			# Triggers the sliding movement calculations handled by your unit node script
 			selected_unit.move_to(cell)
 			selected_unit.has_moved = true
+			
+			# Clean range layouts immediately so they disappear during the walk loop
 			highlight.clear_highlights()
 			reachable_cells = {}
+			
+			var current_unit = selected_unit
+			select_unit(current_unit)
+			
+			# 🟢 FIXED: Wait cleanly for the unit to signal that it has reached its final destination tile!
+			if selected_unit.has_signal("movement_finished"):
+				await selected_unit.movement_finished
+			else:
+				# Fallback safety buffer timer just in case the signal is disconnected
+				await get_tree().create_timer(0.5).timeout
+			
+			# Restore authority phase permissions and pop open skill cards
+			current_phase = TurnPhase.PLAYER_TURN
 			if ui_manager != null and ui_manager.has_method("show_unit_abilities"):
+				print("🔮 Movement complete! Displaying action bar buttons for: ", selected_unit.unit_data.display_name)
 				ui_manager.show_unit_abilities(selected_unit)
 		else:
 			print("↩️ Invalid tile path choice. Resetting selection.")
@@ -258,37 +284,18 @@ func select_unit(unit) -> void:
 	selected_unit = unit
 	selected_ability = null
 	
-	# If the unit already moved this turn, skip straight to showing abilities.
 	if unit.has_moved:
 		if ui_manager != null and ui_manager.has_method("show_unit_abilities"):
 			ui_manager.show_unit_abilities(unit)
 		return
 
-	# Read this unit's movement range from their data resource.
-	var movement_range: int = 0
-	if "unit_data" in unit and unit.unit_data != null:
-		var data = unit.unit_data
-		if data.base_stats != null and "mov" in data.base_stats:
-			movement_range = data.base_stats.mov
-
-	# Safety fallback: if for any reason mov is 0 or unset, default to 3 so the unit isn't frozen.
-	if movement_range <= 0:
-		movement_range = 3
+	var movement_range: int = 3
+	if unit.has_method("get_effective_mov"):
+		movement_range = unit.get_effective_mov()
 
 	print("🚶 Calculating pathfinding grid weights for distance: ", movement_range)
 
-	# ==============================================================================
-	# 🔧 MOVEMENT FIX: Pass the moving unit into get_reachable_cells.
-	# ==============================================================================
-	# Previously, the pathfinder couldn't find any tiles because it uses
-	# grid.is_passable() to check neighbors, and is_passable() returns FALSE
-	# for any tile that has a unit on it — including the unit's OWN starting tile.
-	# That means the pathfinder blocked itself at the very first step and returned
-	# no reachable tiles. Passing 'unit' in lets the pathfinder skip over just that
-	# one unit when doing the occupancy check.
 	reachable_cells = pathfinder.get_reachable_cells(unit.grid_position, movement_range, unit)
-	
-	# Paint the overlay tiles green on your game board view
 	highlight.show_movement(reachable_cells.keys())
 	
 	
@@ -305,16 +312,13 @@ func deselect_unit() -> void:
 
 # Triggered by UIManager buttons when you tap a skill icon button.
 func on_ability_selected(ability: AbilityData) -> void:
-	
 	if selected_unit == null: return
 	selected_ability = ability
 	
-	# Fetch all raw coordinate cells within the min/max range criteria circles.
 	var in_range = pathfinder.get_cells_in_range(
 		selected_unit.grid_position, ability.min_range, ability.max_range
 	)
 	
-	# Filter targets using Line-Of-Sight raycast requirements.
 	var valid_targets = []
 	for cell in in_range:
 		if ability.requires_line_of_sight:
@@ -323,90 +327,87 @@ func on_ability_selected(ability: AbilityData) -> void:
 		else:
 			valid_targets.append(cell)
 			
-	# Tell the layout overlay tool to paint attack ranges bright red.
 	highlight.show_attack_range(valid_targets)
 
 
-# Fires damage and cost updates.
-# res://scripts/battle/battle_manager.gd
-
+# Fires ability calculations and charges damage costs
 func _try_use_ability(cell: Vector2i) -> void:
 	if selected_unit == null or selected_ability == null: 
 		return
 		
-	# 1. Recalculate the valid cast range cells from the unit's position
 	var valid_target_cells: Array = pathfinder.get_cells_in_range(
 		selected_unit.grid_position, 
 		selected_ability.min_range, 
 		selected_ability.max_range
 	)
 	
-	# THE CRITICAL RANGE CHECK: Is the clicked tile actually within cast range?
+	# STRICT RANGE ENFORCEMENT
 	if not cell in valid_target_cells:
 		print("❌ ATTACK FAILED: Target tile ", cell, " is out of range.")
-		# Reset preview if they click completely outside the cast range
 		aoe_preview_cell = Vector2i(-1, -1)
 		_refresh_ability_highlights(valid_target_cells)
 		return 
 
-	# 2. Line of Sight Check
 	if selected_ability.requires_line_of_sight:
 		if not pathfinder.has_line_of_sight(selected_unit.grid_position, cell):
 			print("❌ ATTACK FAILED: Line of sight is blocked to tile ", cell)
 			return
 
-	# 🟩 NEW TWO-STEP CONFIRMATION LOGIC FOR AOE
-	# Check if this ability hits multiple tiles (is not single target)
-	var is_aoe = selected_ability.has_method("get_aoe_type") or selected_ability.max_range > 0 # adjust to your data format
-	# A simple check: if the shape returns more than 1 cell, it's an AOE
 	var simulated_cells = _get_aoe_cells(cell, selected_ability)
 	
-	if simulated_cells.size() > 1:
-		# If they haven't clicked this specific tile yet to preview it:
+	# TWO-STEP CONFIRMATION LOGIC FOR AOE
+	if selected_ability.aoe_shape != "single":
 		if aoe_preview_cell != cell:
 			aoe_preview_cell = cell
 			print("🎯 Previewing AOE shape centered at: ", cell)
 			
-			# Redraw the grid: keep cast range visual, but layer the AOE preview on top
+			# 🟢 ANIMATION HOOK: Play casting animation loop during targeting selection phase
+			if selected_unit.has_method("play_animation"):
+				selected_unit.play_animation("charging")
+				
 			_draw_aoe_preview(valid_target_cells, simulated_cells)
-			return # STOP HERE! Do not execute yet. Wait for confirmation click.
+			return 
 
-	# 3. CONFIRMED! If it passes preview (or is single target), proceed with execution
+	# CONFIRMED! Action locked down for computational calculations
+	current_phase = TurnPhase.ANIMATION
 	print("⚔️ Confirmed! Executing ability: ", selected_ability.display_name, " on target cell: ", cell)
+	
+	# 🟢 ANIMATION HOOK: Play attack flash frames before execution math fires
+	if selected_unit.has_method("play_animation"):
+		selected_unit.play_animation("attack")
+		await get_tree().create_timer(1).timeout
 	
 	var target_cells = _get_aoe_cells(cell, selected_ability)
 	executor.execute_ability(selected_unit, selected_ability, target_cells)
 	selected_unit.has_acted = true
 	
-	# 🧹 Clean up targeting states
+	# 🟢 ANIMATION HOOK: Safely restore idle poses once attacks complete
+	if selected_unit.has_method("play_animation"):
+		selected_unit.play_animation("idle")
+	
+	# Structural clearing routines
 	selected_ability = null
 	aoe_preview_cell = Vector2i(-1, -1)
 	highlight.clear_highlights()
 	deselect_unit()
 	
+	current_phase = TurnPhase.PLAYER_TURN
 	_check_end_player_turn()
 
 
 func _draw_aoe_preview(cast_range_cells: Array, aoe_impact_cells: Array) -> void:
 	if highlight == null:
 		return
-		
 	highlight.clear_highlights()
-	
-	# 1. 🟢 CHANGED: Use show_attack_range instead of highlight_ability_cells
 	highlight.show_attack_range(cast_range_cells)
-	
-	# 2. Overlay our orange blast shapes directly on top
 	highlight.highlight_aoe_blast_cells(aoe_impact_cells)
 
-
-# res://scripts/battle/battle_manager.gd
 
 func _refresh_ability_highlights(valid_cells: Array) -> void:
 	if highlight != null:
 		highlight.clear_highlights()
-		# 🟢 CHANGED: Use show_attack_range instead of highlight_ability_cells
 		highlight.show_attack_range(valid_cells)
+
 
 # Loops through active party components checking for outstanding action tokens.
 func _check_end_player_turn() -> void:
@@ -427,10 +428,9 @@ func _get_aoe_cells(center: Vector2i, ability: AbilityData) -> Array:
 
 	match ability.aoe_shape:
 		"single":
-			cells = [center] # Only damages the exact tile center coordinate tapped.
+			cells = [center] 
 
 		"square":
-			# Nested loops drawing an outward boundary grid box layout.
 			for x in range(-size + 1, size):
 				for y in range(-size + 1, size):
 					var c = center + Vector2i(x, y)
@@ -438,70 +438,60 @@ func _get_aoe_cells(center: Vector2i, ability: AbilityData) -> Array:
 						cells.append(c)
 
 		"line":
-			# 🟢 UPDATED: Line now originates directly from the casting unit
 			if selected_unit:
 				var origin = selected_unit.grid_position
 				var dir = center - origin
 				
-				# Get a clean grid step direction (1, 0), (-1, 0), etc.
 				var step = Vector2i(sign(dir.x), sign(dir.y))
 				if step.x != 0 and step.y != 0:
-					# Flatten diagonals to cardinal axes for strict straight lines
 					if abs(dir.x) >= abs(dir.y):
 						step.y = 0
 					else:
 						step.x = 0
 				
-				# If the click is exactly on the caster, default facing right
 				if step == Vector2i.ZERO:
 					step = Vector2i(1, 0)
 				
-				# Trace the laser/projectile outward step-by-step from the caster
 				for i in range(1, size + 1):
 					var c = origin + (step * i)
 					if grid.is_valid_cell(c):
 						cells.append(c)
 
 		"cross":
-			# Targets a plus '+' compass shape around the epicenter.
 			cells = [center]
 			for i in range(1, size + 1):
 				var directions = [
-					center + Vector2i(i, 0),   # Right arm
-					center + Vector2i(-i, 0),  # Left arm
-					center + Vector2i(0, i),   # Down arm
-					center + Vector2i(0, -i)   # Up arm
+					center + Vector2i(i, 0),   
+					center + Vector2i(-i, 0),  
+					center + Vector2i(0, i),   
+					center + Vector2i(0, -i)   
 				]
 				for c in directions:
 					if grid.is_valid_cell(c) and not c in cells:
 						cells.append(c)
 
 		"cone":
-			# 🟢 NEW: Standard grid-based cone projecting from the caster toward the target
 			if selected_unit:
 				var origin = selected_unit.grid_position
 				var dir = center - origin
 				
-				# Identify primary direction of fire (Cardinal axis)
 				var forward = Vector2i.ZERO
 				var side = Vector2i.ZERO
 				
 				if abs(dir.x) >= abs(dir.y):
-					forward = Vector2i(sign(dir.x), 0) # Shooting horizontally
-					side = Vector2i(0, 1)              # Width expands vertically
+					forward = Vector2i(sign(dir.x), 0) 
+					side = Vector2i(0, 1)              
 				else:
-					forward = Vector2i(0, sign(dir.y)) # Shooting vertically
-					side = Vector2i(1, 0)              # Width expands horizontally
+					forward = Vector2i(0, sign(dir.y)) 
+					side = Vector2i(1, 0)              
 					
 				if forward == Vector2i.ZERO:
-					forward = Vector2i(1, 0) # Fallback facing right
+					forward = Vector2i(1, 0) 
 					side = Vector2i(0, 1)
 
-				# Row-by-row cone expansion outward
-				# Row 1 is 1 tile wide, Row 2 is 3 tiles wide, Row i is (2*i - 1) wide
 				for i in range(1, size + 1):
 					var row_center = origin + (forward * i)
-					var width_spread = i - 1 # Extends outward sideways by this many tiles on each side
+					var width_spread = i - 1 
 					
 					for j in range(-width_spread, width_spread + 1):
 						var c = row_center + (side * j)
@@ -510,21 +500,20 @@ func _get_aoe_cells(center: Vector2i, ability: AbilityData) -> Array:
 
 	return cells
 	
+
 # Handover sequence: Shuts down player commands, updates metrics, wakes up the AI.
 func end_player_turn() -> void:
 	current_phase = TurnPhase.ENEMY_TURN
 	selected_ability = null
 	if has_method("deselect_unit"):
-		deselect_unit() # This usually sets selected_unit = null and clears movement fields
+		deselect_unit() 
 	else:
 		selected_unit = null
 		reachable_cells = {}
 	
-	# Force the grid highlights to completely vanish so no red/blue tiles remain
 	if highlight != null:
 		highlight.clear_highlights()
 		
-	# Clear the UI buttons so they don't linger into the enemy turn
 	if ui_manager != null and ui_manager.has_method("clear_abilities"):
 		ui_manager.clear_abilities()
 	elif ui_manager != null and ui_manager.has_node("VBoxContainer/AbilityBar"):
@@ -533,19 +522,15 @@ func end_player_turn() -> void:
 			
 	print("--- ENEMY TURN PHASE ACTIVATED ---")
 	
-	# 1. Process damage status tickers (poison, burn, bleed values) lingering on your heroes.
 	for unit in player_units:
 		unit.tick_statuses_end_of_round("player")
-		unit.has_moved = false # Refresh movement permissions for next round
-		unit.has_acted = false # Refresh action permissions for next round
+		unit.has_moved = false 
+		unit.has_acted = false 
 		
-	# 2. Tick down cooldown timers tracking on enemy action structures.
 	for unit in enemy_units:
 		for key in unit.ability_cooldowns:
 			unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
 			
-	# 3. Fire up the automated enemy state loops. We pass a callback hook link 
-	# (_on_enemy_turn_complete) so the AI script can return turn authority to us when done.
 	ai_system.run_enemy_turn(enemy_units, player_units, grid, pathfinder, executor, _on_enemy_turn_complete)
 
 
@@ -553,15 +538,12 @@ func end_player_turn() -> void:
 func _on_enemy_turn_complete() -> void:
 	print("--- PLAYER TURN PHASE ACTIVATED ---")
 	
-	# 1. Process damage status tickers lingering on enemy units.
 	for unit in enemy_units:
 		unit.tick_statuses_end_of_round("enemy")
 		
-	# 2. Lower active cooldown counter values tracking on your hero hotbar buttons.
 	for unit in player_units:
 		for key in unit.ability_cooldowns:
 			unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
 			
-	# 3. Increment the turn index layout tracker and hand controls back to the player.
 	round_number += 1
 	current_phase = TurnPhase.PLAYER_TURN
