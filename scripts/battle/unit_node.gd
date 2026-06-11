@@ -30,6 +30,7 @@ var has_moved: bool = false
 var grid_ref: Node = null
 
 signal unit_died(unit)
+signal movement_finished
 
 func _ready() -> void:
 	# 🟢 NEW: Ensure the unit starts in its idle loop
@@ -160,9 +161,10 @@ func move_to(new_cell: Vector2i) -> void:
 		tween.tween_property(self, "position", target_world_position, move_speed)
 		
 		# Return to idle once the slide completes
-		tween.tween_callback(func(): play_animation("idle"))
-
-	has_moved = true
+		tween.tween_callback(func(): 
+			play_animation("idle")
+			movement_finished.emit()
+)
 
 func apply_status(status_data: StatusEffectData, stacks: int = 1) -> void:
 	for s in active_statuses:

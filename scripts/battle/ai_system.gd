@@ -24,52 +24,48 @@ func run_enemy_turn(enemies: Array, players: Array, grid: Node, pathfinder: Node
 	done_callback.call()
 
 func _run_single_enemy(enemy, players: Array, grid: Node, pathfinder: Node, executor: Node) -> void:
-
 	if players.is_empty(): return
 
-	# Rule: attack the closest player unit. If tied, attack whoever was most recently attacked.
-
+	# 1. Target Selection
 	var target = _find_closest_player(enemy, players)
-
 	if target == null: return
 
-	# --- MOVEMENT ---
-
-	# Move toward the target if not already in range of basic attack
-
+	# 2. Setup Ability Data
 	var basic_attack = _get_basic_attack(enemy)
-
+	
+	# 3. MOVEMENT PHASE
 	var in_attack_range = pathfinder.get_cells_in_range(enemy.grid_position, basic_attack.min_range, basic_attack.max_range)
-
-	if not target.grid_position in in_attack_range:
-
-		# Move as close as possible
-
-		# 📥 CALLS FROM: pathfinder.get_reachable_cells() from PathfindingSystem
-
+	
+	# Only move if NOT already in range
+	if not target.grid_position in in_attack_range: 
 		var reachable = pathfinder.get_reachable_cells(enemy.grid_position, enemy.get_effective_mov())
-
 		var best_cell = _find_best_move_toward(enemy.grid_position, target.grid_position, reachable)
-
+		
+		# Only move if there is a valid better tile to stand on
 		if best_cell != enemy.grid_position:
-
 			enemy.move_to(best_cell)
+			await enemy.movement_finished # Wait for movement animation!
 
-	# --- ATTACK ---
-
-	# Re-check if target is now in range
-
+	# 4. ATTACK PHASE
+	# Re-calculate range from our NEW position
 	in_attack_range = pathfinder.get_cells_in_range(enemy.grid_position, basic_attack.min_range, basic_attack.max_range)
-
+	
+	# Check if target is now reachable AND has line of sight
 	if target.grid_position in in_attack_range:
-
-		# Check LOS
-
 		if pathfinder.has_line_of_sight(enemy.grid_position, target.grid_position):
-
-			# 📤 EXPORTS TO: executor.execute_ability() from AbilityExecutor
-
-			executor.execute_ability(enemy, basic_attack, [target.grid_position])
+			# 1. Trigger the attack animation on the enemy node
+			if enemy.has_method("play_animation"):
+				enemy.play_animation("attack")
+			
+# 2. Add a brief wait so the animation can be seen by the player
+		await get_tree().create_timer(0.5).timeout 
+		
+# 3. Perform the damage math
+		executor.execute_ability(enemy, basic_attack, [target.grid_position])
+		
+# 4. Return to idle
+	if enemy.has_method("play_animation"):
+		enemy.play_animation("idle")
 
 func _find_closest_player(enemy, players: Array):
 
