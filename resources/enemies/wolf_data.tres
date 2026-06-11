@@ -9,8 +9,8 @@
 
 [resource]
 script = ExtResource("3_n758h")
-id = "GiantRat"
-display_name = "ROUS"
+id = "wolf"
+display_name = "Wolf"
 portrait = ExtResource("2_mvdbc")
 battle_sprite = ExtResource("2_mvdbc")
 stats_by_level = Array[ExtResource("6_npou1")]([ExtResource("1_nhl57")])

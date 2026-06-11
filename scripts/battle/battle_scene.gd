@@ -8,14 +8,16 @@ extends Node2D
 @onready var battle_ui = $BattleUI
 
 func _ready() -> void:
-	# Connect UI to BattleManager
-	# 📥 CALLS FROM: BattleManager and UIManager need to know about each other
+	# 1. Connect UI to BattleManager
 	battle_ui.battle_manager = battle_manager
 
-	# Connect battle end signal
+	# 🛑 THE ADDITION: Connect BattleManager back to the UI Manager
+	battle_manager.ui_manager = battle_ui
+
+	# 2. Connect battle end signal
 	battle_manager.battle_ended.connect(_on_battle_ended)
 
-	# Setup the test map (Added in Step 29)
+	# 3. Setup the test map
 	_setup_test_map()
 
 func _setup_test_map() -> void:

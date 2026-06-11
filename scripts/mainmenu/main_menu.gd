@@ -38,31 +38,28 @@ func _on_continue_pressed() -> void:
 	# The RunManager data already exists, so we just jump straight to the battle grid
 	_change_scene_to(BATTLE_SCENE_PATH)
 
-# res://scripts/mainmenu/main_menu.gd
-
 func _on_new_game_pressed() -> void:
 	print("Starting a completely fresh run! Initializing RunData...")
+	
 	RunManager.current_run = RunData.new()
 	
-	# 1. Load your different unit blueprints
-	var berserker_hero = load("res://resources/units/berserker.tres")
-	var windmage = load("res://resources/units/windmage.tres")
+	# 1. Load your character file 
+	var test_hero = load("res://resources/units/guardian_data.tres")
 	
-	var starting_party: Array = []
-	
-	# 2. Safely add them to your squad list if they exist
-	if berserker_hero: starting_party.append(berserker_hero)
-	if windmage:       starting_party.append(windmage)
-	
-	# Assign the party array to your run session
-	RunManager.current_run.party = starting_party
-	
-	# 3. Setup individual levels for each hero ID tracking map
-	RunManager.current_run.unit_levels = {}
-	for hero in starting_party:
-		var hero_id = hero.id if "id" in hero else "unknown_hero"
-		RunManager.current_run.unit_levels[hero_id] = 1
+	# 2. Check if the resource loaded properly
+	if test_hero != null:
+		RunManager.current_run.party = [test_hero]
 		
+		# 3. DYNAMIC FIX: Safely grab the actual ID property from your unit resource
+		# If your UnitData script uses a different variable name (like 'unit_id' or 'name'), change '.id' below to match it!
+		var hero_id = test_hero.id if "id" in test_hero else "berserker"
+		
+		# 4. Correctly pair the level to that specific ID string
+		RunManager.current_run.unit_levels = { hero_id: 1 }
+		print("Hero registered in run with ID: ", hero_id)
+	else:
+		printerr("❌ Main Menu could not load berserker.tres!")
+	
 	_change_scene_to(BATTLE_SCENE_PATH)
 
 func _on_achievements_pressed() -> void:
