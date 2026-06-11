@@ -30,10 +30,10 @@ func _setup_test_map() -> void:
 			map_data[Vector2i(x, y)] = dirt_tile
 	$BattleGrid.setup_grid(map_data)
 
-func _on_battle_ended(victory: bool) -> void:
-	if victory:
+func _on_battle_ended(result: String) -> void:
+	if result == "victory":
 		RunManager.add_gold(5)  # reward gold for winning
 		RunManager.advance_stage()
 		get_tree().change_scene_to_file("res://scenes/meta/ShopScene.tscn")
-	else:
+	elif result == "defeat":
 		get_tree().change_scene_to_file("res://scenes/meta/GameOverScreen.tscn")

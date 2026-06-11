@@ -1,153 +1,188 @@
-# res://scripts/managers/shop_manager.gd
-
-# 📥 CALLS FROM: RunManager (reads current gold and party)
-
-# 📤 EXPORTS TO: RunManager (updates gold and party when unit purchased)
-
-extends Node2D
-
-const REFRESH_COST = 4
-
-const MAX_SHOP_SLOTS = 4
-
-@onready var gold_label = $GoldLabel
-
-@onready var unit_container = $HBoxContainer
-
-@onready var refresh_button = $RefreshButton
-
-@onready var continue_button = $ContinueButton
-
-# Pool of all available units — populate this in the Inspector or via code
-
-# 📥 CALLS FROM: UnitData resources you created in Phase 1
-
-@export var all_units: Array[UnitData] = []
-
-var current_shop_units: Array = []
-
-func _ready() -> void:
-
-	refresh_button.pressed.connect(_on_refresh_pressed)
-
-	continue_button.pressed.connect(_on_continue_pressed)
-
-	_refresh_shop()
-
-	_update_gold_display()
-
-func _refresh_shop() -> void:
-
-	# Pick random units to show
-
-	current_shop_units = []
-
-	var available = all_units.duplicate()
-
-	available.shuffle()
-
-	for i in range(min(MAX_SHOP_SLOTS, available.size())):
-
-		current_shop_units.append(available[i])
-
-	_draw_shop()
-
-func _draw_shop() -> void:
-
-	for child in unit_container.get_children():
-
-		child.queue_free()
-
-	for unit_data in current_shop_units:
-
-		var card = _make_unit_card(unit_data)
-
-		unit_container.add_child(card)
-
-func _make_unit_card(unit_data: UnitData) -> Control:
-
-	var panel = PanelContainer.new()
-
-	var vbox = VBoxContainer.new()
-
-	panel.add_child(vbox)
-
-	var name_label = Label.new()
-
-	name_label.text = unit_data.display_name
-
-	vbox.add_child(name_label)
-
-	var cost_label = Label.new()
-
-	cost_label.text = "Cost: " + str(unit_data.cost_gold) + " gold"
-
-	vbox.add_child(cost_label)
-
-	var buy_button = Button.new()
-
-	buy_button.text = "Recruit"
-
-	# Check if affordable and party not full
-
-	var can_buy = RunManager.current_run.gold >= unit_data.cost_gold
-
-	var party_size = RunManager.current_run.party.size() + RunManager.current_run.bench.size()
-
-	buy_button.disabled = not can_buy or party_size >= 10  # 4 party + 6 bench
-
-	buy_button.pressed.connect(func(): _buy_unit(unit_data, buy_button))
-
-	vbox.add_child(buy_button)
-
-	return panel
-
-func _buy_unit(unit_data: UnitData, button: Button) -> void:
-
-	# 📤 EXPORTS TO: RunManager.spend_gold() and updates run party
-
-	if RunManager.spend_gold(unit_data.cost_gold):
-
-		if RunManager.current_run.party.size() < 4:
-
-			RunManager.current_run.party.append(unit_data)
-
-		else:
-
-			RunManager.current_run.bench.append(unit_data)
-
-		button.disabled = true
-
-		_update_gold_display()
-
-func _on_refresh_pressed() -> void:
-
-	if RunManager.spend_gold(REFRESH_COST):
-
-		_refresh_shop()
-
-		_update_gold_display()
-
-func _on_continue_pressed() -> void:
-
-	# Move to the next stage
-
-	# �04 EXPORTS TO: RunManager.advance_stage() then loads appropriate scene
-
-	RunManager.advance_stage()
-
-	var stage_type = RunManager.get_current_stage_type()
-
-	match stage_type:
-
-		"combat", "subboss", "boss", "special_combat":
-
-			get_tree().change_scene_to_file("res://scenes/battle/BattleScene.tscn")
-
-		"encounter":
-
-			get_tree().change_scene_to_file("res://scenes/encounter/EncounterScene.tscn")
-
-func _update_gold_display() -> void:
-
-	$GoldLabel.text = "Gold: " + str(RunManager.current_run.gold)
+# res://scripts/battle/ability_executor.gd
+
+# 📥 CALLS FROM: BattleManager when a unit uses an ability
+# 📥 CALLS FROM: UnitNode.get_effective_atk() — reads unit's current modified stats
+# 📤 EXPORTS TO: UnitNode.take_damage() — sends final damage amount
+# 📤 EXPORTS TO: UnitNode.apply_status() — applies status effects from the ability
+
+extends Node
+
+# Reference set by BattleManager
+# 📥 CALLS FROM: BattleManager sets this on start
+var grid_ref: Node = null
+
+# Execute an ability from a caster aimed at target cells
+func execute_ability(caster, ability: AbilityData, target_cells: Array) -> void:
+	# 📥 CALLS FROM: BattleManager when player (or AI) selects an ability and confirms target
+	for cell in target_cells:
+		var target = grid_ref.get_unit_at(cell)
+
+		# --- DAMAGE ---
+		if ability.base_damage_multiplier > 0 and target != null:
+			var damage = calculate_damage(caster, target, ability)
+			target.take_damage(damage, ability.damage_type)
+			
+			# 🟢 FIXED: Swapped variables here so int comes before Vector2
+			_spawn_damage_number(target.position, damage)
+
+		# --- APPLY STATUS EFFECTS ---
+		if target != null:
+			for status_data in ability.applies_statuses:
+				target.apply_status(status_data)
+
+		# --- SPAWN HAZARD ---
+		if ability.spawns_hazard != null:
+			grid_ref.add_hazard(cell, ability.spawns_hazard)
+
+		# --- DISPLACEMENT (push/pull) ---
+		if ability.displacement_squares != 0 and target != null:
+			_displace_unit(caster, target, ability.displacement_squares)
+
+		# --- HEALING ---
+		if ability.heal_percent > 0.0:
+			var target_to_heal = target if target != null else caster
+			var max_hp = target_to_heal.get_stats().hp
+			target_to_heal.heal(int(max_hp * ability.heal_percent))
+
+	# --- APPLY COOLDOWN ---
+	if ability.cooldown_rounds > 0:
+		caster.ability_cooldowns[ability.id] = ability.cooldown_rounds
+
+	# --- APPLY COSTS ---
+	var stats = caster.get_stats()
+	caster.current_mana -= ability.mana_cost
+	if ability.hp_cost_percent > 0:
+		caster.take_damage(int(stats.hp * ability.hp_cost_percent), "true")
+
+
+func calculate_damage(caster, target, ability: AbilityData) -> int:
+	# The core damage formula: max(1, (ATK - DEF) * multiplier)
+	# 📥 CALLS FROM: caster.get_effective_atk/matk() from UnitNode
+	# 📥 CALLS FROM: target.get_effective_def() from UnitNode
+
+	# Choose attack stat
+	var atk: int = caster.get_effective_atk() if ability.scaling_stat == "atk" else caster.get_stats().matk
+
+	# Choose defense stat
+	var def: int = 0
+	match ability.damage_type:
+		"physical": def = target.get_effective_def()
+		"magical": def = target.get_stats().mdef
+		"hazard": def = target.get_stats().mdef
+		"true": def = 0  # true damage ignores all defense
+
+	# Base damage
+	var base = float(atk - def) * ability.base_damage_multiplier
+
+	# Apply damage modifiers from target's status effects
+	for s in target.active_statuses:
+		var mod = s["data"].damage_taken_modifier
+		if mod != 0.0:
+			base *= (1.0 + mod)
+
+	# Clamp minimum to 1
+	var final_damage = max(1, int(base))
+
+	# --- CRITICAL HIT CHECK ---
+	var crit_chance = caster.get_effective_crit_chance()
+	var roll = randf() * 100.0
+	if roll < crit_chance:
+		var crit_dmg_percent = caster.get_stats().crit_damage
+		# CritDMG works as: multiply ATK by (crit_damage / 100), then recalculate
+		atk = int(atk * (crit_dmg_percent / 100.0))
+		base = float(atk - def) * ability.base_damage_multiplier
+		for s in target.active_statuses:
+			base *= (1.0 + s["data"].damage_taken_modifier)
+		final_damage = max(1, int(base))
+
+	return final_damage
+
+
+func _displace_unit(caster, target, squares: int) -> void:
+	# Push (positive) or pull (negative) target relative to caster
+	var direction = target.grid_position - caster.grid_position
+	if direction == Vector2i(0, 0): return
+
+	# Normalize to 1 step
+	if abs(direction.x) > abs(direction.y):
+		direction = Vector2i(sign(direction.x), 0)
+	else:
+		direction = Vector2i(0, sign(direction.y))
+
+	var move_dir = direction * sign(squares)
+	var steps = abs(squares)
+	var current = target.grid_position
+
+	for _i in range(steps):
+		var next = current + move_dir
+		if not grid_ref.is_passable(next): break
+		current = next
+
+	if current != target.grid_position:
+		target.move_to(current)
+
+
+
+func _spawn_damage_number(amount: int, pos: Vector2) -> void:
+	var tree = get_tree()
+	if tree == null: 
+		return
+
+	# 1. 🎯 FIND THE RIGHT GAME WORLD LAYER
+	# We attach the numbers to your UnitLayer inside BattleGrid so it moves with the camera.
+	var spawn_root = null
+	if grid_ref != null and grid_ref.has_node("UnitLayer"):
+		spawn_root = grid_ref.get_node("UnitLayer")
+	elif grid_ref != null:
+		spawn_root = grid_ref
+	else:
+		spawn_root = tree.current_scene
+
+	if spawn_root == null:
+		return 
+
+	# 2. CREATE AND POSITION THE UI LABEL NODE
+	var damage_label = Label.new()
+	damage_label.text = str(amount)
+	
+	# Center alignment ensures the text block anchors nicely over the target
+	damage_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	damage_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	
+	# Position directly at the unit's pixel coordinates.
+	# We offset it left by -50 pixels (to center it) and up by -60 pixels (to float above their head)
+	damage_label.position = pos + Vector2(-50, -60)
+
+	# 3. HIGH-CONTRAST RETRO RPG STYLING
+	var settings = LabelSettings.new()
+	settings.font = SystemFont.new() # Heavyweight clean rendering
+	settings.font_size = 22
+	settings.font_color = Color(1.0, 0.1, 0.1) # Aggressive damage crimson red
+	
+	# Strong black border ensures it reads clearly on top of grass or combat map tiles
+	settings.outline_width = 5
+	settings.outline_color = Color(0, 0, 0) 
+
+	# Critical or high damage threshold styling
+	if amount > 15:
+		settings.font_size = 30
+		settings.font_color = Color(1.0, 0.8, 0.0) # Bright gold critical hit color
+
+	damage_label.label_settings = settings
+	
+	# 4. INSTANTLY SPAWN INTO THE WORLD
+	spawn_root.add_child(damage_label)
+
+	# 5. SAFE SCENE-TREE TIMED TWEEN ANIMATION
+	var tween = tree.create_tween().set_parallel(true)
+	
+	# Float upwards vertically in the map space over 0.75 seconds
+	tween.tween_property(damage_label, "position:y", damage_label.position.y - 40, 0.75)\
+		.set_trans(Tween.TRANS_CUBIC)\
+		.set_ease(Tween.EASE_OUT)
+		
+	# Smoothly fade out the opacity modifier track over the same 0.75 seconds
+	tween.tween_property(damage_label, "modulate:a", 0.0, 0.75)
+	
+	# Clean up memory completely when the tracking animation finishes
+	tween.chain().tween_callback(damage_label.queue_free)

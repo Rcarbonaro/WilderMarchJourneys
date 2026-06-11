@@ -112,13 +112,31 @@ func heal(amount: int) -> void:
 	_update_hp_label()
 
 func die() -> void:
-	grid_ref.unregister_unit(grid_position)
-	emit_signal("unit_died", self)
+	# Guard clause: Don't die twice
+	if not is_inside_tree():
+		queue_free()
+		return
+		
+	print(unit_data.display_name, " has been defeated!")
 	
-	# 🟢 NEW: Play death animation, wait for it, then clear node
-	play_animation("die")
-	await get_tree().create_timer(0.5).timeout
-	queue_free()
+	# 1. Take them off the tactical grid immediately so nobody can target them again
+	if grid_ref != null and grid_ref.has_method("unregister_unit"):
+		grid_ref.unregister_unit(grid_position)
+		
+	# 2. Tell the BattleManager right away so team lists update
+	unit_died.emit(self)
+	
+	# 3. Play death animation or hide them visually so they look dead to the player
+	if has_node("AnimatedSprite2D"):
+		$AnimatedSprite2D.play("death")
+	else:
+		hide() # Invisible fallback
+		
+	# 4. Instead of destroying the node code-side right this millisecond,
+	# use call_deferred to delete it at the very end of the engine's frame loop.
+	# This keeps 'get_tree()' valid for the remainder of this ability execution!
+	queue_free.call_deferred()
+
 
 func move_to(new_cell: Vector2i) -> void:
 	if grid_ref != null:
