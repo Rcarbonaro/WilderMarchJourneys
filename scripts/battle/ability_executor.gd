@@ -36,7 +36,7 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array) -> void:
 
 			# Show floating damage number
 
-			_spawn_damage_number(target.position, damage)
+			_spawn_damage_number(damage, target.position)
 
 		# --- APPLY STATUS EFFECTS ---
 
@@ -191,26 +191,64 @@ func _displace_unit(caster, target, squares: int) -> void:
 		target.move_to(current)
 
 
-func _spawn_damage_number(pos: Vector2, amount: int) -> void:
+func _spawn_damage_number(amount: int, position: Vector2) -> void:
+	var tree = get_tree()
+	if tree == null: 
+		return
 
-	# Creates a floating damage number above a unit's head
+	# 1. 🎯 FIND THE RIGHT GAME WORLD LAYER
+	var spawn_root = null
+	if grid_ref != null and grid_ref.has_node("UnitLayer"):
+		spawn_root = grid_ref.get_node("UnitLayer")
+	elif grid_ref != null:
+		spawn_root = grid_ref
+	elif tree.current_scene != null:
+		spawn_root = tree.current_scene
 
-	# 📤 EXPORTS TO: (visual only, no other script depends on this)
+	if spawn_root == null:
+		print("⚠️ Cannot spawn damage number: No valid parent scene found.")
+		return 
 
-	var label = Label.new()
+	# 2. CREATE AND POSITION THE UI LABEL NODE
+	var damage_label = Label.new()
+	damage_label.text = str(amount) # Uses 'amount' here!
+	
+	damage_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	damage_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	
+	# Position directly at the unit's pixel coordinates (Uses 'position' here!)
+	damage_label.position = position + Vector2(-50, -60)
 
-	label.text = str(amount)
+	# 3. HIGH-CONTRAST RETRO RPG STYLING
+	var settings = LabelSettings.new()
+	settings.font = SystemFont.new()
+	settings.font_size = 22
+	settings.font_color = Color(1.0, 0.1, 0.1) # Crimson red
+	
+	# 🟢 FIXED: Using universal set() to bypass strict property assignment bugs
+	settings.set("outline_width", 5)
+	settings.outline_color = Color(0, 0, 0) 
 
-	label.position = pos + Vector2(-20, -60)
+	# Critical hit styling
+	if amount > 15:
+		settings.font_size = 60
+		settings.font_color = Color(1.0, 0.8, 0.0) # Bright gold
 
-	get_tree().current_scene.add_child(label)
+	damage_label.label_settings = settings
+	
+	# 4. INSTANTLY SPAWN INTO THE WORLD
+	spawn_root.add_child(damage_label)
 
-	# Simple tween to float upward and fade
-
-	var tween = label.create_tween()
-
-	tween.tween_property(label, "position", label.position + Vector2(0, -40), 0.8)
-
-	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.8)
-
-	tween.tween_callback(label.queue_free)
+	# 5. SAFE SCENE-TREE TIMED TWEEN ANIMATION
+	var tween = tree.create_tween().set_parallel(true)
+	
+	# Float upwards vertically over 0.75 seconds
+	tween.tween_property(damage_label, "position:y", damage_label.position.y - 40, 2)\
+		.set_trans(Tween.TRANS_CUBIC)\
+		.set_ease(Tween.EASE_OUT)
+		
+	# Smoothly fade out opacity
+	tween.tween_property(damage_label, "modulate:a", 0.0, 0.75)
+	
+	# Clean up memory completely when done
+	tween.chain().tween_callback(damage_label.queue_free)

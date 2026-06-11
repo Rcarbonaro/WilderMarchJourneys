@@ -183,18 +183,21 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_ekpkk")
 }, {
-"duration": 1.0,
+"duration": 2.0,
 "texture": SubResource("AtlasTexture_3isg1")
 }, {
-"duration": 1.0,
+"duration": 2.0,
 "texture": SubResource("AtlasTexture_aoj6l")
 }, {
-"duration": 1.0,
+"duration": 2.0,
 "texture": SubResource("AtlasTexture_v4o1g")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3sr8h")
 }],
 "loop": false,
 "name": &"attack",
-"speed": 14.0
+"speed": 16.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -285,7 +288,7 @@ scale = Vector2(0.46666667, 0.4711066)
 sprite_frames = SubResource("SpriteFrames_grxbi")
 animation = &"attack"
 autoplay = "idle"
-frame = 17
+frame = 18
 frame_progress = 1.0
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
