@@ -207,7 +207,7 @@ animations = [{
 }],
 "loop": false,
 "name": &"attack",
-"speed": 13.0
+"speed": 15.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -365,8 +365,10 @@ script = ExtResource("1_j2vdh")
 position = Vector2(9, -22.999998)
 scale = Vector2(0.46666667, 0.4711066)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"idle"
+animation = &"attack"
 autoplay = "idle"
+frame = 8
+frame_progress = 1.0
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0
