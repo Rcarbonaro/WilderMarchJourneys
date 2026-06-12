@@ -5,7 +5,8 @@ extends Node2D
 # 📥 CALLS FROM: UnitData resource file (.tres)
 @export var unit_data: UnitData
 
-@export var move_speed: float = 0.25 # 🟢 NEW: Duration of the tile-to-tile slide
+@export var move_speed: float = 1.5 # 🟢 NEW: Duration of the tile-to-tile slide
+@export var faces_right_by_default: bool = true # Check this in Inspector for players, uncheck for enemies
 
 # Runtime stats (these change during battle)
 var current_hp: int = 0
@@ -165,6 +166,29 @@ func move_to(new_cell: Vector2i) -> void:
 			play_animation("idle")
 			movement_finished.emit()
 )
+
+
+func look_at_target(target_pos: Vector2i):
+	var sprite = $AnimatedSprite2D # Ensure this path is correct
+	
+	# 1. Determine where the target is relative to us
+	var target_is_to_the_right = target_pos.x > grid_position.x
+	
+	# 2. Logic: Should we flip?
+	# This logic handles all 4 combinations of (Default State) vs (Target Position)
+	# XOR logic: If target is right (True) and we default right (True), 
+	# result is False (No flip). If target is left (False) and we default right (True), 
+	# result is True (Flip).
+	var should_flip = target_is_to_the_right != faces_right_by_default
+	
+	# 3. Apply the flip
+	sprite.flip_h = should_flip
+	
+	print("My pos: ", grid_position, " Target pos: ", target_pos)
+	if target_pos.x < grid_position.x:
+		$AnimatedSprite2D.flip_h = true
+	else:
+		$AnimatedSprite2D.flip_h = false
 
 func apply_status(status_data: StatusEffectData, stacks: int = 1) -> void:
 	for s in active_statuses:

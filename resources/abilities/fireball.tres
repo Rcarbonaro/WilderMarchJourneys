@@ -2,17 +2,19 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_6sfer"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_546e4"]
+[ext_resource type="Texture2D" uid="uid://cnuluar0jmbkb" path="res://sprites/Wind Mage/Tornado_Icon.png" id="2_vwgc1"]
 
 [resource]
 script = ExtResource("2_546e4")
 id = "fireball"
 display_name = "Fireball"
 description = "Kaboom!"
+icon = ExtResource("2_vwgc1")
 mana_cost = 10
 min_range = 1
 max_range = 6
-aoe_shape = "square"
-aoe_size = 4
+aoe_shape = "cone"
+aoe_size = 5
 damage_type = "magical"
 scaling_stat = "matk"
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

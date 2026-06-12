@@ -6,5 +6,7 @@
 script = ExtResource("1_hkkbg")
 id = "exposed"
 display_name = "Exposed"
+duration_rounds = 3
 def_modifier = -10
+trigger_damage_type = "magical"
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

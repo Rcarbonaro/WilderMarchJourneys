@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://01w1tymoafld" path="res://scripts/battle/unit_node.gd" id="1_tu5pq"]
 [ext_resource type="Texture2D" uid="uid://ueyftp0pguw2" path="res://sprites/guardian/Guardian Attack.png" id="2_o5kc6"]
+[ext_resource type="Resource" uid="uid://kl0hrp648qp8" path="res://resources/units/guardian_data.tres" id="2_vnw84"]
 [ext_resource type="Texture2D" uid="uid://bbqmdev1iuf7q" path="res://sprites/Wind Mage/windmage_dead.png" id="3_vnw84"]
 [ext_resource type="Texture2D" uid="uid://v6mb8nhkoknl" path="res://sprites/guardian/Guardian Idle.png" id="4_dma4l"]
 
@@ -245,6 +246,8 @@ animations = [{
 
 [node name="Guardian" type="Node2D" unique_id=15020637]
 script = ExtResource("1_tu5pq")
+unit_data = ExtResource("2_vnw84")
+move_speed = 1.0
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1298568116]
 position = Vector2(17.999998, -15)
