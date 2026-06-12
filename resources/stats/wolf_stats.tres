@@ -6,7 +6,7 @@
 script = ExtResource("1_eysqb")
 hp = 20
 atk = 12
-def = 2
-mdef = 1
+def = 4
+mdef = 3
 mov = 4
 metadata/_custom_type_script = "uid://c3bdx4sniu017"
