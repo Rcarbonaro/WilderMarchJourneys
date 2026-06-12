@@ -18,15 +18,15 @@ offset_right = 1031.0
 offset_bottom = 1429.0
 
 [node name="RefreshButton" type="Button" parent="." unique_id=177932080]
-offset_left = 7.0
-offset_top = 1730.0
-offset_right = 340.0
-offset_bottom = 1904.0
+offset_left = 13.0
+offset_top = 837.0
+offset_right = 346.0
+offset_bottom = 1011.0
 text = "Refresh (3 Gold)"
 
 [node name="Button" type="Button" parent="." unique_id=1515844418]
-offset_left = 735.0
-offset_top = 1711.0
-offset_right = 1071.0
-offset_bottom = 1898.0
+offset_left = 741.0
+offset_top = 818.0
+offset_right = 1077.0
+offset_bottom = 1005.0
 text = "Continue"
