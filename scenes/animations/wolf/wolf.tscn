@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://01w1tymoafld" path="res://scripts/battle/unit_node.gd" id="1_j2vdh"]
 [ext_resource type="Texture2D" uid="uid://b7csyy76bl6ms" path="res://sprites/wolf/Wolf Attack.png" id="2_j8g0u"]
+[ext_resource type="Resource" uid="uid://cb4odxeuc788g" path="res://resources/enemies/wolf_data.tres" id="2_khfjn"]
 [ext_resource type="Texture2D" uid="uid://c2gw2bh5x0sfq" path="res://sprites/wolf/wolfdie.png" id="3_khfjn"]
 [ext_resource type="Texture2D" uid="uid://smxanb7a6g0s" path="res://sprites/wolf/wolf hurt.png" id="4_trw47"]
 [ext_resource type="Texture2D" uid="uid://bvwxk3sbjp54" path="res://sprites/wolf/Wolf Idle.png" id="5_fagmv"]
@@ -360,6 +361,8 @@ animations = [{
 
 [node name="Wolf" type="Node2D" unique_id=15020637]
 script = ExtResource("1_j2vdh")
+unit_data = ExtResource("2_khfjn")
+faces_right_by_default = false
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1298568116]
 position = Vector2(9, -22.999998)

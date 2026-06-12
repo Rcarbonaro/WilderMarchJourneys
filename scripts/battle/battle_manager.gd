@@ -108,6 +108,8 @@ func _spawn_stage_enemies() -> void:
 	
 	# 1. Load the raw .tres data resource file for your wolf enemy
 	var wolf_data = load("res://resources/enemies/wolf_data.tres")
+	var sylvaris_data = load("res://resources/enemies/sylvaris_data.tres")
+
 	
 	if wolf_data == null:
 		printerr("❌ Could not load wolf_data.tres! Check your file path.")
@@ -118,6 +120,8 @@ func _spawn_stage_enemies() -> void:
 	spawn_unit(wolf_data, Vector2i(7, 2), false, 1) # Wolf A
 	spawn_unit(wolf_data, Vector2i(8, 3), false, 1) # Wolf B
 	spawn_unit(wolf_data, Vector2i(8, 5), false, 1) # Wolf C
+	spawn_unit(sylvaris_data, Vector2i(8, 3), false, 1) # Wolf B
+
 	
 	print("🐺 3 Wild Wolves have surrounded the party!")
 
@@ -214,68 +218,68 @@ func _battle_defeat() -> void:
 func on_tile_tapped(cell: Vector2i) -> void:
 	print("🎯 Map Grid Tapped at coordinate: ", cell, " | Current Game Phase: ", current_phase)
 	
+	# Ignore clicks if not in player turn
 	if current_phase != TurnPhase.PLAYER_TURN: 
 		print("❌ Click Ignored: Controls are locked during animations or enemy actions!")
 		return
 
-	# STATE A: You haven't clicked a character yet.
+	# STATE A: No unit selected
 	if selected_unit == null:
 		var unit = grid.get_unit_at(cell)
-		if unit != null:
-			print("👤 Found Unit: ", unit.unit_data.display_name, " | Is Player Team: ", unit.is_player_unit)
-			if unit.is_player_unit:
-				select_unit(unit)
+		if is_instance_valid(unit) and unit.is_player_unit:
+			select_unit(unit)
 		else:
-			print("🟫 Tapped an empty floor tile with no unit selected.")
+			print("🟫 Empty tile or non-player unit.")
 			
 	# STATE B: Targeting/Casting state
 	elif selected_ability != null:
-		print("🔮 Casting Ability: ", selected_ability.display_name, " on tile: ", cell)
 		_try_use_ability(cell)
 		
 	# STATE C: Unit selected, waiting for movement instructions
 	else:
-		print("🧍 Active Hero ", selected_unit.unit_data.display_name, " is waiting for movement. Tapped tile: ", cell)
+		# Check if the unit is still valid before doing anything
+		if not is_instance_valid(selected_unit):
+			deselect_unit()
+			return
+
 		if cell == selected_unit.grid_position:
-			print("🧍 Unit chose to stand still.")
 			selected_unit.has_moved = true
 			highlight.clear_highlights()
 			reachable_cells = {}
-			if ui_manager != null and ui_manager.has_method("show_unit_abilities"):
+			if ui_manager and ui_manager.has_method("show_unit_abilities"):
 				ui_manager.show_unit_abilities(selected_unit)
 				
 		elif reachable_cells.has(cell):
-			print("🚶 Moving unit...")
-		
-			
-			# 🟢 INPUT PROTECTION LOCK: Freeze inputs while the unit is moving
+			# 🟢 LOCK INPUTS: Set phase to ANIMATION so no new inputs trigger logic
 			current_phase = TurnPhase.ANIMATION
 			
-			# Triggers the sliding movement calculations handled by your unit node script
-			selected_unit.move_to(cell)
-			selected_unit.has_moved = true
+			# Store a local reference to the unit moving
+			var moving_unit = selected_unit
 			
-			# Clean range layouts immediately so they disappear during the walk loop
 			highlight.clear_highlights()
 			reachable_cells = {}
 			
-			var current_unit = selected_unit
-			select_unit(current_unit)
+			# Move the unit
+			moving_unit.move_to(cell)
+			moving_unit.has_moved = true
 			
-			# 🟢 FIXED: Wait cleanly for the unit to signal that it has reached its final destination tile!
-			if selected_unit.has_signal("movement_finished"):
-				await selected_unit.movement_finished
+			# 🟢 AWAIT MOVEMENT:
+			# We await the signal. Using 'await' makes the execution stop here
+			# until the signal is emitted, preventing parallel race conditions.
+			await moving_unit.movement_finished
+			
+			# 🟢 POST-MOVE SAFETY CHECK: 
+			# Ensure the unit still exists after the animation
+			if is_instance_valid(moving_unit):
+				current_phase = TurnPhase.PLAYER_TURN
+				# Re-select or update UI
+				if ui_manager and ui_manager.has_method("show_unit_abilities"):
+					ui_manager.show_unit_abilities(moving_unit)
 			else:
-				# Fallback safety buffer timer just in case the signal is disconnected
-				await get_tree().create_timer(0.5).timeout
-			
-			# Restore authority phase permissions and pop open skill cards
-			current_phase = TurnPhase.PLAYER_TURN
-			if ui_manager != null and ui_manager.has_method("show_unit_abilities"):
-				print("🔮 Movement complete! Displaying action bar buttons for: ", selected_unit.unit_data.display_name)
-				ui_manager.show_unit_abilities(selected_unit)
+				# If the unit was destroyed during move, reset state
+				current_phase = TurnPhase.PLAYER_TURN
+				deselect_unit()
 		else:
-			print("↩️ Invalid tile path choice. Resetting selection.")
 			deselect_unit()
 
 

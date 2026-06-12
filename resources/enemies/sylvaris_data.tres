@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://dq6sdol1fo1j0"]
+
+[ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="1_1vwcd"]
+[ext_resource type="Resource" uid="uid://bon40ui0d1syn" path="res://resources/stats/sylvaris_stats.tres" id="1_r0s07"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_6ccxf"]
+[ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_r0s07"]
+[ext_resource type="Resource" uid="uid://bkhl370vs27t7" path="res://resources/abilities/windmage_basic.tres" id="4_u11g4"]
+
+[resource]
+script = ExtResource("1_1vwcd")
+id = "sylvaris"
+display_name = "Sylvaris"
+stats_by_level = Array[ExtResource("3_r0s07")]([ExtResource("1_r0s07")])
+base_stats = ExtResource("1_r0s07")
+starting_abilities = Array[ExtResource("2_6ccxf")]([ExtResource("4_u11g4")])
+metadata/_custom_type_script = "uid://utmj7y8m802a"
