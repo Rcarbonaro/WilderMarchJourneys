@@ -45,3 +45,15 @@ script = ExtResource("7_5u8xp")
 script = ExtResource("8_yvj2l")
 grid = NodePath("../BattleGrid")
 battle_manager = NodePath("../BattleManager")
+
+[node name="BattleBackgrounds" type="CanvasLayer" parent="." unique_id=998565248]
+layer = -100
+
+[node name="BackgroundTexture" type="TextureRect" parent="BattleBackgrounds" unique_id=2082639679]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1

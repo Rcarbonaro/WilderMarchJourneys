@@ -39,50 +39,6 @@
 			"type": "scene_tree"
 		},
 		{
-			"path": "res://scripts/battle/battle_scene.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/encounter_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/encounter/encounter_scene.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/hazard_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/highlight_manager.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/input_handler.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/mainmenu/main_menu.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/managers/run_manager.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/stats_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/tile_type_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/unit_data.gd",
-			"type": "script"
-		},
-		{
 			"path": "res://scripts/battle/battle_manager.gd",
 			"type": "script"
 		},
@@ -124,6 +80,50 @@
 		},
 		{
 			"path": "res://scripts/battle/unit_node.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/unit_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/tile_type_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/stats_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/managers/run_manager.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/mainmenu/main_menu.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/input_handler.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/highlight_manager.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/hazard_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/encounter/encounter_scene.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/encounter_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/battle_scene.gd",
 			"type": "script"
 		}
 	],
