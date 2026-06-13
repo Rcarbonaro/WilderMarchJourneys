@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://4hii3tx3d506"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_qvh21"]
+[ext_resource type="PackedScene" uid="uid://cvncq3xf6rqu6" path="res://scenes/animations/windmage/tornado.tscn" id="2_hnbcj"]
+[ext_resource type="Texture2D" uid="uid://cnuluar0jmbkb" path="res://sprites/Wind Mage/Tornado_Icon.png" id="3_82lxo"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="4_rotjb"]
+
+[resource]
+script = ExtResource("4_rotjb")
+id = "tornado"
+display_name = "Tornado"
+description = "Tornado!"
+icon = ExtResource("3_82lxo")
+effect_scene = ExtResource("2_hnbcj")
+mana_cost = 10
+min_range = 1
+max_range = 6
+aoe_shape = "square"
+aoe_size = 3
+damage_type = "magical"
+scaling_stat = "matk"
+ability_type = "spell"
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

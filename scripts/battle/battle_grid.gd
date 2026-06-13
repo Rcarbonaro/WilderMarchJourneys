@@ -8,9 +8,9 @@
 
 extends Node2D
 
-const GRID_WIDTH = 10
+const GRID_WIDTH = 100
 
-const GRID_HEIGHT = 10
+const GRID_HEIGHT = 9
 
 const TILE_SIZE = 96  # pixels per tile — adjust for your art
 

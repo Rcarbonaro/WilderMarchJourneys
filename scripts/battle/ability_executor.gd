@@ -43,10 +43,10 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array, origin_c
 		# ── AOE / MELEE — play VFX then apply damage ──────────────────────────
 		# For AOE shapes, show the impact visual first, then apply effects.
 		if ability.aoe_shape != "single":
-			_play_aoe_vfx(caster, ability, target_cells, origin_cell)
-			# Short pause so the player sees the VFX before numbers pop.
-			await get_tree().create_timer(0.3).timeout
 
+			await _play_aoe_vfx(caster, ability, target_cells, origin_cell)
+			await get_tree().create_timer(0.1).timeout
+			
 		# Apply effects to every cell in the (already team-filtered) list.
 		for cell in target_cells:
 			var target = grid_ref.get_unit_at(cell)
@@ -90,12 +90,17 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array, origin_c
 # ── DAMAGE FORMULA ────────────────────────────────────────────────────────────
 
 func calculate_damage(caster, target, ability: AbilityData) -> int:
+	# 🛑 CRITICAL FIX 1: Check instance validity IMMEDIATELY before doing ANYTHING with 'target' or 'caster'
+	if not is_instance_valid(target) or not is_instance_valid(caster):
+		print("⚠️ Damage calculation bypassed: Caster or Target vanished from memory!")
+		return 0
+
 	# 1. Fetch CURRENT EFFECTIVE STATS instead of base stats
 	var offensive_stat: int = 0
 	var defensive_stat: int = 0
 	var stat_name: String = "ATK"
 	var def_name: String = "DEF"
-
+	
 	if ability.damage_type == "magical":
 		# Use effective Magic Attack / Magic Defense methods if they exist, otherwise fallback
 		offensive_stat = caster.get_effective_matk() if caster.has_method("get_effective_matk") else caster.get_stats().matk
@@ -110,26 +115,29 @@ func calculate_damage(caster, target, ability: AbilityData) -> int:
 	# 2. Calculate initial base damage using our modified dynamic stats
 	var base: float = float(offensive_stat - defensive_stat) * ability.base_damage_multiplier
 
-	# Step 4: Clamp to at least 1.
-	var final_damage = max(1, int(base))
-
-	# Step 5: Roll for critical hit.
-	var crit_chance = caster.get_effective_crit_chance()
+	# Step 3: Roll for critical hit and apply stat modifiers before final tracking
+	var is_critical: bool = false
+	var crit_chance = caster.get_effective_crit_chance() if caster.has_method("get_effective_crit_chance") else 0.0
 	var roll = randf() * 100.0
 	
 	if roll < crit_chance:
 		print("⚡ CRITICAL HIT!")
-		var crit_dmg_percent = caster.get_stats().crit_damage
+		is_critical = true
+		var crit_dmg_percent = caster.get_stats().crit_damage if "crit_damage" in caster.get_stats() else 150.0
 		
 		var crit_offensive_stat = int(offensive_stat * (crit_dmg_percent / 100.0))
 		base = float(crit_offensive_stat - defensive_stat) * ability.base_damage_multiplier
-		
-		if "active_statuses" in target:
-			for s in target.active_statuses:
-				if s.has("data") and "damage_taken_modifier" in s["data"]:
-					base *= (1.0 + s["data"].damage_taken_modifier)
-					
-		final_damage = max(1, int(base))
+
+	# 🛑 STRUCTURAL FIX 2: Moved status multipliers out of the crit-only block 
+	# so that active statuses are calculated for ALL regular attacks as well.
+	if "active_statuses" in target and target.active_statuses != null:
+		for s in target.active_statuses:
+			if s.has("data") and "damage_taken_modifier" in s["data"]:
+				base *= (1.0 + s["data"].damage_taken_modifier)
+
+	# Step 4: Clamp to at least 1 minimum damage so attacks never deal 0 or negative values.
+	var final_damage = max(1, int(base))
+	return final_damage
 
 	print("💥 Damage calc: %s %s=%d vs %s %s=%d | Type=%s | Multiplier=%.1f" % [
 		caster.unit_data.display_name, stat_name, offensive_stat,
@@ -224,6 +232,7 @@ func _play_aoe_vfx(caster, ability: AbilityData, target_cells: Array, origin_cel
 	var TILE_SIZE: float = 96.0  # Must match BattleGrid.TILE_SIZE
 	var cell_width  = (max_x - min_x + 1) * TILE_SIZE
 	var cell_height = (max_y - min_y + 1) * TILE_SIZE
+	var target_size := Vector2(cell_width, cell_height)
 
 	# Center the overlay on the middle of the bounding box.
 	var center_cell := Vector2i(
@@ -233,31 +242,32 @@ func _play_aoe_vfx(caster, ability: AbilityData, target_cells: Array, origin_cel
 	var center_world: Vector2 = grid_ref.grid_to_world(center_cell)
 
 	var vfx_node: Node2D
+	var is_custom_scene: bool = false
 
 	if ability.effect_scene != null:
 		vfx_node = ability.effect_scene.instantiate()
-		# Scale the scene to cover the AOE area.
-		var scene_size := Vector2(cell_width, cell_height)
-		vfx_node.scale = scene_size / Vector2(TILE_SIZE, TILE_SIZE)
+		is_custom_scene = true
+		_apply_vfx_scaling(vfx_node, target_size, TILE_SIZE)
 	else:
 		# Build a sprite that exactly covers the bounding box.
 		var sprite := Sprite2D.new()
 		if ability.icon != null:
 			sprite.texture = ability.icon
+			# If you want the icon to repeat/tile across the AOE instead of stretching out of proportion:
+			sprite.region_enabled = true
+			sprite.region_rect = Rect2(0, 0, cell_width, cell_height)
+			sprite.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 		else:
+			# Generate a flat color placeholder fitting the exact pixel dimensions
 			var img := Image.create(int(cell_width), int(cell_height), false, Image.FORMAT_RGBA8)
 			img.fill(Color.WHITE)
 			sprite.texture = ImageTexture.create_from_image(img)
-		# Scale sprite to cover the area (Sprite2D is centered by default).
-		var tex_size := sprite.texture.get_size()
-		sprite.scale  = Vector2(cell_width / tex_size.x, cell_height / tex_size.y)
+		
 		# Make it semi-transparent so the grid is still visible underneath.
 		sprite.modulate = Color(1, 1, 1, 0.6)
 		vfx_node = sprite
 
 	# ── Rotate for directional AOE shapes ─────────────────────────────────────
-	# Line and cone shapes are directional. The default facing direction is RIGHT.
-	# We rotate the visual to match the direction from caster to target.
 	if ability.aoe_shape in ["line", "cone"]:
 		if origin_cell != Vector2i(-1, -1) and caster != null:
 			var caster_world: Vector2 = grid_ref.grid_to_world(caster.grid_position)
@@ -268,11 +278,53 @@ func _play_aoe_vfx(caster, ability: AbilityData, target_cells: Array, origin_cel
 	vfx_node.position = center_world
 	spawn_root.add_child(vfx_node)
 
-	# Auto-remove the visual after a short display time.
-	get_tree().create_timer(0.6).timeout.connect(func():
-		if is_instance_valid(vfx_node):
-			vfx_node.queue_free()
-	)
+	# ── Handle Dynamic Visual Tracking Lifecycle ──────────────────────────────
+	if is_custom_scene:
+		if vfx_node is AnimatedSprite2D:
+			vfx_node.play("default")
+			await vfx_node.animation_finished
+		elif vfx_node.has_node("AnimatedSprite2D"):
+			var anim_sprite = vfx_node.get_node("AnimatedSprite2D") as AnimatedSprite2D
+			anim_sprite.play("default")
+			await anim_sprite.animation_finished
+		elif vfx_node.has_node("AnimationPlayer"):
+			var anim_player = vfx_node.get_node("AnimationPlayer") as AnimationPlayer
+			if anim_player.has_animation("play"):
+				anim_player.play("play")
+			await anim_player.animation_finished
+		else:
+			await get_tree().create_timer(0.6).timeout
+	else:
+		await get_tree().create_timer(0.6).timeout
+
+	if is_instance_valid(vfx_node):
+		vfx_node.queue_free()
+
+
+# Helper function to dynamically scale custom scene hierarchies or animated elements
+func _apply_vfx_scaling(node: Node2D, target_size: Vector2, tile_size: float) -> void:
+	if node is AnimatedSprite2D:
+		var sprite_frames = node.sprite_frames
+		if sprite_frames and sprite_frames.has_animation("default"):
+			var frame_tex = sprite_frames.get_frame_texture("default", 0)
+			if frame_tex:
+				var tex_size = frame_tex.get_size()
+				node.scale = target_size / tex_size
+				return
+	
+	# Check if the scene root is a base Node2D housing an AnimatedSprite2D child
+	if node.has_node("AnimatedSprite2D"):
+		var child_sprite = node.get_node("AnimatedSprite2D") as AnimatedSprite2D
+		var sprite_frames = child_sprite.sprite_frames
+		if sprite_frames and sprite_frames.has_animation("default"):
+			var frame_tex = sprite_frames.get_frame_texture("default", 0)
+			if frame_tex:
+				var tex_size = frame_tex.get_size()
+				child_sprite.scale = target_size / tex_size
+				return
+
+	# Fallback scale: scale the root object uniformly based on relative tile size units
+	node.scale = target_size / Vector2(tile_size, tile_size)
 
 # ── SHARED HELPERS ────────────────────────────────────────────────────────────
 

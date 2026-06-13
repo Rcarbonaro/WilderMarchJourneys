@@ -6,7 +6,7 @@
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_nfyw7"]
 [ext_resource type="Resource" uid="uid://bkhl370vs27t7" path="res://resources/abilities/windmage_basic.tres" id="5_1rute"]
 [ext_resource type="Resource" uid="uid://d020c7xsebbes" path="res://resources/stats/windmage_stats.tres" id="6_1rute"]
-[ext_resource type="Resource" uid="uid://4hii3tx3d506" path="res://resources/abilities/fireball.tres" id="6_pjwqc"]
+[ext_resource type="Resource" uid="uid://4hii3tx3d506" path="res://resources/abilities/tornado.tres" id="6_pjwqc"]
 
 [resource]
 script = ExtResource("1_mjyq5")

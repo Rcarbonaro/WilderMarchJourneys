@@ -113,7 +113,6 @@ func _run_single_enemy(enemy, players: Array, grid: Node, pathfinder: Node, exec
 
 	if final_dist >= chosen_ability.min_range and final_dist <= chosen_ability.max_range and los_ok:
 		print("⚔️ AI executing ability: ", chosen_ability.display_name, " on target: ", target_player.grid_position)
-		
 		enemy.look_at_target(target_player.grid_position)
 		
 		var dy = target_player.grid_position.y - enemy.grid_position.y
@@ -126,28 +125,24 @@ func _run_single_enemy(enemy, players: Array, grid: Node, pathfinder: Node, exec
 			
 		await get_tree().create_timer(0.5).timeout
 		
-		# Execute action using combat pipeline references
-		executor.execute_ability(enemy, chosen_ability, [target_player.grid_position], target_player.grid_position)
+		# ✅ The layout now calls the executor exactly ONCE using the proper method arguments
+		await executor.execute_ability(enemy, chosen_ability, [target_player.grid_position], target_player.grid_position)
 		
-		# Execute action using combat pipeline references
-		executor.execute_ability(enemy, chosen_ability, [target_player.grid_position], target_player.grid_position)
-		
-		# 🆕 SAFE COOLDOWN APPLICATION:
+		# ⏳ Safe application of cooldown adjustments
 		if "ability_cooldowns" in enemy:
 			var cd_value = 0
 			if "base_cooldown" in chosen_ability:
 				cd_value = chosen_ability.base_cooldown
 			elif "cooldown_turns" in chosen_ability:
 				cd_value = chosen_ability.cooldown_turns
-			
 			if cd_value > 0:
 				enemy.ability_cooldowns[chosen_ability.display_name] = cd_value
-			
+				
 		await get_tree().create_timer(0.5).timeout
-		
+
 	if is_instance_valid(enemy) and enemy.has_method("play_animation"):
 		enemy.play_animation("idle")
-
+		
 	enemy.has_acted = true
 
 func _choose_enemy_ability(unit) -> AbilityData:

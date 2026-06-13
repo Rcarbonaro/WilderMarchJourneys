@@ -25,7 +25,7 @@ func _setup_test_map() -> void:
 	# 📥 CALLS FROM: tile_dirt resource you made in Phase 1
 	var dirt_tile = preload("res://resources/tiles/tile_dirt.tres")
 	var map_data = {}
-	for x in range(10):
+	for x in range(25):
 		for y in range(10):
 			map_data[Vector2i(x, y)] = dirt_tile
 	$BattleGrid.setup_grid(map_data)
