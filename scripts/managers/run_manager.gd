@@ -79,3 +79,30 @@ func _run_complete() -> void:
 	# Go to victory scene
 
 	get_tree().change_scene_to_file("res://scenes/meta/VictoryScreen.tscn")
+	
+
+
+
+# 🌲 Placeholder variable to track the active biome state of the run
+# Change this manually in code to "desert" or "dungeon" to test your different backgrounds!
+var current_biome: String = "grassland"
+
+## Optional: An array of biomes if you want to test fully random progression later
+const AVAILABLE_BIOMES = ["grassland", "desert", "dungeon"]
+
+func _ready() -> void:
+	print("🚀 RunManager initialized. Current biome placeholder set to: ", current_biome)
+
+
+## 📤 PUBLIC API: This is what BattleScene calls to know which background to load
+func get_current_biome_type() -> String:
+	# Returns the tracked biome, lowercase to guarantee dictionary matchmaking matches perfectly
+	return current_biome.strip_edges().to_lower()
+
+
+func advance_to_next_stage_placeholder() -> void:
+	# Randomly chooses one of your biomes for testing purposes
+	var random_index = randi() % AVAILABLE_BIOMES.size()
+	current_biome = AVAILABLE_BIOMES[random_index]
+	
+	print("🔄 Advanced stage! RunManager placeholder biome shifted to: ", current_biome)
