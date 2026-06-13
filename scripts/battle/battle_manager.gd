@@ -78,16 +78,20 @@ func _spawn_stage_enemies() -> void:
 	print("🐺 Spawning Monster Waves...")
 	var wolf_data     = load("res://resources/enemies/wolf_data.tres")
 	var sylvaris_data = load("res://resources/enemies/sylvaris_data.tres")
+	var ent_data = load("res://resources/enemies/ent_data.tres")
+
 
 	if wolf_data == null:
 		printerr("❌ Could not load wolf_data.tres!")
 		return
 
-	spawn_unit(wolf_data,     Vector2i(7, 2), false, 1)
-	spawn_unit(wolf_data,     Vector2i(8, 3), false, 1)
-	spawn_unit(wolf_data,     Vector2i(8, 5), false, 1)
+	spawn_unit(wolf_data,     Vector2i(10, 2), false, 1)
+	spawn_unit(wolf_data,     Vector2i(12, 3), false, 1)
+	spawn_unit(wolf_data,     Vector2i(10, 5), false, 1)
 	if sylvaris_data != null:
-		spawn_unit(sylvaris_data, Vector2i(8, 3), false, 1)
+		spawn_unit(sylvaris_data, Vector2i(13, 3), false, 1)
+	if ent_data != null:
+		spawn_unit(ent_data, Vector2i(12, 5), false, 1)
 
 	print("🐺 Monster waves deployed!")
 

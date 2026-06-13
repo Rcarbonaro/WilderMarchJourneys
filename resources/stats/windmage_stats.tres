@@ -4,8 +4,10 @@
 
 [resource]
 script = ExtResource("1_1oiww")
+hp = 12
 atk = 20
 matk = 16
-mdef = 8
+def = 8
+mdef = 10
 mana = 20
 metadata/_custom_type_script = "uid://c3bdx4sniu017"
