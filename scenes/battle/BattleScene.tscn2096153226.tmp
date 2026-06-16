@@ -1,0 +1,59 @@
+[gd_scene format=3 uid="uid://diiisvq4ivv0e"]
+
+[ext_resource type="PackedScene" uid="uid://chpxqjve0eavy" path="res://scenes/battle/BattleGrid.tscn" id="1_5282s"]
+[ext_resource type="Script" uid="uid://diiysarhsyxd1" path="res://scripts/battle/battle_scene.gd" id="1_nnhtb"]
+[ext_resource type="PackedScene" uid="uid://cex0ecyqllq4k" path="res://scenes/battle/BattleUI.tscn" id="2_nnhtb"]
+[ext_resource type="Script" uid="uid://dl7vuaekx7pne" path="res://scripts/battle/battle_manager.gd" id="3_rpe18"]
+[ext_resource type="Script" uid="uid://bbb24tkspic2t" path="res://scripts/battle/pathfinding_system.gd" id="4_vvcci"]
+[ext_resource type="Script" uid="uid://dy4cb2tydqp13" path="res://scripts/battle/ability_executor.gd" id="5_qcili"]
+[ext_resource type="Script" uid="uid://dg0jjul5epkv3" path="res://scripts/battle/highlight_manager.gd" id="6_4ro08"]
+[ext_resource type="Script" uid="uid://b7ttftkyy71c8" path="res://scripts/battle/ai_system.gd" id="7_5u8xp"]
+[ext_resource type="Script" uid="uid://tmqx7l74t3pp" path="res://scripts/battle/input_handler.gd" id="8_yvj2l"]
+
+[node name="BattleScene" type="Node2D" unique_id=1882324266]
+script = ExtResource("1_nnhtb")
+
+[node name="BattleGrid" parent="." unique_id=57941334 instance=ExtResource("1_5282s")]
+position = Vector2(1, -1)
+
+[node name="BattleUI" parent="." unique_id=493660787 node_paths=PackedStringArray("battle_manager") instance=ExtResource("2_nnhtb")]
+battle_manager = NodePath("../BattleManager")
+
+[node name="BattleManager" type="Node" parent="." unique_id=1196931915 node_paths=PackedStringArray("grid", "pathfinder", "executor", "highlight", "ai_system", "ui_manager")]
+script = ExtResource("3_rpe18")
+grid = NodePath("../BattleGrid")
+pathfinder = NodePath("../PathfindingSystem")
+executor = NodePath("../AbilityExecutor")
+highlight = NodePath("../HightlightManager")
+ai_system = NodePath("../AISystem")
+ui_manager = NodePath("../InputHandler")
+
+[node name="PathfindingSystem" type="Node" parent="." unique_id=763641049]
+script = ExtResource("4_vvcci")
+
+[node name="AbilityExecutor" type="Node" parent="." unique_id=299050339]
+script = ExtResource("5_qcili")
+
+[node name="HightlightManager" type="Node" parent="." unique_id=170531670 node_paths=PackedStringArray("grid")]
+script = ExtResource("6_4ro08")
+grid = NodePath("../BattleGrid")
+
+[node name="AISystem" type="Node" parent="." unique_id=343254484]
+script = ExtResource("7_5u8xp")
+
+[node name="InputHandler" type="Node" parent="." unique_id=1396642094 node_paths=PackedStringArray("grid", "battle_manager")]
+script = ExtResource("8_yvj2l")
+grid = NodePath("../BattleGrid")
+battle_manager = NodePath("../BattleManager")
+
+[node name="BattleBackgrounds" type="CanvasLayer" parent="." unique_id=998565248]
+layer = -100
+
+[node name="BackgroundTexture" type="TextureRect" parent="BattleBackgrounds" unique_id=2082639679]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://b17unu8jwcih0"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_splk2"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_fbj5v"]
+[ext_resource type="Resource" uid="uid://c20siv2jtmrv5" path="res://resources/status_effects/bolstered.tres" id="2_gsk1l"]
+
+[resource]
+script = ExtResource("2_fbj5v")
+id = "stonespike"
+display_name = "Stonespike Armor"
+description = "Surrounds himself with spiked stones, bolstering defense and damaging attackers for 1 round."
+mana_cost = 10
+max_range = 0
+affects_team = "all"
+base_damage_multiplier = 0.0
+damage_type = "magical"
+scaling_stat = "matk"
+applies_statuses = Array[ExtResource("1_splk2")]([ExtResource("2_gsk1l")])
+ability_type = "spell"
+applies_thorns = true
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

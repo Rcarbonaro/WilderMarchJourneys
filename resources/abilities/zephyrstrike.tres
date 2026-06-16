@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://dkj00w82k7am5"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_pxjrn"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_mx4nk"]
+
+[resource]
+script = ExtResource("2_mx4nk")
+id = "zephyr_strike"
+display_name = "Zephy Strike"
+mana_cost = 5
+min_range = 1
+max_range = 5
+aoe_shape = "line"
+aoe_size = 5
+damage_type = "magical"
+scaling_stat = "matk"
+is_dash = true
+ability_type = "spell"
+on_kill_reset_has_acted = true
+on_kill_reset_has_moved = true
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

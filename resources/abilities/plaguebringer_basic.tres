@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://b406fvrri3tpy"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_x3hri"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_wv4lp"]
+
+[resource]
+script = ExtResource("2_wv4lp")
+id = "plaguebringerbasic"
+display_name = "Basic Attack"
+description = "Launch a Blightbolt at an enemy"
+damage_type = "magical"
+scaling_stat = "matk"
+bonus_per_target_debuff_max = 1.1
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

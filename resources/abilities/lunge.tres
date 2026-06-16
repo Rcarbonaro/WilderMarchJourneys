@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://bw3q0dan042jh"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_ui481"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_pfl7k"]
+[ext_resource type="Resource" uid="uid://6oeegldom1yq" path="res://resources/status_effects/exposed.tres" id="2_po7l4"]
+
+[resource]
+script = ExtResource("2_pfl7k")
+id = "lunge"
+display_name = "Lunge"
+cooldown_rounds = 2
+max_range = 6
+aoe_shape = "line"
+aoe_size = 6
+base_damage_multiplier = 1.25
+applies_statuses = Array[ExtResource("1_ui481")]([ExtResource("2_po7l4")])
+is_dash = true
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

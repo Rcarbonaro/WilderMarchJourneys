@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://dfpxvocy7yu3u"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_kwjbu"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_etaya"]
+
+[resource]
+script = ExtResource("2_etaya")
+id = "execute"
+display_name = "Execute"
+cooldown_rounds = 5
+base_damage_multiplier = 1.5
+has_on_kill_effect = true
+on_kill_trigger_on_caster = true
+on_kill_reset_has_acted = true
+on_kill_reset_has_moved = true
+on_kill_reset_cooldowns = true
+bonus_per_target_debuff = 0.5
+bonus_per_target_debuff_max = 2.0
+bonus_atk_per_caster_buff = 5
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

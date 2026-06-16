@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://dss5dlp33c80p"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_2hleg"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_ac8s0"]
+
+[resource]
+script = ExtResource("2_ac8s0")
+id = "woe"
+display_name = "Woe"
+description = "Reduce all enemy stats"
+mana_cost = 20
+max_range = 2
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

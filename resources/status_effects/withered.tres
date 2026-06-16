@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://dl16q1q73q38l"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_qm2a2"]
+
+[resource]
+script = ExtResource("1_qm2a2")
+id = "withered"
+display_name = "Withered"
+duration_rounds = 5
+can_stack = true
+atk_modifier = -3
+def_modifier = -3
+matk_modifier = -3
+mdef_modifier = -3
+mov_modifier = -2
+trigger_timing = "start_of_turn"
+metadata/_custom_type_script = "uid://gsbk18mmfnol"

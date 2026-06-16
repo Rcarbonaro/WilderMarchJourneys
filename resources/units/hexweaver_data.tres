@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://d2l0h3qrrj16v"]
+
+[ext_resource type="Resource" uid="uid://bd31vylcgn58f" path="res://resources/stats/hexweaver_stats.tres" id="1_gnfme"]
+[ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="1_ygf8m"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_lmhne"]
+[ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_iwngs"]
+[ext_resource type="Resource" uid="uid://dgtjf8s7uu7ux" path="res://resources/abilities/hexweaver_basic.tres" id="3_ps7qu"]
+[ext_resource type="Resource" uid="uid://csxllnq6vcprm" path="res://resources/abilities/wither.tres" id="4_gnfme"]
+[ext_resource type="Resource" uid="uid://cykmqjugvv0sn" path="res://resources/abilities/tether.tres" id="5_5cmow"]
+
+[resource]
+script = ExtResource("1_ygf8m")
+id = "hexweaver"
+display_name = "Hexweaver"
+stats_by_level = Array[ExtResource("3_iwngs")]([ExtResource("1_gnfme")])
+base_stats = ExtResource("1_gnfme")
+starting_abilities = Array[ExtResource("2_lmhne")]([ExtResource("3_ps7qu"), ExtResource("4_gnfme"), ExtResource("5_5cmow")])
+metadata/_custom_type_script = "uid://utmj7y8m802a"

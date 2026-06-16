@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://by0vegpuernga"]
+
+[ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="1_hbk8x"]
+[ext_resource type="Resource" uid="uid://5unj8u5ypx2x" path="res://resources/stats/spellsword.tres" id="1_nnys7"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_8rtn7"]
+[ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_eqeet"]
+[ext_resource type="Resource" uid="uid://i4vke5e81fky" path="res://resources/abilities/spellsword_basic.tres" id="4_2hmbf"]
+[ext_resource type="Resource" uid="uid://bn1rigttdhb6b" path="res://resources/abilities/fire_slash.tres" id="5_q0pr1"]
+[ext_resource type="Resource" uid="uid://cvo30h186mrer" path="res://resources/abilities/lightning_thrust.tres" id="6_e33ic"]
+
+[resource]
+script = ExtResource("1_hbk8x")
+id = "spellsword"
+display_name = "Spellsword"
+stats_by_level = Array[ExtResource("3_eqeet")]([ExtResource("1_nnys7")])
+base_stats = ExtResource("1_nnys7")
+starting_abilities = Array[ExtResource("2_8rtn7")]([ExtResource("4_2hmbf"), ExtResource("5_q0pr1"), ExtResource("6_e33ic")])
+metadata/_custom_type_script = "uid://utmj7y8m802a"

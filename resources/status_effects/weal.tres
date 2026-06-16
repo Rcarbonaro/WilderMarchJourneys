@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://drv0ggphou2p8"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_0sv2r"]
+
+[resource]
+script = ExtResource("1_0sv2r")
+id = "weal"
+display_name = "Weal"
+description = "Increases all stats for 3 rounds"
+duration_rounds = 3
+atk_modifier = 3
+def_modifier = 3
+matk_modifier = 3
+mdef_modifier = 3
+crit_chance_modifier = 20.0
+metadata/_custom_type_script = "uid://gsbk18mmfnol"
