@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://7sv3r5yncshl"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_353ah"]
+
+[resource]
+script = ExtResource("1_353ah")
+id = "crush"
+display_name = "Crush"
+duration_rounds = 4
+can_stack = true
+max_stacks = 10
+def_modifier = -1
+metadata/_custom_type_script = "uid://gsbk18mmfnol"

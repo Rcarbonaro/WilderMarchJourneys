@@ -1,0 +1,33 @@
+[gd_scene format=3 uid="uid://kqjap0gxmbhr"]
+
+[ext_resource type="Script" uid="uid://b65fyc4xxpp78" path="res://scripts/ui/ui_unit_status_box.gd" id="1_0gvx5"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lo86h"]
+bg_color = Color(0.12225222, 0.12225225, 0.12225217, 1)
+
+[node name="UnitStatusBox" type="PanelContainer" unique_id=1647676687]
+custom_minimum_size = Vector2(280, 300)
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -86.0
+offset_top = -40.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_lo86h")
+script = ExtResource("1_0gvx5")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1152827202]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Label" type="Label" parent="VBoxContainer" unique_id=1453046916]
+layout_mode = 2
+text = "Unit Status"
+
+[node name="UnitList" type="ScrollContainer" parent="VBoxContainer" unique_id=455050524]
+layout_mode = 2
+mouse_filter = 2

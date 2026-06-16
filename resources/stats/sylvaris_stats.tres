@@ -4,8 +4,8 @@
 
 [resource]
 script = ExtResource("1_ofao2")
-atk = 18
-matk = 18
-mdef = 9
+atk = 16
+matk = 16
+mdef = 10
 mov = 4
 metadata/_custom_type_script = "uid://c3bdx4sniu017"

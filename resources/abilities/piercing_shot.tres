@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://c14he4gl11sl3"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_ioeqa"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_cxgdr"]
+
+[resource]
+script = ExtResource("2_cxgdr")
+id = "piercingshot"
+display_name = "Piercing Shot"
+description = "Hit all targets in a line with a powerful shot!"
+cooldown_rounds = 10
+max_range = 4
+aoe_shape = "line"
+aoe_size = 4
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

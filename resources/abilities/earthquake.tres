@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://yhyh5timeu7g"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_o7uq1"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_hp2hh"]
+
+[resource]
+script = ExtResource("2_hp2hh")
+id = "earthquake"
+display_name = "Earthquake"
+description = "Rends the ground to deal massive damage to nearby enemies"
+mana_cost = 30
+max_range = 0
+aoe_shape = "square"
+aoe_size = 3
+base_damage_multiplier = 1.2
+damage_type = "magical"
+scaling_stat = "matk"
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

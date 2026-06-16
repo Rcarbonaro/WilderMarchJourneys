@@ -43,6 +43,8 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array) -> void:
 			var target_to_heal = target if target != null else caster
 			var max_hp = target_to_heal.get_stats().hp
 			target_to_heal.heal(int(max_hp * ability.heal_percent))
+			
+
 
 	# --- APPLY COOLDOWN ---
 	if ability.cooldown_rounds > 0:

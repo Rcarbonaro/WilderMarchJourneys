@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="HazardData" format=3 uid="uid://ru4n7oosj1qw"]
+
+[ext_resource type="Script" uid="uid://bv2ltgyye0n4f" path="res://scripts/data/hazard_data.gd" id="1_b6w67"]
+[ext_resource type="Resource" uid="uid://dxft4tccskmnc" path="res://resources/status_effects/poisoncloud.tres" id="1_i1mmx"]
+[ext_resource type="Texture2D" uid="uid://bt1kjmiiu8k0b" path="res://sprites/plaguebringer/poisoncloud.png" id="2_x5pg5"]
+
+[resource]
+script = ExtResource("1_b6w67")
+id = "poisoncloud"
+display_name = "Poison Cloud"
+icon = ExtResource("2_x5pg5")
+duration_rounds = 4
+damage_type = "magical"
+applies_status = ExtResource("1_i1mmx")
+metadata/_custom_type_script = "uid://bv2ltgyye0n4f"

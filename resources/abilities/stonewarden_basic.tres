@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://naav1rvovg1e"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_gfxts"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_b8v1m"]
+
+[resource]
+script = ExtResource("2_b8v1m")
+id = "stonewardenbasic"
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

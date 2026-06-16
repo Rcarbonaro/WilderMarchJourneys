@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://cykmqjugvv0sn"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_xv7mr"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_7n4w4"]
+[ext_resource type="Texture2D" uid="uid://1gb6f8ipghme" path="res://sprites/hexweaver/hexweaver square.png" id="2_c4x1a"]
+
+[resource]
+script = ExtResource("2_7n4w4")
+id = "tether"
+display_name = "Tether"
+icon = ExtResource("2_c4x1a")
+mana_cost = 30
+max_range = 4
+aoe_shape = "cross"
+aoe_size = 2
+base_damage_multiplier = 0.0
+damage_type = "magical"
+scaling_stat = "matk"
+ability_type = "spell"
+is_counterattack_immune = true
+applies_tether = true
+tether_id = "tethered"
+tether_duration_rounds = 4
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://olq0ma5py0nb"]
+
+[ext_resource type="Script" uid="uid://b65fyc4xxpp78" path="res://scripts/ui/ui_unit_status_box.gd" id="1_kg5ln"]
+
+[node name="UnitStatusBox" type="PanelContainer" unique_id=151914857]
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_kg5ln")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=1839352309]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="VBoxContainer" unique_id=819837120]
+layout_mode = 2
+
+[node name="HPBar" type="ProgressBar" parent="VBoxContainer" unique_id=1898613]
+layout_mode = 2
+
+[node name="ManaBar" type="ProgressBar" parent="VBoxContainer" unique_id=181600045]
+layout_mode = 2
+
+[node name="StatusIconContainer" type="HFlowContainer" parent="VBoxContainer" unique_id=1131483826]
+layout_mode = 2

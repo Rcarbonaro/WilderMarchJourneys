@@ -7,6 +7,7 @@
 [ext_resource type="Resource" uid="uid://bkhl370vs27t7" path="res://resources/abilities/windmage_basic.tres" id="5_1rute"]
 [ext_resource type="Resource" uid="uid://d020c7xsebbes" path="res://resources/stats/windmage_stats.tres" id="6_1rute"]
 [ext_resource type="Resource" uid="uid://4hii3tx3d506" path="res://resources/abilities/tornado.tres" id="6_pjwqc"]
+[ext_resource type="Resource" uid="uid://dkj00w82k7am5" path="res://resources/abilities/zephyrstrike.tres" id="7_a2ykl"]
 
 [resource]
 script = ExtResource("1_mjyq5")
@@ -16,5 +17,5 @@ portrait = ExtResource("2_nfyw7")
 battle_sprite = ExtResource("2_nfyw7")
 stats_by_level = Array[ExtResource("3_nfyw7")]([ExtResource("6_1rute")])
 base_stats = ExtResource("6_1rute")
-starting_abilities = Array[ExtResource("2_f3la8")]([ExtResource("5_1rute"), ExtResource("6_pjwqc")])
+starting_abilities = Array[ExtResource("2_f3la8")]([ExtResource("5_1rute"), ExtResource("6_pjwqc"), ExtResource("7_a2ykl")])
 metadata/_custom_type_script = "uid://utmj7y8m802a"

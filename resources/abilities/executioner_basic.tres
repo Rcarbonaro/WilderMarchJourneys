@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://va5t7a8jrmkv"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_5gsx2"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_dcnnm"]
+
+[resource]
+script = ExtResource("2_dcnnm")
+id = "basicattack"
+display_name = "Basic Attack"
+bonus_per_target_debuff = 0.5
+bonus_per_target_debuff_max = 2.0
+bonus_atk_per_caster_buff = 5
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

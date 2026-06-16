@@ -16,8 +16,7 @@ script = ExtResource("1_nnhtb")
 [node name="BattleGrid" parent="." unique_id=57941334 instance=ExtResource("1_5282s")]
 position = Vector2(1, -1)
 
-[node name="BattleUI" parent="." unique_id=493660787 node_paths=PackedStringArray("battle_manager") instance=ExtResource("2_nnhtb")]
-battle_manager = NodePath("../BattleManager")
+[node name="BattleUI" parent="." unique_id=493660787 instance=ExtResource("2_nnhtb")]
 
 [node name="BattleManager" type="Node" parent="." unique_id=1196931915 node_paths=PackedStringArray("grid", "pathfinder", "executor", "highlight", "ai_system", "ui_manager")]
 script = ExtResource("3_rpe18")

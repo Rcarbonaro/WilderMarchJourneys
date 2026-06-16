@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://csxllnq6vcprm"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_pu6fh"]
+[ext_resource type="Resource" uid="uid://dl16q1q73q38l" path="res://resources/status_effects/withered.tres" id="2_pnyrv"]
+[ext_resource type="Texture2D" uid="uid://1gb6f8ipghme" path="res://sprites/hexweaver/hexweaver square.png" id="2_rgtf4"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_xmtxh"]
+
+[resource]
+script = ExtResource("2_xmtxh")
+id = "wither"
+display_name = "Wither"
+icon = ExtResource("2_rgtf4")
+mana_cost = 15
+max_range = 3
+aoe_shape = "square"
+aoe_size = 3
+base_damage_multiplier = 0.5
+damage_type = "magical"
+scaling_stat = "matk"
+applies_statuses = Array[ExtResource("1_pu6fh")]([ExtResource("2_pnyrv")])
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"
