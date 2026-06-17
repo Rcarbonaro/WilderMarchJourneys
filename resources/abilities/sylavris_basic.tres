@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_3max7"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_conug"]
-[ext_resource type="Resource" uid="uid://6oeegldom1yq" path="res://resources/status_effects/exposed.tres" id="2_t25nf"]
+[ext_resource type="Resource" uid="uid://d3c2eke24m7cq" path="res://resources/status_effects/sylvarissnare.tres" id="2_t25nf"]
 
 [resource]
 script = ExtResource("2_conug")

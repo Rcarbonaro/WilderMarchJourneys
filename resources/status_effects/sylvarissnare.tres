@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://d3c2eke24m7cq"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_qtnqe"]
+
+[resource]
+script = ExtResource("1_qtnqe")
+id = "sylvarissnare"
+display_name = "Sylvaris' Snare"
+can_stack = true
+def_modifier = -5
+mov_modifier = -1
+metadata/_custom_type_script = "uid://gsbk18mmfnol"

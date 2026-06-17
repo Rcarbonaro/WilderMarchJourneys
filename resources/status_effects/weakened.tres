@@ -9,5 +9,5 @@ display_name = "Weakened"
 duration_rounds = 2
 can_stack = true
 max_stacks = 3
-atk_modifier = -5
+atk_modifier = -2
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

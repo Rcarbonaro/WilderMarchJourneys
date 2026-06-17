@@ -7,7 +7,7 @@
 script = ExtResource("2_dcnnm")
 id = "basicattack"
 display_name = "Basic Attack"
-bonus_per_target_debuff = 0.5
+bonus_per_target_debuff = 0.25
 bonus_per_target_debuff_max = 2.0
 bonus_atk_per_caster_buff = 5
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"
