@@ -41,8 +41,9 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 	#                  (used to determine dash direction).
 
 	# ── STEP 0: MANA GATE ─────────────────────────────────────────────────────
-	# Check BEFORE doing anything else. If the unit can't afford this, abort.
-	if not caster.can_afford_ability(ability):
+	# Check BEFORE doing anything else. If the unit can't afford this, 
+	# and they don't have an Arcana Charge, abort.
+	if not caster.has_arcana_charge and not caster.can_afford_ability(ability):
 		print("⛔ ", caster.unit_data.display_name, " cannot afford '",
 			  ability.display_name, "' (needs ", ability.mana_cost, " mana, has ",
 			  caster.current_mana, ")")
@@ -54,13 +55,21 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 
 	# ── STEP 1: APPLY COSTS ───────────────────────────────────────────────────
 	# Deduct mana and HP cost immediately (before damage resolves).
-	caster.spend_mana(ability.mana_cost)
+	# If they have an Arcana Charge, consume it instead of mana.
+	if caster.has_arcana_charge:
+		caster.has_arcana_charge = false
+		print("✨ Arcana Charge consumed by ", caster.unit_data.display_name)
+		# Update animation/status effect here if needed
+		caster.play_animation("idle") 
+	else:
+		caster.spend_mana(ability.mana_cost)
+
 	if ability.hp_cost_percent > 0:
 		var hp_cost = int(caster.get_stats().hp * ability.hp_cost_percent)
 		caster.take_damage(hp_cost, "true")
 		if not is_instance_valid(caster):
 			return   # Caster killed themselves with HP cost — nothing more to do.
-
+			
 	# ── STEP 2: DASH ──────────────────────────────────────────────────────────
 	# A "dash" is a line AOE where the CASTER physically moves to the last valid
 	# tile. We resolve the caster's movement BEFORE applying damage so the caster
@@ -127,13 +136,30 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 			grid_ref.add_hazard(cell, ability.spawns_hazard, caster)
 
 		# ── DISPLACEMENT / KNOCKBACK ──────────────────────────────────────────
+		# ── DISPLACEMENT / KNOCKBACK / SCATTER ────────────────────────────────
 		if ability.displacement_squares != 0 and target != null:
-			if ability.displacement_direction == "manual":
-				_displace_unit_manual(target, ability.displacement_squares,
-									  ability.displacement_manual_dir)
-			else:
-				# "auto" = push away (positive squares) or pull toward (negative)
-				_displace_unit_auto(caster, target, ability.displacement_squares)
+			match ability.displacement_type:
+				"manual":
+					_displace_unit_manual(
+						target,
+						ability.displacement_squares,
+						ability.displacement_manual_dir
+					)
+
+				"auto":
+					_displace_unit_auto(
+ 					   caster,
+ 					   target,
+						ability.displacement_squares
+					)
+
+				"scatter":
+					_displace_unit_scatter(
+						ability,
+						target,
+						ability.displacement_squares,
+						target_cells
+					)
 
 		# ── HEALING ───────────────────────────────────────────────────────────
 		if ability.heal_percent > 0.0:
@@ -499,59 +525,131 @@ func _spawn_dash_trail(from_world: Vector2, to_world: Vector2,
 # ── DISPLACEMENT HELPERS ──────────────────────────────────────────────────────
 
 func _displace_unit_auto(caster, target, squares: int) -> void:
-	# Pushes (positive squares) or pulls (negative squares) the target relative
-	# to the caster's position. Direction is determined automatically.
-	var direction = target.grid_position - caster.grid_position
+	var direction: Vector2i = target.grid_position - caster.grid_position
 	if direction == Vector2i(0, 0):
-		return   # Caster and target are on the same tile — can't displace.
+		return
 
-	# Normalize to a single-step cardinal direction.
-	if abs(direction.x) > abs(direction.y):
-		direction = Vector2i(sign(direction.x), 0)
-	else:
-		direction = Vector2i(0, sign(direction.y))
+	var dir_f: Vector2 = Vector2(direction.x, direction.y).normalized()
+	var move_dir: Vector2i = Vector2i(int(round(dir_f.x)), int(round(dir_f.y)))
 
-	# Positive squares = push away (same direction as the gap between them).
-	# Negative squares = pull toward (opposite direction).
-	var move_dir = direction * sign(squares)
-	var steps    = abs(squares)
-	var current  = target.grid_position
+	if move_dir == Vector2i(0, 0):
+		if abs(direction.x) > abs(direction.y):
+			move_dir = Vector2i(sign(direction.x), 0)
+		else:
+			move_dir = Vector2i(0, sign(direction.y))
+
+	move_dir *= sign(squares)
+
+	var steps: int = abs(squares)
+	var current: Vector2i = target.grid_position
 
 	for _i in range(steps):
-		var next = current + move_dir
+		var next: Vector2i = current + move_dir
+
+		# --- NEW: Stop if next tile is the caster (no overshoot)
+		if next == caster.grid_position:
+			break
+
+		# --- NEW: Stop if next tile is adjacent to caster (pull ends)
+		if next.distance_to(caster.grid_position) == 1:
+			current = next
+			break
+
 		if not grid_ref.is_passable(next):
-			break   # Hit a wall or another unit — stop here.
+			break
+
 		current = next
 
 	if current != target.grid_position:
 		target.move_to(current)
 
+func _displace_unit_scatter(
+	ability: AbilityData,
+	target,
+	squares: int,
+	target_cells: Array
+) -> void:
 
-func _displace_unit_manual(target, squares: int, fixed_dir: Vector2i) -> void:
-	# Pushes the target in a FIXED direction regardless of the caster's position.
-	# Used for abilities like uppercuts that always knock upward.
-	if fixed_dir == Vector2i(0, 0):
+	# Compute center of AOE
+	var sum_x: int = 0
+	var sum_y: int = 0
+	var count: int = target_cells.size()
+
+	for cell in target_cells:
+		sum_x += cell.x
+		sum_y += cell.y
+
+	var center: Vector2i = Vector2i(sum_x / count, sum_y / count)
+
+	# Direction from center → target
+	var direction: Vector2i = target.grid_position - center
+	if direction == Vector2i(0, 0):
 		return
 
-	# Normalize to a single-step cardinal direction just in case.
-	var move_dir: Vector2i
-	if abs(fixed_dir.x) >= abs(fixed_dir.y):
-		move_dir = Vector2i(sign(fixed_dir.x), 0)
-	else:
-		move_dir = Vector2i(0, sign(fixed_dir.y))
+	# Normalize to diagonal-aware step
+	var dir_f: Vector2 = Vector2(direction.x, direction.y).normalized()
+	var move_dir: Vector2i = Vector2i(
+		int(round(dir_f.x)),
+		int(round(dir_f.y))
+	)
 
-	move_dir = move_dir * sign(squares)
-	var steps   = abs(squares)
-	var current = target.grid_position
+	# Fallback to cardinal if normalization degenerates
+	if move_dir == Vector2i(0, 0):
+		if abs(direction.x) > abs(direction.y):
+			move_dir = Vector2i(sign(direction.x), 0)
+		else:
+			move_dir = Vector2i(0, sign(direction.y))
+
+	var steps: int = squares
+	var current: Vector2i = target.grid_position
 
 	for _i in range(steps):
-		var next = current + move_dir
+		var next: Vector2i = current + move_dir
 		if not grid_ref.is_passable(next):
 			break
 		current = next
 
 	if current != target.grid_position:
 		target.move_to(current)
+
+
+
+func _displace_unit_manual(target, squares: int, fixed_dir: Vector2i) -> void:
+	if fixed_dir == Vector2i(0, 0):
+		return
+
+	# Convert to float vector for normalization
+	var dir_f: Vector2 = Vector2(fixed_dir.x, fixed_dir.y)
+	dir_f = dir_f.normalized()
+
+	# Back to grid step (round to nearest int)
+	var move_dir: Vector2i = Vector2i(
+		int(round(dir_f.x)),
+		int(round(dir_f.y))
+	)
+
+	# If normalization produced (0,0), fall back to cardinal
+	if move_dir == Vector2i(0, 0):
+		if abs(fixed_dir.x) >= abs(fixed_dir.y):
+			move_dir = Vector2i(sign(fixed_dir.x), 0)
+		else:
+			move_dir = Vector2i(0, sign(fixed_dir.y))
+
+	move_dir *= sign(squares)
+
+	var steps: int = abs(squares)
+	var current: Vector2i = target.grid_position
+
+	for _i in range(steps):
+		var next: Vector2i = current + move_dir
+		if not grid_ref.is_passable(next):
+			break
+		current = next
+
+	if current != target.grid_position:
+		target.move_to(current)
+
+
 
 # ── PROJECTILE VFX ────────────────────────────────────────────────────────────
 

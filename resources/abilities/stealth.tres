@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://bhefcss7mcg2g"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_mpvlb"]
+[ext_resource type="Resource" uid="uid://dqbwq32fco5nj" path="res://resources/status_effects/invisible.tres" id="2_4exvk"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_xu7bv"]
+
+[resource]
+script = ExtResource("2_xu7bv")
+id = "stealth"
+display_name = "Stealth"
+max_range = 0
+affects_team = "all"
+base_damage_multiplier = 0.0
+applies_statuses = Array[ExtResource("1_mpvlb")]([ExtResource("2_4exvk")])
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

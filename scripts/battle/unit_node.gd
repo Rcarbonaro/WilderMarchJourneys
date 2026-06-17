@@ -44,6 +44,10 @@ var occupied_cells: Array = []
 # applying tile_footprint offsets to grid_position). Updated every time the
 # unit moves.
 
+# ── Spellsword Arcana Charges ───────────────────────────────────────────────────────────
+@export var is_spellsword: bool = false 
+var has_arcana_charge: bool = false
+
 # ── RUNTIME STATS ─────────────────────────────────────────────────────────────
 
 var current_hp:   int = 0
@@ -164,6 +168,9 @@ func play_animation(anim_name: String) -> void:
 				actual_anim = "walk"
 	if sprite.sprite_frames.has_animation(actual_anim):
 		sprite.play(actual_anim)
+	if anim_name == "idle" and has_arcana_charge:
+		sprite.play("arcana_charge")
+		return
 
 
 func _set_facing_for_direction(target_pos: Vector2i) -> void:

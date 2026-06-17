@@ -98,7 +98,7 @@ extends Resource
 # How many squares to move the target.
 # Positive = push away from caster. Negative = pull toward caster.
 
-@export var displacement_direction: String = "auto"
+@export_enum("auto", "manual", "scatter") var displacement_type: String = "auto"
 # "auto"   = always pushes/pulls directly away from / toward the caster.
 #            This is the classic knockback behaviour.
 # "manual" = uses the displacement_manual_dir vector below instead.

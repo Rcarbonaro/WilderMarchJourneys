@@ -4,8 +4,8 @@
 
 [resource]
 script = ExtResource("1_nwjll")
-hp = 60
-atk = 23
-def = 8
+hp = 100
+atk = 27
+def = 7
 mov = 2
 metadata/_custom_type_script = "uid://c3bdx4sniu017"

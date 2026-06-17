@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://bdc6msrw685tm"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_sgw4n"]
+[ext_resource type="Resource" uid="uid://dqbwq32fco5nj" path="res://resources/status_effects/invisible.tres" id="2_m4sct"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_mrr0b"]
+
+[resource]
+script = ExtResource("2_mrr0b")
+id = "roguebasic"
+display_name = "Basic Attack"
+bonus_damage_isolated = 0.5
+has_on_kill_effect = true
+on_kill_trigger_on_caster = true
+on_kill_reset_has_acted = true
+on_kill_reset_has_moved = true
+on_kill_apply_status = ExtResource("2_m4sct")
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

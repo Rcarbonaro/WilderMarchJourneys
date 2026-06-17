@@ -51,6 +51,10 @@ var selected_unit    = null            # The unit the player tapped.
 var selected_ability: AbilityData = null   # The ability button the player pressed.
 var reachable_cells: Dictionary = {}   # Tiles the selected unit can walk to.
 
+#Spellsword arcana charge vars
+var total_mana_spent: int = 0
+const ARCANA_THRESHOLD: int = 50
+
 # ── INSPECTOR LINKS ───────────────────────────────────────────────────────────
 # Drag each scene node into these slots in the Inspector.
 
@@ -89,7 +93,7 @@ func _ready() -> void:
 
 func _spawn_player_party_from_run() -> void:
 	print("🧙 Spawning Player Party Units...")
-	var mage_data     = load("res://resources/units/windmage_data.tres")
+	var windmage_data     = load("res://resources/units/windmage_data.tres")
 	var hexweaver_data     = load("res://resources/units/hexweaver_data.tres")
 	var guardian_data = load("res://resources/units/guardian_data.tres")
 	var dragoon_data     = load("res://resources/units/dragoon_data.tres")
@@ -98,10 +102,10 @@ func _spawn_player_party_from_run() -> void:
 	var stonewarden_data     = load("res://resources/units/stonewarden_data.tres")
 	var plaguebringer_data     = load("res://resources/units/plaguebringer_data.tres")
 	var divinator_data     = load("res://resources/units/divinator_data.tres")
+	var rogue_data     = load("res://resources/units/rogue_data.tres")
 
 
-
-	if mage_data     != null: spawn_unit(mage_data,     Vector2i(1, 7), true,  1)
+	if windmage_data     != null: spawn_unit(windmage_data,     Vector2i(1, 7), true,  1)
 	else: printerr("❌ Could not load windmage_data.tres!")
 
 	if hexweaver_data != null: spawn_unit(hexweaver_data, Vector2i(2, 6), true,  1)
@@ -113,13 +117,13 @@ func _spawn_player_party_from_run() -> void:
 	if dragoon_data != null: spawn_unit(dragoon_data, Vector2i(3, 6), true,  1)
 	else: printerr("❌ Could not load dragoon_data.tres!")
 	
-	if spellsword_data != null: spawn_unit(spellsword_data, Vector2i(4, 6), true,  1)
+	if spellsword_data != null: spawn_unit(spellsword_data, Vector2i(1, 6), true,  1)
 	else: printerr("❌ Could not load spellsword_data.tres!")
 	
 	if executioner_data != null: spawn_unit(executioner_data, Vector2i(1, 6), true,  1)
 	else: printerr("❌ Could not load executioner_data.tres!")
 
-	if stonewarden_data != null: spawn_unit(stonewarden_data, Vector2i(1, 5), true,  1)
+	if stonewarden_data != null: spawn_unit(stonewarden_data, Vector2i(4, 5), true,  1)
 	else: printerr("❌ Could not load stonewarden_data.tres!")
 	
 	if plaguebringer_data != null: spawn_unit(plaguebringer_data, Vector2i(2, 5), true,  1)
@@ -127,6 +131,9 @@ func _spawn_player_party_from_run() -> void:
 	
 	if divinator_data != null: spawn_unit(divinator_data, Vector2i(3, 5), true,  1)
 	else: printerr("❌ Could not load divinator_data.tres!")
+	
+	if rogue_data != null: spawn_unit(rogue_data, Vector2i(4, 4), true,  1)
+	else: printerr("❌ Could not load rogue_data.tres!")
 
 func _spawn_stage_enemies() -> void:
 	print("🐺 Spawning Monster Waves...")
@@ -466,10 +473,28 @@ func _try_use_ability(cell: Vector2i) -> void:
 	await get_tree().create_timer(0.5).timeout
 
 	var filtered_cells = _filter_cells_by_team(simulated_cells, selected_ability, selected_unit)
-
+	
+	#Debug script to ensure mana being spent is being recorded
+	print("DEBUG: Current Total Mana Spent: ", total_mana_spent, " / Threshold: ", ARCANA_THRESHOLD)
+		
 	# executor.execute_ability is async (uses await internally for VFX).
 	await executor.execute_ability(selected_unit, selected_ability, filtered_cells, cell)
-
+	
+	# --- NEW MANA TRACKING LOGIC ---
+	if is_instance_valid(selected_unit):
+		total_mana_spent += selected_ability.mana_cost
+		print("DEBUG: Spent ", selected_ability.mana_cost, " mana. Total: ", total_mana_spent)
+		
+		if total_mana_spent >= 50: # Your ARCANA_THRESHOLD
+			total_mana_spent -= 50
+			_grant_arcana_charge_to_spellsword()
+	
+	if is_instance_valid(selected_unit):
+		total_mana_spent += selected_ability.mana_cost
+		if total_mana_spent >= ARCANA_THRESHOLD:
+			total_mana_spent -= ARCANA_THRESHOLD
+			_grant_arcana_charge_to_spellsword()
+			
 	if not is_instance_valid(selected_unit):
 		current_phase = TurnPhase.PLAYER_TURN
 		deselect_unit()
@@ -745,3 +770,15 @@ func _get_aoe_cells(center: Vector2i, ability: AbilityData) -> Array:
 							cells.append(c)
 
 	return cells
+
+
+#Spellsword add charges
+func _grant_arcana_charge_to_spellsword() -> void:
+	print("DEBUG: Attempting to grant Arcana Charge...")
+	for unit in player_units:
+		# Check if the unit is the Spellsword using the variable we added to unit_node.gd
+		if "is_spellsword" in unit and unit.is_spellsword:
+			unit.has_arcana_charge = true
+			print("DEBUG: Arcana Charge granted to: ", unit.unit_data.display_name)
+			return
+	print("DEBUG: Error - No unit with is_spellsword = true found in player_units!")
