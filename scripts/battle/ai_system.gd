@@ -54,6 +54,8 @@ func _run_single_enemy(enemy, players: Array, grid: Node, pathfinder: Node, exec
 	var target_player = null
 	var closest_dist = 999999
 	for p in valid_players:
+		if p.has_status("invisible"):
+			continue
 		var dist = abs(enemy.grid_position.x - p.grid_position.x) + abs(enemy.grid_position.y - p.grid_position.y)
 		if dist < closest_dist:
 			closest_dist = dist

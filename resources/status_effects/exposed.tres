@@ -8,6 +8,6 @@ id = "exposed"
 display_name = "Exposed"
 duration_rounds = 3
 can_stack = true
-def_modifier = -5
+crit_chance_modifier = 0.2
 trigger_damage_type = "magical"
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

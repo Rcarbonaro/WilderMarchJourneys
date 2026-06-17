@@ -11,7 +11,5 @@ display_name = "Basic Attack"
 bonus_damage_isolated = 0.5
 has_on_kill_effect = true
 on_kill_trigger_on_caster = true
-on_kill_reset_has_acted = true
-on_kill_reset_has_moved = true
 on_kill_apply_status = ExtResource("2_m4sct")
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"
