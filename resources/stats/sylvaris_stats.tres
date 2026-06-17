@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_ofao2")
-atk = 16
+atk = 12
 matk = 16
 mdef = 10
 mov = 4

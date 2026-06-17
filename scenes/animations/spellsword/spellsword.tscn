@@ -305,7 +305,7 @@ is_spellsword = true
 position = Vector2(1, -28)
 scale = Vector2(0.6550189, 0.69850576)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"walk"
+animation = &"arcana_charge"
 autoplay = "idle"
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]

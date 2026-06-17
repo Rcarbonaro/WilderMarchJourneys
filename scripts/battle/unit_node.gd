@@ -437,7 +437,7 @@ func tick_statuses_end_of_round(team_that_just_ended: String) -> void:
 			to_remove.append(s)
 	for s in to_remove:
 		active_statuses.erase(s)
-	update_visuals()
+	
 
 
 func get_buff_count() -> int:

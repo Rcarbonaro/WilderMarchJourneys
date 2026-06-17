@@ -53,7 +53,7 @@ var reachable_cells: Dictionary = {}   # Tiles the selected unit can walk to.
 
 #Spellsword arcana charge vars
 var total_mana_spent: int = 0
-const ARCANA_THRESHOLD: int = 50
+const ARCANA_THRESHOLD: int = 75
 
 # ── INSPECTOR LINKS ───────────────────────────────────────────────────────────
 # Drag each scene node into these slots in the Inspector.
@@ -117,7 +117,7 @@ func _spawn_player_party_from_run() -> void:
 	if dragoon_data != null: spawn_unit(dragoon_data, Vector2i(3, 6), true,  1)
 	else: printerr("❌ Could not load dragoon_data.tres!")
 	
-	if spellsword_data != null: spawn_unit(spellsword_data, Vector2i(1, 6), true,  1)
+	if spellsword_data != null: spawn_unit(spellsword_data, Vector2i(1, 5), true,  1)
 	else: printerr("❌ Could not load spellsword_data.tres!")
 	
 	if executioner_data != null: spawn_unit(executioner_data, Vector2i(1, 6), true,  1)
@@ -398,7 +398,11 @@ func on_ability_selected(ability: AbilityData) -> void:
 	# ── MANA GATE ─────────────────────────────────────────────────────────────
 	# Check if the unit can afford this ability BEFORE showing targeting.
 	# This mirrors the check in ability_executor as a first line of defence.
-	if not selected_unit.can_afford_ability(ability):
+	var is_spellsword: bool = "is_spellsword" in selected_unit and selected_unit.is_spellsword
+	var can_bypass: bool = is_spellsword and selected_unit.has_arcana_charge
+
+	# If they can't bypass the cost, run the normal mana check.
+	if not can_bypass and not selected_unit.can_afford_ability(ability):
 		print("⛔ ", selected_unit.unit_data.display_name, " cannot afford '",
 			  ability.display_name, "'")
 		# Show a "Insufficient Mana" popup near the ability bar.
@@ -485,15 +489,18 @@ func _try_use_ability(cell: Vector2i) -> void:
 		total_mana_spent += selected_ability.mana_cost
 		print("DEBUG: Spent ", selected_ability.mana_cost, " mana. Total: ", total_mana_spent)
 		
-		if total_mana_spent >= 50: # Your ARCANA_THRESHOLD
-			total_mana_spent -= 50
+		if total_mana_spent >= 75: # Your ARCANA_THRESHOLD
+			total_mana_spent -= 75
 			_grant_arcana_charge_to_spellsword()
 	
 	if is_instance_valid(selected_unit):
+		# OPTIONAL: Uncomment the line below if ONLY the Spellsword's spells should count!
+		
 		total_mana_spent += selected_ability.mana_cost
-		if total_mana_spent >= ARCANA_THRESHOLD:
-			total_mana_spent -= ARCANA_THRESHOLD
-			_grant_arcana_charge_to_spellsword()
+		print("DEBUG: Spent ", selected_ability.mana_cost, " mana. Total Pool: ", total_mana_spent)
+		
+		# Using >= ensures that values like 55 properly grant a charge and carry over the remaining 5
+
 			
 	if not is_instance_valid(selected_unit):
 		current_phase = TurnPhase.PLAYER_TURN
@@ -776,9 +783,10 @@ func _get_aoe_cells(center: Vector2i, ability: AbilityData) -> Array:
 func _grant_arcana_charge_to_spellsword() -> void:
 	print("DEBUG: Attempting to grant Arcana Charge...")
 	for unit in player_units:
-		# Check if the unit is the Spellsword using the variable we added to unit_node.gd
 		if "is_spellsword" in unit and unit.is_spellsword:
 			unit.has_arcana_charge = true
 			print("DEBUG: Arcana Charge granted to: ", unit.unit_data.display_name)
-			return
-	print("DEBUG: Error - No unit with is_spellsword = true found in player_units!")
+			
+			# 👇 ADD THIS LINE to play the animation the moment the charge is earned!
+			if unit.has_method("play_animation"):
+				unit.play_animation("arcana_charge")

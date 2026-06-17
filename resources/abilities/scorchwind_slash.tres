@@ -7,7 +7,7 @@
 script = ExtResource("2_4e7tr")
 id = "scorchwindslash"
 display_name = "Scorchwind Slash"
-mana_cost = 5
+mana_cost = 25
 max_range = 3
 aoe_shape = "cone"
 aoe_size = 3
