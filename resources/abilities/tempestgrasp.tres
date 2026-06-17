@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://de4ctcun42qd1"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_hicjn"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_gm58u"]
+[ext_resource type="Resource" uid="uid://6oeegldom1yq" path="res://resources/status_effects/exposed.tres" id="2_qpbmu"]
+
+[resource]
+script = ExtResource("2_gm58u")
+id = "tempestgrasp"
+display_name = "Tempest Grasp"
+mana_cost = 10
+max_range = 7
+aoe_size = 6
+base_damage_multiplier = 0.7
+damage_type = "magical"
+scaling_stat = "matk"
+applies_statuses = Array[ExtResource("1_hicjn")]([ExtResource("2_qpbmu")])
+displacement_squares = -5
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

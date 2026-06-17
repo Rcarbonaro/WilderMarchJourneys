@@ -6,4 +6,5 @@
 [resource]
 script = ExtResource("2_b8v1m")
 id = "stonewardenbasic"
+display_name = "Basic Attack"
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

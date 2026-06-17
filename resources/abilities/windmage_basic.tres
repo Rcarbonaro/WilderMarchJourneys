@@ -11,4 +11,5 @@ min_range = 1
 max_range = 4
 damage_type = "magical"
 scaling_stat = "matk"
+displacement_squares = 1
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

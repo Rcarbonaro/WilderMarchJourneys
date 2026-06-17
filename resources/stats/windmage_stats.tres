@@ -8,5 +8,5 @@ hp = 12
 matk = 19
 def = 8
 mdef = 10
-mana = 50
+mana = 60
 metadata/_custom_type_script = "uid://c3bdx4sniu017"

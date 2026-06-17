@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cbaxlv6fxi1ku"]
 
 [ext_resource type="Script" uid="uid://01w1tymoafld" path="res://scripts/battle/unit_node.gd" id="1_8ofag"]
-[ext_resource type="Resource" uid="uid://bwnaicxo5cl5n" path="res://resources/units/windmage_data.tres" id="2_bjdy4"]
+[ext_resource type="Resource" uid="uid://by0vegpuernga" path="res://resources/units/spellsword_data.tres" id="2_ws1ep"]
 [ext_resource type="Texture2D" uid="uid://ctqml3bk6a8l7" path="res://sprites/spellsword/spellblade fireattack.png" id="3_5o51m"]
 [ext_resource type="Texture2D" uid="uid://bbqmdev1iuf7q" path="res://sprites/Wind Mage/windmage_dead.png" id="4_eupug"]
 [ext_resource type="Texture2D" uid="uid://rfgs0tl16yhl" path="res://sprites/spellsword/spellblade attack2.png" id="4_ws1ep"]
@@ -10,6 +10,14 @@
 [ext_resource type="Texture2D" uid="uid://buy5nf322k2vx" path="res://sprites/spellsword/spellsword charging.png" id="6_ws1ep"]
 [ext_resource type="Texture2D" uid="uid://cg1x24cm7auvs" path="res://sprites/spellsword/spellblade idle (2).png" id="8_htb4k"]
 [ext_resource type="Texture2D" uid="uid://mo5qj7ssvoub" path="res://sprites/spellsword/spellsword walk.png" id="9_0fpv8"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_htb4k"]
+atlas = ExtResource("6_ws1ep")
+region = Rect2(0, 192, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0fpv8"]
+atlas = ExtResource("6_ws1ep")
+region = Rect2(352, 192, 352, 192)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_mg77q"]
 atlas = ExtResource("3_5o51m")
@@ -58,14 +66,6 @@ region = Rect2(704, 384, 352, 192)
 [sub_resource type="AtlasTexture" id="AtlasTexture_qcdl2"]
 atlas = ExtResource("6_ws1ep")
 region = Rect2(1056, 0, 352, 192)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_htb4k"]
-atlas = ExtResource("6_ws1ep")
-region = Rect2(0, 192, 352, 192)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_0fpv8"]
-atlas = ExtResource("6_ws1ep")
-region = Rect2(352, 192, 352, 192)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_kcdqy"]
 atlas = ExtResource("4_eupug")
@@ -125,6 +125,20 @@ region = Rect2(0, 0, 352, 192)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_grxbi"]
 animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_htb4k")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0fpv8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_htb4k")
+}],
+"loop": true,
+"name": &"arcana_charge",
+"speed": 13.0
+}, {
 "frames": [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_mg77q")
@@ -255,23 +269,6 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_qcdl2")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_htb4k")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_0fpv8")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_htb4k")
-}],
-"loop": true,
-"name": &"mana_charge",
-"speed": 5.0
-}, {
-"frames": [{
-"duration": 1.0,
 "texture": SubResource("AtlasTexture_5qmvu")
 }, {
 "duration": 1.0,
@@ -299,15 +296,16 @@ animations = [{
 "speed": 5.0
 }]
 
-[node name="WindMage" type="Node2D" unique_id=15020637]
+[node name="spellsword" type="Node2D" unique_id=15020637]
 script = ExtResource("1_8ofag")
-unit_data = ExtResource("2_bjdy4")
+unit_data = ExtResource("2_ws1ep")
+is_spellsword = true
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1298568116]
 position = Vector2(1, -28)
 scale = Vector2(0.6550189, 0.69850576)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"mana_charge"
+animation = &"walk"
 autoplay = "idle"
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]

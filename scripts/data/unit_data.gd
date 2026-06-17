@@ -47,3 +47,7 @@ extends Resource
 # Ability
 
 @export var starting_abilities: Array[AbilityData] = []
+
+# Ensure this is at the top of unit_node.gd, outside any functions
+@export var is_spellsword: bool = false
+var has_arcana_charge: bool = false
