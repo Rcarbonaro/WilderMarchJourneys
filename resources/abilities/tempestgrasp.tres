@@ -8,7 +8,7 @@
 script = ExtResource("2_gm58u")
 id = "tempestgrasp"
 display_name = "Tempest Grasp"
-mana_cost = 10
+mana_cost = 20
 max_range = 7
 aoe_size = 6
 base_damage_multiplier = 0.7

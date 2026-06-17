@@ -84,6 +84,11 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 	# have already hit so a 2×2 unit doesn't take damage 4 times from one AOE.
 	var already_hit: Array = []   # Filled with UnitNode references.
 
+	if caster.has_status("invisible"):
+		caster.remove_status("invisible")
+		caster.update_visuals() # Refresh to make them opaque again
+		print("👁️ ", caster.unit_data.display_name, " revealed by attacking!")
+	
 	for cell in target_cells:
 		var target = grid_ref.get_unit_at(cell)
 		print("🔍 cell: ", cell, " | target: ", target)
@@ -98,6 +103,8 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 				already_hit.append(target)
 				var damage = calculate_damage(caster, target, ability)
 				_apply_damage_with_effects(caster, target, ability, damage)
+
+
 
 		# ── STATUS EFFECTS ────────────────────────────────────────────────────
 		if target != null:
@@ -166,6 +173,8 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 			var heal_target = target if target != null else caster
 			var max_hp      = heal_target.get_stats().hp
 			heal_target.heal(int(max_hp * ability.heal_percent))
+
+
 
 	# ── STEP 4: COOLDOWN ──────────────────────────────────────────────────────
 	if ability.cooldown_rounds > 0:
@@ -294,8 +303,9 @@ func _apply_damage_with_effects(caster, target, ability: AbilityData, damage: in
 
 	# -- 6. ON-KILL CHECK ──────────────────────────────────────────────────────
 	# If the target just died (HP was > 0 before this hit), trigger on-kill effects.
-	if hp_before_damage > 0 and not is_instance_valid(target):
+	if hp_before_damage > 0 and target.current_hp <= 0:
 		_trigger_on_kill(caster, ability, target)
+		print("DEBUG: Kill confirmed for ", target.unit_data.display_name)
 
 # ── ON-KILL HANDLER ───────────────────────────────────────────────────────────
 
@@ -328,6 +338,7 @@ func _trigger_on_kill(caster, ability: AbilityData, dead_target) -> void:
 	# -- Apply a self-buff to the caster on kill.
 	if ability.on_kill_apply_status != null:
 		caster.apply_status(ability.on_kill_apply_status)
+		print("✨ Condition successfully applied to: ", caster.unit_data.display_name)
 
 	# -- Reset action flags so the caster can act again this turn.
 	if ability.on_kill_reset_has_acted:

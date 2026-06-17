@@ -412,6 +412,7 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1) -> void:
 		"remaining_rounds": status_data.duration_rounds
 	})
 	_debug_print_status_applied(status_data, stacks)
+	update_visuals()
 
 
 func remove_status(status_id: String) -> void:
@@ -436,6 +437,7 @@ func tick_statuses_end_of_round(team_that_just_ended: String) -> void:
 			to_remove.append(s)
 	for s in to_remove:
 		active_statuses.erase(s)
+	update_visuals()
 
 
 func get_buff_count() -> int:
@@ -485,3 +487,21 @@ func _debug_print_status_applied(status_data: StatusEffectData, stacks: int) -> 
 	print("   ATK:  base=", get_stats().atk,  "  effective=", get_effective_atk())
 	print("   DEF:  base=", get_stats().def,  "  effective=", get_effective_def())
 	print("   MOV:  base=", get_stats().mov,  "  effective=", get_effective_mov())
+
+
+# Inside res://scripts/battle/unit_node.gd
+
+func has_status(status_id: String) -> bool:
+	# Iterate through the actual list being used by your status system
+	for s in active_statuses:
+		if s["data"].id == status_id:
+			return true
+	return false
+
+
+func update_visuals() -> void:
+	var sprite = $AnimatedSprite2D # Adjust the path if your sprite is named differently
+	if has_status("invisible"):
+		sprite.modulate.a = 0.5 # 50% transparency
+	else:
+		sprite.modulate.a = 1.0 # Fully opaque

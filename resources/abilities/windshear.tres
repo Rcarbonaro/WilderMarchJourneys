@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://c66sfs26rqmv2"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_8deio"]
+[ext_resource type="Resource" uid="uid://6oeegldom1yq" path="res://resources/status_effects/exposed.tres" id="2_u47r4"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_xucen"]
+
+[resource]
+script = ExtResource("2_xucen")
+id = "windshear"
+display_name = "Windshear"
+mana_cost = 30
+max_range = 4
+damage_type = "magical"
+scaling_stat = "matk"
+applies_statuses = Array[ExtResource("1_8deio")]([ExtResource("2_u47r4")])
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"
