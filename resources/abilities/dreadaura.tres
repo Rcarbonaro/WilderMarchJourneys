@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://dydp4ke8y2nja"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_1d7sx"]
+[ext_resource type="Resource" uid="uid://cvaecrhgoehfq" path="res://resources/auras/dreadaura.tres" id="2_6g41h"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_i4dpk"]
+
+[resource]
+script = ExtResource("2_i4dpk")
+id = "dreadaura"
+display_name = "Dread Aura"
+max_range = 0
+base_damage_multiplier = 0.0
+damage_type = "magical"
+scaling_stat = "matk"
+is_aura = true
+aura_data = ExtResource("2_6g41h")
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

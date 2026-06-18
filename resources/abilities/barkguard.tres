@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://d1k2q6fywpued"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_lm0tg"]
+[ext_resource type="Resource" uid="uid://h1bwtk25nbyd" path="res://resources/status_effects/barkguard.tres" id="2_bvodd"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_ua1bp"]
+
+[resource]
+script = ExtResource("2_ua1bp")
+id = "barkguard"
+display_name = "Barkguard"
+cooldown_rounds = 2
+max_range = 0
+requires_line_of_sight = false
+can_ignore_los = true
+affects_team = "all"
+base_damage_multiplier = 0.0
+applies_statuses = Array[ExtResource("1_lm0tg")]([ExtResource("2_bvodd")])
+applies_shield = true
+shield_amount = 15
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

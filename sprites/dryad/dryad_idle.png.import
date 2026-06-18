@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://48wxnk8dtlib"
-path="res://.godot/imported/dreadknight_attack.png-5a77e10696438b4f113e94f86b7bc409.ctex"
+uid="uid://dim76bp3pb7wr"
+path="res://.godot/imported/dryad_idle.png-682b3c57ea1a13bb048808b017c05c2e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/dreadknight/dreadknight_attack.png"
-dest_files=["res://.godot/imported/dreadknight_attack.png-5a77e10696438b4f113e94f86b7bc409.ctex"]
+source_file="res://sprites/dryad/dryad_idle.png"
+dest_files=["res://.godot/imported/dryad_idle.png-682b3c57ea1a13bb048808b017c05c2e.ctex"]
 
 [params]
 

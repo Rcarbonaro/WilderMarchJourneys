@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://ds2a6026yun8u"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_wbw5u"]
+
+[resource]
+script = ExtResource("1_wbw5u")
+id = "dreadknightcurse"
+display_name = "Dreadknight's Curse"
+duration_rounds = 5
+can_stack = true
+max_stacks = 5
+atk_modifier = -1
+matk_modifier = -1
+metadata/_custom_type_script = "uid://gsbk18mmfnol"

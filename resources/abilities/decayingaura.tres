@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://bjma8xvpwa6hd"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_qndft"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_3hlq0"]
+[ext_resource type="Resource" uid="uid://4mj6cbd74k2s" path="res://resources/auras/decayingaura.tres" id="2_o4bc2"]
+
+[resource]
+script = ExtResource("2_3hlq0")
+id = "decayingaura"
+display_name = "Decaying Aura"
+max_range = 0
+base_damage_multiplier = 0.0
+damage_type = "magical"
+scaling_stat = "matk"
+is_aura = true
+aura_data = ExtResource("2_o4bc2")
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

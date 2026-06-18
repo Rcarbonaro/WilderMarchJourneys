@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://j2jwvacgws5w"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_ll6wk"]
+
+[resource]
+script = ExtResource("1_ll6wk")
+id = "decayingauradebuff"
+display_name = "Decaying Aura"
+duration_rounds = 3
+can_stack = true
+max_stacks = 3
+atk_modifier = -2
+matk_modifier = -2
+damage_dealt_modifier = 0.9
+metadata/_custom_type_script = "uid://gsbk18mmfnol"

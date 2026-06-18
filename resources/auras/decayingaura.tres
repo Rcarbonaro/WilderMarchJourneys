@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="AuraData" format=3 uid="uid://4mj6cbd74k2s"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_w0v4j"]
+[ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="2_2uchb"]
+[ext_resource type="Resource" uid="uid://j2jwvacgws5w" path="res://resources/status_effects/decayingaura.tres" id="2_nq3dx"]
+
+[resource]
+script = ExtResource("2_2uchb")
+id = "decayingaura"
+display_name = "Decaying aura"
+duration_rounds = 5
+is_permanent = true
+flat_damage = 0
+damage_multiplier = 0.0
+applies_statuses = Array[ExtResource("1_w0v4j")]([ExtResource("2_nq3dx")])
+aura_color = Color(0.13725491, 0.16862746, 0.03529412, 0.2509804)
+crit_overload_chance = 0.0
+metadata/_custom_type_script = "uid://dlthrdiu5tc4w"
