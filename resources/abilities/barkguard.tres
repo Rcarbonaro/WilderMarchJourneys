@@ -16,5 +16,5 @@ affects_team = "all"
 base_damage_multiplier = 0.0
 applies_statuses = Array[ExtResource("1_lm0tg")]([ExtResource("2_bvodd")])
 applies_shield = true
-shield_amount = 15
+shield_amount = 18
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

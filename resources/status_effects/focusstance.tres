@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://dn2itso8l451b"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_102ve"]
+
+[resource]
+script = ExtResource("1_102ve")
+id = "focusstance"
+display_name = "Focus stance"
+description = "Unable to move, but grants bonus critical chance and critical damage"
+duration_rounds = 3
+max_stacks = 3
+atk_modifier = 4
+mov_modifier = -3
+crit_chance_modifier = 50.0
+metadata/_custom_type_script = "uid://gsbk18mmfnol"

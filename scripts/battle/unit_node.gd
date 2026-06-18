@@ -10,56 +10,77 @@
 #   - Post-attack movement flag
 #   - Tether cleanup on death
 #   - Shield/Thorns/Guardian applied via battle_grid on death
+#   - momentum_bonuses dictionary for Momentum aura stat tracking
+#   - get_effective_crit_damage() so Momentum crit bonuses apply
+#   - die() notifies AuraManager to strip bonuses and remove caster's auras
 
 extends Node2D
 
 # ── DATA LINK ─────────────────────────────────────────────────────────────────
 
 @export var unit_data: UnitData
-# The "data card" resource (.tres file) that holds the unit's name, stats, and
-# abilities. You drag this in from the Inspector on the scene.
+# The "data card" resource (.tres file) holding this unit's name, stats, and
+# abilities. Drag it in from the Inspector when placing the unit in the scene.
 
 @export var move_speed: float = 1.5
-# How many seconds the sliding movement animation takes per tile-to-tile move.
+# How many seconds the sliding movement animation takes per move.
 
 @export var faces_right_by_default: bool = true
-# ✅ CHECK for player/ally units (they face right).
-# ✅ UNCHECK for enemy units (they face left by default).
+# CHECK for player/ally units (they face right toward the enemy side).
+# UNCHECK for enemy units (they face left by default).
 
 # ── MULTI-TILE SUPPORT ────────────────────────────────────────────────────────
 
 @export var tile_footprint: Array = [Vector2i(0,0)]
-# The list of OFFSETS (relative to grid_position / the "anchor" cell) that this
-# unit occupies. A normal 1×1 unit has just [Vector2i(0,0)].
-# A 2×2 unit would have: [Vector2i(0,0), Vector2i(1,0), Vector2i(0,1), Vector2i(1,1)]
-# The anchor cell is the TOP-LEFT corner of the unit.
-#
-# HOW TO SET THIS IN THE INSPECTOR:
-#   1. Open the unit's scene or the unit_data resource.
-#   2. Find "Tile Footprint" in the Inspector.
-#   3. Add one Vector2i entry per tile the unit occupies.
+# The list of OFFSETS (relative to grid_position, the "anchor" cell) this unit
+# occupies. A normal 1×1 unit has just [Vector2i(0,0)].
+# A 2×2 unit would have: [Vector2i(0,0), Vector2i(1,0), Vector2i(0,1), Vector2i(1,1)].
 
 var occupied_cells: Array = []
 # The ACTUAL grid cells this unit currently occupies (computed at runtime by
-# applying tile_footprint offsets to grid_position). Updated every time the
-# unit moves.
+# adding tile_footprint offsets to grid_position). Updated every time the unit moves.
 
-# ── Spellsword Arcana Charges ───────────────────────────────────────────────────────────
-@export var is_spellsword: bool = false 
+# ── SPELLSWORD ARCANA CHARGES ─────────────────────────────────────────────────
+
+@export var is_spellsword: bool = false
+# Check this box on the Spellsword unit to enable Arcana Charge behaviour.
+
 var has_arcana_charge: bool = false
+# Set to true by BattleManager when the mana pool threshold is reached.
 
 # ── RUNTIME STATS ─────────────────────────────────────────────────────────────
 
 var current_hp:   int = 0
 var current_mana: int = 0
 var level:        int = 1
-var grid_position: Vector2i = Vector2i(0, 0)
-# The "anchor" cell (top-left for large units).
 
-var custom_resources:   Dictionary = {}
-var active_statuses:    Array      = []
-var ability_cooldowns:  Dictionary = {}
-var equipped_items:     Array      = []
+var grid_position: Vector2i = Vector2i(0, 0)
+# The "anchor" cell (top-left corner for large units).
+
+var custom_resources:  Dictionary = {}
+var active_statuses:   Array      = []
+# List of active status effects. Each entry is a Dictionary:
+# { "data": StatusEffectData, "stacks": int, "remaining_rounds": int }
+
+var ability_cooldowns: Dictionary = {}
+# Maps ability id → rounds remaining on cooldown.
+
+var equipped_items: Array = []
+
+# ── MOMENTUM BONUSES ──────────────────────────────────────────────────────────
+
+var momentum_bonuses: Dictionary = {}
+# Stores permanent stat bonuses granted by Momentum auras.
+# Structure: { "aura_id": { "atk": int, "def": int, "matk": int, "mdef": int,
+#                           "mov": int, "crit_chance": float, "crit_damage": float } }
+#
+# AuraManager WRITES to this dictionary when a kill is scored inside a Momentum aura.
+# AuraManager ERASES the matching key when the caster of that aura dies.
+# The stat getter functions (get_effective_atk, etc.) READ this to add the bonus
+# on top of the base stat + status modifiers.
+#
+# Fractional bonuses (e.g. 0.5 per kill) are tracked as floats by AuraManager
+# and floor()'d before writing here as integers (except crit values which stay float).
 
 # ── STATE FLAGS ───────────────────────────────────────────────────────────────
 
@@ -68,35 +89,35 @@ var has_acted:        bool = false
 var has_moved:        bool = false
 
 var pre_move_position: Vector2i = Vector2i(-1, -1)
-# Saved before moving so the player can cancel and undo.
+# Saved before moving so the player can cancel and snap back.
 
 var can_cancel_move: bool = false
 # True only between "unit finished moving" and "unit used an ability".
 
 var pending_post_attack_moves: int = 0
 # If an ability has post_attack_move_squares > 0, this is set after the attack
-# so the battle_manager can grant the unit extra movement.
-
-#Add momentum bonus, currently aimed at helping bard
-var momentum_bonuses: Dictionary = {}
+# so BattleManager can grant the unit extra movement.
 
 # ── TETHER TRACKING ───────────────────────────────────────────────────────────
 
 var tether_ids: Array = []
 # Stores the tether_id strings this unit is currently linked to.
-# Populated by ability_executor when a tether ability is used.
-# Cleared from battle_grid on death.
+# Populated by AbilityExecutor when a tether ability hits this unit.
+# Cleaned up in battle_grid on death.
 
 # ── REFERENCES ────────────────────────────────────────────────────────────────
 
 var grid_ref: Node = null
 # Filled in by BattleManager when the unit is spawned.
+# Used to look up the grid, register/unregister tiles, find AuraManager, etc.
+
+# ── SIGNALS ───────────────────────────────────────────────────────────────────
 
 signal unit_died(unit)
-# Emitted when HP reaches 0. BattleManager listens so it can update team lists.
+# Emitted when HP reaches 0. BattleManager listens to update team lists.
 
 signal movement_finished
-# Emitted when the slide tween finishes. BattleManager awaits this.
+# Emitted when the slide tween completes. BattleManager awaits this.
 
 # ── LIFECYCLE ─────────────────────────────────────────────────────────────────
 
@@ -106,8 +127,9 @@ func _ready() -> void:
 
 func setup(data: UnitData, unit_level: int, is_player: bool) -> void:
 	# Called by BattleManager right after instantiating this scene.
-	unit_data    = data
-	level        = unit_level
+	# Initialises all runtime state from the data card.
+	unit_data      = data
+	level          = unit_level
 	is_player_unit = is_player
 
 	var stats: StatsData = unit_data.stats_by_level[level - 1]
@@ -118,7 +140,7 @@ func setup(data: UnitData, unit_level: int, is_player: bool) -> void:
 	play_animation("idle")
 	_update_hp_label()
 
-	# Compute occupied cells from the default footprint at the starting position.
+	# Compute occupied cells from the starting position and footprint.
 	_update_occupied_cells()
 
 # ── MULTI-TILE HELPERS ────────────────────────────────────────────────────────
@@ -132,8 +154,8 @@ func _update_occupied_cells() -> void:
 
 
 func get_center_world_position() -> Vector2:
-	# Returns the visual center of a large unit in world (pixel) space.
-	# For a 1×1 unit this is just its position. For 2×2 it's the midpoint.
+	# Returns the visual centre of the unit in world (pixel) space.
+	# For 1×1 units this is just its position. For 2×2 it's the midpoint.
 	if grid_ref == null:
 		return position
 	var min_cell = occupied_cells[0]
@@ -157,7 +179,7 @@ func _apply_default_facing() -> void:
 
 
 func play_animation(anim_name: String) -> void:
-	# Safely plays a named animation, falling back gracefully if missing.
+	# Safely plays a named animation, falling back gracefully if it's missing.
 	if not has_node("AnimatedSprite2D"):
 		return
 	var sprite := $AnimatedSprite2D as AnimatedSprite2D
@@ -165,14 +187,14 @@ func play_animation(anim_name: String) -> void:
 	match anim_name:
 		"attack_up", "attack_down":
 			if not sprite.sprite_frames.has_animation(anim_name):
-				actual_anim = "attack"
+				actual_anim = "attack"   # Fall back to the generic attack anim.
 		"walk_up":
 			if not sprite.sprite_frames.has_animation(anim_name):
 				actual_anim = "walk"
 	if sprite.sprite_frames.has_animation(actual_anim):
 		sprite.play(actual_anim)
 	if anim_name == "idle" and has_arcana_charge:
-		sprite.play("arcana_charge")
+		sprite.play("arcana_charge")   # Arcana charge replaces idle visually.
 		return
 
 
@@ -184,17 +206,23 @@ func _set_facing_for_direction(target_pos: Vector2i) -> void:
 	sprite.flip_h = (target_is_right != faces_right_by_default)
 
 # ── STAT GETTERS ──────────────────────────────────────────────────────────────
+# Each getter adds up: base stat + status effect modifiers + momentum bonuses.
+# Status modifiers come from active_statuses (buffs/debuffs).
+# Momentum bonuses come from the momentum_bonuses dictionary, which is written
+# by AuraManager when kills occur inside a Momentum aura.
 
 func get_stats() -> StatsData:
+	# Returns the raw stats data card for this unit's current level.
 	return unit_data.stats_by_level[level - 1]
 
 
 func get_effective_atk() -> int:
 	var base = get_stats().atk
-	# Add bonuses from active status effects (buffs/debuffs).
+	# Add/subtract modifiers from all active status effects.
 	for s in active_statuses:
 		base += s["data"].atk_modifier * s["stacks"]
-	# Add permanent momentum bonuses from any aura this unit benefits from.
+	# Add permanent Momentum bonuses from any aura this unit benefits from.
+	# Each key in momentum_bonuses is an aura_id; we sum all the atk values.
 	for aura_id in momentum_bonuses:
 		base += momentum_bonuses[aura_id].get("atk", 0)
 	return max(0, base)
@@ -230,8 +258,9 @@ func get_effective_mdef() -> int:
 func get_effective_mov() -> int:
 	var base = get_stats().mov
 	for s in active_statuses:
+		# A root effect overrides everything — rooted units cannot move at all.
 		if s["data"].is_root:
-			return 0  # Rooted units cannot move at all.
+			return 0
 		base += s["data"].mov_modifier * s["stacks"]
 	for aura_id in momentum_bonuses:
 		base += momentum_bonuses[aura_id].get("mov", 0)
@@ -239,29 +268,32 @@ func get_effective_mov() -> int:
 
 
 func get_effective_crit_chance() -> float:
+	# Returns the unit's effective crit chance, including status and momentum bonuses.
 	var base = get_stats().crit_chance
 	for s in active_statuses:
 		base += s["data"].crit_chance_modifier * s["stacks"]
-	# Momentum crit_chance bonus is already a float percentage — add directly.
+	# Momentum crit_chance is already a float percentage — add it directly.
 	for aura_id in momentum_bonuses:
 		base += momentum_bonuses[aura_id].get("crit_chance", 0.0)
 	return base
 
+
 func get_effective_crit_damage() -> float:
-	# Returns the unit's crit damage percentage, including any momentum bonuses.
-	# This replaces the direct read of get_stats().crit_damage in ability_executor.
+	# Returns the unit's effective crit damage percentage, including momentum bonuses.
+	# This replaces the old direct read of get_stats().crit_damage in ability_executor
+	# so that Momentum crit_damage bonuses are factored in.
+	# e.g. base 150% + 10% from Momentum = 160% crit damage.
 	var base: float = get_stats().crit_damage
 	for aura_id in momentum_bonuses:
 		base += momentum_bonuses[aura_id].get("crit_damage", 0.0)
 	return base
-	
+
 # ── MANA ──────────────────────────────────────────────────────────────────────
 
 func can_afford_ability(ability: AbilityData) -> bool:
 	# Returns true if the unit currently has enough mana to use this ability.
-	# Also checks HP cost won't kill the unit outright.
-	# This is called by ui_manager (to grey buttons) and by ability_executor
-	# (as a final safety gate before executing).
+	# Also checks the HP cost won't kill the unit outright.
+	# Called by ui_manager (to grey out buttons) and ability_executor (safety gate).
 	if current_mana < ability.mana_cost:
 		return false
 	if ability.hp_cost_percent > 0.0:
@@ -275,14 +307,20 @@ func spend_mana(amount: int) -> void:
 	# Deducts mana, clamped so it never goes below 0.
 	current_mana = max(0, current_mana - amount)
 
+
+func restore_mana(amount: int) -> void:
+	# Restores mana up to the stat maximum.
+	var max_mana = get_stats().mana
+	current_mana = min(current_mana + amount, max_mana)
+
 # ── COMBAT ────────────────────────────────────────────────────────────────────
 
 func take_damage(amount: int, damage_type: String) -> int:
-	# Applies damage to this unit. Always deals at least 1. Returns actual amount.
+	# Applies damage to this unit. Always deals at least 1. Returns the actual amount.
 	#
-	# For multi-tile units: damage is applied to the UNIT, not the tile.
-	# Even if an AOE hits all 4 tiles of a 2×2 unit, this function is only
-	# called ONCE per damage event (ability_executor deduplicates by unit reference).
+	# For multi-tile units: ability_executor deduplicates by unit reference so
+	# this function is only called ONCE per damage event even if an AOE hits
+	# all 4 tiles of a 2×2 unit.
 	var actual = max(1, amount)
 	current_hp -= actual
 	_update_hp_label()
@@ -291,6 +329,7 @@ func take_damage(amount: int, damage_type: String) -> int:
 		die()
 	else:
 		play_animation("hurt")
+		# Return to idle after a brief hurt flash.
 		get_tree().create_timer(0.25).timeout.connect(func():
 			if is_instance_valid(self) and current_hp > 0:
 				play_animation("idle")
@@ -304,12 +343,6 @@ func heal(amount: int) -> void:
 	_update_hp_label()
 
 
-func restore_mana(amount: int) -> void:
-	# Restores mana up to the stat maximum.
-	var max_mana = get_stats().mana
-	current_mana = min(current_mana + amount, max_mana)
-
-
 func die() -> void:
 	if not is_inside_tree():
 		queue_free()
@@ -317,48 +350,72 @@ func die() -> void:
 
 	print(unit_data.display_name, " has been defeated!")
 
-	# Unregister ALL cells this unit occupied (handles large units).
+	# ── NOTIFY AURA MANAGER ───────────────────────────────────────────────────
+	# Strip momentum bonuses and remove this unit's auras immediately, before
+	# anything else, so no downstream code sees stale aura state.
+	if grid_ref != null and grid_ref.has_node("AuraManager"):
+		grid_ref.get_node("AuraManager").remove_all_auras_for(self)
+
+	# Unregister ALL cells this unit occupied so pathfinding opens up immediately.
+	# We do this NOW (not after the animation) so other units can path through
+	# the tile while the death animation is still playing.
 	if grid_ref != null:
 		if tile_footprint.size() > 1:
-			# Multi-tile unit: remove every occupied cell.
 			grid_ref.unregister_large_unit(self)
 		else:
 			grid_ref.unregister_unit(grid_position)
 
-	# Remove this unit from every tether group it belonged to.
+	# Remove from tether, guardian, shield, thorns maps immediately.
 	if grid_ref != null and grid_ref.has_method("unregister_tether"):
 		for tid in tether_ids:
 			grid_ref.unregister_tether(self, tid)
-
-	# Remove any guardian or shield entries pointing to this unit.
 	if grid_ref != null:
-		if grid_ref.shield_map.has(self):
-			grid_ref.shield_map.erase(self)
-		if grid_ref.guardian_map.has(self):
-			grid_ref.guardian_map.erase(self)
-		if grid_ref.thorns_map.has(self):
-			grid_ref.thorns_map.erase(self)
-			# Notify the AuraManager that this unit has died.
-	# This will immediately strip any Momentum bonuses this unit's auras granted.
-	# We do this BEFORE emitting unit_died so the bonuses are gone before any
-	# downstream logic (like BattleManager updating the UI) runs.
-	if grid_ref != null and grid_ref.has_node("AuraManager"):
-		grid_ref.get_node("AuraManager").remove_all_auras_for(self)
+		if grid_ref.shield_map.has(self):   grid_ref.shield_map.erase(self)
+		if grid_ref.guardian_map.has(self): grid_ref.guardian_map.erase(self)
+		if grid_ref.thorns_map.has(self):   grid_ref.thorns_map.erase(self)
 
-	unit_died.emit(self)
+	# ── PLAY DEATH ANIMATION THEN CLEAN UP ────────────────────────────────────
+	# We use call_deferred to push the rest of the death sequence (signal + free)
+	# one frame forward. This gives:
+	#   • The damage number float-up tween time to start visually
+	#   • The AI's current await to resume and finish gracefully before the node
+	#     is freed (avoiding "previously freed" errors on the next line)
+	#   • The die animation time to play before the node disappears
+	_finish_death.call_deferred()
+
+
+func _finish_death() -> void:
+	# Called one frame after die() via call_deferred.
+	# Plays the death animation, waits for it to finish, then emits the signal
+	# and frees the node. Separating this from die() ensures all in-flight
+	# awaits in ai_system and ability_executor have had a chance to resume first.
+	if not is_inside_tree():
+		return
 
 	if has_node("AnimatedSprite2D"):
-		$AnimatedSprite2D.play("die")
+		var sprite := $AnimatedSprite2D as AnimatedSprite2D
+		sprite.play("die")
+		# If the sprite has a "die" animation, wait for it to finish naturally.
+		# If the animation loops or doesn't exist we fall back to a fixed delay.
+		if sprite.sprite_frames != null and sprite.sprite_frames.has_animation("die"):
+			await sprite.animation_finished
+		else:
+			await get_tree().create_timer(0.4).timeout
 	else:
 		hide()
+		await get_tree().create_timer(0.4).timeout
 
-	queue_free.call_deferred()
+	# Emit the death signal AFTER the animation so BattleManager updates team
+	# lists (and potentially triggers victory/defeat) only once the unit has
+	# visually disappeared.
+	unit_died.emit(self)
+	queue_free()
 
 # ── MOVEMENT ──────────────────────────────────────────────────────────────────
 
 func move_to(new_cell: Vector2i) -> void:
 	# Moves the unit to a new anchor cell, updating the grid registry and sliding
-	# the visual position smoothly using a Tween.
+	# the visual position smoothly with a Tween.
 	if grid_ref == null:
 		return
 
@@ -370,7 +427,7 @@ func move_to(new_cell: Vector2i) -> void:
 	else:
 		play_animation("walk")
 
-	# For multi-tile units: unregister ALL current cells, then register ALL new cells.
+	# For large units: unregister ALL current cells, then register ALL new cells.
 	if tile_footprint.size() > 1:
 		grid_ref.unregister_large_unit(self)
 		grid_position = new_cell
@@ -382,8 +439,15 @@ func move_to(new_cell: Vector2i) -> void:
 		_update_occupied_cells()
 		grid_ref.register_unit(self, new_cell)
 
-	# Slide the visual to the new anchor world position.
+	# Slide the visual sprite to the new anchor world position.
 	var target_world_pos: Vector2 = grid_ref.grid_to_world(new_cell)
+
+	# ── NOTIFY AURA MANAGER — start visual tween NOW, before our own tween ────
+	# begin_caster_move() starts the aura overlay tween with the same duration
+	# and easing as our tween below, so both slide in perfect lockstep.
+	if grid_ref.has_node("AuraManager"):
+		grid_ref.get_node("AuraManager").begin_caster_move(self, new_cell)
+
 	var tween = create_tween()
 	tween.set_trans(Tween.TRANS_CUBIC)
 	tween.set_ease(Tween.EASE_OUT)
@@ -395,7 +459,7 @@ func move_to(new_cell: Vector2i) -> void:
 
 
 func snap_to(new_cell: Vector2i) -> void:
-	# Instantly teleports the unit with no animation (used by dash and cancel-move).
+	# Instantly teleports the unit with no animation. Used by dash and cancel-move.
 	if grid_ref == null:
 		return
 	if tile_footprint.size() > 1:
@@ -422,13 +486,17 @@ func look_at_target(target_pos: Vector2i) -> void:
 # ── STATUS EFFECTS ────────────────────────────────────────────────────────────
 
 func apply_status(status_data: StatusEffectData, stacks: int = 1) -> void:
-	# Check for immunity first.
+	# Applies a status effect to this unit. Checks for immunity first,
+	# then either refreshes an existing instance or adds a new one.
+
+	# If the unit has an immunity status, block all incoming status applications.
 	for s in active_statuses:
 		if s["data"].grants_immunity:
-			print("🛡️ ", unit_data.display_name, " is immune! Status '", status_data.display_name, "' blocked.")
+			print("🛡️ ", unit_data.display_name, " is immune! Status '",
+				  status_data.display_name, "' blocked.")
 			return
 
-	# If already active, refresh or stack.
+	# If this status is already active, refresh its duration and optionally stack.
 	for s in active_statuses:
 		if s["data"].id == status_data.id:
 			if status_data.can_stack:
@@ -437,7 +505,7 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1) -> void:
 			_debug_print_status_applied(status_data, s["stacks"])
 			return
 
-	# New status: add it.
+	# Brand new status — add it to the list.
 	active_statuses.append({
 		"data":             status_data,
 		"stacks":           stacks,
@@ -448,7 +516,7 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1) -> void:
 
 
 func remove_status(status_id: String) -> void:
-	# Removes a status by its id string. Used for cleanse effects.
+	# Removes a status by its id string. Used for cleanse/dispel effects.
 	active_statuses = active_statuses.filter(func(s): return s["data"].id != status_id)
 
 
@@ -459,8 +527,8 @@ func tick_statuses_end_of_round(team_that_just_ended: String) -> void:
 	for s in active_statuses:
 		var data: StatusEffectData = s["data"]
 		if data.is_permanent:
-			continue
-		# Only count down statuses that expire on this team's round.
+			continue   # Permanent statuses never count down.
+		# Only count down statuses that expire at the end of THIS team's round.
 		if data.expires_at == "end_of_player_round" and team_that_just_ended == "player":
 			s["remaining_rounds"] -= 1
 		elif data.expires_at == "end_of_enemy_round" and team_that_just_ended == "enemy":
@@ -469,18 +537,25 @@ func tick_statuses_end_of_round(team_that_just_ended: String) -> void:
 			to_remove.append(s)
 	for s in to_remove:
 		active_statuses.erase(s)
-	
+		print("⏱️ Status '", s["data"].display_name, "' expired on ", unit_data.display_name)
+
+# ── STATUS QUERY HELPERS ──────────────────────────────────────────────────────
+
+func has_status(status_id: String) -> bool:
+	# Returns true if the unit currently has a status with the given id.
+	for s in active_statuses:
+		if s["data"].id == status_id:
+			return true
+	return false
 
 
 func get_buff_count() -> int:
 	# Returns how many BUFF (positive) statuses this unit has.
-	# A buff is defined as any status that gives at least one positive stat modifier
-	# and none of the negative flags (stun, root, etc.).
 	var count = 0
 	for s in active_statuses:
 		var d: StatusEffectData = s["data"]
 		if d.is_stun or d.is_root:
-			continue  # These are always debuffs.
+			continue   # Stun and root are always debuffs, never count as buffs.
 		var is_positive = (d.atk_modifier > 0 or d.def_modifier > 0 or
 						   d.matk_modifier > 0 or d.mdef_modifier > 0 or
 						   d.mov_modifier > 0 or d.crit_chance_modifier > 0 or
@@ -508,32 +583,24 @@ func get_debuff_count() -> int:
 # ── UI HELPERS ────────────────────────────────────────────────────────────────
 
 func _update_hp_label() -> void:
-	# Updates the floating HP label above the unit's head (if one exists).
+	# Updates the floating HP number above the unit's head (if the node exists).
 	if has_node("HPLabel"):
 		$HPLabel.text = str(current_hp)
 
 
+func update_visuals() -> void:
+	# Refreshes the unit's sprite transparency based on invisible status.
+	var sprite = $AnimatedSprite2D
+	if has_status("invisible"):
+		sprite.modulate.a = 0.5   # 50% transparent when invisible.
+	else:
+		sprite.modulate.a = 1.0   # Fully opaque otherwise.
+
+
 func _debug_print_status_applied(status_data: StatusEffectData, stacks: int) -> void:
 	print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	print("📊 STATUS APPLIED: '", status_data.display_name, "' × ", stacks, " → ", unit_data.display_name)
+	print("📊 STATUS APPLIED: '", status_data.display_name, "' × ", stacks,
+		  " → ", unit_data.display_name)
 	print("   ATK:  base=", get_stats().atk,  "  effective=", get_effective_atk())
 	print("   DEF:  base=", get_stats().def,  "  effective=", get_effective_def())
 	print("   MOV:  base=", get_stats().mov,  "  effective=", get_effective_mov())
-
-
-# Inside res://scripts/battle/unit_node.gd
-
-func has_status(status_id: String) -> bool:
-	# Iterate through the actual list being used by your status system
-	for s in active_statuses:
-		if s["data"].id == status_id:
-			return true
-	return false
-
-
-func update_visuals() -> void:
-	var sprite = $AnimatedSprite2D # Adjust the path if your sprite is named differently
-	if has_status("invisible"):
-		sprite.modulate.a = 0.5 # 50% transparency
-	else:
-		sprite.modulate.a = 1.0 # Fully opaque

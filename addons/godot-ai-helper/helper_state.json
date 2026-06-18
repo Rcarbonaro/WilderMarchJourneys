@@ -39,50 +39,6 @@
 			"type": "scene_tree"
 		},
 		{
-			"path": "res://scripts/battle/battle_manager.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/battle_grid.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/ai_system.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/ability_executor.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/ability_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/pathfinding_system.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/run_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/managers/shop_manager.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/status_effect_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/ui/ui_manager.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/unit_node.gd",
-			"type": "script"
-		},
-		{
 			"path": "res://scripts/data/unit_data.gd",
 			"type": "script"
 		},
@@ -124,6 +80,50 @@
 		},
 		{
 			"path": "res://scripts/battle/battle_scene.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/unit_node.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/ui/ui_manager.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/status_effect_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/managers/shop_manager.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/run_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/pathfinding_system.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/ability_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/ability_executor.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/ai_system.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/battle_grid.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/battle_manager.gd",
 			"type": "script"
 		}
 	],

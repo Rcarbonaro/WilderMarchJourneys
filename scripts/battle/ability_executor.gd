@@ -19,19 +19,31 @@
 #   - Conditional bonus damage (target debuffs, caster buffs)
 #   - Bonus damage to isolated targets (no allies nearby)
 #   - Large-unit deduplication: AOE only damages a multi-tile unit once
+#   - Aura activation: abilities marked is_aura activate an AuraData zone
+#   - Crit Overload: notifies AuraManager when a crit lands inside an aura
+#   - Momentum: notifies AuraManager when a kill happens inside an aura
 
 extends Node
 
-# Set by BattleManager on startup.
+# ── EXTERNAL REFERENCES ───────────────────────────────────────────────────────
+
 var grid_ref: Node = null
+# Set by BattleManager on startup.
 # We use grid_ref to look up units at cells, check passability, and access
 # the special-effect maps (shield_map, thorns_map, guardian_map, tether_map).
+
 var aura_manager: Node = null
-# Set by BattleManager on startup, same as grid_ref.
-# Used to activate auras and fire Crit Overload / Momentum events.
+# Set by BattleManager on startup, alongside grid_ref.
+# Used to activate auras when an aura ability is used, and to fire
+# Crit Overload and Momentum events when crits and kills happen.
+
+# ── INTERNAL STATE ────────────────────────────────────────────────────────────
 
 var _last_hit_was_crit: bool = false
-# Set to true inside calculate_damage() when a crit occurs.
+# Set to true inside calculate_damage() whenever a critical hit is rolled.
+# Read inside _apply_damage_with_effects() to decide whether to fire Crit Overload.
+# Reset to false at the START of every calculate_damage() call so it is always
+# accurate for the most recent hit.
 
 # ── MAIN ENTRY POINT ──────────────────────────────────────────────────────────
 
@@ -46,18 +58,24 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 	#   origin_cell  — For line/cone shapes, the cell the player aimed at
 	#                  (used to determine dash direction).
 
-	# ── STEP 0: MANA GATE ─────────────────────────────────────────────────────
-	# Check BEFORE doing anything else. If the unit can't afford this, 
-	# and they don't have an Arcana Charge, abort.
+	# ── STEP 0: CASTER VALIDITY + MANA GATE ──────────────────────────────────
+	# Check the caster is still alive first. It's possible for an aura's entry
+	# damage to kill the caster between when the ability was queued and when this
+	# function actually runs (e.g. an enemy walks into a thorns aura and dies).
+	if not is_instance_valid(caster):
+		return
+
+	# Check BEFORE doing anything else. If the unit can't afford this,
+	# and they don't have an Arcana Charge, abort immediately.
 	if not caster.has_arcana_charge and not caster.can_afford_ability(ability):
 		print("⛔ ", caster.unit_data.display_name, " cannot afford '",
 			  ability.display_name, "' (needs ", ability.mana_cost, " mana, has ",
 			  caster.current_mana, ")")
 		return
-	
-	print("🌵 execute_ability called: ", ability.display_name, 
-	  " | target_cells: ", target_cells, 
-	  " | caster: ", caster.unit_data.display_name)
+
+	print("🌵 execute_ability called: ", ability.display_name,
+		  " | target_cells: ", target_cells,
+		  " | caster: ", caster.unit_data.display_name)
 
 	# ── STEP 1: APPLY COSTS ───────────────────────────────────────────────────
 	# Deduct mana and HP cost immediately (before damage resolves).
@@ -65,8 +83,7 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 	if caster.has_arcana_charge:
 		caster.has_arcana_charge = false
 		print("✨ Arcana Charge consumed by ", caster.unit_data.display_name)
-		# Update animation/status effect here if needed
-		caster.play_animation("idle") 
+		caster.play_animation("idle")
 	else:
 		caster.spend_mana(ability.mana_cost)
 
@@ -75,7 +92,7 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 		caster.take_damage(hp_cost, "true")
 		if not is_instance_valid(caster):
 			return   # Caster killed themselves with HP cost — nothing more to do.
-			
+
 	# ── STEP 2: DASH ──────────────────────────────────────────────────────────
 	# A "dash" is a line AOE where the CASTER physically moves to the last valid
 	# tile. We resolve the caster's movement BEFORE applying damage so the caster
@@ -85,40 +102,45 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 	if ability.is_dash and ability.aoe_shape == "line":
 		dash_landing_cell = await _execute_dash(caster, ability, target_cells)
 
-	# ── STEP 3: COLLECT UNIQUE UNIT TARGETS ───────────────────────────────────
+	# ── STEP 3: COLLECT UNIQUE UNIT TARGETS AND APPLY EFFECTS ─────────────────
 	# Large units occupy multiple cells. We track which UnitNode references we
 	# have already hit so a 2×2 unit doesn't take damage 4 times from one AOE.
 	var already_hit: Array = []   # Filled with UnitNode references.
 
+	# If the caster was invisible, attacking reveals them.
 	if caster.has_status("invisible"):
 		caster.remove_status("invisible")
-		caster.update_visuals() # Refresh to make them opaque again
+		caster.update_visuals()
 		print("👁️ ", caster.unit_data.display_name, " revealed by attacking!")
-	
+
 	for cell in target_cells:
 		var target = grid_ref.get_unit_at(cell)
 		print("🔍 cell: ", cell, " | target: ", target)
+
+		# Don't let a unit damage themselves with an enemies-only ability.
 		if target == caster and ability.base_damage_multiplier > 0 and ability.affects_team == "enemies":
 			continue
-		
-		
 
 		# ── DAMAGE ────────────────────────────────────────────────────────────
+		# Only deal damage if the ability has a multiplier and there is a target.
+		# Deduplicate: large units occupying multiple cells only take damage once.
 		if ability.base_damage_multiplier > 0 and target != null:
 			if not target in already_hit:
 				already_hit.append(target)
 				var damage = calculate_damage(caster, target, ability)
+				# _apply_damage_with_effects handles guardian, shield, thorns,
+				# tether, and now also Crit Overload via _last_hit_was_crit.
 				_apply_damage_with_effects(caster, target, ability, damage)
 
-
-
 		# ── STATUS EFFECTS ────────────────────────────────────────────────────
+		# Apply status effects to the target (if any) from the ability's list.
 		if target != null:
 			for status_data in ability.applies_statuses:
 				target.apply_status(status_data)
 
 		# ── TETHER APPLICATION ────────────────────────────────────────────────
-		# If this ability applies a tether, register the hit unit in the tether group.
+		# If this ability applies a tether, register the hit unit in the group.
+		# All tethered units share a portion of damage dealt to any one of them.
 		if ability.applies_tether and target != null:
 			if grid_ref.has_method("register_tether"):
 				grid_ref.register_tether(target, ability.tether_id)
@@ -126,18 +148,18 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 					target.tether_ids.append(ability.tether_id)
 
 		# ── SHIELD APPLICATION ────────────────────────────────────────────────
+		# Gives the target a damage-absorbing barrier of flat HP.
 		if ability.applies_shield and target != null:
 			grid_ref.apply_shield(target, ability.shield_amount, ability.shield_duration_rounds)
 
 		# ── THORNS APPLICATION ────────────────────────────────────────────────
+		# When the target is hit, they reflect a portion of damage back to the attacker.
 		if ability.applies_thorns and target != null:
 			grid_ref.apply_thorns(target, ability.thorns_reflect_percent,
 								  ability.thorns_scaling_stat, ability.thorns_duration_rounds)
 
-
 		# ── GUARDIAN APPLICATION ──────────────────────────────────────────────
-		# "Guardian" makes the CASTER protect the TARGET. The caster intercepts
-		# damage aimed at the target for the duration.
+		# "Guardian" makes the CASTER intercept damage aimed at the TARGET ally.
 		if ability.applies_guardian and target != null:
 			grid_ref.apply_guardian(target, caster,
 									ability.guardian_redirect_percent,
@@ -145,11 +167,12 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 									ability.guardian_duration_rounds)
 
 		# ── SPAWN HAZARD ──────────────────────────────────────────────────────
+		# Places a hazard tile at the target cell (e.g. fire, poison pool).
 		if ability.spawns_hazard != null:
 			grid_ref.add_hazard(cell, ability.spawns_hazard, caster)
 
-		# ── DISPLACEMENT / KNOCKBACK ──────────────────────────────────────────
 		# ── DISPLACEMENT / KNOCKBACK / SCATTER ────────────────────────────────
+		# Moves the target unit away from, toward, or away from the AOE centre.
 		if ability.displacement_squares != 0 and target != null:
 			match ability.displacement_type:
 				"manual":
@@ -158,14 +181,12 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 						ability.displacement_squares,
 						ability.displacement_manual_dir
 					)
-
 				"auto":
 					_displace_unit_auto(
- 					   caster,
- 					   target,
+						caster,
+						target,
 						ability.displacement_squares
 					)
-
 				"scatter":
 					_displace_unit_scatter(
 						ability,
@@ -175,37 +196,39 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 					)
 
 		# ── HEALING ───────────────────────────────────────────────────────────
+		# Restores a percentage of the target's max HP (or the caster's if no target).
 		if ability.heal_percent > 0.0:
 			var heal_target = target if target != null else caster
 			var max_hp      = heal_target.get_stats().hp
 			heal_target.heal(int(max_hp * ability.heal_percent))
 
-
 	# ── STEP 3.5: AURA ACTIVATION ─────────────────────────────────────────────
-	# If this ability activates an aura, tell the AuraManager.
-	# This happens AFTER the normal damage/status loop so any immediate targets
-	# still get hit by the ability itself (e.g. an ability that both damages and
-	# places an aura simultaneously).
+	# If this ability activates an aura, tell the AuraManager to register it.
+	# This runs AFTER the normal target loop so any direct hit on the initial
+	# target still resolves first (e.g. an ability that both damages and places
+	# an aura simultaneously).
 	if ability.is_aura and ability.aura_data != null and aura_manager != null:
 		aura_manager.activate_aura(caster, ability.aura_data)
- 
+		print("🌀 Aura activated: '", ability.aura_data.id,
+			  "' by ", caster.unit_data.display_name)
 
 	# ── STEP 4: COOLDOWN ──────────────────────────────────────────────────────
+	# Put this ability on cooldown so it cannot be used again immediately.
 	if ability.cooldown_rounds > 0:
 		caster.ability_cooldowns[ability.id] = ability.cooldown_rounds
 
 	# ── STEP 5: POST-ATTACK MOVEMENT ─────────────────────────────────────────
 	# If the ability grants the caster extra movement squares after attacking,
-	# set the flag on the unit so BattleManager can handle the input next.
+	# set the flag on the unit so BattleManager can handle the input next turn.
 	if ability.post_attack_move_squares > 0:
 		caster.pending_post_attack_moves = ability.post_attack_move_squares
-		# BattleManager watches for this flag and shows movement tiles again.
 
 	# ── STEP 6: LAUNCH PROJECTILE / VFX ─────────────────────────────────────
-	# (Visual only — game logic is already applied above.)
-	if ability.is_dash and ability.dash_effect_scene != null:
-		# The "projectile" for a dash is the caster themselves travelling the line.
-		# We already moved the caster in _execute_dash, so we just play the VFX.
+	# Visual only — all game logic above is already applied.
+	# Aura abilities skip projectile VFX (the aura visual handles its own display).
+	if ability.is_aura:
+		pass   # AuraManager handles aura visuals; no projectile needed.
+	elif ability.is_dash and ability.dash_effect_scene != null:
 		pass   # Future: trigger a dash trail particle system here.
 	elif not ability.is_dash and target_cells.size() > 0:
 		if ability.aoe_shape == "single":
@@ -213,11 +236,14 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 		else:
 			await _play_aoe_vfx(caster, ability, target_cells, origin_cell)
 
-# ── DAMAGE APPLICATION (with Shield / Thorns / Guardian / Tether) ────────────
+# ── DAMAGE APPLICATION (with Shield / Thorns / Guardian / Tether / Crit Overload) ──
 
 func _apply_damage_with_effects(caster, target, ability: AbilityData, damage: int) -> void:
 	# This is the full damage pipeline. Each step can absorb, redirect, or
 	# reflect a portion of the damage before it touches the target's HP.
+	#
+	# We also read _last_hit_was_crit (set by calculate_damage just before this
+	# is called) to fire the Crit Overload event when relevant.
 
 	# -- 1. GUARDIAN CHECK ─────────────────────────────────────────────────────
 	# If a Guardian is protecting this unit, they intercept a portion of the hit.
@@ -227,12 +253,10 @@ func _apply_damage_with_effects(caster, target, ability: AbilityData, damage: in
 		var redirect_pct: float = guardian_entry["redirect_percent"]
 
 		# Calculate how much damage the Guardian takes.
-		# The "uses_defense" setting decides which stat to use when mitigating
-		# the redirected hit against the Guardian.
+		# The "uses_defense" setting decides which stat mitigates the redirected hit.
 		var redirected_dmg = int(damage * redirect_pct)
 		var remaining_dmg  = damage - redirected_dmg
 
-		# Apply the redirected hit to the Guardian using their chosen defense stat.
 		var guard_dmg = redirected_dmg
 		match guardian_entry["uses_defense"]:
 			"caster_def":   guard_dmg = max(1, redirected_dmg - guardian.get_effective_def())
@@ -240,40 +264,42 @@ func _apply_damage_with_effects(caster, target, ability: AbilityData, damage: in
 			"target_def":   guard_dmg = max(1, redirected_dmg - target.get_effective_def())
 			"target_mdef":  guard_dmg = max(1, redirected_dmg - target.get_effective_mdef())
 
-		# Guardian takes the redirected portion (no further special effects —
-		# the instructions say Guardian's own Thorns/Shield do NOT apply here).
+		# Guardian's own Thorns/Shield do NOT apply to the redirected portion.
 		guardian.take_damage(guard_dmg, ability.damage_type)
 		_spawn_damage_number(guard_dmg, guardian.position)
 		print("🛡️ Guardian intercepted ", guard_dmg, " damage for ", target.unit_data.display_name)
 
-		# The original target takes only the remainder.
 		damage = remaining_dmg
 		if damage <= 0:
+			_last_hit_was_crit = false   # Reset the flag even if we abort early.
 			return   # Guardian absorbed everything.
 
 	# -- 2. SHIELD CHECK ───────────────────────────────────────────────────────
-	# The target's barrier absorbs damage before it touches HP.
+	# The target's barrier absorbs incoming damage before it touches HP.
 	if grid_ref.has_method("absorb_shield_damage"):
 		damage = grid_ref.absorb_shield_damage(target, damage)
 		if damage <= 0:
 			print("🛡️ Shield absorbed all damage for ", target.unit_data.display_name)
+			_last_hit_was_crit = false   # Reset the flag even if we abort early.
 			return
 
 	# -- 3. APPLY DAMAGE TO TARGET ─────────────────────────────────────────────
 	var hp_before_damage: int = target.current_hp
 	var actual_damage = target.take_damage(damage, ability.damage_type)
 	_spawn_damage_number(actual_damage, target.position)
-	
-	# -- CRIT OVERLOAD CHECK ───────────────────────────────────────────────────
-	# If this hit was a critical strike and the caster has a Crit Overload aura,
-	# let the AuraManager handle the splash.
+
+	# -- 3.5 CRIT OVERLOAD ─────────────────────────────────────────────────────
+	# If this hit was a critical strike AND the caster has an active aura with
+	# Crit Overload enabled, notify the AuraManager so it can roll the splash.
+	# _last_hit_was_crit is set inside calculate_damage() for the most recent hit.
 	if _last_hit_was_crit and aura_manager != null:
 		aura_manager.on_critical_hit(caster, target, actual_damage)
-	_last_hit_was_crit = false  # Reset for the next hit.
+	# Always reset after reading so the next non-crit hit doesn't falsely trigger.
+	_last_hit_was_crit = false
 
 	# -- 4. THORNS REFLECTION ──────────────────────────────────────────────────
-	# After the hit lands, check if the target has Thorns.
-	# If so, reflect a portion back to the CASTER.
+	# After the hit lands, check if the target has Thorns active.
+	# If so, reflect a portion of damage back to the CASTER.
 	var thorns_entry = grid_ref.get_thorns(target)
 	if not thorns_entry.is_empty() and is_instance_valid(caster):
 		var stat_name: String = thorns_entry["scaling_stat"]
@@ -292,30 +318,19 @@ func _apply_damage_with_effects(caster, target, ability: AbilityData, damage: in
 
 	# -- 5. TETHER PROPAGATION ─────────────────────────────────────────────────
 	# Only for SINGLE-TARGET abilities. If the target is tethered, pass a portion
-	# of the damage to all other units in the same tether group.
+	# of the damage to every other unit in the same tether group.
 	if ability.aoe_shape == "single" and target.tether_ids.size() > 0:
 		for tether_id in target.tether_ids:
-			# Only propagate from the ABILITY's tether if it matches — or always
-			# propagate from the target's existing tethers regardless of what hit them.
 			var tethered = grid_ref.get_tethered_units(tether_id, target)
 			for ally in tethered:
 				if not is_instance_valid(ally):
 					continue
-				# Determine if this was an overkill hit.
+				# Overkill hits pass a larger percentage to tether-mates.
 				var is_overkill = (hp_before_damage - actual_damage) <= 0 and actual_damage > hp_before_damage
-				# Choose the right tether percent based on overkill.
-				# We look up the tether percent from the STATUS on the target unit
-				# (stored when the tether was applied). Here we use a simple approach:
-				# read from the ability that initially applied the tether, or fall back to 0.5.
-				var tether_pct: float = 0.5
+				var tether_pct: float   = 0.5
 				var overkill_pct: float = 0.75
-				# If the tether was applied by an ability we can reference, read its values.
-				# For now we store tether config on the STATUS or read from a tag; using
-				# defaults here and letting designers override via AbilityData on the ORIGIN.
-				# (See tether_damage_percent on the ability that created the tether.)
 				var pass_damage = int(actual_damage * (overkill_pct if is_overkill else tether_pct))
 				pass_damage = max(1, pass_damage)
-				var ally_hp_before = ally.current_hp
 				var ally_actual = grid_ref.absorb_shield_damage(ally, pass_damage) \
 								  if grid_ref.has_method("absorb_shield_damage") else pass_damage
 				ally.take_damage(ally_actual, "true")   # Tether uses true damage.
@@ -323,7 +338,8 @@ func _apply_damage_with_effects(caster, target, ability: AbilityData, damage: in
 				print("🔗 Tether propagated ", ally_actual, " to ", ally.unit_data.display_name)
 
 	# -- 6. ON-KILL CHECK ──────────────────────────────────────────────────────
-	# If the target just died (HP was > 0 before this hit), trigger on-kill effects.
+	# If the target just died from this hit (HP was above 0 before, now at/below 0),
+	# trigger on-kill effects. This also notifies Momentum via _trigger_on_kill.
 	if hp_before_damage > 0 and target.current_hp <= 0:
 		_trigger_on_kill(caster, ability, target)
 		print("DEBUG: Kill confirmed for ", target.unit_data.display_name)
@@ -332,11 +348,21 @@ func _apply_damage_with_effects(caster, target, ability: AbilityData, damage: in
 
 func _trigger_on_kill(caster, ability: AbilityData, dead_target) -> void:
 	# Called immediately after a killing blow is confirmed.
+	# Handles ability on-kill effects AND notifies the AuraManager for Momentum.
+	if not is_instance_valid(caster):
+		return
+
+	# ── MOMENTUM NOTIFICATION ──────────────────────────────────────────────────
+	# Tell the AuraManager that a kill happened. It will check whether the killed
+	# unit was inside any of the caster's Momentum auras, and if so, award the
+	# per-kill stat bonuses. We do this BEFORE checking has_on_kill_effect so that
+	# Momentum always fires even on abilities without other on-kill effects.
 	if aura_manager != null:
 		aura_manager.on_unit_killed_inside_aura(caster, dead_target)
+
+	# ── STANDARD ON-KILL EFFECTS ──────────────────────────────────────────────
+	# All the logic below only runs if the ability has on-kill effects enabled.
 	if not ability.has_on_kill_effect:
-		return
-	if not is_instance_valid(caster):
 		return
 
 	print("💀 On-Kill triggered by ", caster.unit_data.display_name)
@@ -347,11 +373,8 @@ func _trigger_on_kill(caster, ability: AbilityData, dead_target) -> void:
 		if ability.on_kill_trigger_on_caster:
 			spawn_cell = caster.grid_position
 		else:
-			# Use the dead target's LAST known position before it was freed.
-			# Since the target may already be freed, we rely on the kill position
-			# stored in the calling context. We use caster position as fallback.
-			spawn_cell = caster.grid_position   # Improve: store last_position on die().
-
+			# Use caster position as fallback; improve by storing last_position on die().
+			spawn_cell = caster.grid_position
 		var trigger_scene = ability.on_kill_trigger_ability.instantiate()
 		var spawn_root = _get_spawn_root()
 		if spawn_root != null:
@@ -381,8 +404,15 @@ func _trigger_on_kill(caster, ability: AbilityData, dead_target) -> void:
 
 func calculate_damage(caster, target, ability: AbilityData) -> int:
 	# The core formula: (ATK - DEF) * multiplier, modified by conditions.
+	# Also sets _last_hit_was_crit = true if a crit is rolled, so that
+	# _apply_damage_with_effects can fire Crit Overload immediately after.
+
 	if not is_instance_valid(target) or not is_instance_valid(caster):
 		return 0
+
+	# Reset the crit flag at the start of every damage calculation so that a
+	# previous crit can never bleed into a different hit.
+	_last_hit_was_crit = false
 
 	# -- 1. Base offensive / defensive stats ──────────────────────────────────
 	var offensive_stat: int = 0
@@ -395,6 +425,7 @@ func calculate_damage(caster, target, ability: AbilityData) -> int:
 		"matk":
 			offensive_stat = caster.get_effective_matk()
 		_:
+			# Default to ATK if an unrecognised stat is set.
 			offensive_stat = caster.get_effective_atk()
 
 	match ability.damage_type:
@@ -405,12 +436,12 @@ func calculate_damage(caster, target, ability: AbilityData) -> int:
 
 	# -- 2. Per-buff stat bonuses (only for this attack) ──────────────────────
 	# These are bonuses the ability adds to the caster's EFFECTIVE stats for
-	# this single hit based on how many buffs the caster has.
+	# this single hit, based on how many buffs the caster has active.
 	var caster_buff_count: int = min(caster.get_buff_count(), ability.buff_bonus_max_stacks)
 	offensive_stat += ability.bonus_atk_per_caster_buff  * caster_buff_count
 	offensive_stat += ability.bonus_matk_per_caster_buff * caster_buff_count
-	defensive_stat -= ability.bonus_def_per_caster_buff  * caster_buff_count   # more def on caster = less net dmg dealt
-	# Note: crit bonuses are handled below.
+	defensive_stat -= ability.bonus_def_per_caster_buff  * caster_buff_count
+	# (More defence on caster = less net damage dealt; hence the subtraction.)
 
 	# -- 3. Base damage calculation ───────────────────────────────────────────
 	var base: float = float(offensive_stat - defensive_stat) * ability.base_damage_multiplier
@@ -422,9 +453,18 @@ func calculate_damage(caster, target, ability: AbilityData) -> int:
 
 	if roll < crit_chance:
 		print("⚡ CRITICAL HIT!")
+
+		# ── SET THE CRIT FLAG ──────────────────────────────────────────────────
+		# _apply_damage_with_effects reads this right after we return, so it
+		# knows to notify the AuraManager for Crit Overload.
 		_last_hit_was_crit = true
-		var crit_dmg_pct: float = caster.get_effective_crit_damage()  # <-- CHANGED
+
+		# Use get_effective_crit_damage() so Momentum crit_damage bonuses are
+		# included. This replaces the old direct read of get_stats().crit_damage.
+		var crit_dmg_pct: float = caster.get_effective_crit_damage()
 		crit_dmg_pct += ability.bonus_crit_dmg_per_caster_buff * float(caster_buff_count)
+
+		# Recalculate base damage using the boosted attack value.
 		var crit_atk: int = int(offensive_stat * (crit_dmg_pct / 100.0))
 		base = float(crit_atk - defensive_stat) * ability.base_damage_multiplier
 
@@ -466,12 +506,13 @@ func calculate_damage(caster, target, ability: AbilityData) -> int:
 func _is_target_isolated(target, check_range: int) -> bool:
 	# Returns true if no ally of the TARGET is within check_range tiles.
 	# "Ally" = a unit on the same team (same is_player_unit flag).
+	# Uses Manhattan distance so diagonals count correctly.
 	for dx in range(-check_range, check_range + 1):
 		for dy in range(-check_range, check_range + 1):
 			if dx == 0 and dy == 0:
 				continue   # Skip the target's own cell.
 			if abs(dx) + abs(dy) > check_range:
-				continue   # Manhattan distance > range, skip.
+				continue   # Outside Manhattan distance range.
 			var check_cell = target.grid_position + Vector2i(dx, dy)
 			var unit_there = grid_ref.get_unit_at(check_cell)
 			if unit_there != null and unit_there != target:
@@ -482,37 +523,34 @@ func _is_target_isolated(target, check_range: int) -> bool:
 # ── DASH ──────────────────────────────────────────────────────────────────────
 
 func _execute_dash(caster, ability: AbilityData, line_cells: Array) -> Vector2i:
+	# Moves the caster along a line, stopping at the last walkable tile.
+	# Returns the final landing cell.
 	if line_cells.is_empty():
 		return caster.grid_position
 
 	var landing_cell: Vector2i = caster.grid_position
-	
+
 	for cell in line_cells:
-		# Now using the function you just created in battle_grid.gd
 		if grid_ref.is_terrain_walkable(cell):
 			landing_cell = cell
 		else:
-			# Hit a wall or edge of the map; stop here.
-			break
+			break   # Hit a wall or map edge; stop here.
 
-	# Move the caster (visuals and snap)
 	var end_world: Vector2 = grid_ref.grid_to_world(landing_cell)
 	caster.snap_to(landing_cell)
 
-	# -- Optional trail visual: stretch a texture across all valid tiles -------
+	# Spawn an optional trail texture along the dash line.
 	if ability.dash_trail_texture != null:
 		_spawn_dash_trail(caster.position, grid_ref.grid_to_world(landing_cell),
 						  ability.dash_trail_texture)
 
-	# -- Move the caster sprite along the dash path ---------------------------
+	# Animate the caster sprite racing to the destination.
 	var start_world: Vector2 = caster.position
 	var distance:    float   = start_world.distance_to(end_world)
 	var duration:    float   = distance / ability.dash_speed
 
-	# Update grid registry BEFORE tweening so pathfinding is accurate.
-	caster.snap_to(landing_cell)
+	caster.snap_to(landing_cell)   # Grid registry updated before the tween.
 
-	# Now play the visual animation (the sprite races to the destination).
 	var tween = get_tree().create_tween()
 	tween.tween_property(caster, "position", end_world, duration)\
 		.set_trans(Tween.TRANS_LINEAR)\
@@ -526,22 +564,17 @@ func _execute_dash(caster, ability: AbilityData, line_cells: Array) -> Vector2i:
 func _spawn_dash_trail(from_world: Vector2, to_world: Vector2,
 					   trail_texture: Texture2D) -> void:
 	# Creates a stretched sprite that covers the entire dash line visually.
-	# The sprite is placed at the midpoint and scaled to reach both ends.
-	# It auto-deletes after 0.5 seconds.
+	# Auto-deletes after 0.5 seconds.
 	var spawn_root = _get_spawn_root()
 	if spawn_root == null:
 		return
 
 	var trail = Sprite2D.new()
 	trail.texture = trail_texture
-
-	# Position at the midpoint of the line.
 	trail.position = (from_world + to_world) / 2.0
-
-	# Rotate to point along the dash direction.
 	trail.rotation = from_world.angle_to_point(to_world)
 
-	# Scale: the X axis should equal the pixel distance; Y stays as 1 tile.
+	# Scale so the trail fills the distance exactly.
 	var pixel_length: float = from_world.distance_to(to_world)
 	var tex_size: Vector2   = trail_texture.get_size()
 	if tex_size.x > 0 and tex_size.y > 0:
@@ -549,10 +582,9 @@ func _spawn_dash_trail(from_world: Vector2, to_world: Vector2,
 	else:
 		trail.scale = Vector2(pixel_length / 96.0, 1.0)
 
-	trail.modulate = Color(1, 1, 1, 0.7)   # Slightly transparent.
+	trail.modulate = Color(1, 1, 1, 0.7)
 	spawn_root.add_child(trail)
 
-	# Fade out and remove after a short time.
 	var tween = get_tree().create_tween()
 	tween.tween_property(trail, "modulate:a", 0.0, 0.5)
 	tween.tween_callback(trail.queue_free)
@@ -560,6 +592,7 @@ func _spawn_dash_trail(from_world: Vector2, to_world: Vector2,
 # ── DISPLACEMENT HELPERS ──────────────────────────────────────────────────────
 
 func _displace_unit_auto(caster, target, squares: int) -> void:
+	# Pushes (positive) or pulls (negative) the target relative to the caster.
 	var direction: Vector2i = target.grid_position - caster.grid_position
 	if direction == Vector2i(0, 0):
 		return
@@ -580,32 +613,22 @@ func _displace_unit_auto(caster, target, squares: int) -> void:
 
 	for _i in range(steps):
 		var next: Vector2i = current + move_dir
-
-		# --- NEW: Stop if next tile is the caster (no overshoot)
 		if next == caster.grid_position:
 			break
-
-		# --- NEW: Stop if next tile is adjacent to caster (pull ends)
 		if next.distance_to(caster.grid_position) == 1:
 			current = next
 			break
-
 		if not grid_ref.is_passable(next):
 			break
-
 		current = next
 
 	if current != target.grid_position:
 		target.move_to(current)
 
-func _displace_unit_scatter(
-	ability: AbilityData,
-	target,
-	squares: int,
-	target_cells: Array
-) -> void:
 
-	# Compute center of AOE
+func _displace_unit_scatter(ability: AbilityData, target, squares: int,
+							target_cells: Array) -> void:
+	# Scatters the target outward from the centre of the AOE.
 	var sum_x: int = 0
 	var sum_y: int = 0
 	var count: int = target_cells.size()
@@ -615,20 +638,13 @@ func _displace_unit_scatter(
 		sum_y += cell.y
 
 	var center: Vector2i = Vector2i(sum_x / count, sum_y / count)
-
-	# Direction from center → target
 	var direction: Vector2i = target.grid_position - center
 	if direction == Vector2i(0, 0):
 		return
 
-	# Normalize to diagonal-aware step
 	var dir_f: Vector2 = Vector2(direction.x, direction.y).normalized()
-	var move_dir: Vector2i = Vector2i(
-		int(round(dir_f.x)),
-		int(round(dir_f.y))
-	)
+	var move_dir: Vector2i = Vector2i(int(round(dir_f.x)), int(round(dir_f.y)))
 
-	# Fallback to cardinal if normalization degenerates
 	if move_dir == Vector2i(0, 0):
 		if abs(direction.x) > abs(direction.y):
 			move_dir = Vector2i(sign(direction.x), 0)
@@ -648,22 +664,14 @@ func _displace_unit_scatter(
 		target.move_to(current)
 
 
-
 func _displace_unit_manual(target, squares: int, fixed_dir: Vector2i) -> void:
+	# Displaces the target in a fixed designer-chosen direction.
 	if fixed_dir == Vector2i(0, 0):
 		return
 
-	# Convert to float vector for normalization
-	var dir_f: Vector2 = Vector2(fixed_dir.x, fixed_dir.y)
-	dir_f = dir_f.normalized()
+	var dir_f: Vector2 = Vector2(fixed_dir.x, fixed_dir.y).normalized()
+	var move_dir: Vector2i = Vector2i(int(round(dir_f.x)), int(round(dir_f.y)))
 
-	# Back to grid step (round to nearest int)
-	var move_dir: Vector2i = Vector2i(
-		int(round(dir_f.x)),
-		int(round(dir_f.y))
-	)
-
-	# If normalization produced (0,0), fall back to cardinal
 	if move_dir == Vector2i(0, 0):
 		if abs(fixed_dir.x) >= abs(fixed_dir.y):
 			move_dir = Vector2i(sign(fixed_dir.x), 0)
@@ -683,8 +691,6 @@ func _displace_unit_manual(target, squares: int, fixed_dir: Vector2i) -> void:
 
 	if current != target.grid_position:
 		target.move_to(current)
-
-
 
 # ── PROJECTILE VFX ────────────────────────────────────────────────────────────
 
@@ -785,9 +791,10 @@ func _play_aoe_vfx(caster, ability: AbilityData, target_cells: Array,
 	if is_instance_valid(vfx_node):
 		vfx_node.queue_free()
 
-# ── SHARED HELPERS ─────────────────────────────────────────────────────────────
+# ── SHARED HELPERS ────────────────────────────────────────────────────────────
 
 func _apply_vfx_scaling(node: Node2D, target_size: Vector2, tile_size: float) -> void:
+	# Scales a VFX node to fit the target area.
 	if node is AnimatedSprite2D:
 		var sf = node.sprite_frames
 		if sf and sf.has_animation("default"):
@@ -808,6 +815,7 @@ func _apply_vfx_scaling(node: Node2D, target_size: Vector2, tile_size: float) ->
 
 func _get_spawn_root() -> Node:
 	# Finds the best node to parent VFX to.
+	# Prefers UnitLayer inside BattleGrid so VFX are in world space.
 	var tree = get_tree()
 	if tree == null:
 		return null
@@ -819,7 +827,7 @@ func _get_spawn_root() -> Node:
 
 
 func _spawn_damage_number(amount: int, pos: Vector2) -> void:
-	# Floats a damage number above the target's head.
+	# Floats an animated damage number above the target's head.
 	var tree = get_tree()
 	if tree == null:
 		return
@@ -839,9 +847,12 @@ func _spawn_damage_number(amount: int, pos: Vector2) -> void:
 	settings.font_color = Color(1.0, 0.1, 0.1)
 	settings.set("outline_width", 5)
 	settings.outline_color = Color(0, 0, 0)
+
+	# Larger gold text for high-damage hits.
 	if amount > 15:
 		settings.font_size  = 30
 		settings.font_color = Color(1.0, 0.8, 0.0)
+
 	damage_label.label_settings = settings
 	spawn_root.add_child(damage_label)
 
