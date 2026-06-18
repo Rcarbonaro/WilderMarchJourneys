@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ch1dy3yjh0oq3"
-path="res://.godot/imported/dreadknight_cast.png-668dd41fceab6538407545d18a2ec5a5.ctex"
+uid="uid://ben4yqrl65gof"
+path="res://.godot/imported/dryad_die.png-db3627b1f74903d506de710da568dc81.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/dreadknight/dreadknight_cast.png"
-dest_files=["res://.godot/imported/dreadknight_cast.png-668dd41fceab6538407545d18a2ec5a5.ctex"]
+source_file="res://sprites/dryad/dryad_die.png"
+dest_files=["res://.godot/imported/dryad_die.png-db3627b1f74903d506de710da568dc81.ctex"]
 
 [params]
 

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="AuraData" format=3 uid="uid://bys2b1xudatox"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_ba05s"]
+[ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="2_6xnlj"]
+[ext_resource type="Resource" uid="uid://j2jwvacgws5w" path="res://resources/status_effects/decayingaura.tres" id="2_8q58p"]
+
+[resource]
+script = ExtResource("2_6xnlj")
+id = "necroticaura"
+display_name = "Necrotic Aura"
+radius = 3
+duration_rounds = 10
+is_permanent = true
+damage_mode = "flat_true"
+damage_multiplier = 1.0
+applies_statuses = Array[ExtResource("1_ba05s")]([ExtResource("2_8q58p")])
+aura_color = Color(0.011764706, 0, 0.05490196, 0.40784314)
+metadata/_custom_type_script = "uid://dlthrdiu5tc4w"

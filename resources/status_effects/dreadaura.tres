@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://d0kwo2chvyc5b"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_gi6th"]
+
+[resource]
+script = ExtResource("1_gi6th")
+id = "dreadauradebuff"
+display_name = "Dread Aura"
+mov_modifier = -2
+crit_chance_modifier = -20.0
+metadata/_custom_type_script = "uid://gsbk18mmfnol"

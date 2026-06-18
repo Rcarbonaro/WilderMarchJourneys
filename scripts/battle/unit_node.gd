@@ -77,6 +77,9 @@ var pending_post_attack_moves: int = 0
 # If an ability has post_attack_move_squares > 0, this is set after the attack
 # so the battle_manager can grant the unit extra movement.
 
+#Add momentum bonus, currently aimed at helping bard
+var momentum_bonuses: Dictionary = {}
+
 # ── TETHER TRACKING ───────────────────────────────────────────────────────────
 
 var tether_ids: Array = []
@@ -188,8 +191,12 @@ func get_stats() -> StatsData:
 
 func get_effective_atk() -> int:
 	var base = get_stats().atk
+	# Add bonuses from active status effects (buffs/debuffs).
 	for s in active_statuses:
 		base += s["data"].atk_modifier * s["stacks"]
+	# Add permanent momentum bonuses from any aura this unit benefits from.
+	for aura_id in momentum_bonuses:
+		base += momentum_bonuses[aura_id].get("atk", 0)
 	return max(0, base)
 
 
@@ -197,6 +204,8 @@ func get_effective_matk() -> int:
 	var base = get_stats().matk
 	for s in active_statuses:
 		base += s["data"].matk_modifier * s["stacks"]
+	for aura_id in momentum_bonuses:
+		base += momentum_bonuses[aura_id].get("matk", 0)
 	return max(0, base)
 
 
@@ -204,6 +213,8 @@ func get_effective_def() -> int:
 	var base = get_stats().def
 	for s in active_statuses:
 		base += s["data"].def_modifier * s["stacks"]
+	for aura_id in momentum_bonuses:
+		base += momentum_bonuses[aura_id].get("def", 0)
 	return max(0, base)
 
 
@@ -211,6 +222,8 @@ func get_effective_mdef() -> int:
 	var base = get_stats().mdef
 	for s in active_statuses:
 		base += s["data"].mdef_modifier * s["stacks"]
+	for aura_id in momentum_bonuses:
+		base += momentum_bonuses[aura_id].get("mdef", 0)
 	return max(0, base)
 
 
@@ -218,8 +231,10 @@ func get_effective_mov() -> int:
 	var base = get_stats().mov
 	for s in active_statuses:
 		if s["data"].is_root:
-			return 0   # Rooted units cannot move at all.
+			return 0  # Rooted units cannot move at all.
 		base += s["data"].mov_modifier * s["stacks"]
+	for aura_id in momentum_bonuses:
+		base += momentum_bonuses[aura_id].get("mov", 0)
 	return max(0, base)
 
 
@@ -227,8 +242,19 @@ func get_effective_crit_chance() -> float:
 	var base = get_stats().crit_chance
 	for s in active_statuses:
 		base += s["data"].crit_chance_modifier * s["stacks"]
+	# Momentum crit_chance bonus is already a float percentage — add directly.
+	for aura_id in momentum_bonuses:
+		base += momentum_bonuses[aura_id].get("crit_chance", 0.0)
 	return base
 
+func get_effective_crit_damage() -> float:
+	# Returns the unit's crit damage percentage, including any momentum bonuses.
+	# This replaces the direct read of get_stats().crit_damage in ability_executor.
+	var base: float = get_stats().crit_damage
+	for aura_id in momentum_bonuses:
+		base += momentum_bonuses[aura_id].get("crit_damage", 0.0)
+	return base
+	
 # ── MANA ──────────────────────────────────────────────────────────────────────
 
 func can_afford_ability(ability: AbilityData) -> bool:
@@ -312,6 +338,12 @@ func die() -> void:
 			grid_ref.guardian_map.erase(self)
 		if grid_ref.thorns_map.has(self):
 			grid_ref.thorns_map.erase(self)
+			# Notify the AuraManager that this unit has died.
+	# This will immediately strip any Momentum bonuses this unit's auras granted.
+	# We do this BEFORE emitting unit_died so the bonuses are gone before any
+	# downstream logic (like BattleManager updating the UI) runs.
+	if grid_ref != null and grid_ref.has_node("AuraManager"):
+		grid_ref.get_node("AuraManager").remove_all_auras_for(self)
 
 	unit_died.emit(self)
 

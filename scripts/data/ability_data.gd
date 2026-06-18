@@ -10,7 +10,7 @@
 #   - Mana cost checked before casting
 #   - Special effect architecture: Tether, Thorns, Shield, Guardian,
 #     On-Kill, Movement-after-attack, Conditional bonus damage
-
+ 
 class_name AbilityData
 extends Resource
 
@@ -313,3 +313,6 @@ extends Resource
 @export var buff_bonus_max_stacks: int = 10
 # Maximum number of buffs counted for the above per-buff bonuses.
 # Prevents infinite scaling.
+
+@export var is_aura: bool = false
+@export var aura_data: AuraData

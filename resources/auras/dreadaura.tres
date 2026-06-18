@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="AuraData" format=3 uid="uid://cvaecrhgoehfq"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_mfbj7"]
+[ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="2_jwok8"]
+[ext_resource type="Resource" uid="uid://d0kwo2chvyc5b" path="res://resources/status_effects/dreadaura.tres" id="2_t0cht"]
+
+[resource]
+script = ExtResource("2_jwok8")
+id = "dreadaura"
+display_name = "Dread Aura"
+radius = 3
+duration_rounds = 7
+is_permanent = true
+flat_damage = 0
+damage_multiplier = 0.0
+applies_statuses = Array[ExtResource("1_mfbj7")]([ExtResource("2_t0cht")])
+aura_color = Color(0.14737126, 0.00028938614, 0.32821283, 0.2509804)
+crit_overload_chance = 0.0
+crit_overload_radius = 0
+metadata/_custom_type_script = "uid://dlthrdiu5tc4w"

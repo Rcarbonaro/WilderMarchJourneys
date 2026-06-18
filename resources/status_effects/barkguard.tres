@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://h1bwtk25nbyd"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_j2wvg"]
+
+[resource]
+script = ExtResource("1_j2wvg")
+id = "barkguard"
+display_name = "Barkguard"
+duration_rounds = 2
+cleansable = false
+def_modifier = 2
+mov_modifier = -2
+is_root = true
+metadata/_custom_type_script = "uid://gsbk18mmfnol"

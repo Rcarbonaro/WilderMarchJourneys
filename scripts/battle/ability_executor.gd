@@ -26,6 +26,12 @@ extends Node
 var grid_ref: Node = null
 # We use grid_ref to look up units at cells, check passability, and access
 # the special-effect maps (shield_map, thorns_map, guardian_map, tether_map).
+var aura_manager: Node = null
+# Set by BattleManager on startup, same as grid_ref.
+# Used to activate auras and fire Crit Overload / Momentum events.
+
+var _last_hit_was_crit: bool = false
+# Set to true inside calculate_damage() when a crit occurs.
 
 # ── MAIN ENTRY POINT ──────────────────────────────────────────────────────────
 
@@ -175,6 +181,14 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 			heal_target.heal(int(max_hp * ability.heal_percent))
 
 
+	# ── STEP 3.5: AURA ACTIVATION ─────────────────────────────────────────────
+	# If this ability activates an aura, tell the AuraManager.
+	# This happens AFTER the normal damage/status loop so any immediate targets
+	# still get hit by the ability itself (e.g. an ability that both damages and
+	# places an aura simultaneously).
+	if ability.is_aura and ability.aura_data != null and aura_manager != null:
+		aura_manager.activate_aura(caster, ability.aura_data)
+ 
 
 	# ── STEP 4: COOLDOWN ──────────────────────────────────────────────────────
 	if ability.cooldown_rounds > 0:
@@ -249,6 +263,13 @@ func _apply_damage_with_effects(caster, target, ability: AbilityData, damage: in
 	var hp_before_damage: int = target.current_hp
 	var actual_damage = target.take_damage(damage, ability.damage_type)
 	_spawn_damage_number(actual_damage, target.position)
+	
+	# -- CRIT OVERLOAD CHECK ───────────────────────────────────────────────────
+	# If this hit was a critical strike and the caster has a Crit Overload aura,
+	# let the AuraManager handle the splash.
+	if _last_hit_was_crit and aura_manager != null:
+		aura_manager.on_critical_hit(caster, target, actual_damage)
+	_last_hit_was_crit = false  # Reset for the next hit.
 
 	# -- 4. THORNS REFLECTION ──────────────────────────────────────────────────
 	# After the hit lands, check if the target has Thorns.
@@ -311,6 +332,8 @@ func _apply_damage_with_effects(caster, target, ability: AbilityData, damage: in
 
 func _trigger_on_kill(caster, ability: AbilityData, dead_target) -> void:
 	# Called immediately after a killing blow is confirmed.
+	if aura_manager != null:
+		aura_manager.on_unit_killed_inside_aura(caster, dead_target)
 	if not ability.has_on_kill_effect:
 		return
 	if not is_instance_valid(caster):
@@ -399,7 +422,8 @@ func calculate_damage(caster, target, ability: AbilityData) -> int:
 
 	if roll < crit_chance:
 		print("⚡ CRITICAL HIT!")
-		var crit_dmg_pct: float = caster.get_stats().crit_damage
+		_last_hit_was_crit = true
+		var crit_dmg_pct: float = caster.get_effective_crit_damage()  # <-- CHANGED
 		crit_dmg_pct += ability.bonus_crit_dmg_per_caster_buff * float(caster_buff_count)
 		var crit_atk: int = int(offensive_stat * (crit_dmg_pct / 100.0))
 		base = float(crit_atk - defensive_stat) * ability.base_damage_multiplier

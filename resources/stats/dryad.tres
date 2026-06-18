@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="StatsData" format=3 uid="uid://xtv5f8yaa1ea"]
+
+[ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="1_1hhiw"]
+
+[resource]
+script = ExtResource("1_1hhiw")
+hp = 38
+atk = 6
+matk = 8
+def = 10
+mdef = 13
+mov = 2
+metadata/_custom_type_script = "uid://c3bdx4sniu017"
