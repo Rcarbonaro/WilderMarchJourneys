@@ -151,12 +151,24 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 		enemy.move_to(best_move_cell)
 		await enemy.movement_finished
 
-		# ── NOTIFY AURA MANAGER AFTER ENEMY MOVES ─────────────────────────────
-		# If the enemy just walked into a player's aura zone, apply damage and
-		# status effects immediately rather than waiting for end-of-round.
-		# We reach the AuraManager through the grid node (it's a child of BattleGrid).
-		if is_instance_valid(enemy) and grid.has_node("AuraManager"):
+		# ── ENTRY EFFECTS AFTER ENEMY MOVES ───────────────────────────────────
+		# The enemy may have died during the movement tween (e.g. from a Thorns
+		# or aura tick). Guard every access from here on.
+		if not is_instance_valid(enemy):
+			return
+		# Hazard: "enter" trigger fires for any hazard tile they landed on.
+		grid.apply_hazard_to_unit(enemy, enemy.grid_position, "enter")
+		# Aura: fire entry damage/status for any player aura they walked into.
+		if grid.has_node("AuraManager"):
 			grid.get_node("AuraManager").on_enemy_unit_moved(enemy)
+		# The entry effects may have just killed them — check again.
+		if not is_instance_valid(enemy):
+			return
+
+	# Re-check validity before the combat phase — the enemy could have died
+	# from entry effects above, or never moved but died some other way.
+	if not is_instance_valid(enemy):
+		return
 
 	# 6. Combat phase — attack if we're now in range with line of sight.
 	var final_dist = (abs(enemy.grid_position.x - target_player.grid_position.x)
@@ -177,12 +189,20 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 
 		await get_tree().create_timer(0.5).timeout
 
+		# The enemy may have died during the pre-attack delay (e.g. from a DoT
+		# status tick). Check before handing to the executor.
+		if not is_instance_valid(enemy):
+			return
+
 		await executor.execute_ability(
 			enemy, chosen_ability,
 			[target_player.grid_position], target_player.grid_position
 		)
 
-		# Apply cooldown from the ability's cooldown field.
+		# Apply cooldown — guard again because execute_ability is async and the
+		# enemy could have died from Thorns/tether during their own attack.
+		if not is_instance_valid(enemy):
+			return
 		if "ability_cooldowns" in enemy:
 			var cd_value = 0
 			if "base_cooldown" in chosen_ability:
@@ -194,7 +214,13 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 
 		await get_tree().create_timer(0.5).timeout
 
-	if is_instance_valid(enemy) and enemy.has_method("play_animation"):
+	# Final guard before touching has_acted — by this point the enemy is
+	# expected to be alive, but entry effects, Thorns, or tether could have
+	# killed them at any await above.
+	if not is_instance_valid(enemy):
+		return
+
+	if enemy.has_method("play_animation"):
 		enemy.play_animation("idle")
 
 	enemy.has_acted = true

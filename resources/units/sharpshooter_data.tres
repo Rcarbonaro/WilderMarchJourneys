@@ -1,17 +1,17 @@
-[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://b11xniwva6u1u"]
+[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://db84ajgfylp50"]
 
-[ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="1_6u5ja"]
-[ext_resource type="Resource" uid="uid://b4f8tn7oiimmj" path="res://resources/stats/sharpshooter_stats.tres" id="1_s1yhq"]
-[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_4j4f2"]
-[ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_u7ayh"]
-[ext_resource type="Resource" uid="uid://skgk2liny7oi" path="res://resources/abilities/sharpshooter_basic.tres" id="4_6cpkx"]
-[ext_resource type="Resource" uid="uid://c14he4gl11sl3" path="res://resources/abilities/piercing_shot.tres" id="5_udbhy"]
+[ext_resource type="Resource" uid="uid://b4f8tn7oiimmj" path="res://resources/stats/sharpshooter_stats.tres" id="1_jdtuf"]
+[ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="1_r2f4j"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_jdtuf"]
+[ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_fwn01"]
+[ext_resource type="Resource" uid="uid://dxf13gtkhyi5o" path="res://resources/abilities/sharpshooterbasic.tres" id="4_e2uu1"]
+[ext_resource type="Resource" uid="uid://bx8ncmffrc8ro" path="res://resources/abilities/focusstance.tres" id="5_00g4e"]
 
 [resource]
-script = ExtResource("1_6u5ja")
+script = ExtResource("1_r2f4j")
 id = "sharpshooter"
 display_name = "Sharpshooter"
-stats_by_level = Array[ExtResource("3_u7ayh")]([ExtResource("1_s1yhq")])
-base_stats = ExtResource("1_s1yhq")
-starting_abilities = Array[ExtResource("2_4j4f2")]([ExtResource("4_6cpkx"), ExtResource("5_udbhy")])
+stats_by_level = Array[ExtResource("3_fwn01")]([ExtResource("1_jdtuf")])
+base_stats = ExtResource("1_jdtuf")
+starting_abilities = Array[ExtResource("2_jdtuf")]([ExtResource("4_e2uu1"), ExtResource("5_00g4e")])
 metadata/_custom_type_script = "uid://utmj7y8m802a"

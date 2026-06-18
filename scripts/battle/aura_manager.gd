@@ -226,43 +226,87 @@ func on_enemy_unit_moved(unit) -> void:
 		_apply_statuses_to(unit, data)
 
 
+func begin_caster_move(caster, new_cell: Vector2i) -> void:
+	# Called by unit_node.move_to() BEFORE the slide tween starts.
+	# Fires the aura visual tween at the exact same moment as the unit tween,
+	# so the overlay moves in perfect lockstep with the sprite underneath.
+	#
+	# Cell coverage and ally entry-buff logic are handled AFTER movement finishes
+	# in on_caster_moved() — this function is purely visual.
+	for entry in _active_auras:
+		if entry["caster"] != caster:
+			continue
+		if not entry["data"].follows_caster:
+			continue
+
+		# Compute where each visual needs to end up.
+		var data: AuraData   = entry["data"]
+		var new_cells: Array = _get_aura_cells(new_cell, data.radius)
+
+		match data.visual_type:
+			"color", "sprite":
+				if entry["visuals"].size() == new_cells.size():
+					for idx in range(new_cells.size()):
+						var visual = entry["visuals"][idx]
+						if not is_instance_valid(visual):
+							continue
+						var cell: Vector2i = new_cells[idx]
+						var target_pos: Vector2
+						if data.visual_type == "color":
+							target_pos = grid_ref.grid_to_world(cell) - Vector2(TILE_SIZE / 2.0, TILE_SIZE / 2.0)
+						else:
+							target_pos = grid_ref.grid_to_world(cell)
+						var tween = visual.create_tween()
+						tween.set_trans(Tween.TRANS_CUBIC)
+						tween.set_ease(Tween.EASE_OUT)
+						tween.tween_property(visual, "position", target_pos, VISUAL_MOVE_DURATION)
+				# If cell count changed (map boundary edge case), do nothing here —
+				# _rebuild_visuals in on_caster_moved will handle it after arrival.
+
+			"scene":
+				var new_anchor_world: Vector2 = grid_ref.grid_to_world(new_cell)
+				for visual in entry["visuals"]:
+					if not is_instance_valid(visual):
+						continue
+					var tween = visual.create_tween()
+					tween.set_trans(Tween.TRANS_CUBIC)
+					tween.set_ease(Tween.EASE_OUT)
+					tween.tween_property(visual, "position", new_anchor_world, VISUAL_MOVE_DURATION)
+
+
 func on_caster_moved(caster) -> void:
-	# Called by BattleManager after the CASTER (the unit who owns an aura) moves.
-	# For follows_caster=true auras we:
-	#   1. Recalculate which cells the aura now covers.
-	#   2. Move the visuals to follow the caster.
-	#   3. Apply ally buffs to any new allies now inside the updated area.
-	# For follows_caster=false auras, we do nothing — the zone stays planted
-	# exactly where it was cast. The caster can walk away from their own aura.
+	# Called by BattleManager AFTER the caster's movement tween completes.
+	# By this point begin_caster_move() has already handled the visual slide.
+	# This function handles the logical side: updating cell coverage, anchor_cell,
+	# and applying ally entry buffs to any units now inside the shifted zone.
+	# It also rebuilds visuals for the edge case where cell count changed.
 	for entry in _active_auras:
 		if entry["caster"] != caster:
 			continue
 
 		var data: AuraData = entry["data"]
 
-		# STATIONARY AURA — skip all movement logic. The cells and visuals
-		# never change. The caster walking away has no effect on the zone.
+		# Stationary auras never move — skip entirely.
 		if not data.follows_caster:
 			continue
 
 		var new_cells: Array = _get_aura_cells(caster.grid_position, data.radius)
 		var old_cells: Array = entry["aura_cells"]
 		entry["aura_cells"]  = new_cells
-		# Keep anchor_cell in sync with the caster's new position for
-		# scene-type visual repositioning inside _rebuild_visuals.
 		entry["anchor_cell"] = caster.grid_position
 
-		# Rebuild visuals at the new position.
-		_rebuild_visuals(entry)
+		# Only rebuild visuals if the cell count changed (map boundary edge case).
+		# Normally begin_caster_move already tweened them to the right place.
+		if entry["visuals"].size() != new_cells.size():
+			_rebuild_visuals(entry)
 
-		# Find cells that are newly inside the aura (weren't there before).
+		# Apply ally entry buffs for cells newly inside the aura.
 		for cell in new_cells:
 			if cell in old_cells:
-				continue  # Was already inside — don't re-apply.
+				continue
 			var unit = grid_ref.get_unit_at(cell)
 			if unit == null or not is_instance_valid(unit):
 				continue
-			# Apply ally buffs to units that just entered the aura.
 			if data.affects_team != "enemies" and _is_ally(caster, unit):
 				_apply_statuses_to(unit, data)
 

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://bx8ncmffrc8ro"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_f52td"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_i2ntf"]
+[ext_resource type="Resource" uid="uid://dn2itso8l451b" path="res://resources/status_effects/focusstance.tres" id="2_uvuai"]
+
+[resource]
+script = ExtResource("2_i2ntf")
+id = "focusstance"
+display_name = "Focus Stance"
+description = "Enter a deep focus, increasing critical hit chance, but reducing movement."
+cooldown_rounds = 5
+max_range = 0
+affects_team = "allies"
+base_damage_multiplier = 0.0
+applies_statuses = Array[ExtResource("1_f52td")]([ExtResource("2_uvuai")])
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

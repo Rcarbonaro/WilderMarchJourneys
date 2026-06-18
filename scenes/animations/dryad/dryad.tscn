@@ -5,7 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://c38her0mqrchi" path="res://sprites/dryad/dryad_cast.png" id="3_2vl8k"]
 [ext_resource type="Texture2D" uid="uid://ben4yqrl65gof" path="res://sprites/dryad/dryad_die.png" id="4_qjpwm"]
 [ext_resource type="Texture2D" uid="uid://dim76bp3pb7wr" path="res://sprites/dryad/dryad_idle.png" id="5_leke8"]
-[ext_resource type="Texture2D" path="res://sprites/dryad/dryad_walk.png" id="6_runj7"]
+[ext_resource type="Texture2D" uid="uid://byeqto8frqjl" path="res://sprites/dryad/dryad_walk.png" id="6_runj7"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_3p55h"]
 atlas = ExtResource("3_2vl8k")

@@ -138,6 +138,9 @@ func _spawn_player_party_from_run() -> void:
 	var divinator_data     = load("res://resources/units/divinator_data.tres")
 	var rogue_data         = load("res://resources/units/rogue_data.tres")
 	var dreadknight_data         = load("res://resources/units/dreadknight_data.tres")
+	var dryad_data         = load("res://resources/units/dryad_data.tres")
+	var sharpshooter_data         = load("res://resources/units/sharpshooter_data.tres")
+
 
 
 	if windmage_data      != null: spawn_unit(windmage_data,      Vector2i(1, 7), true, 1)
@@ -162,7 +165,10 @@ func _spawn_player_party_from_run() -> void:
 	else: printerr("❌ Could not load rogue_data.tres!")
 	if dreadknight_data         != null: spawn_unit(dreadknight_data,         Vector2i(4, 3), true, 1)
 	else: printerr("❌ Could not load dreadknight_data.tres!")
-
+	if dryad_data         != null: spawn_unit(dryad_data,         Vector2i(2, 5), true, 1)
+	else: printerr("❌ Could not load dryad_data.tres!")
+	if sharpshooter_data         != null: spawn_unit(sharpshooter_data,         Vector2i(3, 7), true, 1)
+	else: printerr("❌ Could not load sharpshooter_data.tres!")
 
 
 
@@ -645,7 +651,6 @@ func _filter_cells_by_team(cells: Array, ability: AbilityData, caster) -> Array:
 	return result
 
 # ── END OF PLAYER TURN ────────────────────────────────────────────────────────
-
 func end_player_turn() -> void:
 	# Called by the "End Turn" button, or automatically when all units have acted.
 	_return_selected_to_idle()
@@ -662,43 +667,39 @@ func end_player_turn() -> void:
 	print("--- ENEMY TURN (Round ", round_number, ") ---")
 
 	# ── TICK AURAS (end of player round) ──────────────────────────────────────
-	# This applies aura damage and status effects to all enemies currently inside
-	# any active aura zone. It also counts down aura durations and removes any
-	# that have expired. This runs BEFORE hazard ticking so the order each round is:
-	#   1. Aura end-of-round effects (damage + statuses on targets in range)
-	#   2. Hazard duration countdown (grid.tick_all_effects)
-	#   3. Enemy start-of-turn hazard damage
 	if aura_manager != null:
 		aura_manager.tick_auras_end_of_player_round(player_units, enemy_units)
 
 	# ── TICK HAZARDS ──────────────────────────────────────────────────────────
-	# Counts down all hazard durations once per round and removes expired ones.
 	grid.tick_all_effects()
 
 	# ── APPLY HAZARD DAMAGE AT START OF EACH ENEMY TURN ──────────────────────
-	# Every enemy unit standing on a hazard tile at the start of the enemy turn
-	# takes damage from that hazard.
 	for unit in enemy_units:
 		if is_instance_valid(unit):
 			grid.apply_hazard_to_unit(unit, unit.grid_position, "start_of_turn")
 
-	# ── TICK PLAYER STATUSES AND RESET TURN FLAGS ─────────────────────────────
-	# Count down player status durations and reset movement/action flags so
-	# every player unit can act again on the next player turn.
-	for unit in player_units:
+	# ── TICK STATUSES FOR *ALL* UNITS (End of Player Round) ───────────────────
+	# Crucial: Enemies holding player-phase debuffs must be ticked here too!
+	for unit in player_units + enemy_units:
 		if is_instance_valid(unit):
 			unit.tick_statuses_end_of_round("player")
+			if unit.has_method("update_visuals"):
+				unit.update_visuals()
+
+	# ── RESET PLAYER FLAGS ────────────────────────────────────────────────────
+	for unit in player_units:
+		if is_instance_valid(unit):
 			unit.has_moved       = false
 			unit.has_acted       = false
 			unit.can_cancel_move = false
 
-	# Count down enemy ability cooldowns so they become available again over time.
+	# ── TICK ENEMY COOLDOWNS ONCE (Right before AI runs) ──────────────────────
 	for unit in enemy_units:
 		if is_instance_valid(unit):
 			for key in unit.ability_cooldowns:
 				unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
 
-	# Hand control to the AI system. It will call _on_enemy_turn_complete when done.
+	# Hand control to the AI system.
 	ai_system.run_enemy_turn(
 		enemy_units, player_units, grid, pathfinder, executor,
 		_on_enemy_turn_complete
@@ -713,17 +714,23 @@ func _on_enemy_turn_complete() -> void:
 		if is_instance_valid(unit):
 			grid.apply_hazard_to_unit(unit, unit.grid_position, "start_of_turn")
 
-	# Reset enemy turn flags and count down their cooldowns.
-	for unit in enemy_units:
+	# ── TICK STATUSES FOR *ALL* UNITS (End of Enemy Round) ────────────────────
+	# Crucial: Players holding enemy-phase debuffs must be ticked here too!
+	for unit in player_units + enemy_units:
 		if is_instance_valid(unit):
 			unit.tick_statuses_end_of_round("enemy")
+			if unit.has_method("update_visuals"):
+				unit.update_visuals()
+
+	# ── RESET ENEMY FLAGS ─────────────────────────────────────────────────────
+	for unit in enemy_units:
+		if is_instance_valid(unit):
 			unit.has_moved       = false
 			unit.has_acted       = false
 			unit.can_cancel_move = false
-			for key in unit.ability_cooldowns:
-				unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
+			# ❌ Removed duplicate enemy cooldown countdown from here
 
-	# Count down player cooldowns too.
+	# ── TICK PLAYER COOLDOWNS ONCE (Start of Player Turn) ─────────────────────
 	for unit in player_units:
 		if is_instance_valid(unit):
 			for key in unit.ability_cooldowns:

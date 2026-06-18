@@ -69,3 +69,6 @@ extends Resource
 @export var is_invisible: bool = false   # untargetable by ranged
 
 @export var grants_immunity: bool = false # blocks all debuffs
+
+@export_group("Visuals")
+@export var animation_suffix: String = "" # e.g., "_armored", "_poisoned"

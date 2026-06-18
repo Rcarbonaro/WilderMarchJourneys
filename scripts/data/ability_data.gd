@@ -316,3 +316,6 @@ extends Resource
 
 @export var is_aura: bool = false
 @export var aura_data: AuraData
+
+@export_group("Visuals")
+@export var animation_override: String = "" # e.g., "heavy_slam", "fireball_cast"
