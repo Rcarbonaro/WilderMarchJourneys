@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://q7oq7jdgur76"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_35pk0"]
+
+[resource]
+script = ExtResource("1_35pk0")
+id = "taunt"
+display_name = "Taunt"
+description = "Force the enemy to focus the source of the taunt"
+duration_rounds = 2
+applies_taunt = true
+dot_flat_amount = 0
+dot_damage_percent = 0.0
+metadata/_custom_type_script = "uid://gsbk18mmfnol"

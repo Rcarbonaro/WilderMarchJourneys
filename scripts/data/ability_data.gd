@@ -10,7 +10,8 @@
 #   - Mana cost checked before casting
 #   - Special effect architecture: Tether, Thorns, Shield, Guardian,
 #     On-Kill, Movement-after-attack, Conditional bonus damage
- 
+#   - Aura ability support (is_aura, aura_data)
+
 class_name AbilityData
 extends Resource
 
@@ -31,7 +32,22 @@ extends Resource
 
 @export var effect_scene: PackedScene
 # Optional scene used for projectile travel or AOE display.
-# Falls back to icon, then a white square.
+# Falls back to icon, then a white square if neither is set.
+
+# ── CUSTOM ATTACK ANIMATION ───────────────────────────────────────────────────
+
+@export var attack_animation_name: String = ""
+# The named animation played on the caster's AnimatedSprite2D when this specific
+# ability is used. e.g. "attack_fire_sword", "attack_lightning_sword".
+#
+# Leave BLANK to fall back to the unit's normal generic attack animations
+# ("attack", "attack_up", "attack_down" based on target direction — the
+# existing behaviour in battle_manager.gd / ai_system.gd is unchanged).
+#
+# When set, this OVERRIDES the directional fallback entirely — the exact named
+# animation plays regardless of target direction. If you need directional
+# variants for a custom animation too, suffix your own and check in
+# battle_manager/ai_system, or leave this blank to use the built-in fallback.
 
 # ── COST ──────────────────────────────────────────────────────────────────────
 
@@ -41,6 +57,16 @@ extends Resource
 
 @export var hp_cost_percent: float = 0.0
 # e.g. 0.2 = costs 20% of max HP when used.
+
+@export var is_unleash_ability: bool = false
+# Check this box to mark this as a party-wide "Unleash" ability — one that can
+# only be used once total HP spent on ability costs (across the whole party,
+# tracked by battle_manager.gd's unleash_available flag) crosses
+# HP_UNLEASH_THRESHOLD. Casting it consumes the threshold, resetting the
+# counter so the party has to build it back up again before using another.
+# If unleash_available is false, selecting this ability is blocked entirely
+# (mirrors how Arcana Charge gates Spellsword abilities, but party-wide
+# instead of per-unit).
 
 @export var charge_cost: int = 0
 @export var custom_resource_cost: int = 0
@@ -65,9 +91,23 @@ extends Resource
 
 # ── AREA OF EFFECT ────────────────────────────────────────────────────────────
 
-@export_enum("single", "line", "cone", "square", "cross") var aoe_shape: String = "single"
+@export_enum("single", "line", "cone", "square", "cross", "wall") var aoe_shape: String = "single"
 @export var aoe_size: int = 1
 # For "line": how many tiles long. For "square": radius. For "cone": how far.
+# For "wall": ignored — wall length comes from spawns_hazard.wall_length instead.
+
+# ── WALL PLACEMENT ─────────────────────────────────────────────────────────────
+# Only relevant when aoe_shape == "wall". A wall ability requires the player to
+# pick a START tile and an END tile (two taps instead of one), and the resulting
+# wall's orientation (horizontal or vertical) is determined automatically from
+# whichever axis has the larger offset relative to the CASTER's position —
+# see battle_manager.gd's wall placement flow for the exact two-tap UI sequence.
+
+@export var wall_select_start_prompt: String = "Select wall start location"
+# Text shown to the player during the first tap of wall placement.
+
+@export var wall_select_end_prompt: String = "Select wall end location"
+# Text shown to the player during the second tap of wall placement.
 
 # ── DAMAGE ────────────────────────────────────────────────────────────────────
 
@@ -84,29 +124,29 @@ extends Resource
 @export var applies_statuses: Array[StatusEffectData] = []
 # Status effects applied to every hit target.
 
+@export var applies_statuses_to_self: Array[StatusEffectData] = []
+
+
 @export var spawns_hazard: HazardData
 # If set, places a hazard tile on every affected cell.
 
 @export var heal_percent: float = 0.0
 # Fraction of max HP to restore. e.g. 0.3 = heals 30%.
 
-# ── DISPLACEMENT (PUSH / PULL / KNOCKBACK) ─────────────────────────────────
+# ── DISPLACEMENT (PUSH / PULL / KNOCKBACK) ────────────────────────────────────
 # "Displacement" moves the target relative to the caster.
-# Positive = push away. Negative = pull toward.
 
 @export var displacement_squares: int = 0
 # How many squares to move the target.
 # Positive = push away from caster. Negative = pull toward caster.
 
 @export_enum("auto", "manual", "scatter") var displacement_type: String = "auto"
-# "auto"   = always pushes/pulls directly away from / toward the caster.
-#            This is the classic knockback behaviour.
-# "manual" = uses the displacement_manual_dir vector below instead.
-#            Lets you make abilities that always push in a fixed direction
-#            (e.g. an uppercut that always knocks upward regardless of facing).
+# "auto"    = always pushes/pulls directly away from / toward the caster.
+# "manual"  = uses the displacement_manual_dir vector below.
+# "scatter" = pushes outward from the AOE centre point.
 
 @export var displacement_manual_dir: Vector2i = Vector2i(0, -1)
-# Only used when displacement_direction == "manual".
+# Only used when displacement_type == "manual".
 # (0, -1) = always push upward. (1, 0) = always push right. Etc.
 
 # ── DASH ABILITY ──────────────────────────────────────────────────────────────
@@ -119,20 +159,15 @@ extends Resource
 
 @export var dash_damages_path: bool = true
 # If true, every valid tile the caster dashes THROUGH takes damage.
-# If false, only the final landing tile (or nothing) deals damage.
 
 @export var dash_trail_texture: Texture2D
 # Optional texture stretched along the full length of the dash line.
-# Think of it as the "motion blur" or "slash trail" left behind.
-# Leave blank for no trail visual.
 
 @export var dash_speed: float = 800.0
 # Pixels per second the caster sprite travels during the dash.
-# Higher = faster dash. 800 is a good default.
 
 @export var dash_effect_scene: PackedScene
-# Optional scene to instantiate on the caster during the dash
-# (e.g. a motion blur particle effect that travels with the unit).
+# Optional scene to instantiate on the caster during the dash.
 
 # ── TAGS & TYPE ───────────────────────────────────────────────────────────────
 
@@ -144,13 +179,11 @@ extends Resource
 @export var is_counterattack_immune: bool = false
 # If true, this ability cannot trigger counter-attacks.
 
-# ── BONUS DAMAGE ISOLATED TARGETS ─────────────────────────────────────────────
-# Deals extra damage to targets who have no allies standing next to them.
-# "Alone" is defined as: no friendly unit occupying any of the 4 cardinal
-# neighbours of the target.
+# ── BONUS DAMAGE TO ISOLATED TARGETS ─────────────────────────────────────────
+# Deals extra damage to targets who have no allies standing nearby.
 
 @export var bonus_damage_isolated: float = 0.0
-# Additional damage MULTIPLIER added when the target is isolated.
+# Additional damage MULTIPLIER when the target is isolated.
 # e.g. 0.5 means +50% extra damage. 0.0 = disabled.
 
 @export var isolated_range: int = 1
@@ -165,141 +198,76 @@ extends Resource
 # ── TETHER ────────────────────────────────────────────────────────────────────
 # When a tethered unit is hit by a SINGLE-TARGET attack, a percentage of that
 # damage is also dealt to all other units in the tether group.
-# Tether only links ENEMIES together (one unit hits another, their allies share pain).
 
 @export var applies_tether: bool = false
-# Check this to make the ability apply a tether to the targets it hits.
-
 @export var tether_id: String = ""
 # A shared ID string. All units with the same tether_id are linked.
-# e.g. "pack_bond" — all wolves in a pack share this string.
 
 @export var tether_damage_percent: float = 0.5
-# What fraction of the original damage is passed to each tethered ally.
-# 0.5 = 50% of damage dealt to one tethered unit is also dealt to the others.
+# What fraction of damage is passed to each tethered ally.
 
 @export var tether_overkill_percent: float = 0.75
-# If the original hit deals MORE damage than the target's remaining HP
-# (i.e. the killing blow has "overkill"), tethered allies instead take
-# this percentage of the original damage.
-# e.g. 0.75 = 75% of the damage passes through on overkill.
-# Set equal to tether_damage_percent to disable the overkill distinction.
+# On overkill hits, tethered allies take this fraction instead.
 
 @export var tether_duration_rounds: int = 2
-# How many rounds the tether lasts before it disappears.
 
 # ── THORNS ────────────────────────────────────────────────────────────────────
 # When this unit is attacked, a portion of the damage is reflected back
-# at the attacker. Thorns is applied as a STATUS on the unit, so it
-# persists across turns. This field makes the ABILITY apply that status.
+# at the attacker.
 
 @export var applies_thorns: bool = false
-# Check to make the ability apply a thorns status to the targets (or caster
-# if affects_team == "allies").
-
 @export var thorns_reflect_percent: float = 0.25
-# What fraction of incoming damage is reflected. 0.25 = 25%.
-
 @export_enum("atk", "matk", "def", "mdef") var thorns_scaling_stat: String = "def"
-# Which stat the reflection is based on.
-# "def"  = defensive thorns (rewards high-defence units for being hit).
-# "atk"  = offensive thorns (punishes attackers relative to your raw power).
-# "matk" = magic thorns. "mdef" = magic defence thorns.
-
 @export var thorns_duration_rounds: int = 2
-# How many rounds the thorns effect lasts.
 
 # ── SHIELD / BARRIER ──────────────────────────────────────────────────────────
 # Applies a flat damage-absorbing barrier. Damage hits the barrier first,
 # and only the remaining damage (if any) touches HP.
 
 @export var applies_shield: bool = false
-# Check to make the ability apply a barrier to the target.
-
 @export var shield_amount: int = 0
-# How many points of damage the barrier absorbs before it breaks.
-# e.g. 30 = the unit can take 30 damage before their HP is touched.
-
 @export var shield_duration_rounds: int = 2
-# How many rounds the shield lasts (even if it hasn't been destroyed).
 
 # ── GUARDIAN ──────────────────────────────────────────────────────────────────
 # A unit with the Guardian effect intercepts damage meant for an ally.
-# When the PROTECTED unit is attacked, the Guardian takes a portion instead.
 
 @export var applies_guardian: bool = false
-# Check to make the ability give the caster a Guardian link to a target ally.
-
 @export var guardian_redirect_percent: float = 1.0
-# What fraction of the damage the Guardian absorbs. 1.0 = all of it.
-# 0.5 = Guardian takes 50%, original target takes 50%.
-
 @export_enum("caster_def", "caster_mdef", "target_def", "target_mdef") var guardian_uses_defense: String = "caster_def"
-# Which def stat is used when calculating the redirected hit against the Guardian.
-# "caster_def"   = the Guardian's own physical defence protects them.
-# "target_def"   = the original target's physical defence is used instead (unusual).
-
 @export var guardian_duration_rounds: int = 1
-# How many rounds the Guardian link lasts.
 
 # ── ON-KILL EFFECTS ───────────────────────────────────────────────────────────
 # Something special happens when this unit lands a killing blow.
 
 @export var has_on_kill_effect: bool = false
-# Check to enable on-kill logic for this ability.
-
 @export var on_kill_trigger_ability: PackedScene
-# Optional: an ability scene spawned at the KILLED ENEMY's tile on kill.
-# e.g. an explosion that damages nearby enemies.
-# Leave blank if you only want the stat/turn effects below.
-
 @export var on_kill_trigger_on_caster: bool = false
-# If true, the on_kill_trigger_ability spawns at the CASTER's tile instead
-# of the killed enemy's tile. Useful for "absorb soul" type effects.
-
 @export var on_kill_reset_has_acted: bool = false
-# If true, the caster's "has_acted" flag is reset, allowing them to
-# use another ability this turn (effectively a bonus action).
-
 @export var on_kill_reset_has_moved: bool = false
-# If true, the caster's "has_moved" flag is also reset, letting them move again.
-
 @export var on_kill_reset_cooldowns: bool = false
-# If true, ALL of the caster's ability cooldowns are cleared on a kill.
-# Great for assassin-style units that chain kills.
-
 @export var on_kill_apply_status: StatusEffectData
-# Optional: apply this status to the CASTER when they score a kill.
-# e.g. a self-buff, a rage stack, etc.
 
 # ── MOVEMENT AFTER ATTACK ─────────────────────────────────────────────────────
 # After the attack resolves, the caster can move some squares.
 
 @export var post_attack_move_squares: int = 0
-# How many squares the caster can move after the attack.
-# 0 = disabled. Positive = free movement squares granted.
-# The player will be shown valid movement tiles after the attack.
+# 0 = disabled. Positive = free movement squares granted after attacking.
 
 # ── CONDITIONAL BONUS DAMAGE / STAT SCALING ───────────────────────────────────
-# These let you build abilities whose power scales with the state of the battle.
+# These let you build abilities whose power scales with battle state.
 
-# --- Bonus based on TARGET's debuff count ---
 @export var bonus_per_target_debuff: float = 0.0
-# Extra damage ADDED PER DEBUFF the TARGET currently has.
-# e.g. 0.1 = each debuff on the enemy gives +10% more damage.
+# Extra damage added per DEBUFF the TARGET currently has.
 
 @export var bonus_per_target_debuff_max: float = 1.0
-# Maximum total bonus from this source (cap). e.g. 1.0 = never more than +100%.
+# Maximum total bonus from target debuffs.
 
-# --- Bonus based on CASTER's buff count ---
 @export var bonus_damage_per_caster_buff: float = 0.0
 # Extra damage added per BUFF the CASTER currently has.
 
 @export var bonus_damage_per_caster_buff_max: float = 1.0
 # Maximum bonus damage from caster buffs.
 
-# --- Stat bonuses based on caster's own buff count ---
-# These boost the caster's effective stats during THIS attack only.
 @export var bonus_atk_per_caster_buff: int = 0
 @export var bonus_matk_per_caster_buff: int = 0
 @export var bonus_def_per_caster_buff: int = 0
@@ -307,15 +275,25 @@ extends Resource
 @export var bonus_crit_chance_per_caster_buff: float = 0.0
 @export var bonus_crit_dmg_per_caster_buff: float = 0.0
 @export var bonus_mov_per_caster_buff: int = 0
-# Each of these is multiplied by the caster's buff count.
-# e.g. bonus_atk_per_caster_buff = 3, and caster has 2 buffs → +6 ATK for this hit.
+# Each is multiplied by the caster's buff count for this single hit.
 
 @export var buff_bonus_max_stacks: int = 10
-# Maximum number of buffs counted for the above per-buff bonuses.
-# Prevents infinite scaling.
+# Maximum number of buffs counted for the per-buff bonuses above.
+
+# ── AURA ABILITY ──────────────────────────────────────────────────────────────
+# When is_aura is true, using this ability activates a persistent zone effect
+# defined by the AuraData resource assigned to aura_data.
+# The aura follows the caster as they move, applies effects to units inside
+# its area, and has its own visual (color overlay, sprite, or looping scene).
 
 @export var is_aura: bool = false
-@export var aura_data: AuraData
+# Check this box to mark this ability as an aura activator.
+# When the ability is used, AbilityExecutor calls AuraManager.activate_aura()
+# in addition to (or instead of) the normal damage/status pipeline.
+# Leave this unchecked for all normal attacks, spells, and buffs.
 
-@export_group("Visuals")
-@export var animation_override: String = "" # e.g., "heavy_slam", "fireball_cast"
+@export var aura_data: AuraData
+# Drag the AuraData .tres resource here (the one you filled out in aura_data.gd).
+# This defines the aura's radius, who it affects, what damage it deals,
+# what status effects it applies, how long it lasts, and how it looks.
+# Only read when is_aura is true — ignored on all other abilities.

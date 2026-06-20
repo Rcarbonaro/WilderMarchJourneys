@@ -26,11 +26,13 @@ signal battle_ended(result: String)
 # we use readable names that the compiler can check for typos.
 
 enum TurnPhase {
-	PLAYER_TURN,   # Player is choosing actions.
-	ENEMY_TURN,    # AI is running.
-	ANIMATION,     # An animation is playing — block all input until it finishes.
-	POST_ATTACK,   # Waiting for the player to pick a tile for post-attack movement.
-	GAME_OVER      # Combat is finished — no more input accepted.
+	PLAYER_TURN,       # Player is choosing actions.
+	ENEMY_TURN,        # AI is running.
+	ANIMATION,         # An animation is playing — block all input until it finishes.
+	POST_ATTACK,       # Waiting for the player to pick a tile for post-attack movement.
+	WALL_SELECT_START, # Waiting for the player to tap the wall's START tile.
+	WALL_SELECT_END,   # Waiting for the player to tap the wall's END tile.
+	GAME_OVER          # Combat is finished — no more input accepted.
 }
 
 # ── STATE VARIABLES ───────────────────────────────────────────────────────────
@@ -48,9 +50,27 @@ var selected_unit    = null                # The unit the player most recently t
 var selected_ability: AbilityData = null   # The ability button the player pressed.
 var reachable_cells: Dictionary = {}       # Tiles the selected unit can walk to this turn.
 
+# ── WALL PLACEMENT STATE ──────────────────────────────────────────────────────
+var wall_start_cell: Vector2i = Vector2i(-1, -1)
+# The first tile the player tapped during wall placement. Vector2i(-1,-1) means
+# "no start point chosen yet". Cleared when wall placement finishes or cancels.
+
 # Spellsword arcana charge accumulator.
 var total_mana_spent: int = 0
 const ARCANA_THRESHOLD: int = 75
+
+# ── UNLEASH (HP-COST ACCUMULATOR) ─────────────────────────────────────────────
+# Tracks total HP spent as an ability cost across the whole party this battle.
+# When it crosses HP_UNLEASH_THRESHOLD, every player unit becomes able to use
+# their "Unleash" ability (an ability flagged is_unleash_ability = true) once.
+# The actual running total lives on executor.total_hp_consumed — BattleManager
+# just polls it after each ability use, the same pattern as total_mana_spent.
+const HP_UNLEASH_THRESHOLD: int = 50
+
+var unleash_available: bool = false
+# True once total HP consumed has crossed HP_UNLEASH_THRESHOLD this battle.
+# Stays true until someone uses an Unleash ability, then resets to false and
+# the counter starts accumulating toward the threshold again.
 
 # ── INSPECTOR LINKS ───────────────────────────────────────────────────────────
 # Drag each scene node into these slots in the Inspector.
@@ -121,6 +141,11 @@ func _ready() -> void:
 	_spawn_stage_enemies()
 	_spawn_player_party_from_run()
 
+	# Reset the HP-cost-consumed counter for this fresh battle (safety measure
+	# in case the scene/executor is reused without a full reload).
+	executor.total_hp_consumed = 0
+	unleash_available = false
+
 	# Apply synergy bonuses that are active from the very start of battle.
 	_refresh_synergies()
 
@@ -140,35 +165,53 @@ func _spawn_player_party_from_run() -> void:
 	var dreadknight_data         = load("res://resources/units/dreadknight_data.tres")
 	var dryad_data         = load("res://resources/units/dryad_data.tres")
 	var sharpshooter_data         = load("res://resources/units/sharpshooter_data.tres")
+	var stormblade_data         = load("res://resources/units/stormblade_data.tres")
 
 
 
-	if windmage_data      != null: spawn_unit(windmage_data,      Vector2i(1, 7), true, 1)
-	else: printerr("❌ Could not load windmage_data.tres!")
+
+	
+	#--- Isolation ---
+	#if windmage_data      != null: spawn_unit(windmage_data,      Vector2i(1, 7), true, 1)
+	#else: printerr("❌ Could not load windmage_data.tres!")
+	#if dragoon_data       != null: spawn_unit(dragoon_data,       Vector2i(3, 6), true, 1)
+	#else: printerr("❌ Could not load dragoon_data.tres!")
+	#if rogue_data         != null: spawn_unit(rogue_data,         Vector2i(4, 4), true, 1)
+	#else: printerr("❌ Could not load rogue_data.tres!")
+	#if rogue_data         != null: spawn_unit(dryad_data,         Vector2i(4, 3), true, 1)
+	#else: printerr("❌ Could not load dryad_data.tres!")
+	#if stormblade_data != null: spawn_unit(stormblade_data, Vector2i(2, 5), true, 1)
+	#else: printerr("❌ Could not load stormblade_data.tres!")
+
+	#--- Debuff ---
 	if hexweaver_data     != null: spawn_unit(hexweaver_data,     Vector2i(2, 6), true, 1)
 	else: printerr("❌ Could not load hexweaver_data.tres!")
-	if guardian_data      != null: spawn_unit(guardian_data,      Vector2i(2, 8), true, 1)
-	else: printerr("❌ Could not load guardian_data.tres!")
-	if dragoon_data       != null: spawn_unit(dragoon_data,       Vector2i(3, 6), true, 1)
-	else: printerr("❌ Could not load dragoon_data.tres!")
-	if spellsword_data    != null: spawn_unit(spellsword_data,    Vector2i(1, 5), true, 1)
-	else: printerr("❌ Could not load spellsword_data.tres!")
+	if dreadknight_data     != null: spawn_unit(dreadknight_data,     Vector2i(3, 6), true, 1)
+	else: printerr("❌ Could not load dreadknigh_data.tres!")
 	if executioner_data   != null: spawn_unit(executioner_data,   Vector2i(1, 6), true, 1)
 	else: printerr("❌ Could not load executioner_data.tres!")
-	if stonewarden_data   != null: spawn_unit(stonewarden_data,   Vector2i(4, 5), true, 1)
-	else: printerr("❌ Could not load stonewarden_data.tres!")
-	if plaguebringer_data != null: spawn_unit(plaguebringer_data, Vector2i(2, 5), true, 1)
-	else: printerr("❌ Could not load plaguebringer_data.tres!")
+	#if plaguebringer_data != null: spawn_unit(plaguebringer_data, Vector2i(2, 5), true, 1)
+	#else: printerr("❌ Could not load plaguebringer_data.tres!")
 	if divinator_data     != null: spawn_unit(divinator_data,     Vector2i(3, 5), true, 1)
 	else: printerr("❌ Could not load divinator_data.tres!")
-	if rogue_data         != null: spawn_unit(rogue_data,         Vector2i(4, 4), true, 1)
-	else: printerr("❌ Could not load rogue_data.tres!")
-	if dreadknight_data         != null: spawn_unit(dreadknight_data,         Vector2i(4, 3), true, 1)
-	else: printerr("❌ Could not load dreadknight_data.tres!")
-	if dryad_data         != null: spawn_unit(dryad_data,         Vector2i(2, 5), true, 1)
-	else: printerr("❌ Could not load dryad_data.tres!")
-	if sharpshooter_data         != null: spawn_unit(sharpshooter_data,         Vector2i(3, 7), true, 1)
-	else: printerr("❌ Could not load sharpshooter_data.tres!")
+	
+	#--- Arcane ---
+	#if divinator_data     != null: spawn_unit(divinator_data,     Vector2i(3, 5), true, 1)
+	#else: printerr("❌ Could not load divinator_data.tres!")
+	#if spellsword_data    != null: spawn_unit(spellsword_data,    Vector2i(1, 5), true, 1)
+	#else: printerr("❌ Could not load spellsword_data.tres!")
+	#if stonewarden_data   != null: spawn_unit(stonewarden_data,   Vector2i(4, 5), true, 1)
+	#else: printerr("❌ Could not load stonewarden_data.tres!")
+	#if hexweaver_data     != null: spawn_unit(hexweaver_data,     Vector2i(2, 6), true, 1)
+	#else: printerr("❌ Could not load hexweaver_data.tres!")
+	
+	
+	#Extras (for now)
+	#if guardian_data      != null: spawn_unit(guardian_data,      Vector2i(2, 8), true, 1)
+	#else: printerr("❌ Could not load guardian_data.tres!")
+	#if sharpshooter_data      != null: spawn_unit(guardian_data,      Vector2i(3, 8), true, 1)
+	#else: printerr("❌ Could not load sharpshooter_data.tres!")
+	
 
 
 
@@ -281,6 +324,16 @@ func _battle_defeat() -> void:
 func on_tile_tapped(cell: Vector2i) -> void:
 	# Main entry point for all grid taps. Called by input_handler.gd.
 	print("🎯 Tile tapped: ", cell, " | Phase: ", current_phase)
+
+	# ── WALL PLACEMENT MODE ────────────────────────────────────────────────────
+	# Two-tap flow: first tap picks the start tile, second tap picks the end
+	# tile and (if valid) executes the wall ability immediately.
+	if current_phase == TurnPhase.WALL_SELECT_START:
+		_try_select_wall_start(cell)
+		return
+	if current_phase == TurnPhase.WALL_SELECT_END:
+		_try_select_wall_end(cell)
+		return
 
 	# ── POST-ATTACK MOVEMENT MODE ─────────────────────────────────────────────
 	# If we are waiting for the player to choose a tile to step to after an
@@ -405,9 +458,10 @@ func cancel_unit_move() -> void:
 	unit.pre_move_position = Vector2i(-1, -1)
 	unit.play_animation("idle")
 
-	# If this unit is an aura caster, snap the aura visuals back too.
+	# If this unit is an aura caster, snap the aura visuals back too (instant,
+	# matching the instant teleport of snap_to — no slide animation).
 	if aura_manager != null and _unit_has_active_aura(unit):
-		aura_manager.on_caster_moved(unit)
+		aura_manager.snap_caster_move(unit)
 
 	if ui_manager and ui_manager.has_method("clear_abilities"):
 		ui_manager.clear_abilities()
@@ -457,6 +511,19 @@ func on_ability_selected(ability: AbilityData) -> void:
 	if selected_unit == null:
 		return
 
+	# ── UNLEASH GATE ──────────────────────────────────────────────────────────
+	# Unleash abilities are blocked entirely until the party-wide HP-cost
+	# counter has crossed HP_UNLEASH_THRESHOLD. Checked BEFORE the normal mana
+	# gate since an Unleash ability being unavailable is a harder block than
+	# "can't afford it" — there's nothing to refund or bypass here.
+	if ability.is_unleash_ability and not unleash_available:
+		print("⛔ ", selected_unit.unit_data.display_name, " cannot use '",
+			  ability.display_name, "' — Unleash is not ready yet (",
+			  executor.total_hp_consumed, "/", HP_UNLEASH_THRESHOLD, " HP consumed).")
+		if ui_manager and ui_manager.has_method("show_unleash_not_ready_popup"):
+			ui_manager.show_unleash_not_ready_popup()
+		return
+
 	# ── MANA GATE ─────────────────────────────────────────────────────────────
 	# Check affordability before showing targeting highlights.
 	# Spellswords with an Arcana Charge bypass the mana check entirely.
@@ -476,6 +543,23 @@ func on_ability_selected(ability: AbilityData) -> void:
 		ui_manager.set_cancel_move_visible(
 			is_instance_valid(selected_unit) and selected_unit.can_cancel_move
 		)
+
+	# ── WALL ABILITY — DIFFERENT TARGETING FLOW ───────────────────────────────
+	# Wall abilities need TWO taps (start tile, then end tile) instead of one.
+	# We branch off here entirely and let on_tile_tapped's WALL_SELECT_START/
+	# WALL_SELECT_END handlers take over from this point.
+	if ability.aoe_shape == "wall":
+		wall_start_cell = Vector2i(-1, -1)
+		current_phase   = TurnPhase.WALL_SELECT_START
+
+		var in_range_wall = pathfinder.get_cells_in_range(
+			selected_unit.grid_position, ability.min_range, ability.max_range
+		)
+		highlight.show_attack_range(in_range_wall)
+
+		if ui_manager and ui_manager.has_method("show_targeting_prompt"):
+			ui_manager.show_targeting_prompt(ability.wall_select_start_prompt)
+		return
 
 	# Calculate and highlight the valid target tiles for this ability.
 	var in_range = pathfinder.get_cells_in_range(
@@ -530,11 +614,17 @@ func _try_use_ability(cell: Vector2i) -> void:
 	# 4. Execute the ability.
 	current_phase = TurnPhase.ANIMATION
 
-	selected_unit.look_at_target(cell)
-	var dy = cell.y - selected_unit.grid_position.y
-	if dy < -1:  selected_unit.play_animation("attack_up")
-	elif dy > 1: selected_unit.play_animation("attack_down")
-	else:        selected_unit.play_animation("attack")
+	# Use the ability's custom attack animation if one is set (e.g. a Spellsword's
+	# fire-enhanced swing vs lightning-enhanced swing), otherwise fall back to
+	# the normal directional attack/attack_up/attack_down logic.
+	if selected_ability.attack_animation_name != "":
+		selected_unit.look_at_target(cell, selected_ability.attack_animation_name)
+	else:
+		selected_unit.look_at_target(cell)
+		var dy = cell.y - selected_unit.grid_position.y
+		if dy < -1:  selected_unit.play_animation("attack_up")
+		elif dy > 1: selected_unit.play_animation("attack_down")
+		else:        selected_unit.play_animation("attack")
 
 	await get_tree().create_timer(0.5).timeout
 
@@ -556,6 +646,18 @@ func _try_use_ability(cell: Vector2i) -> void:
 		if total_mana_spent >= ARCANA_THRESHOLD:
 			total_mana_spent -= ARCANA_THRESHOLD
 			_grant_arcana_charge_to_spellsword()
+
+	# ── UNLEASH THRESHOLD CHECK ────────────────────────────────────────────────
+	# Polls the running HP-cost total tracked on the executor (it accumulates
+	# there automatically for every execute_ability call, player or enemy).
+	# Once it crosses the threshold, unleash_available flips on for the whole
+	# party — check _check_unleash_threshold for how this is consumed.
+	_check_unleash_threshold()
+
+	# If the ability just used WAS the Unleash ability, consume the charge now
+	# that it has successfully executed.
+	if selected_ability.is_unleash_ability:
+		consume_unleash()
 
 	if not is_instance_valid(selected_unit):
 		current_phase = TurnPhase.PLAYER_TURN
@@ -651,6 +753,7 @@ func _filter_cells_by_team(cells: Array, ability: AbilityData, caster) -> Array:
 	return result
 
 # ── END OF PLAYER TURN ────────────────────────────────────────────────────────
+
 func end_player_turn() -> void:
 	# Called by the "End Turn" button, or automatically when all units have acted.
 	_return_selected_to_idle()
@@ -667,39 +770,43 @@ func end_player_turn() -> void:
 	print("--- ENEMY TURN (Round ", round_number, ") ---")
 
 	# ── TICK AURAS (end of player round) ──────────────────────────────────────
+	# This applies aura damage and status effects to all enemies currently inside
+	# any active aura zone. It also counts down aura durations and removes any
+	# that have expired. This runs BEFORE hazard ticking so the order each round is:
+	#   1. Aura end-of-round effects (damage + statuses on targets in range)
+	#   2. Hazard duration countdown (grid.tick_all_effects)
+	#   3. Enemy start-of-turn hazard damage
 	if aura_manager != null:
 		aura_manager.tick_auras_end_of_player_round(player_units, enemy_units)
 
 	# ── TICK HAZARDS ──────────────────────────────────────────────────────────
+	# Counts down all hazard durations once per round and removes expired ones.
 	grid.tick_all_effects()
 
 	# ── APPLY HAZARD DAMAGE AT START OF EACH ENEMY TURN ──────────────────────
+	# Every enemy unit standing on a hazard tile at the start of the enemy turn
+	# takes damage from that hazard.
 	for unit in enemy_units:
 		if is_instance_valid(unit):
 			grid.apply_hazard_to_unit(unit, unit.grid_position, "start_of_turn")
 
-	# ── TICK STATUSES FOR *ALL* UNITS (End of Player Round) ───────────────────
-	# Crucial: Enemies holding player-phase debuffs must be ticked here too!
-	for unit in player_units + enemy_units:
-		if is_instance_valid(unit):
-			unit.tick_statuses_end_of_round("player")
-			if unit.has_method("update_visuals"):
-				unit.update_visuals()
-
-	# ── RESET PLAYER FLAGS ────────────────────────────────────────────────────
+	# ── TICK PLAYER STATUSES AND RESET TURN FLAGS ─────────────────────────────
+	# Count down player status durations and reset movement/action flags so
+	# every player unit can act again on the next player turn.
 	for unit in player_units:
 		if is_instance_valid(unit):
+			unit.tick_statuses_end_of_round("player")
 			unit.has_moved       = false
 			unit.has_acted       = false
 			unit.can_cancel_move = false
 
-	# ── TICK ENEMY COOLDOWNS ONCE (Right before AI runs) ──────────────────────
+	# Count down enemy ability cooldowns so they become available again over time.
 	for unit in enemy_units:
 		if is_instance_valid(unit):
 			for key in unit.ability_cooldowns:
 				unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
 
-	# Hand control to the AI system.
+	# Hand control to the AI system. It will call _on_enemy_turn_complete when done.
 	ai_system.run_enemy_turn(
 		enemy_units, player_units, grid, pathfinder, executor,
 		_on_enemy_turn_complete
@@ -709,28 +816,27 @@ func end_player_turn() -> void:
 func _on_enemy_turn_complete() -> void:
 	print("--- PLAYER TURN (Round ", round_number + 1, ") ---")
 
+	# Catch any HP-cost abilities the AI used during its turn (enemy abilities
+	# with hp_cost_percent also feed total_hp_consumed on the executor — this
+	# poll picks those up since AISystem has no direct line to BattleManager).
+	_check_unleash_threshold()
+
 	# Apply start-of-turn hazard damage to player units.
 	for unit in player_units:
 		if is_instance_valid(unit):
 			grid.apply_hazard_to_unit(unit, unit.grid_position, "start_of_turn")
 
-	# ── TICK STATUSES FOR *ALL* UNITS (End of Enemy Round) ────────────────────
-	# Crucial: Players holding enemy-phase debuffs must be ticked here too!
-	for unit in player_units + enemy_units:
-		if is_instance_valid(unit):
-			unit.tick_statuses_end_of_round("enemy")
-			if unit.has_method("update_visuals"):
-				unit.update_visuals()
-
-	# ── RESET ENEMY FLAGS ─────────────────────────────────────────────────────
+	# Reset enemy turn flags and count down their cooldowns.
 	for unit in enemy_units:
 		if is_instance_valid(unit):
+			unit.tick_statuses_end_of_round("enemy")
 			unit.has_moved       = false
 			unit.has_acted       = false
 			unit.can_cancel_move = false
-			# ❌ Removed duplicate enemy cooldown countdown from here
+			for key in unit.ability_cooldowns:
+				unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
 
-	# ── TICK PLAYER COOLDOWNS ONCE (Start of Player Turn) ─────────────────────
+	# Count down player cooldowns too.
 	for unit in player_units:
 		if is_instance_valid(unit):
 			for key in unit.ability_cooldowns:
@@ -781,6 +887,171 @@ func _unit_has_active_aura(unit) -> bool:
 		if entry["caster"] == unit and entry["data"].follows_caster:
 			return true
 	return false
+
+# ── WALL PLACEMENT ────────────────────────────────────────────────────────────
+
+func _try_select_wall_start(cell: Vector2i) -> void:
+	# First tap of wall placement: validates the tile is in range, then stores
+	# it and moves to the second tap (end point).
+	if selected_unit == null or selected_ability == null:
+		current_phase = TurnPhase.PLAYER_TURN
+		return
+
+	var in_range = pathfinder.get_cells_in_range(
+		selected_unit.grid_position, selected_ability.min_range, selected_ability.max_range
+	)
+	if not cell in in_range:
+		print("❌ Wall start tile out of range.")
+		return
+	if selected_ability.requires_line_of_sight:
+		if not pathfinder.has_line_of_sight(selected_unit.grid_position, cell):
+			print("❌ Wall start tile blocked by line of sight.")
+			return
+
+	wall_start_cell = cell
+	current_phase   = TurnPhase.WALL_SELECT_END
+
+	if ui_manager and ui_manager.has_method("show_targeting_prompt"):
+		ui_manager.show_targeting_prompt(selected_ability.wall_select_end_prompt)
+
+	# Highlight only tiles that would form a VALID end point — i.e. tiles
+	# directly horizontal or vertical from the start tile, within wall_length.
+	var valid_end_cells = _get_valid_wall_end_cells(wall_start_cell, selected_ability)
+	highlight.clear_highlights()
+	highlight.show_attack_range(valid_end_cells)
+
+
+func _try_select_wall_end(cell: Vector2i) -> void:
+	# Second tap of wall placement: validates the tile forms a legal straight
+	# line with wall_start_cell, then computes the final wall cells, rotates/
+	# orients them, and executes the ability.
+	if selected_unit == null or selected_ability == null:
+		current_phase = TurnPhase.PLAYER_TURN
+		_cancel_wall_placement()
+		return
+
+	var valid_end_cells = _get_valid_wall_end_cells(wall_start_cell, selected_ability)
+	if not cell in valid_end_cells:
+		print("❌ Invalid wall end tile — must be a straight cardinal line within the wall's length.")
+		return
+
+	var wall_cells = _calculate_wall_cells(wall_start_cell, cell, selected_ability)
+	if wall_cells.is_empty():
+		print("❌ Could not compute a valid wall — placement cancelled.")
+		_cancel_wall_placement()
+		return
+
+	current_phase = TurnPhase.ANIMATION
+	if ui_manager and ui_manager.has_method("hide_targeting_prompt"):
+		ui_manager.hide_targeting_prompt()
+	highlight.clear_highlights()
+
+	# Face and animate the caster toward the wall's centre point for feedback.
+	var center_index = wall_cells.size() / 2
+	if selected_ability.attack_animation_name != "":
+		selected_unit.look_at_target(wall_cells[center_index], selected_ability.attack_animation_name)
+	else:
+		selected_unit.look_at_target(wall_cells[center_index])
+		selected_unit.play_animation("attack")
+
+	await get_tree().create_timer(0.5).timeout
+
+	# execute_ability handles wall spawning via ability.spawns_hazard +
+	# ability.aoe_shape == "wall" (see ability_executor.gd's wall handling).
+	await executor.execute_ability(selected_unit, selected_ability, wall_cells, cell)
+
+	if is_instance_valid(selected_unit):
+		total_mana_spent += selected_ability.mana_cost
+		if total_mana_spent >= ARCANA_THRESHOLD:
+			total_mana_spent -= ARCANA_THRESHOLD
+			_grant_arcana_charge_to_spellsword()
+
+		selected_unit.has_acted       = true
+		selected_unit.can_cancel_move = false
+		if selected_unit.has_method("play_animation"):
+			selected_unit.play_animation("idle")
+
+	_check_unleash_threshold()
+	if selected_ability.is_unleash_ability:
+		consume_unleash()
+
+	wall_start_cell = Vector2i(-1, -1)
+	_finish_ability(selected_unit if is_instance_valid(selected_unit) else null)
+
+
+func _cancel_wall_placement() -> void:
+	# Resets wall placement state without executing anything.
+	wall_start_cell = Vector2i(-1, -1)
+	current_phase   = TurnPhase.PLAYER_TURN
+	if ui_manager and ui_manager.has_method("hide_targeting_prompt"):
+		ui_manager.hide_targeting_prompt()
+	highlight.clear_highlights()
+	deselect_unit()
+
+
+func _get_valid_wall_end_cells(start: Vector2i, ability: AbilityData) -> Array:
+	# Returns every tile that would form a legal wall end point relative to
+	# 'start': directly horizontal or directly vertical, up to (wall_length - 1)
+	# tiles away in either direction along that axis (since start itself counts
+	# as one tile of the wall's total length).
+	var max_dist: int = 2  # Safe default if no hazard is assigned yet.
+	if ability.spawns_hazard != null:
+		max_dist = max(1, ability.spawns_hazard.wall_length - 1)
+
+	var cells: Array = []
+	# Horizontal candidates (same row).
+	for dx in range(-max_dist, max_dist + 1):
+		if dx == 0:
+			continue
+		var c = start + Vector2i(dx, 0)
+		if grid.is_valid_cell(c):
+			cells.append(c)
+	# Vertical candidates (same column).
+	for dy in range(-max_dist, max_dist + 1):
+		if dy == 0:
+			continue
+		var c = start + Vector2i(0, dy)
+		if grid.is_valid_cell(c):
+			cells.append(c)
+	return cells
+
+
+func _calculate_wall_cells(start: Vector2i, end: Vector2i, ability: AbilityData) -> Array:
+	# Computes the final list of cells the wall occupies, strictly clamped to
+	# wall_length tiles. Orientation (horizontal vs vertical) is determined by
+	# whichever axis has the larger offset between start and end — this also
+	# matches how the player's two taps naturally express direction.
+	#
+	# IMPORTANT: this does NOT use the caster's position for orientation — it
+	# uses start vs end, which is more precise for player-chosen walls. Both
+	# taps already had to be in range of the caster, so the wall is naturally
+	# "relative to the caster's position" by construction.
+	if ability.spawns_hazard == null:
+		printerr("❌ Wall ability has no spawns_hazard assigned — cannot determine wall_length.")
+		return []
+
+	var max_length: int = max(1, ability.spawns_hazard.wall_length)
+
+	var dx = end.x - start.x
+	var dy = end.y - start.y
+
+	var cells: Array = []
+	if abs(dx) >= abs(dy):
+		# Horizontal wall.
+		var step = 1 if dx >= 0 else -1
+		var length = min(abs(dx) + 1, max_length)   # +1 because start tile counts.
+		for i in range(length):
+			cells.append(start + Vector2i(step * i, 0))
+	else:
+		# Vertical wall.
+		var step = 1 if dy >= 0 else -1
+		var length = min(abs(dy) + 1, max_length)
+		for i in range(length):
+			cells.append(start + Vector2i(0, step * i))
+
+	# Filter out any cells that fall outside the map.
+	cells = cells.filter(func(c): return grid.is_valid_cell(c))
+	return cells
 
 # ── AOE HELPERS ───────────────────────────────────────────────────────────────
 
@@ -862,6 +1133,39 @@ func _get_aoe_cells(center: Vector2i, ability: AbilityData) -> Array:
 							cells.append(c)
 
 	return cells
+
+# ── UNLEASH (HP-COST ACCUMULATOR) ─────────────────────────────────────────────
+
+func _check_unleash_threshold() -> void:
+	# Polls executor.total_hp_consumed (which accumulates automatically inside
+	# execute_ability every time ANY unit pays an HP cost — player or enemy)
+	# and flips unleash_available on once it crosses HP_UNLEASH_THRESHOLD.
+	# Does NOT consume/reset the counter here — that happens in
+	# consume_unleash() once a player actually uses an Unleash ability,
+	# mirroring how Arcana Charge is granted then consumed on use.
+	if executor == null:
+		return
+	if unleash_available:
+		return   # Already unlocked — nothing more to do until it's consumed.
+
+	if executor.total_hp_consumed >= HP_UNLEASH_THRESHOLD:
+		unleash_available = true
+		print("🔥 UNLEASH READY! Total HP consumed this battle: ",
+			  executor.total_hp_consumed, " / ", HP_UNLEASH_THRESHOLD)
+		if ui_manager and ui_manager.has_method("show_unleash_ready_indicator"):
+			ui_manager.show_unleash_ready_indicator()
+
+
+func consume_unleash() -> void:
+	# Called by ability_executor (or here, from on_ability_selected — see the
+	# is_unleash_ability gate below) once a player actually uses their Unleash
+	# ability. Resets the counter so the next Unleash has to be earned again.
+	unleash_available = false
+	if executor != null:
+		executor.total_hp_consumed -= HP_UNLEASH_THRESHOLD
+		executor.total_hp_consumed = max(0, executor.total_hp_consumed)
+	if ui_manager and ui_manager.has_method("hide_unleash_ready_indicator"):
+		ui_manager.hide_unleash_ready_indicator()
 
 # ── SPELLSWORD ARCANA CHARGE ──────────────────────────────────────────────────
 

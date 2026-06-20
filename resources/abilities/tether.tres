@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_xv7mr"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_7n4w4"]
+[ext_resource type="Resource" uid="uid://6oeegldom1yq" path="res://resources/status_effects/exposed.tres" id="2_38v47"]
 [ext_resource type="Texture2D" uid="uid://1gb6f8ipghme" path="res://sprites/hexweaver/hexweaver square.png" id="2_c4x1a"]
 
 [resource]
@@ -16,6 +17,7 @@ aoe_size = 2
 base_damage_multiplier = 0.0
 damage_type = "magical"
 scaling_stat = "matk"
+applies_statuses = Array[ExtResource("1_xv7mr")]([ExtResource("2_38v47")])
 ability_type = "spell"
 is_counterattack_immune = true
 applies_tether = true

@@ -5,7 +5,6 @@
 [ext_resource type="Texture2D" uid="uid://ef6347s2fdqn" path="res://sprites/sharpshooter/sharpshooter_attack.png" id="3_wtema"]
 [ext_resource type="Texture2D" uid="uid://ogtit5vv8rht" path="res://sprites/sharpshooter/sharpshooter_idle.png" id="4_5fabv"]
 [ext_resource type="Texture2D" uid="uid://cynaygv5ie8cb" path="res://sprites/sharpshooter/sharpshooter_die.png" id="5_84r1h"]
-[ext_resource type="Texture2D" uid="uid://chbiixwuvrnt4" path="res://sprites/Wind Mage/wind mage walker.png" id="7_cn213"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_7g5xd"]
 atlas = ExtResource("3_wtema")
@@ -131,13 +130,9 @@ region = Rect2(373, 384, 330, 192)
 atlas = ExtResource("4_5fabv")
 region = Rect2(703, 384, 330, 192)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_fcalv"]
-atlas = ExtResource("7_cn213")
-region = Rect2(376, 34, 188, 303)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_upkoq"]
-atlas = ExtResource("7_cn213")
-region = Rect2(752, 34, 188, 303)
+[sub_resource type="AtlasTexture" id="AtlasTexture_obrge"]
+atlas = ExtResource("4_5fabv")
+region = Rect2(1056, 192, 352, 192)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_jqsae"]
 atlas = ExtResource("4_5fabv")
@@ -341,14 +336,11 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_fcalv")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_upkoq")
+"texture": SubResource("AtlasTexture_obrge")
 }],
 "loop": true,
 "name": &"walk",
-"speed": 6.0
+"speed": 11.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -395,10 +387,9 @@ is_spellsword = null
 position = Vector2(-7, -22.999998)
 scale = Vector2(0.46666667, 0.4711066)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"attack"
+animation = &"walk"
 autoplay = "idle"
-frame = 9
-frame_progress = 1.0
+frame_progress = 0.48695478
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0

@@ -91,7 +91,9 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 		return
 
 	# 3. Target selection: find the closest visible player unit.
-	var target_player = null
+	# This is the DEFAULT target used for non-damaging abilities, and the
+	# fallback target if this enemy is taunted but can't reach the taunter.
+	var default_target = null
 	var closest_dist  = 999999
 	for p in valid_players:
 		if p.has_status("invisible"):
@@ -100,11 +102,26 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 				  + abs(enemy.grid_position.y - p.grid_position.y))
 		if dist < closest_dist:
 			closest_dist  = dist
-			target_player = p
+			default_target = p
 
-	if target_player == null:
+	if default_target == null:
 		enemy.has_acted = true
 		return
+
+	# ── TAUNT CHECK ─────────────────────────────────────────────────────────
+	# If this enemy is taunted AND the chosen ability deals damage to enemies
+	# (i.e. it's an attack, not a buff/heal/movement ability), the taunter
+	# becomes the PREFERRED target. We don't commit to it yet — first we check
+	# in step 4 whether we can actually reach them this turn. If not, we fall
+	# back to default_target (closest reachable player) for this turn only.
+	var taunt_source = enemy.get_taunt_source() if enemy.has_method("get_taunt_source") else null
+	var is_damaging_ability = (chosen_ability.base_damage_multiplier > 0
+							  and chosen_ability.affects_team == "enemies")
+	var preferred_target = default_target
+	if taunt_source != null and is_damaging_ability and is_instance_valid(taunt_source):
+		preferred_target = taunt_source
+
+	var target_player = preferred_target
 
 	# 4. Movement planning: find the best tile to move to.
 	var movement_range = 3
@@ -136,6 +153,34 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 					can_attack_from_somewhere  = true
 
 	# Fallback: if we can't find an in-range tile, just move as close as possible.
+	if not can_attack_from_somewhere:
+		# ── TAUNT FALLBACK ─────────────────────────────────────────────────────
+		# If we were trying to reach the taunter specifically and couldn't,
+		# retry the whole in-range search against the default (closest) target
+		# instead, for this turn only.
+		if target_player == taunt_source and taunt_source != default_target:
+			print("⚠️ ", enemy.unit_data.display_name, " is taunted but can't reach ",
+				  "the taunter — falling back to closest target this turn.")
+			target_player = default_target
+			best_move_dist = 999999
+			for cell in available_move_cells.keys():
+				var dist_to_target = (abs(cell.x - target_player.grid_position.x)
+									+ abs(cell.y - target_player.grid_position.y))
+				if dist_to_target >= chosen_ability.min_range and dist_to_target <= chosen_ability.max_range:
+					if chosen_ability.requires_line_of_sight:
+						if pathfinder.has_line_of_sight(cell, target_player.grid_position):
+							if dist_to_target < best_move_dist:
+								best_move_dist            = dist_to_target
+								best_move_cell            = cell
+								can_attack_from_somewhere = true
+					else:
+						if dist_to_target < best_move_dist:
+							best_move_dist            = dist_to_target
+							best_move_cell            = cell
+							can_attack_from_somewhere = true
+
+	# Final fallback: if STILL nothing in range (even after a taunt fallback),
+	# just move as close as possible to whichever target we ended up on.
 	if not can_attack_from_somewhere:
 		best_move_dist = 999999
 		for cell in available_move_cells.keys():
@@ -180,12 +225,17 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 	if final_dist >= chosen_ability.min_range and final_dist <= chosen_ability.max_range and los_ok:
 		print("⚔️ AI executing ability: ", chosen_ability.display_name,
 			  " on target: ", target_player.grid_position)
-		enemy.look_at_target(target_player.grid_position)
 
-		var dy = target_player.grid_position.y - enemy.grid_position.y
-		if dy < -1:  enemy.play_animation("attack_up")
-		elif dy > 1: enemy.play_animation("attack_down")
-		else:        enemy.play_animation("attack")
+		# Use the ability's custom attack animation if one is set, otherwise
+		# fall back to the normal directional attack/attack_up/attack_down logic.
+		if chosen_ability.attack_animation_name != "":
+			enemy.look_at_target(target_player.grid_position, chosen_ability.attack_animation_name)
+		else:
+			enemy.look_at_target(target_player.grid_position)
+			var dy = target_player.grid_position.y - enemy.grid_position.y
+			if dy < -1:  enemy.play_animation("attack_up")
+			elif dy > 1: enemy.play_animation("attack_down")
+			else:        enemy.play_animation("attack")
 
 		await get_tree().create_timer(0.5).timeout
 

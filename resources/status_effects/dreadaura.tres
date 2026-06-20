@@ -6,6 +6,7 @@
 script = ExtResource("1_gi6th")
 id = "dreadauradebuff"
 display_name = "Dread Aura"
+atk_modifier = -2
 mov_modifier = -2
 crit_chance_modifier = -20.0
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

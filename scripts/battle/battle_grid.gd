@@ -5,11 +5,16 @@
 # (tethers, shields, guardian links, thorns).
 #
 # WHAT'S NEW:
-#   - Hazards now enforced max 3 turns; only one of each type per tile.
+#   - Hazards now enforced max 3 turns; only one of each type per tile
+#     (walls are EXEMPT from the 3-turn cap — see add_hazard).
 #   - Multi-tile unit support: large units (2×2, etc.) occupy multiple cells.
 #   - Tether tracking: a dictionary mapping tether_id → list of unit nodes.
 #   - Shield / Guardian / Thorns data stored per unit so ability_executor
 #     can look them up during damage resolution.
+#   - Animated hazard visuals: entrance → idle (looping) → exit, instead of
+#     static sprites. Falls back to a static icon if no scenes are provided.
+#   - Wall hazards: a hazard spanning multiple cells that blocks movement
+#     (per a team filter) and optionally line of sight, instead of dealing damage.
 
 extends Node2D
 
@@ -35,15 +40,21 @@ var unit_positions: Dictionary = {}
 var hazard_map: Dictionary = {}
 # Key: Vector2i
 # Value: Dictionary with keys:
-#   "data"           : HazardData resource (the template)
-#   "remaining"      : int  (turns left before expiry)
-#   "caster"         : UnitNode that placed this hazard (may be null)
-#   "visual"         : Node2D visual placed on HazardLayer (may be null)
+#   "data"            : HazardData resource (the template)
+#   "remaining"       : int  (turns left before expiry)
+#   "caster"          : UnitNode that placed this hazard (may be null)
+#   "visual"          : Node2D currently displayed (entrance, idle, or exit instance)
+#   "visual_state"    : String — "entrance", "idle", or "exit" (tracks animation phase)
+#   "wall_group_id"   : String — shared id linking all cells of the same wall
+#                       placement together (so removing one tile can find its
+#                       siblings if needed). Empty string for non-wall hazards.
 # Only ONE hazard of each id is allowed per tile. A second placement of
 # the same type refreshes the duration instead of stacking.
 
 const HAZARD_MAX_TURNS: int = 3
-# Hard cap: no hazard can last more than 3 turns, regardless of HazardData.
+# Hard cap: no NON-WALL hazard can last more than 3 turns, regardless of HazardData.
+# Walls are exempt from this cap since they're often meant to persist as
+# battlefield-shaping terrain for the whole encounter.
 
 # ── SPECIAL EFFECT MAPS ───────────────────────────────────────────────────────
 # These dictionaries are the "lookup tables" ability_executor reads during
@@ -109,27 +120,44 @@ func is_valid_cell(cell: Vector2i) -> bool:
 
 func is_passable(cell: Vector2i) -> bool:
 	# Returns true if a unit CAN stand on this cell (not a wall, not occupied).
+	# This is the team-agnostic version used by general pathfinding queries
+	# that don't know which unit is asking. For wall-aware checks during actual
+	# movement, callers should prefer is_passable_for(unit, cell) below.
 	if not is_valid_cell(cell): return false
 	if not tile_map.has(cell):  return false
 	var tile: TileTypeData = tile_map[cell]
 	if tile.is_wall:            return false
 	if unit_positions.has(cell): return false
+	if _is_blocked_by_wall_hazard(cell, null): return false
 	return true
-	
-	
+
+
+func is_passable_for(unit, cell: Vector2i) -> bool:
+	# Team-aware passability check. Use this from pathfinding so wall hazards
+	# correctly respect their wall_blocks filter ("player", "enemies", "all").
+	if not is_valid_cell(cell): return false
+	if not tile_map.has(cell):  return false
+	var tile: TileTypeData = tile_map[cell]
+	if tile.is_wall:             return false
+	if unit_positions.has(cell): return false
+	if _is_blocked_by_wall_hazard(cell, unit): return false
+	return true
+
+
 func is_terrain_walkable(cell: Vector2i) -> bool:
 	# 1. Check if the cell is valid/inside the map
 	if not is_valid_cell(cell): return false
 	# 2. Check if the tile exists in our data
 	if not tile_map.has(cell):  return false
-	
-	# 3. ONLY check if it is a wall. 
-	# We purposefully exclude the 'unit_positions' check here.
+
+	# 3. ONLY check if it is a wall (terrain) or a wall HAZARD.
+	# We purposefully exclude the 'unit_positions' check here, since this is
+	# used for things like dash paths that care about terrain, not occupancy.
 	var tile: TileTypeData = tile_map[cell]
 	if tile.is_wall:           return false
-	
-	return true
+	if _is_blocked_by_wall_hazard(cell, null): return false
 
+	return true
 
 
 func get_movement_cost(cell: Vector2i) -> int:
@@ -139,7 +167,38 @@ func get_movement_cost(cell: Vector2i) -> int:
 
 func blocks_los(cell: Vector2i) -> bool:
 	if not tile_map.has(cell): return false
-	return tile_map[cell].blocks_line_of_sight or tile_map[cell].is_wall
+	if tile_map[cell].blocks_line_of_sight or tile_map[cell].is_wall:
+		return true
+	# Wall hazards optionally block line of sight too, per their HazardData flag.
+	if hazard_map.has(cell):
+		for hazard_id in hazard_map[cell]:
+			var entry = hazard_map[cell][hazard_id]
+			var hdata: HazardData = entry["data"]
+			if hdata.is_wall_hazard and hdata.wall_blocks_line_of_sight:
+				return true
+	return false
+
+
+func _is_blocked_by_wall_hazard(cell: Vector2i, unit) -> bool:
+	# Internal helper: checks if a wall hazard at this cell blocks the given unit.
+	# 'unit' may be null (team-agnostic check — blocks if ANY team would be blocked).
+	if not hazard_map.has(cell):
+		return false
+	for hazard_id in hazard_map[cell]:
+		var entry = hazard_map[cell][hazard_id]
+		var hdata: HazardData = entry["data"]
+		if not hdata.is_wall_hazard:
+			continue
+		match hdata.wall_blocks:
+			"all":
+				return true
+			"player":
+				if unit == null or unit.is_player_unit:
+					return true
+			"enemies":
+				if unit == null or not unit.is_player_unit:
+					return true
+	return false
 
 # ── UNIT REGISTRY ─────────────────────────────────────────────────────────────
 
@@ -175,12 +234,17 @@ func unregister_large_unit(unit) -> void:
 
 # ── HAZARD SYSTEM ─────────────────────────────────────────────────────────────
 
-func add_hazard(cell: Vector2i, hazard_data: HazardData, caster = null) -> void:
+func add_hazard(cell: Vector2i, hazard_data: HazardData, caster = null,
+				wall_group_id: String = "") -> void:
 	# Places (or refreshes) a hazard on a tile.
 	# Rules:
 	#   - Only one hazard of each TYPE (id) per tile.
-	#   - Duration is clamped to HAZARD_MAX_TURNS (3).
+	#   - Duration is clamped to HAZARD_MAX_TURNS (3) UNLESS it's a wall hazard.
 	#   - If the same hazard id already exists here, we refresh duration only.
+	#
+	# wall_group_id links multiple cells together as one wall placement.
+	# Pass the SAME string for every cell in a single wall so they can be
+	# tracked/removed as a unit if needed later. Leave blank for normal hazards.
 
 	if not hazard_map.has(cell):
 		hazard_map[cell] = {}
@@ -190,57 +254,213 @@ func add_hazard(cell: Vector2i, hazard_data: HazardData, caster = null) -> void:
 	# Check if this exact hazard type already exists at this cell.
 	if slot.has(hazard_data.id):
 		# Refresh duration — do NOT stack a second copy.
-		slot[hazard_data.id]["remaining"] = min(hazard_data.duration_rounds, HAZARD_MAX_TURNS)
+		var refreshed_duration = hazard_data.duration_rounds
+		if not hazard_data.is_wall_hazard:
+			refreshed_duration = min(refreshed_duration, HAZARD_MAX_TURNS)
+		slot[hazard_data.id]["remaining"] = refreshed_duration
 		return
 
-	# New hazard type: calculate duration with the 3-turn cap.
-	var duration = hazard_data.duration_rounds if not hazard_data.is_permanent \
-				   else 9999
-	duration = min(duration, HAZARD_MAX_TURNS)
-
-	# Spawn a visual icon on the HazardLayer so the player can see it.
-	var visual: Node2D = null
-	if hazard_data.icon != null and has_node("HazardLayer"):
-		var sprite = Sprite2D.new()
-		sprite.texture = hazard_data.icon
-		sprite.position = grid_to_world(cell)
-		sprite.modulate = Color(1, 1, 1, 0.75)  # Slightly transparent so tile is visible.
-		$HazardLayer.add_child(sprite)
-		visual = sprite
+	# New hazard type: calculate duration.
+	# Wall hazards are EXEMPT from the 3-turn cap.
+	var duration = hazard_data.duration_rounds if not hazard_data.is_permanent else 9999
+	if not hazard_data.is_wall_hazard:
+		duration = min(duration, HAZARD_MAX_TURNS)
 
 	slot[hazard_data.id] = {
-		"data":      hazard_data,
-		"remaining": duration,
-		"caster":    caster,
-		"visual":    visual
+		"data":          hazard_data,
+		"remaining":     duration,
+		"caster":        caster,
+		"visual":        null,
+		"visual_state":  "none",
+		"wall_group_id": wall_group_id,
 	}
+
+	_spawn_hazard_visual(cell, hazard_data.id)
+
+
+func _spawn_hazard_visual(cell: Vector2i, hazard_id: String) -> void:
+	# Spawns the ENTRANCE animation if one is defined, otherwise jumps straight
+	# to the looping idle visual, otherwise falls back to a static icon sprite.
+	if not hazard_map.has(cell) or not hazard_map[cell].has(hazard_id):
+		return
+	var entry = hazard_map[cell][hazard_id]
+	var hdata: HazardData = entry["data"]
+
+	if not has_node("HazardLayer"):
+		return
+
+	if hdata.entrance_scene != null:
+		var instance = hdata.entrance_scene.instantiate()
+		instance.position = grid_to_world(cell)
+		$HazardLayer.add_child(instance)
+		entry["visual"]       = instance
+		entry["visual_state"] = "entrance"
+
+		# Wait for the entrance animation to finish, then swap to idle.
+		# Supports either AnimatedSprite2D (animation_finished signal) or
+		# AnimationPlayer (animation_finished signal) as the root/child node.
+		_await_entrance_then_idle(cell, hazard_id, instance)
+
+	elif hdata.idle_scene != null:
+		_spawn_idle_visual(cell, hazard_id)
+
+	elif hdata.icon != null:
+		# Fallback: static sprite, exactly like the old behaviour.
+		var sprite = Sprite2D.new()
+		sprite.texture = hdata.icon
+		sprite.position = grid_to_world(cell)
+		sprite.modulate = Color(1, 1, 1, 0.75)
+		$HazardLayer.add_child(sprite)
+		entry["visual"]       = sprite
+		entry["visual_state"] = "idle"
+
+
+func _await_entrance_then_idle(cell: Vector2i, hazard_id: String, instance: Node) -> void:
+	# Waits for the entrance animation to complete, then transitions to idle.
+	# Uses a generic signal-detection approach so it works whether the hazard
+	# scene's root is an AnimatedSprite2D, an AnimationPlayer, or a custom node
+	# that exposes either of those as a child.
+	var finished_signal: Signal
+	if instance is AnimatedSprite2D:
+		(instance as AnimatedSprite2D).play("default")
+		finished_signal = (instance as AnimatedSprite2D).animation_finished
+	elif instance.has_node("AnimatedSprite2D"):
+		var s = instance.get_node("AnimatedSprite2D") as AnimatedSprite2D
+		s.play("default")
+		finished_signal = s.animation_finished
+	elif instance is AnimationPlayer:
+		(instance as AnimationPlayer).play("default")
+		finished_signal = (instance as AnimationPlayer).animation_finished
+	elif instance.has_node("AnimationPlayer"):
+		var ap = instance.get_node("AnimationPlayer") as AnimationPlayer
+		ap.play("default")
+		finished_signal = ap.animation_finished
+	else:
+		# No recognisable animation node — fall back to a fixed delay.
+		await get_tree().create_timer(0.6).timeout
+		_finish_entrance_transition(cell, hazard_id, instance)
+		return
+
+	await finished_signal
+	_finish_entrance_transition(cell, hazard_id, instance)
+
+
+func _finish_entrance_transition(cell: Vector2i, hazard_id: String, old_instance: Node) -> void:
+	# Removes the entrance instance and spawns the looping idle visual.
+	if is_instance_valid(old_instance):
+		old_instance.queue_free()
+	if not hazard_map.has(cell) or not hazard_map[cell].has(hazard_id):
+		return   # Hazard was removed mid-animation — nothing more to do.
+	_spawn_idle_visual(cell, hazard_id)
+
+
+func _spawn_idle_visual(cell: Vector2i, hazard_id: String) -> void:
+	# Spawns the looping idle scene for a hazard. If no idle_scene is set,
+	# falls back to the static icon (or nothing, if neither is set).
+	if not hazard_map.has(cell) or not hazard_map[cell].has(hazard_id):
+		return
+	var entry = hazard_map[cell][hazard_id]
+	var hdata: HazardData = entry["data"]
+
+	if hdata.idle_scene != null:
+		var instance = hdata.idle_scene.instantiate()
+		instance.position = grid_to_world(cell)
+		$HazardLayer.add_child(instance)
+		# Start the loop, if it's an AnimatedSprite2D-based scene.
+		if instance is AnimatedSprite2D:
+			(instance as AnimatedSprite2D).play("default")
+		elif instance.has_node("AnimatedSprite2D"):
+			instance.get_node("AnimatedSprite2D").play("default")
+		entry["visual"]       = instance
+		entry["visual_state"] = "idle"
+	elif hdata.icon != null:
+		var sprite = Sprite2D.new()
+		sprite.texture = hdata.icon
+		sprite.position = grid_to_world(cell)
+		sprite.modulate = Color(1, 1, 1, 0.75)
+		$HazardLayer.add_child(sprite)
+		entry["visual"]       = sprite
+		entry["visual_state"] = "idle"
+	else:
+		entry["visual"]       = null
+		entry["visual_state"] = "idle"
 
 
 func remove_hazard(cell: Vector2i, hazard_id: String) -> void:
-	# Removes a specific hazard type from a tile and cleans up its visual.
+	# Removes a specific hazard type from a tile. If an exit_scene is defined,
+	# plays it first and only erases the grid entry once it finishes.
 	if not hazard_map.has(cell): return
 	var slot = hazard_map[cell]
 	if not slot.has(hazard_id): return
 
 	var entry = slot[hazard_id]
-	if entry["visual"] != null and is_instance_valid(entry["visual"]):
-		entry["visual"].queue_free()
+	var hdata: HazardData = entry["data"]
+	var old_visual = entry["visual"]
 
+	# Remove the grid-logic entry immediately — gameplay effects (passability,
+	# damage triggers) end right away even if a visual is still playing out.
 	slot.erase(hazard_id)
 	if slot.is_empty():
 		hazard_map.erase(cell)
 
+	if hdata.exit_scene != null:
+		_play_exit_animation(cell, hdata, old_visual)
+	else:
+		# No exit animation — remove the idle visual instantly, same as before.
+		if old_visual != null and is_instance_valid(old_visual):
+			old_visual.queue_free()
+
+
+func _play_exit_animation(cell: Vector2i, hdata: HazardData, old_visual: Node) -> void:
+	# Plays the one-shot exit animation, then frees both the old idle visual
+	# and the exit instance once finished.
+	if old_visual != null and is_instance_valid(old_visual):
+		old_visual.queue_free()
+
+	if not has_node("HazardLayer"):
+		return
+
+	var instance = hdata.exit_scene.instantiate()
+	instance.position = grid_to_world(cell)
+	$HazardLayer.add_child(instance)
+
+	var finished_signal: Signal
+	if instance is AnimatedSprite2D:
+		(instance as AnimatedSprite2D).play("default")
+		finished_signal = (instance as AnimatedSprite2D).animation_finished
+	elif instance.has_node("AnimatedSprite2D"):
+		var s = instance.get_node("AnimatedSprite2D") as AnimatedSprite2D
+		s.play("default")
+		finished_signal = s.animation_finished
+	elif instance is AnimationPlayer:
+		(instance as AnimationPlayer).play("default")
+		finished_signal = (instance as AnimationPlayer).animation_finished
+	elif instance.has_node("AnimationPlayer"):
+		var ap = instance.get_node("AnimationPlayer") as AnimationPlayer
+		ap.play("default")
+		finished_signal = ap.animation_finished
+	else:
+		await get_tree().create_timer(0.6).timeout
+		if is_instance_valid(instance):
+			instance.queue_free()
+		return
+
+	await finished_signal
+	if is_instance_valid(instance):
+		instance.queue_free()
+
 
 func get_hazards_at(cell: Vector2i) -> Array:
 	# Returns a list of all active hazard entries at this cell.
-	# Each entry is a Dictionary with keys: data, remaining, caster, visual.
+	# Each entry is a Dictionary with keys: data, remaining, caster, visual, visual_state.
 	if not hazard_map.has(cell): return []
 	return hazard_map[cell].values()
 
 
 func tick_hazards() -> void:
 	# Called once per round (by BattleManager) to count down hazard durations.
-	# Any hazard that reaches 0 remaining turns is removed automatically.
+	# Any hazard that reaches 0 remaining turns is removed automatically
+	# (which triggers its exit animation, if any).
 	var to_remove: Array = []  # [ [cell, hazard_id], ... ]
 
 	for cell in hazard_map:
@@ -257,19 +477,25 @@ func tick_hazards() -> void:
 
 
 func apply_hazard_to_unit(unit, cell: Vector2i, trigger: String) -> void:
-	# Applies damage and status from ALL hazards at 'cell' to 'unit',
+	# Applies damage and status from ALL non-wall hazards at 'cell' to 'unit',
 	# but ONLY if the hazard's trigger condition matches 'trigger'.
 	#
 	# trigger can be:
 	#   "enter"        — unit just stepped onto the tile
 	#   "start_of_turn"— it is the start of the unit's turn
 	#   "end_of_turn"  — it is the end of the unit's turn
+	#
+	# Wall hazards never reach this function in practice (units can't enter
+	# a wall tile), but we skip them defensively anyway in case of edge cases.
 
 	if not hazard_map.has(cell): return
 
 	for hazard_id in hazard_map[cell]:
 		var entry = hazard_map[cell][hazard_id]
 		var hdata: HazardData = entry["data"]
+
+		if hdata.is_wall_hazard:
+			continue   # Walls don't deal damage — they only block movement.
 
 		# Check if this hazard triggers for this timing.
 		var should_trigger = false
@@ -291,6 +517,37 @@ func apply_hazard_to_unit(unit, cell: Vector2i, trigger: String) -> void:
 		# Apply optional status.
 		if hdata.applies_status != null:
 			unit.apply_status(hdata.applies_status)
+
+# ── WALL HAZARD PLACEMENT ─────────────────────────────────────────────────────
+
+func place_wall(cells: Array, hazard_data: HazardData, caster = null) -> void:
+	# Places a wall hazard across every cell in 'cells'. All cells share the
+	# same wall_group_id so they're recognisably part of one wall placement.
+	# Called by ability_executor after it has calculated the wall's cell line
+	# (see _calculate_wall_cells in ability_executor.gd for orientation logic).
+	if cells.is_empty():
+		return
+	var wall_group_id = "wall_%d" % Time.get_ticks_msec()
+	for cell in cells:
+		if not is_valid_cell(cell):
+			continue
+		# A wall cannot be placed on top of an existing unit or terrain wall.
+		if unit_positions.has(cell):
+			continue
+		if tile_map.has(cell) and tile_map[cell].is_wall:
+			continue
+		add_hazard(cell, hazard_data, caster, wall_group_id)
+
+
+func tick_shields() -> void:
+	# Counts down shield durations. Called each round.
+	var to_remove = []
+	for unit in shield_map:
+		shield_map[unit]["remaining_rounds"] -= 1
+		if shield_map[unit]["remaining_rounds"] <= 0:
+			to_remove.append(unit)
+	for u in to_remove:
+		shield_map.erase(u)
 
 # ── TETHER SYSTEM ─────────────────────────────────────────────────────────────
 
@@ -349,17 +606,6 @@ func absorb_shield_damage(unit, damage: int) -> int:
 		shield_map.erase(unit)
 
 	return damage - absorbed   # Return what got through.
-
-
-func tick_shields() -> void:
-	# Counts down shield durations. Called each round.
-	var to_remove = []
-	for unit in shield_map:
-		shield_map[unit]["remaining_rounds"] -= 1
-		if shield_map[unit]["remaining_rounds"] <= 0:
-			to_remove.append(unit)
-	for u in to_remove:
-		shield_map.erase(u)
 
 # ── THORNS SYSTEM ─────────────────────────────────────────────────────────────
 
