@@ -957,10 +957,62 @@ func get_debuff_count() -> int:
 
 # ── UI HELPERS ────────────────────────────────────────────────────────────────
 
+const HP_BAR_WIDTH: float  = 64.0
+const HP_BAR_HEIGHT: float = 8.0
+const HP_BAR_Y_OFFSET: float = 56.0
+# How far BELOW the unit's origin the bar is drawn. Tweak to taste based on
+# your sprite's pixel height — positive Y is downward in Godot's 2D space.
+
+var _hp_bar_bg: ColorRect  = null
+var _hp_bar_fill: ColorRect = null
+# Built lazily on first use so existing unit scenes don't need any manual
+# scene-tree changes — the bar is constructed entirely in code.
+
+
+func _ensure_hp_bar_exists() -> void:
+	# Creates the HP bar's background + fill rects once, the first time
+	# they're needed. Safe to call repeatedly — does nothing after the first time.
+	if _hp_bar_bg != null and is_instance_valid(_hp_bar_bg):
+		return
+
+	_hp_bar_bg = ColorRect.new()
+	_hp_bar_bg.size = Vector2(HP_BAR_WIDTH, HP_BAR_HEIGHT)
+	_hp_bar_bg.position = Vector2(-HP_BAR_WIDTH / 2.0, HP_BAR_Y_OFFSET)
+	_hp_bar_bg.color = Color(0.1, 0.1, 0.1, 0.85)   # Dark background frame.
+	_hp_bar_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hp_bar_bg.z_index = 5
+	add_child(_hp_bar_bg)
+
+	_hp_bar_fill = ColorRect.new()
+	_hp_bar_fill.size = Vector2(HP_BAR_WIDTH - 2.0, HP_BAR_HEIGHT - 2.0)
+	_hp_bar_fill.position = Vector2(1.0, 1.0)   # 1px inset inside the background.
+	_hp_bar_fill.color = Color(0.2, 0.9, 0.2, 1.0)   # Green fill — updated per-HP below.
+	_hp_bar_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hp_bar_fill.z_index = 6
+	_hp_bar_bg.add_child(_hp_bar_fill)
+
+
 func _update_hp_label() -> void:
-	# Updates the floating HP number above the unit's head (if the node exists).
-	if has_node("HPLabel"):
-		$HPLabel.text = str(current_hp)
+	# Updates the HP bar below the unit's sprite. Name kept as "_update_hp_label"
+	# since it's called from many existing places (setup, take_damage, heal),
+	# but it now drives a visual bar instead of a text label.
+	_ensure_hp_bar_exists()
+
+	var max_hp: int = 1
+	if unit_data != null:
+		max_hp = max(1, get_stats().hp)
+
+	var pct: float = clamp(float(current_hp) / float(max_hp), 0.0, 1.0)
+	var full_width: float = HP_BAR_WIDTH - 2.0
+	_hp_bar_fill.size.x = full_width * pct
+
+	# Color shifts from green → yellow → red as HP drops, for an at-a-glance read.
+	if pct > 0.5:
+		_hp_bar_fill.color = Color(0.2, 0.9, 0.2, 1.0)
+	elif pct > 0.25:
+		_hp_bar_fill.color = Color(0.95, 0.85, 0.1, 1.0)
+	else:
+		_hp_bar_fill.color = Color(0.9, 0.15, 0.15, 1.0)
 
 
 func update_visuals() -> void:
