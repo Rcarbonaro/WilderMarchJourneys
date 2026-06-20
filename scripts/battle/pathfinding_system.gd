@@ -6,6 +6,10 @@
 # movement range and the obstacles on the map. It uses a technique called
 # Breadth-First Search (BFS) — imagine dropping a stone in water and watching
 # the ripples spread outward one ring at a time. Each ring costs more movement.
+#
+# NEW: _is_passable_for now also respects wall hazards (battle_grid's
+# hazard_map entries with is_wall_hazard = true), filtered by the wall's
+# wall_blocks team setting ("player", "enemies", or "all").
 # ==============================================================================
 
 extends Node
@@ -30,7 +34,7 @@ var grid_ref: Node = null
 #                 a unit" and can't spread to any neighbors at all!
 func get_reachable_cells(start: Vector2i, movement: int, moving_unit = null) -> Dictionary:
 	var reachable = {}
-	
+
 	# The frontier acts as our look-ahead queue. We start with the unit's current tile.
 	var frontier: Array = [{"cell": start, "cost": 0}]
 
@@ -65,7 +69,8 @@ func get_reachable_cells(start: Vector2i, movement: int, moving_unit = null) -> 
 			# the starting tile! So the moving unit blocked its own pathfinding.
 			#
 			# Now we do the same check manually, but we skip the occupancy check for
-			# the tile that the moving_unit itself is standing on.
+			# the tile that the moving_unit itself is standing on. We also respect
+			# wall hazards, filtered by which team they block.
 			if not _is_passable_for(neighbor, moving_unit):
 				continue
 
@@ -79,7 +84,7 @@ func get_reachable_cells(start: Vector2i, movement: int, moving_unit = null) -> 
 				if not reachable.has(neighbor) or reachable[neighbor] > new_cost:
 					# Record the cost to reach this tile.
 					reachable[neighbor] = new_cost
-					
+
 					# Push this tile into the queue so we check its neighbors next.
 					frontier.append({
 						"cell": neighbor,
@@ -95,30 +100,40 @@ func get_reachable_cells(start: Vector2i, movement: int, moving_unit = null) -> 
 # _is_passable_for (private helper)
 # ==============================================================================
 # A version of grid.is_passable() that allows the moving unit to "pass through"
-# its own tile. All other occupancy and wall rules still apply normally.
+# its own tile. All other occupancy, terrain wall, and WALL HAZARD rules still
+# apply normally — wall hazards are filtered through the moving unit's team.
 #
 # Parameters:
 #   cell         — The tile coordinate we are checking.
 #   moving_unit  — The unit doing the moving (can be null if not relevant).
 func _is_passable_for(cell: Vector2i, moving_unit) -> bool:
 	# First, run the standard passability checks (valid cell, not a wall, etc.)
-	# We replicate the logic here instead of calling grid_ref.is_passable() so we 
+	# We replicate the logic here instead of calling grid_ref.is_passable() so we
 	# can insert our special moving_unit exception in the middle.
-	
+
 	if not grid_ref.is_valid_cell(cell):
 		return false
-	
+
 	# Ask the grid for the tile type data at this cell.
 	# If there's no tile data, treat it as impassable.
 	if not grid_ref.tile_map.has(cell):
 		return false
-	
+
 	var tile = grid_ref.tile_map[cell]
-	
-	# Walls block all movement.
+
+	# Terrain walls block all movement, for everyone.
 	if tile.is_wall:
 		return false
-	
+
+	# ── WALL HAZARD CHECK ───────────────────────────────────────────────────
+	# Wall hazards are tracked separately from terrain walls in hazard_map.
+	# Whether they block THIS unit depends on the hazard's wall_blocks setting
+	# ("player", "enemies", or "all"). We ask the grid directly rather than
+	# duplicating the team-filter logic here.
+	if grid_ref.has_method("_is_blocked_by_wall_hazard"):
+		if grid_ref._is_blocked_by_wall_hazard(cell, moving_unit):
+			return false
+
 	# Check if a unit is occupying this cell.
 	if grid_ref.unit_positions.has(cell):
 		# 🌟 THE KEY FIX: If the unit occupying this tile IS the moving unit,
@@ -128,7 +143,7 @@ func _is_passable_for(cell: Vector2i, moving_unit) -> bool:
 		if moving_unit != null and occupant == moving_unit:
 			return true  # Treat own tile as empty — allow pathfinding to proceed.
 		return false      # Someone else is standing here — blocked.
-	
+
 	return true
 
 
@@ -162,6 +177,9 @@ func get_cells_in_range(origin: Vector2i, min_r: int, max_r: int) -> Array:
 # Checks whether there is a clear, unobstructed line between two tiles.
 # Uses linear interpolation to sample tiles along the line and check for walls.
 # Returns true if nothing blocks the path between 'from' and 'to'.
+# grid_ref.blocks_los() already accounts for terrain walls AND wall hazards
+# that have wall_blocks_line_of_sight enabled — no change needed here beyond
+# relying on that updated implementation.
 func has_line_of_sight(from: Vector2i, to: Vector2i) -> bool:
 	var dx = to.x - from.x
 	var dy = to.y - from.y

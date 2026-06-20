@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://c7qq67wfberbo"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_qqnds"]
+[ext_resource type="Resource" uid="uid://jewbtl31wwea" path="res://resources/status_effects/overcharged.tres" id="2_4n08o"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_q2xyi"]
+
+[resource]
+script = ExtResource("2_q2xyi")
+id = "overcharge"
+display_name = "Overcharge"
+hp_cost_percent = 0.4
+max_range = 0
+affects_team = "all"
+base_damage_multiplier = 0.0
+applies_statuses_to_self = Array[ExtResource("1_qqnds")]([ExtResource("2_4n08o")])
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

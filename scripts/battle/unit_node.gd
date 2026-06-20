@@ -60,7 +60,15 @@ var grid_position: Vector2i = Vector2i(0, 0)
 var custom_resources:  Dictionary = {}
 var active_statuses:   Array      = []
 # List of active status effects. Each entry is a Dictionary:
-# { "data": StatusEffectData, "stacks": int, "remaining_rounds": int }
+# { "data": StatusEffectData, "stacks": int, "remaining_rounds": int,
+#   "source_caster": UnitNode or null,
+#   "visual_phase": String — "none" | "entering" | "active" | "exiting" }
+#
+# source_caster is WHO applied this status. It's used for:
+#   - Taunt: source_caster is who the taunted unit must attack.
+#   - DoT: source_caster's ATK/MATK is used for physical/magical damage scaling.
+# It may be null if the status was applied with no clear caster (e.g. a hazard
+# with no tracked placer).
 
 var ability_cooldowns: Dictionary = {}
 # Maps ability id → rounds remaining on cooldown.
@@ -171,6 +179,25 @@ func get_center_world_position() -> Vector2:
 	)
 	return grid_ref.grid_to_world(center_cell)
 
+# ── VISUAL OVERRIDE STATE ─────────────────────────────────────────────────────
+
+var _active_visual_override: StatusEffectData = null
+# Tracks which status (if any) is currently overriding this unit's animation
+# set. Only one visual override can be active at a time — if a second
+# has_visual_override status is applied while one is already active, the
+# newer one takes priority once its enter_animation finishes.
+
+var _visual_override_transitioning: bool = false
+# True while an enter_animation or exit_animation is playing. While true,
+# play_animation() calls are ignored so the transition can't be interrupted
+# by a stray idle/attack call from elsewhere in the codebase.
+
+var _override_scene_instance: Node = null
+# The live instance of StatusEffectData.override_scene, when
+# visual_override_mode == "override_scene". Null whenever no scene-based
+# override is currently showing. The unit's own AnimatedSprite2D is hidden
+# while this is active and shown again once it's cleared.
+
 # ── ANIMATION HELPERS ─────────────────────────────────────────────────────────
 
 func _apply_default_facing() -> void:
@@ -180,10 +207,46 @@ func _apply_default_facing() -> void:
 
 func play_animation(anim_name: String) -> void:
 	# Safely plays a named animation, falling back gracefully if it's missing.
+	# If a visual-override status is currently active (e.g. Bark Armor), the
+	# normal anim_name is redirected to that status's override_* animation
+	# instead, so the unit keeps its special look until the status ends.
 	if not has_node("AnimatedSprite2D"):
 		return
+
+	# While an enter/exit transition is playing, ignore all other animation
+	# requests so the transition always plays out fully and uninterrupted.
+	if _visual_override_transitioning:
+		return
+
 	var sprite := $AnimatedSprite2D as AnimatedSprite2D
 	var actual_anim := anim_name
+
+	# ── VISUAL OVERRIDE REDIRECT ───────────────────────────────────────────────
+	# Only redirect by NAME when the active override uses animation_names mode.
+	# Scene-based overrides manage their own idle/attack looping independently
+	# and don't redirect through this function at all.
+	if _active_visual_override != null and _active_visual_override.visual_override_mode == "animation_names":
+		var override_data := _active_visual_override
+		match anim_name:
+			"idle":
+				if override_data.override_idle_animation != "":
+					actual_anim = override_data.override_idle_animation
+			"walk", "walk_up":
+				if override_data.override_walk_animation != "":
+					actual_anim = override_data.override_walk_animation
+			"attack", "attack_up", "attack_down":
+				if override_data.override_attack_animation != "":
+					actual_anim = override_data.override_attack_animation
+			"hurt":
+				if override_data.override_hurt_animation != "":
+					actual_anim = override_data.override_hurt_animation
+		if sprite.sprite_frames.has_animation(actual_anim):
+			sprite.play(actual_anim)
+			return
+		# If the override didn't define a replacement for this specific anim,
+		# fall through to the normal fallback logic below using the original name.
+		actual_anim = anim_name
+
 	match anim_name:
 		"attack_up", "attack_down":
 			if not sprite.sprite_frames.has_animation(anim_name):
@@ -196,6 +259,24 @@ func play_animation(anim_name: String) -> void:
 	if anim_name == "idle" and has_arcana_charge:
 		sprite.play("arcana_charge")   # Arcana charge replaces idle visually.
 		return
+
+
+func play_named_animation(anim_name: String) -> void:
+	# Plays an EXACT named animation with no fallback redirection and no
+	# visual-override redirection. Used for per-ability custom attack
+	# animations (ability_data.attack_animation_name), since those are
+	# meant to play exactly as specified regardless of override status.
+	# Falls back to the normal play_animation("attack") if the named
+	# animation doesn't exist on this unit's sprite frames.
+	if not has_node("AnimatedSprite2D"):
+		return
+	if _visual_override_transitioning:
+		return
+	var sprite := $AnimatedSprite2D as AnimatedSprite2D
+	if anim_name != "" and sprite.sprite_frames.has_animation(anim_name):
+		sprite.play(anim_name)
+	else:
+		play_animation("attack")
 
 
 func _set_facing_for_direction(target_pos: Vector2i) -> void:
@@ -475,8 +556,15 @@ func snap_to(new_cell: Vector2i) -> void:
 	position = grid_ref.grid_to_world(new_cell)
 
 
-func look_at_target(target_pos: Vector2i) -> void:
+func look_at_target(target_pos: Vector2i, custom_animation_name: String = "") -> void:
+	# Faces the unit toward target_pos, then plays either:
+	#   - the exact custom_animation_name if one was provided (for per-ability
+	#     attack animations like "attack_fire_sword"), or
+	#   - the normal directional attack_up/attack_down/attack fallback.
 	_set_facing_for_direction(target_pos)
+	if custom_animation_name != "":
+		play_named_animation(custom_animation_name)
+		return
 	var dy = target_pos.y - grid_position.y
 	if dy < -1:
 		play_animation("attack_up")
@@ -485,9 +573,13 @@ func look_at_target(target_pos: Vector2i) -> void:
 
 # ── STATUS EFFECTS ────────────────────────────────────────────────────────────
 
-func apply_status(status_data: StatusEffectData, stacks: int = 1) -> void:
+func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster = null) -> void:
 	# Applies a status effect to this unit. Checks for immunity first,
 	# then either refreshes an existing instance or adds a new one.
+	#
+	# source_caster is the unit who applied this status (may be null).
+	# It's recorded so Taunt knows who to redirect attacks toward, and so
+	# DoT damage can scale off the correct unit's ATK/MATK.
 
 	# If the unit has an immunity status, block all incoming status applications.
 	for s in active_statuses:
@@ -502,6 +594,8 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1) -> void:
 			if status_data.can_stack:
 				s["stacks"] = min(s["stacks"] + stacks, status_data.max_stacks)
 			s["remaining_rounds"] = status_data.duration_rounds
+			# Refresh the source caster too — re-taunting updates who to attack.
+			s["source_caster"] = source_caster
 			_debug_print_status_applied(status_data, s["stacks"])
 			return
 
@@ -509,35 +603,316 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1) -> void:
 	active_statuses.append({
 		"data":             status_data,
 		"stacks":           stacks,
-		"remaining_rounds": status_data.duration_rounds
+		"remaining_rounds": status_data.duration_rounds,
+		"source_caster":    source_caster,
+		"visual_phase":     "none",
 	})
 	_debug_print_status_applied(status_data, stacks)
 	update_visuals()
 
+	# ── VISUAL OVERRIDE ENTRY ───────────────────────────────────────────────
+	if status_data.has_visual_override:
+		_begin_visual_override(status_data)
+
 
 func remove_status(status_id: String) -> void:
 	# Removes a status by its id string. Used for cleanse/dispel effects.
-	active_statuses = active_statuses.filter(func(s): return s["data"].id != status_id)
+	var removed_entry = null
+	for s in active_statuses:
+		if s["data"].id == status_id:
+			removed_entry = s
+			break
+	if removed_entry == null:
+		return
+	active_statuses.erase(removed_entry)
+
+	# If the removed status was driving a visual override, play its exit
+	# animation and restore the unit's normal look.
+	if removed_entry["data"].has_visual_override and _active_visual_override == removed_entry["data"]:
+		_end_visual_override(removed_entry["data"])
 
 
 func tick_statuses_end_of_round(team_that_just_ended: String) -> void:
-	# Called at the end of a round (from BattleManager) to count down durations
-	# and remove any that have expired.
+	# Called once per round, ALWAYS with the team that this unit belongs to —
+	# player units are only ever ticked with "player", enemy units only ever
+	# ticked with "enemy" (see battle_manager.gd's end_player_turn and
+	# _on_enemy_turn_complete). Because of that, every status on this unit
+	# decrements by exactly 1 every time this function runs, full stop.
+	#
+	# NOTE: status_effect_data.expires_at previously tried to filter which
+	# team-round a status counts down on, but since a unit only ever receives
+	# ticks for ITS OWN team, that filter was comparing against a value that
+	# never varies — for player units team_that_just_ended is always "player",
+	# for enemy units it's always "enemy". A status whose expires_at didn't
+	# happen to match the unit's own team simply never ticked down at all,
+	# which is the bug being fixed here. expires_at is no longer read for
+	# countdown purposes; duration_rounds now always means "this many of the
+	# unit's own turns must end" regardless of team.
 	var to_remove = []
 	for s in active_statuses:
 		var data: StatusEffectData = s["data"]
+
+		# ── DAMAGE OVER TIME ────────────────────────────────────────────────
+		# Fires at the end of the ENEMY round specifically, regardless of which
+		# team the status is currently sitting on. This lets a player-applied
+		# DoT debuff on an enemy tick once per full round as intended.
+		if data.has_dot and team_that_just_ended == "enemy":
+			_apply_dot_tick(s)
+			if not is_instance_valid(self):
+				return   # The DoT tick killed this unit — stop processing.
+
 		if data.is_permanent:
-			continue   # Permanent statuses never count down.
-		# Only count down statuses that expire at the end of THIS team's round.
-		if data.expires_at == "end_of_player_round" and team_that_just_ended == "player":
-			s["remaining_rounds"] -= 1
-		elif data.expires_at == "end_of_enemy_round" and team_that_just_ended == "enemy":
-			s["remaining_rounds"] -= 1
+			continue   # Permanent statuses never count down toward expiry.
+
+		# Always decrement — this function only ever runs once per round for
+		# this unit's own team, so every call is exactly one round passing.
+		s["remaining_rounds"] -= 1
 		if s["remaining_rounds"] <= 0:
 			to_remove.append(s)
+
 	for s in to_remove:
 		active_statuses.erase(s)
 		print("⏱️ Status '", s["data"].display_name, "' expired on ", unit_data.display_name)
+		# If the expiring status was driving a visual override, play its exit
+		# animation and restore the unit's normal look.
+		if s["data"].has_visual_override and _active_visual_override == s["data"]:
+			_end_visual_override(s["data"])
+
+
+func _apply_dot_tick(status_entry: Dictionary) -> void:
+	# Deals one tick of damage-over-time damage based on the status's
+	# dot_damage_mode, scaled by stacks (each stack deals damage independently
+	# — a stacked DoT of 3 stacks ticks 3 times the per-tick damage).
+	var data: StatusEffectData = status_entry["data"]
+	var caster = status_entry["source_caster"]
+	var stacks: int = status_entry["stacks"]
+
+	var per_tick_damage: int = 0
+	match data.dot_damage_mode:
+		"flat":
+			per_tick_damage = data.dot_flat_amount
+		"physical":
+			if caster != null and is_instance_valid(caster):
+				var atk = caster.get_effective_atk()
+				var def = get_effective_def()
+				per_tick_damage = max(1, int(float(atk - def) * data.dot_damage_percent))
+			else:
+				per_tick_damage = max(1, int(get_stats().atk * data.dot_damage_percent))
+		"magical":
+			if caster != null and is_instance_valid(caster):
+				var matk = caster.get_effective_matk()
+				var mdef = get_effective_mdef()
+				per_tick_damage = max(1, int(float(matk - mdef) * data.dot_damage_percent))
+			else:
+				per_tick_damage = max(1, int(get_stats().matk * data.dot_damage_percent))
+
+	var total_damage = per_tick_damage * max(1, stacks)
+	var dmg_type = "true" if data.dot_damage_mode == "flat" else data.dot_damage_mode
+	print("☣️ DoT '", data.display_name, "' ticks for ", total_damage, " on ", unit_data.display_name)
+	take_damage(total_damage, dmg_type)
+
+# ── TAUNT HELPERS ─────────────────────────────────────────────────────────────
+
+func get_taunt_source():
+	# Returns the UnitNode this unit is currently taunted by, or null if not
+	# taunted (or if the taunter has since died/become invalid).
+	# If multiple taunts are somehow active at once, the most recently applied
+	# one wins (last in active_statuses with applies_taunt = true).
+	var result = null
+	for s in active_statuses:
+		var data: StatusEffectData = s["data"]
+		if data.applies_taunt:
+			var src = s["source_caster"]
+			if src != null and is_instance_valid(src):
+				result = src
+	return result
+
+
+func is_taunted() -> bool:
+	return get_taunt_source() != null
+
+# ── VISUAL OVERRIDE TRANSITIONS ───────────────────────────────────────────────
+
+func _begin_visual_override(status_data: StatusEffectData) -> void:
+	# Starts the visual override sequence. Branches on visual_override_mode:
+	#   "animation_names" — plays enter_animation on the unit's OWN
+	#       AnimatedSprite2D, then redirects idle/walk/attack/hurt calls to
+	#       the override_* names for the duration.
+	#   "override_scene" — hides the unit's own sprite and instantiates
+	#       override_scene as a child, playing its "enter" animation once,
+	#       then its "idle" animation looping for the duration.
+	if not has_node("AnimatedSprite2D"):
+		return
+
+	_active_visual_override = status_data
+
+	if status_data.visual_override_mode == "override_scene":
+		_begin_scene_override(status_data)
+		return
+
+	# ── ANIMATION-NAMES MODE (existing behaviour) ─────────────────────────────
+	if status_data.enter_animation == "":
+		# No transition animation — jump straight to the override idle look.
+		play_animation("idle")
+		return
+
+	_visual_override_transitioning = true
+	var sprite := $AnimatedSprite2D as AnimatedSprite2D
+	if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(status_data.enter_animation):
+		sprite.play(status_data.enter_animation)
+		await sprite.animation_finished
+	else:
+		printerr("⚠️ Status '", status_data.display_name, "': enter_animation '",
+				 status_data.enter_animation, "' not found on this unit's own ",
+				 "AnimatedSprite2D. If this animation lives in a separate scene file, ",
+				 "set visual_override_mode to 'override_scene' and use override_scene instead.")
+	_visual_override_transitioning = false
+
+	# Only settle into the override idle if this status is STILL the active
+	# override (it's possible it was removed mid-transition).
+	if is_instance_valid(self) and _active_visual_override == status_data:
+		play_animation("idle")
+
+
+func _end_visual_override(status_data: StatusEffectData) -> void:
+	# Plays exit_animation/exit phase once (if set), then restores the unit's
+	# normal animation set or sprite visibility.
+	if status_data.visual_override_mode == "override_scene":
+		await _end_scene_override(status_data)
+		return
+
+	if not has_node("AnimatedSprite2D"):
+		_active_visual_override = null
+		return
+
+	if status_data.exit_animation == "":
+		_active_visual_override = null
+		if is_instance_valid(self):
+			play_animation("idle")
+		return
+
+	_visual_override_transitioning = true
+	var sprite := $AnimatedSprite2D as AnimatedSprite2D
+	if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(status_data.exit_animation):
+		sprite.play(status_data.exit_animation)
+		await sprite.animation_finished
+	else:
+		printerr("⚠️ Status '", status_data.display_name, "': exit_animation '",
+				 status_data.exit_animation, "' not found on this unit's own AnimatedSprite2D.")
+	_visual_override_transitioning = false
+
+	# Clear the override AFTER the exit plays so play_animation() redirection
+	# was correctly disabled during the exit animation itself (the exit anim
+	# plays as its own named clip, not redirected through idle/attack/etc).
+	_active_visual_override = null
+	if is_instance_valid(self):
+		play_animation("idle")
+
+# ── SCENE-BASED VISUAL OVERRIDE ───────────────────────────────────────────────
+# Used when StatusEffectData.visual_override_mode == "override_scene". Instead
+# of redirecting animation names within the unit's existing AnimatedSprite2D,
+# an entirely separate scene (with its own SpriteFrames/AnimationPlayer) is
+# instantiated as a child of the unit and shown in its place. That scene is
+# expected to contain animations named exactly "enter", "idle", and "exit".
+
+func _begin_scene_override(status_data: StatusEffectData) -> void:
+	if status_data.override_scene == null:
+		printerr("⚠️ Status '", status_data.display_name,
+				 "' has visual_override_mode = override_scene but no override_scene assigned.")
+		_active_visual_override = null
+		return
+
+	# Hide the unit's normal sprite while the override scene is shown.
+	if has_node("AnimatedSprite2D"):
+		$AnimatedSprite2D.visible = false
+
+	_override_scene_instance = status_data.override_scene.instantiate()
+	add_child(_override_scene_instance)
+
+	var anim_node = _find_animation_node(_override_scene_instance)
+	if anim_node == null:
+		printerr("⚠️ override_scene for '", status_data.display_name,
+				 "' has no AnimatedSprite2D or AnimationPlayer — cannot play enter/idle.")
+		return
+
+	if _has_anim(anim_node, "enter"):
+		_visual_override_transitioning = true
+		_play_anim(anim_node, "enter")
+		await _anim_finished_signal(anim_node)
+		_visual_override_transitioning = false
+
+	# Only settle into idle if this status is STILL the active override —
+	# it may have been removed while "enter" was playing.
+	if is_instance_valid(self) and _active_visual_override == status_data:
+		if is_instance_valid(_override_scene_instance) and _has_anim(anim_node, "idle"):
+			_play_anim(anim_node, "idle", true)
+
+
+func _end_scene_override(status_data: StatusEffectData) -> void:
+	var instance = _override_scene_instance
+	if instance == null or not is_instance_valid(instance):
+		_active_visual_override = null
+		_override_scene_instance = null
+		if has_node("AnimatedSprite2D") and is_instance_valid(self):
+			$AnimatedSprite2D.visible = true
+		return
+
+	var anim_node = _find_animation_node(instance)
+	if anim_node != null and _has_anim(anim_node, "exit"):
+		_visual_override_transitioning = true
+		_play_anim(anim_node, "exit")
+		await _anim_finished_signal(anim_node)
+		_visual_override_transitioning = false
+
+	if is_instance_valid(instance):
+		instance.queue_free()
+	_override_scene_instance = null
+	_active_visual_override = null
+
+	if is_instance_valid(self):
+		if has_node("AnimatedSprite2D"):
+			$AnimatedSprite2D.visible = true
+		play_animation("idle")
+
+
+func _find_animation_node(scene_instance: Node):
+	# Locates the node that drives animation within an override scene — either
+	# the root itself or a direct/nested child named AnimatedSprite2D or
+	# AnimationPlayer. Returns null if neither is found anywhere in the scene.
+	if scene_instance is AnimatedSprite2D or scene_instance is AnimationPlayer:
+		return scene_instance
+	if scene_instance.has_node("AnimatedSprite2D"):
+		return scene_instance.get_node("AnimatedSprite2D")
+	if scene_instance.has_node("AnimationPlayer"):
+		return scene_instance.get_node("AnimationPlayer")
+	# Fall back to a recursive search in case it's nested deeper.
+	for child in scene_instance.get_children():
+		var found = _find_animation_node(child)
+		if found != null:
+			return found
+	return null
+
+
+func _has_anim(anim_node, anim_name: String) -> bool:
+	if anim_node is AnimatedSprite2D:
+		var sf = (anim_node as AnimatedSprite2D).sprite_frames
+		return sf != null and sf.has_animation(anim_name)
+	if anim_node is AnimationPlayer:
+		return (anim_node as AnimationPlayer).has_animation(anim_name)
+	return false
+
+
+func _play_anim(anim_node, anim_name: String, loop_idle: bool = false) -> void:
+	if anim_node is AnimatedSprite2D:
+		(anim_node as AnimatedSprite2D).play(anim_name)
+	elif anim_node is AnimationPlayer:
+		(anim_node as AnimationPlayer).play(anim_name)
+
+
+func _anim_finished_signal(anim_node) -> Signal:
+	if anim_node is AnimatedSprite2D:
+		return (anim_node as AnimatedSprite2D).animation_finished
+	return (anim_node as AnimationPlayer).animation_finished
 
 # ── STATUS QUERY HELPERS ──────────────────────────────────────────────────────
 

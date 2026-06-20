@@ -11,4 +11,5 @@ can_stack = true
 max_stacks = 5
 atk_modifier = -1
 matk_modifier = -1
+applies_taunt = true
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

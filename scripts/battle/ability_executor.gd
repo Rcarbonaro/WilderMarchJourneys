@@ -37,6 +37,16 @@ var aura_manager: Node = null
 # Used to activate auras when an aura ability is used, and to fire
 # Crit Overload and Momentum events when crits and kills happen.
 
+# ── GLOBAL HP-COST TRACKING ───────────────────────────────────────────────────
+
+var total_hp_consumed: int = 0
+# Running total of HP spent as an ability cost across ALL units this battle
+# (player and enemy alike — see _check_unleash_threshold below if you want to
+# restrict this to player-only spending instead).
+# BattleManager reads this after every execute_ability call (the same pattern
+# already used for total_mana_spent/ARCANA_THRESHOLD) to decide when to unlock
+# the Unleash ability. Reset to 0 by BattleManager at the start of each battle.
+
 # ── INTERNAL STATE ────────────────────────────────────────────────────────────
 
 var _last_hit_was_crit: bool = false
@@ -87,11 +97,27 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 	else:
 		caster.spend_mana(ability.mana_cost)
 
+	var hp_cost_paid: int = 0
 	if ability.hp_cost_percent > 0:
-		var hp_cost = int(caster.get_stats().hp * ability.hp_cost_percent)
-		caster.take_damage(hp_cost, "true")
+		# Guarantee at least 1 HP is actually spent when hp_cost_percent > 0 —
+		# int() truncates toward zero, so a small percent on a low-HP unit
+		# (e.g. 0.05 * 12 HP = 0.6 → truncates to 0) previously could compute
+		# a cost of 0 and silently cost nothing despite the field being set.
+		hp_cost_paid = max(1, int(caster.get_stats().hp * ability.hp_cost_percent))
+		caster.take_damage(hp_cost_paid, "true")
 		if not is_instance_valid(caster):
 			return   # Caster killed themselves with HP cost — nothing more to do.
+
+	# ── GLOBAL CONSUMED-HP TRACKING ───────────────────────────────────────────
+	# Report the HP actually spent back through a static accumulator so
+	# BattleManager can track the party-wide "consumed HP" total used to
+	# unlock the powerful Unleash ability once it crosses the threshold.
+	# We use a static var here (rather than routing through BattleManager)
+	# so EVERY caller of execute_ability — player abilities, AI abilities,
+	# anything — contributes automatically with no extra wiring needed.
+	if hp_cost_paid > 0:
+		total_hp_consumed += hp_cost_paid
+		print("💉 HP cost paid: ", hp_cost_paid, " | Total HP consumed this battle: ", total_hp_consumed)
 
 	# ── STEP 2: DASH ──────────────────────────────────────────────────────────
 	# A "dash" is a line AOE where the CASTER physically moves to the last valid
@@ -101,6 +127,27 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 
 	if ability.is_dash and ability.aoe_shape == "line":
 		dash_landing_cell = await _execute_dash(caster, ability, target_cells)
+
+	# ── STEP 2.5: WALL PLACEMENT ───────────────────────────────────────────────
+	# Wall abilities don't damage units or apply statuses through the normal
+	# target loop — they place an impassable hazard across target_cells
+	# (already computed by battle_manager's two-tap wall placement flow) and
+	# then exit early. spawns_hazard must have is_wall_hazard = true.
+	if ability.aoe_shape == "wall":
+		if ability.spawns_hazard == null:
+			printerr("❌ Wall ability '", ability.display_name, "' has no spawns_hazard assigned!")
+		elif not ability.spawns_hazard.is_wall_hazard:
+			printerr("❌ Wall ability '", ability.display_name,
+					 "' spawns_hazard is not flagged is_wall_hazard!")
+		else:
+			grid_ref.place_wall(target_cells, ability.spawns_hazard, caster)
+			print("🧱 Wall placed across ", target_cells.size(), " tiles by ",
+				  caster.unit_data.display_name)
+
+		# Cooldown still applies even though we skip the rest of the pipeline.
+		if ability.cooldown_rounds > 0:
+			caster.ability_cooldowns[ability.id] = ability.cooldown_rounds
+		return
 
 	# ── STEP 3: COLLECT UNIQUE UNIT TARGETS AND APPLY EFFECTS ─────────────────
 	# Large units occupy multiple cells. We track which UnitNode references we
@@ -134,9 +181,11 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 
 		# ── STATUS EFFECTS ────────────────────────────────────────────────────
 		# Apply status effects to the target (if any) from the ability's list.
+		# We pass 'caster' through as source_caster so Taunt knows who to force
+		# attacks toward, and DoT can scale damage off the correct unit's stats.
 		if target != null:
 			for status_data in ability.applies_statuses:
-				target.apply_status(status_data)
+				target.apply_status(status_data, 1, caster)
 
 		# ── TETHER APPLICATION ────────────────────────────────────────────────
 		# If this ability applies a tether, register the hit unit in the group.
@@ -201,6 +250,19 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 			var heal_target = target if target != null else caster
 			var max_hp      = heal_target.get_stats().hp
 			heal_target.heal(int(max_hp * ability.heal_percent))
+
+	# ── STEP 3.4: SELF-STATUS APPLICATION ─────────────────────────────────────
+	# Applies any statuses in applies_statuses_to_self to the CASTER, once per
+	# cast (not once per target cell). This runs regardless of affects_team or
+	# whether the caster happened to be inside the AOE — it always lands.
+	# Use this to combine a taunt-the-enemies effect with a buff-myself effect
+	# in a single ability: put the taunt status in applies_statuses (with
+	# affects_team = "enemies") and the buff status here.
+	if not is_instance_valid(caster):
+		return
+	for self_status in ability.applies_statuses_to_self:
+		if self_status != null:
+			caster.apply_status(self_status, 1, caster)
 
 	# ── STEP 3.5: AURA ACTIVATION ─────────────────────────────────────────────
 	# If this ability activates an aura, tell the AuraManager to register it.
@@ -597,6 +659,10 @@ func _displace_unit_auto(caster, target, squares: int) -> void:
 	if direction == Vector2i(0, 0):
 		return
 
+	# Normalize the direction toward/away from the caster. This naturally
+	# produces a diagonal move_dir (e.g. (1,1)) whenever the target isn't
+	# perfectly aligned on a single axis with the caster — which is exactly
+	# what we want for a "pull to nearest adjacent tile" ability.
 	var dir_f: Vector2 = Vector2(direction.x, direction.y).normalized()
 	var move_dir: Vector2i = Vector2i(int(round(dir_f.x)), int(round(dir_f.y)))
 
@@ -614,11 +680,28 @@ func _displace_unit_auto(caster, target, squares: int) -> void:
 	for _i in range(steps):
 		var next: Vector2i = current + move_dir
 		if next == caster.grid_position:
+			break   # Never let the target land exactly on the caster's tile.
+
+		# ── ADJACENCY CHECK (FIXED) ────────────────────────────────────────────
+		# Stop once we're adjacent to the caster, INCLUDING diagonal adjacency.
+		# The old check used Vector2i.distance_to(), which returns the EUCLIDEAN
+		# distance (sqrt(2) ≈ 1.41 for a diagonal neighbour) — that never equals
+		# exactly 1, so diagonal pulls always failed this check and either
+		# overshot or broke out of the loop early. Chebyshev distance (the
+		# largest of the x/y offsets) is the correct "grid adjacency" measure:
+		# it's exactly 1 for ANY of the 8 surrounding tiles, including diagonals.
+		var chebyshev_dist: int = max(abs(next.x - caster.grid_position.x),
+									   abs(next.y - caster.grid_position.y))
+		if chebyshev_dist <= 1:
+			# 'next' is adjacent to the caster (cardinally or diagonally).
+			# Only commit to it if it's actually free to stand on; otherwise
+			# stay at 'current' (the last confirmed-valid tile) and stop here —
+			# this is the "closest available" tile behaviour requested.
+			if grid_ref.is_passable_for(target, next):
+				current = next
 			break
-		if next.distance_to(caster.grid_position) == 1:
-			current = next
-			break
-		if not grid_ref.is_passable(next):
+
+		if not grid_ref.is_passable_for(target, next):
 			break
 		current = next
 
@@ -656,7 +739,7 @@ func _displace_unit_scatter(ability: AbilityData, target, squares: int,
 
 	for _i in range(steps):
 		var next: Vector2i = current + move_dir
-		if not grid_ref.is_passable(next):
+		if not grid_ref.is_passable_for(target, next):
 			break
 		current = next
 
@@ -685,7 +768,7 @@ func _displace_unit_manual(target, squares: int, fixed_dir: Vector2i) -> void:
 
 	for _i in range(steps):
 		var next: Vector2i = current + move_dir
-		if not grid_ref.is_passable(next):
+		if not grid_ref.is_passable_for(target, next):
 			break
 		current = next
 

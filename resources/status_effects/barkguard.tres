@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://h1bwtk25nbyd"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_j2wvg"]
+[ext_resource type="PackedScene" uid="uid://bwqp6l2nveivg" path="res://scenes/animations/dryad/dryad.tscn" id="1_r54nc"]
 
 [resource]
 script = ExtResource("1_j2wvg")
@@ -11,4 +12,13 @@ cleansable = false
 def_modifier = 3
 mdef_modifier = 1
 mov_modifier = -2
+has_visual_override = true
+override_scene = ExtResource("1_r54nc")
+enter_animation = "barkguard_up"
+exit_animation = "barkguard_down"
+override_idle_animation = "barkguard_idle"
+override_walk_animation = "barkguard_idle"
+override_attack_animation = "barkguard_idle"
+override_hurt_animation = "barkguard_idle"
+dot_flat_amount = 0
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

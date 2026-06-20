@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://isldarce2hk7"]
+
+[ext_resource type="Resource" uid="uid://c3o8em6pvfj77" path="res://resources/stats/stormblade_stats.tres" id="1_127on"]
+[ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="1_ge75a"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_8l2hl"]
+[ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_n4jxu"]
+[ext_resource type="Resource" uid="uid://ckxyxawivmesh" path="res://resources/abilities/stormblade_basic.tres" id="4_ln10n"]
+[ext_resource type="Resource" uid="uid://c7qq67wfberbo" path="res://resources/abilities/overcharged.tres" id="5_ln10n"]
+[ext_resource type="Resource" uid="uid://b3elmuc7cw55r" path="res://resources/abilities/boltstepsurge.tres" id="5_v8mw0"]
+[ext_resource type="Resource" uid="uid://bt0e0hav823uj" path="res://resources/abilities/thunderburst.tres" id="6_8cs0s"]
+
+[resource]
+script = ExtResource("1_ge75a")
+id = "stormblade"
+display_name = "Stormblade"
+stats_by_level = Array[ExtResource("3_n4jxu")]([ExtResource("1_127on")])
+base_stats = ExtResource("1_127on")
+starting_abilities = Array[ExtResource("2_8l2hl")]([ExtResource("4_ln10n"), ExtResource("5_ln10n"), ExtResource("5_v8mw0"), ExtResource("6_8cs0s")])
+metadata/_custom_type_script = "uid://utmj7y8m802a"

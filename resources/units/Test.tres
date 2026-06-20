@@ -1,8 +1,0 @@
-[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://df0vbmms6omii"]
-
-[ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="1_vq3hn"]
-[ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="2_pcwxv"]
-
-[resource]
-script = ExtResource("1_vq3hn")
-metadata/_custom_type_script = "uid://utmj7y8m802a"

@@ -5,8 +5,7 @@
 [resource]
 script = ExtResource("1_avo6b")
 hp = 48
-atk = 13
-matk = 18
+matk = 12
 def = 11
 mdef = 13
 mov = 2

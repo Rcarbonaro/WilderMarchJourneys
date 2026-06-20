@@ -39,39 +39,7 @@
 			"type": "scene_tree"
 		},
 		{
-			"path": "res://scripts/data/unit_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/tile_type_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/stats_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/managers/run_manager.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/mainmenu/main_menu.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/input_handler.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/highlight_manager.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/hazard_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/encounter/encounter_scene.gd",
+			"path": "res://scripts/battle/battle_scene.gd",
 			"type": "script"
 		},
 		{
@@ -79,43 +47,43 @@
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/battle/battle_scene.gd",
+			"path": "res://scripts/encounter/encounter_scene.gd",
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/battle/unit_node.gd",
+			"path": "res://scripts/data/hazard_data.gd",
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/ui/ui_manager.gd",
+			"path": "res://scripts/battle/highlight_manager.gd",
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/data/status_effect_data.gd",
+			"path": "res://scripts/battle/input_handler.gd",
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/managers/shop_manager.gd",
+			"path": "res://scripts/mainmenu/main_menu.gd",
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/data/run_data.gd",
+			"path": "res://scripts/managers/run_manager.gd",
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/battle/pathfinding_system.gd",
+			"path": "res://scripts/data/stats_data.gd",
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/data/ability_data.gd",
+			"path": "res://scripts/data/tile_type_data.gd",
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/battle/ability_executor.gd",
+			"path": "res://scripts/data/unit_data.gd",
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/battle/ai_system.gd",
+			"path": "res://scripts/battle/battle_manager.gd",
 			"type": "script"
 		},
 		{
@@ -123,7 +91,39 @@
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/battle/battle_manager.gd",
+			"path": "res://scripts/battle/ai_system.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/ability_executor.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/ability_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/pathfinding_system.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/run_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/managers/shop_manager.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/status_effect_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/ui/ui_manager.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/unit_node.gd",
 			"type": "script"
 		}
 	],
