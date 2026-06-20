@@ -89,6 +89,7 @@ func setup_grid(map_data: Dictionary) -> void:
 	# map_data = { Vector2i: TileTypeData, ... }
 	tile_map = map_data
 	_draw_tiles()
+	_build_grid_lines()
 
 
 func _draw_tiles() -> void:
@@ -99,6 +100,78 @@ func _draw_tiles() -> void:
 		sprite.texture = tile_type.tile_texture
 		sprite.position = grid_to_world(cell)
 		$GroundLayer.add_child(sprite)
+
+# ── GRID LINES OVERLAY (toggleable) ──────────────────────────────────────────
+# A simple grid of thin line rectangles drawn over every tile in tile_map.
+# Hidden by default; toggled on/off via the UI button (ui_manager.gd calls
+# set_grid_lines_visible()). Built once at setup time so toggling is just a
+# visibility flip with no redraw cost.
+
+var _grid_lines_layer: Node2D = null
+
+const GRID_LINE_THICKNESS: float = 1.5
+const GRID_LINE_COLOR: Color = Color(1, 1, 1, 0.35)   # Faint white lines.
+
+func _build_grid_lines() -> void:
+	if _grid_lines_layer != null and is_instance_valid(_grid_lines_layer):
+		_grid_lines_layer.queue_free()
+
+	_grid_lines_layer = Node2D.new()
+	_grid_lines_layer.name = "GridLinesLayer"
+	_grid_lines_layer.visible = false   # Off by default — player toggles it on.
+	_grid_lines_layer.z_index = 1       # Sits just above GroundLayer's tiles.
+	add_child(_grid_lines_layer)
+
+	# Draw one rectangle OUTLINE per tile that actually exists in tile_map,
+	# rather than a fixed-size grid, so irregular/non-rectangular maps still
+	# get correct grid lines only where there's actual playable terrain.
+	for cell in tile_map:
+		var top_left: Vector2 = grid_to_world(cell) - Vector2(TILE_SIZE / 2.0, TILE_SIZE / 2.0)
+		var outline := _make_tile_outline(top_left)
+		_grid_lines_layer.add_child(outline)
+
+
+func _make_tile_outline(top_left: Vector2) -> Node2D:
+	# Builds a single tile's outline out of 4 thin ColorRects (top/bottom/left/right).
+	# Using ColorRects (instead of a single Line2D loop) keeps this consistent
+	# with the rest of the project's highlight/visual approach, which is
+	# entirely ColorRect-based already (see highlight_manager.gd).
+	var holder := Node2D.new()
+	holder.position = top_left
+
+	var top := ColorRect.new()
+	top.color = GRID_LINE_COLOR
+	top.size = Vector2(TILE_SIZE, GRID_LINE_THICKNESS)
+	top.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(top)
+
+	var bottom := ColorRect.new()
+	bottom.color = GRID_LINE_COLOR
+	bottom.size = Vector2(TILE_SIZE, GRID_LINE_THICKNESS)
+	bottom.position = Vector2(0, TILE_SIZE - GRID_LINE_THICKNESS)
+	bottom.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(bottom)
+
+	var left := ColorRect.new()
+	left.color = GRID_LINE_COLOR
+	left.size = Vector2(GRID_LINE_THICKNESS, TILE_SIZE)
+	left.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(left)
+
+	var right := ColorRect.new()
+	right.color = GRID_LINE_COLOR
+	right.size = Vector2(GRID_LINE_THICKNESS, TILE_SIZE)
+	right.position = Vector2(TILE_SIZE - GRID_LINE_THICKNESS, 0)
+	right.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(right)
+
+	return holder
+
+
+func set_grid_lines_visible(should_show: bool) -> void:
+	# Called by ui_manager.gd's grid toggle button.
+	if _grid_lines_layer != null and is_instance_valid(_grid_lines_layer):
+		_grid_lines_layer.visible = should_show
 
 # ── COORDINATE HELPERS ────────────────────────────────────────────────────────
 

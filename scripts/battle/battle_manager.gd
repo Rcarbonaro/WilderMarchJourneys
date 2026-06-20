@@ -172,28 +172,28 @@ func _spawn_player_party_from_run() -> void:
 
 	
 	#--- Isolation ---
-	#if windmage_data      != null: spawn_unit(windmage_data,      Vector2i(1, 7), true, 1)
-	#else: printerr("❌ Could not load windmage_data.tres!")
+	if windmage_data      != null: spawn_unit(windmage_data,      Vector2i(1, 7), true, 1)
+	else: printerr("❌ Could not load windmage_data.tres!")
 	#if dragoon_data       != null: spawn_unit(dragoon_data,       Vector2i(3, 6), true, 1)
 	#else: printerr("❌ Could not load dragoon_data.tres!")
-	#if rogue_data         != null: spawn_unit(rogue_data,         Vector2i(4, 4), true, 1)
-	#else: printerr("❌ Could not load rogue_data.tres!")
-	#if rogue_data         != null: spawn_unit(dryad_data,         Vector2i(4, 3), true, 1)
-	#else: printerr("❌ Could not load dryad_data.tres!")
-	#if stormblade_data != null: spawn_unit(stormblade_data, Vector2i(2, 5), true, 1)
-	#else: printerr("❌ Could not load stormblade_data.tres!")
+	if dryad_data         != null: spawn_unit(dryad_data,         Vector2i(4, 4), true, 1)
+	else: printerr("❌ Could not load dryad_data.tres!")
+	if rogue_data         != null: spawn_unit(dryad_data,         Vector2i(4, 3), true, 1)
+	else: printerr("❌ Could not load dryad_data.tres!")
+	if stormblade_data != null: spawn_unit(stormblade_data, Vector2i(2, 5), true, 1)
+	else: printerr("❌ Could not load stormblade_data.tres!")
 
 	#--- Debuff ---
-	if hexweaver_data     != null: spawn_unit(hexweaver_data,     Vector2i(2, 6), true, 1)
-	else: printerr("❌ Could not load hexweaver_data.tres!")
-	if dreadknight_data     != null: spawn_unit(dreadknight_data,     Vector2i(3, 6), true, 1)
-	else: printerr("❌ Could not load dreadknigh_data.tres!")
-	if executioner_data   != null: spawn_unit(executioner_data,   Vector2i(1, 6), true, 1)
-	else: printerr("❌ Could not load executioner_data.tres!")
+	#if hexweaver_data     != null: spawn_unit(hexweaver_data,     Vector2i(2, 6), true, 1)
+	#else: printerr("❌ Could not load hexweaver_data.tres!")
+	#if dreadknight_data     != null: spawn_unit(dreadknight_data,     Vector2i(3, 6), true, 1)
+	#else: printerr("❌ Could not load dreadknigh_data.tres!")
+	#if executioner_data   != null: spawn_unit(executioner_data,   Vector2i(1, 6), true, 1)
+	#else: printerr("❌ Could not load executioner_data.tres!")
 	#if plaguebringer_data != null: spawn_unit(plaguebringer_data, Vector2i(2, 5), true, 1)
 	#else: printerr("❌ Could not load plaguebringer_data.tres!")
-	if divinator_data     != null: spawn_unit(divinator_data,     Vector2i(3, 5), true, 1)
-	else: printerr("❌ Could not load divinator_data.tres!")
+	#if divinator_data     != null: spawn_unit(divinator_data,     Vector2i(3, 5), true, 1)
+	#else: printerr("❌ Could not load divinator_data.tres!")
 	
 	#--- Arcane ---
 	#if divinator_data     != null: spawn_unit(divinator_data,     Vector2i(3, 5), true, 1)
@@ -212,7 +212,6 @@ func _spawn_player_party_from_run() -> void:
 	#if sharpshooter_data      != null: spawn_unit(guardian_data,      Vector2i(3, 8), true, 1)
 	#else: printerr("❌ Could not load sharpshooter_data.tres!")
 	
-
 
 
 func _spawn_stage_enemies() -> void:
@@ -351,12 +350,22 @@ func on_tile_tapped(cell: Vector2i) -> void:
 		var unit = grid.get_unit_at(cell)
 		if is_instance_valid(unit):
 			if unit.is_player_unit:
+				# Tapping an ally clears any lingering enemy threat range, then
+				# proceeds to the normal selection flow. select_unit() below
+				# already calls _show_unit_info() for us.
+				highlight.clear_threat_range()
 				select_unit(unit)
 			else:
-				# Tapped an enemy: show their info panel without selecting them.
+				# Tapped an enemy: show their info panel AND their threat range
+				# (green = where they can move, red = everywhere they could
+				# then attack from any of those tiles). Does not select them —
+				# enemies can't be controlled by the player.
 				_show_unit_info(unit)
+				_show_enemy_threat_range(unit)
 		else:
 			print("🟫 Empty tile — nothing selected.")
+			_hide_unit_info()
+			highlight.clear_threat_range()
 
 	# ── STATE B: Ability selected → try to cast it on this tile ──────────────
 	elif selected_ability != null:
@@ -425,6 +434,77 @@ func _show_unit_info(unit) -> void:
 	# Shows the HP/Mana/buff panel for a unit without selecting them.
 	if ui_manager and ui_manager.has_method("show_unit_info"):
 		ui_manager.show_unit_info(unit)
+
+
+func _hide_unit_info() -> void:
+	# Hides the HP/Mana/buff info box. Called on deselect (empty tap) or when
+	# the info box's own owning unit becomes invalid.
+	if ui_manager and ui_manager.has_method("hide_unit_info"):
+		ui_manager.hide_unit_info()
+
+
+func _show_enemy_threat_range(enemy) -> void:
+	# Computes and displays an enemy's full threat range:
+	#   GREEN — every tile they could move to this turn (real pathfinding,
+	#           respects walls/obstacles, identical to player movement highlighting).
+	#   RED   — every tile within attack range of ANY of those green tiles,
+	#           using the UNION of every ability's max_range across the
+	#           enemy's whole kit (showing the maximum possible threat).
+	# Example: move 1, range 1 → green = adjacent tiles, red = the ring of
+	# tiles one further step beyond each green tile.
+	if not is_instance_valid(enemy):
+		return
+
+	var movement_range: int = 3
+	if enemy.has_method("get_effective_mov"):
+		movement_range = enemy.get_effective_mov()
+
+	var move_cells: Dictionary = pathfinder.get_reachable_cells(
+		enemy.grid_position, movement_range, enemy
+	)
+	var move_cell_keys: Array = move_cells.keys()
+
+	# Gather every ability this enemy could use, the same sources AISystem
+	# reads from when picking what to use (starting_abilities + level-gated).
+	var abilities: Array = []
+	if "starting_abilities" in enemy.unit_data and enemy.unit_data.starting_abilities != null:
+		for ability in enemy.unit_data.starting_abilities:
+			if ability != null:
+				abilities.append(ability)
+	if "abilities_by_level" in enemy.unit_data:
+		var level_abilities = enemy.unit_data.abilities_by_level.get(enemy.level, [])
+		for ability in level_abilities:
+			if ability != null:
+				abilities.append(ability)
+
+	# Union the attack range of every ability across every reachable move
+	# tile. A Dictionary is used as a deduplicating set (Vector2i keys).
+	var attack_cells_set: Dictionary = {}
+	for move_cell in move_cell_keys:
+		for ability in abilities:
+			var ability_max_range: int = ability.max_range if "max_range" in ability else 1
+			var ability_min_range: int = ability.min_range if "min_range" in ability else 0
+			var cells_in_range = pathfinder.get_cells_in_range(move_cell, ability_min_range, ability_max_range)
+			for c in cells_in_range:
+				attack_cells_set[c] = true
+
+	# If the enemy has no abilities at all (shouldn't normally happen), fall
+	# back to a basic melee range of 1 so the red zone isn't empty.
+	if abilities.is_empty():
+		for move_cell in move_cell_keys:
+			for c in pathfinder.get_cells_in_range(move_cell, 0, 1):
+				attack_cells_set[c] = true
+
+	# Red tiles should not include tiles already shown green — this keeps the
+	# two zones visually distinct (movement core vs. surrounding threat ring),
+	# matching the example: move 1/range 1 produces an adjacent green ring and
+	# a SEPARATE outer red ring, not overlapping colors on the same tiles.
+	var attack_cells: Array = []
+	for c in attack_cells_set.keys():
+		if not c in move_cell_keys:
+			attack_cells.append(c)
+
+	highlight.show_threat_range(move_cell_keys, attack_cells)
 
 
 func _show_abilities_for(unit) -> void:
@@ -496,6 +576,7 @@ func deselect_unit() -> void:
 	selected_ability = null
 	reachable_cells  = {}
 	highlight.clear_highlights()
+	highlight.clear_threat_range()
 	aoe_preview_cell = Vector2i(-1, -1)
 
 	if ui_manager and ui_manager.has_method("clear_abilities"):
