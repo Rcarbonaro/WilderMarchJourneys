@@ -1,0 +1,23 @@
+{
+  "player_id": "richard_01",
+  "difficulty_unlocks": { "normal": true, "hard": false, "nightmare": false },
+  "achievements": ["first_run_complete"],
+  "endless_teams": [
+    {
+      "team_name": "nightmare_veterans",
+      "units": [
+        {
+          "unit_id": "hexweaver",
+          "instance_id": "hexweaver_001",
+          "level": 5,
+          "equipped_item_ids": ["bloodthirster", "heavy_plate", "talisman_of_health"],
+          "permanent_modifiers": [
+            { "stat": "atk", "amount": 3, "value_mode": "flat", "source": "the_blade_strength" }
+          ]
+        }
+      ],
+      "created_from_run": "run_2026_06_20_001"
+    }
+  ],
+  "settings": { "volume": 0.8, "font_size": 14 }
+}

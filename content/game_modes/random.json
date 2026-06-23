@@ -1,0 +1,9 @@
+{
+  "id": "random",
+  "display_name": "Random Mode",
+  "starting_gold": 15,
+  "starting_equipment_ids": [],
+  "party_size": 4,
+  "excluded_unit_ids": [],
+  "notes": "Per the design doc, Random's excluded pool is allowed to differ from Draft's -- e.g. you might want a unit pickable in Draft but never randomly assigned."
+}

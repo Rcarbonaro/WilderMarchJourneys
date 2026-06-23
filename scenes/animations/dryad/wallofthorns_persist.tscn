@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://bhro3rfwuant4"]
+
+[ext_resource type="Texture2D" uid="uid://tn420mn8qksm" path="res://sprites/dryad/wallofthorns.png" id="1_msgsr"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_b5dcr"]
+atlas = ExtResource("1_msgsr")
+region = Rect2(512, 768, 256, 256)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_76gvx"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_b5dcr")
+}],
+"loop": true,
+"name": &"default",
+"speed": 15.0
+}]
+
+[node name="WallofthornsExit" type="Node2D" unique_id=595428933]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=672828636]
+scale = Vector2(0.5, 0.5)
+sprite_frames = SubResource("SpriteFrames_76gvx")
+frame_progress = 1.0

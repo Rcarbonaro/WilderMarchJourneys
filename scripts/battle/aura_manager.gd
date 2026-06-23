@@ -759,3 +759,46 @@ func _strip_momentum_bonuses(entry: Dictionary) -> void:
 			continue
 		unit.momentum_bonuses.erase(aura_id)
 		print("🔥 Momentum bonus removed from ", unit.unit_data.display_name)
+		
+
+func snap_to(caster) -> void:
+	# Called by BattleManager when a unit's movement is canceled or instantly warped.
+	# This bypasses the sliding tweens and immediately snaps the aura to the unit.
+	for entry in _active_auras:
+		if entry["caster"] != caster:
+			continue
+		
+		var data: AuraData = entry["data"]
+		
+		# Stationary auras never move, so skip updating positioning
+		if not data.follows_caster:
+			continue
+			
+		# 1. Update the logical grid positions immediately
+		var new_cells: Array = _get_aura_cells(caster.grid_position, data.radius)
+		entry["aura_cells"]  = new_cells
+		entry["anchor_cell"] = caster.grid_position
+		
+		# 2. Instantly teleport the visual nodes without a tween
+		match data.visual_type:
+			"color", "sprite":
+				# If cell count changed due to map boundaries, rebuild completely
+				if entry["visuals"].size() != new_cells.size():
+					_rebuild_visuals(entry)
+				else:
+					for idx in range(new_cells.size()):
+						var visual = entry["visuals"][idx]
+						if not is_instance_valid(visual):
+							continue
+						var cell: Vector2i = new_cells[idx]
+						
+						if data.visual_type == "color":
+							visual.position = grid_ref.grid_to_world(cell) - Vector2(TILE_SIZE / 2.0, TILE_SIZE / 2.0)
+						else:
+							visual.position = grid_ref.grid_to_world(cell)
+							
+			"scene":
+				var anchor_world: Vector2 = grid_ref.grid_to_world(caster.grid_position)
+				for visual in entry["visuals"]:
+					if is_instance_valid(visual):
+						visual.position = anchor_world

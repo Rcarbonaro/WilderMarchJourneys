@@ -110,7 +110,7 @@ func _draw_tiles() -> void:
 var _grid_lines_layer: Node2D = null
 
 const GRID_LINE_THICKNESS: float = 1.5
-const GRID_LINE_COLOR: Color = Color(1, 1, 1, 0.35)   # Faint white lines.
+const GRID_LINE_COLOR: Color = Color(1, 1, 1, 0.15)   # Faint white lines.
 
 func _build_grid_lines() -> void:
 	if _grid_lines_layer != null and is_instance_valid(_grid_lines_layer):

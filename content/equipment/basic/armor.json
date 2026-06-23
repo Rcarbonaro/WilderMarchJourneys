@@ -1,0 +1,14 @@
+{
+  "id": "armor",
+  "name": "Armor",
+  "description": "Sturdy plating. +1 DEF, +1 MDEF.",
+  "type": "basic",
+  "subtype": "armor",
+  "tags": ["forgeable"],
+  "effects": [
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "def",  "amount": 1, "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "mdef", "amount": 1, "value_mode": "flat", "scope": "permanent" }
+  ],
+  "stackable": true,
+  "consumable": false
+}

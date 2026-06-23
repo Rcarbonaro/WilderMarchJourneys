@@ -1,0 +1,25 @@
+{
+  "id": "the_pact_bloodbound",
+  "name": "The Pact (Bloodbound)",
+  "description": "All units start with +10% HP. When a unit dies, all allies gain +3 ATK and +3 MATK for the rest of the battle.",
+  "category": "blessed",
+  "rarity": "rare",
+  "tags": ["bloodbound"],
+  "stackable": false,
+  "max_stacks": 1,
+  "effects": [
+    { "type": "add_stat", "target": "team", "target_selector": "all_allies", "stat": "hp", "amount": 10, "value_mode": "percent", "scope": "permanent" }
+  ],
+  "triggers": [
+    {
+      "id": "ally_death_buff",
+      "event": "on_unit_died",
+      "condition": { "type": "event_payload_true", "field": "is_player_unit" },
+      "effects": [
+        { "type": "add_stat", "target": "team", "target_selector": "all_allies", "stat": "atk",  "amount": 3, "value_mode": "flat", "scope": "session" },
+        { "type": "add_stat", "target": "team", "target_selector": "all_allies", "stat": "matk", "amount": 3, "value_mode": "flat", "scope": "session" }
+      ]
+    }
+  ],
+  "notes": "target_selector 'all_allies' on a session-scoped effect reads payload.live_units -- battle_manager.gd needs to publish that list on death (wiring item 9 in combat_hooks.gd) or this trigger has nothing to apply to."
+}

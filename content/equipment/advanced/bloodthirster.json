@@ -1,0 +1,13 @@
+{
+  "id": "bloodthirster",
+  "name": "Bloodthirster",
+  "description": "+5 ATK, +5 MATK. Each round this unit attacks, gain an additional +1 ATK/+1 MATK, up to +4. Resets to +0 if the unit doesn't attack that round.",
+  "type": "advanced",
+  "subtype": "blade_blade",
+  "tags": ["melee"],
+  "effects": [
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "atk",  "amount": 5, "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "matk", "amount": 5, "value_mode": "flat", "scope": "permanent" },
+    { "type": "custom", "custom_id": "bloodthirster" }
+  ]
+}

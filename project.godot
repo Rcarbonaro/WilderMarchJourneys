@@ -17,7 +17,18 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+EventBus="*uid://b048wh6o1pnme"
+ContentLoader="*uid://4p6b1ua7gyrr"
+EffectSystem="*uid://b0bnurvdjqpeq"
+CombatHooks="*uid://68fkgqq443y6"
+CustomEquipmentHandlers="*uid://oflyhola0f81"
+CustomTarotHandlers="*uid://1tdbryg4fv1g"
 RunManager="*uid://bsac4ako53l21"
+EquipmentRuntime="*uid://oc2yim751aha"
+ScalingEngine="*uid://dbsm0v4aautuk"
+ShopEngine="*uid://cm1l25qux5p36"
+DialogueEngine="*uid://c26bd2fopgnjh"
+EncounterEngine="*uid://byswddcebqjfn"
 
 [display]
 

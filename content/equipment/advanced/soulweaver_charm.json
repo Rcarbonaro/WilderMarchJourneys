@@ -1,0 +1,13 @@
+{
+  "id": "soulweaver_charm",
+  "name": "Soulweaver Charm",
+  "description": "+5 HP, +15 mana. When this unit spends mana, heal 2% of max HP per 10 mana spent (rounded up).",
+  "type": "advanced",
+  "subtype": "spellbook_talisman",
+  "tags": ["support", "magic"],
+  "effects": [
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "hp",   "amount": 5,  "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "mana", "amount": 15, "value_mode": "flat", "scope": "permanent" },
+    { "type": "custom", "custom_id": "soulweaver_charm" }
+  ]
+}

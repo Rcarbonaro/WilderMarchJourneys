@@ -436,6 +436,8 @@ func die() -> void:
 	# anything else, so no downstream code sees stale aura state.
 	if grid_ref != null and grid_ref.has_node("AuraManager"):
 		grid_ref.get_node("AuraManager").remove_all_auras_for(self)
+	CombatHooks.notify_unit_died(self)
+
 
 	# Unregister ALL cells this unit occupied so pathfinding opens up immediately.
 	# We do this NOW (not after the animation) so other units can path through
@@ -609,6 +611,13 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster 
 	})
 	_debug_print_status_applied(status_data, stacks)
 	update_visuals()
+	var is_buff := (status_data.atk_modifier > 0 or status_data.def_modifier > 0 or
+						status_data.matk_modifier > 0 or status_data.mdef_modifier > 0 or
+						status_data.mov_modifier > 0 or status_data.crit_chance_modifier > 0 or
+						status_data.damage_dealt_modifier > 0 or status_data.damage_taken_modifier < 0 or
+						status_data.grants_immunity)
+	EventBus.publish(EventBus.ON_BUFF_APPLIED, {"unit": self, "status_id": status_data.id, "is_buff": is_buff})
+
 
 	# ── VISUAL OVERRIDE ENTRY ───────────────────────────────────────────────
 	if status_data.has_visual_override:
@@ -959,37 +968,63 @@ func get_debuff_count() -> int:
 
 const HP_BAR_WIDTH: float  = 64.0
 const HP_BAR_HEIGHT: float = 8.0
-const HP_BAR_Y_OFFSET: float = 56.0
-# How far BELOW the unit's origin the bar is drawn. Tweak to taste based on
-# your sprite's pixel height — positive Y is downward in Godot's 2D space.
 
-var _hp_bar_bg: ColorRect  = null
+# Positions the bar at the very BOTTOM EDGE of the unit's own tile.
+# Units are positioned at the CENTER of their tile (grid_to_world returns the
+# tile's center point), and TILE_SIZE is 96px, so the bottom edge is exactly
+# half a tile (48px) below the unit's origin. Subtracting a couple pixels for
+# HP_BAR_HEIGHT keeps the bar fully inside the tile rather than straddling
+# the boundary into the tile below.
+const HP_BAR_Y_OFFSET: float = 48.0 - HP_BAR_HEIGHT
+
+const HP_BAR_BG_TEXTURE_PATH: String = "res://sprites/UI/Health & Mana Bars/hpbar_background.png"
+# Your background/frame art. Drawn as a Sprite2D sized to fit the bar area —
+# the colored fill ColorRect sits on top of it and is clipped to show progress.
+
+var _hp_bar_bg_sprite: Sprite2D = null
 var _hp_bar_fill: ColorRect = null
 # Built lazily on first use so existing unit scenes don't need any manual
 # scene-tree changes — the bar is constructed entirely in code.
 
 
 func _ensure_hp_bar_exists() -> void:
-	# Creates the HP bar's background + fill rects once, the first time
+	# Creates the HP bar's background sprite + fill rect once, the first time
 	# they're needed. Safe to call repeatedly — does nothing after the first time.
-	if _hp_bar_bg != null and is_instance_valid(_hp_bar_bg):
+	if _hp_bar_bg_sprite != null and is_instance_valid(_hp_bar_bg_sprite):
 		return
 
-	_hp_bar_bg = ColorRect.new()
-	_hp_bar_bg.size = Vector2(HP_BAR_WIDTH, HP_BAR_HEIGHT)
-	_hp_bar_bg.position = Vector2(-HP_BAR_WIDTH / 2.0, HP_BAR_Y_OFFSET)
-	_hp_bar_bg.color = Color(0.1, 0.1, 0.1, 0.85)   # Dark background frame.
-	_hp_bar_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_hp_bar_bg.z_index = 5
-	add_child(_hp_bar_bg)
+	_hp_bar_bg_sprite = Sprite2D.new()
+	var bg_texture: Texture2D = load(HP_BAR_BG_TEXTURE_PATH)
+	if bg_texture != null:
+		_hp_bar_bg_sprite.texture = bg_texture
+		# Scale the art to exactly HP_BAR_WIDTH x HP_BAR_HEIGHT regardless of
+		# the source image's native pixel size, so swapping in a different-sized
+		# PNG later doesn't require touching any code.
+		var tex_size: Vector2 = bg_texture.get_size()
+		if tex_size.x > 0 and tex_size.y > 0:
+			_hp_bar_bg_sprite.scale = Vector2(HP_BAR_WIDTH / tex_size.x, HP_BAR_HEIGHT / tex_size.y)
+	else:
+		printerr("⚠️ Could not load HP bar background at: ", HP_BAR_BG_TEXTURE_PATH)
+
+	# Sprite2D draws centered on its position by default, so offset by half
+	# the bar size to align its top-left corner the same way the old
+	# ColorRect-based bar did.
+	_hp_bar_bg_sprite.position = Vector2(0, HP_BAR_Y_OFFSET + HP_BAR_HEIGHT / 2.0)
+	_hp_bar_bg_sprite.centered = true
+	_hp_bar_bg_sprite.z_index = 5
+	add_child(_hp_bar_bg_sprite)
 
 	_hp_bar_fill = ColorRect.new()
-	_hp_bar_fill.size = Vector2(HP_BAR_WIDTH - 2.0, HP_BAR_HEIGHT - 2.0)
-	_hp_bar_fill.position = Vector2(1.0, 1.0)   # 1px inset inside the background.
+	_hp_bar_fill.size = Vector2(HP_BAR_WIDTH - 4.0, HP_BAR_HEIGHT - 4.0)
+	# Positioned relative to the unit's origin (NOT relative to the sprite,
+	# since ColorRect and Sprite2D measure position differently) — top-left
+	# corner inset by 2px on each side so the fill sits just inside the
+	# background art's border.
+	_hp_bar_fill.position = Vector2(-HP_BAR_WIDTH / 2.0 + 2.0, HP_BAR_Y_OFFSET + 2.0)
 	_hp_bar_fill.color = Color(0.2, 0.9, 0.2, 1.0)   # Green fill — updated per-HP below.
 	_hp_bar_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_hp_bar_fill.z_index = 6
-	_hp_bar_bg.add_child(_hp_bar_fill)
+	add_child(_hp_bar_fill)
 
 
 func _update_hp_label() -> void:
@@ -1003,7 +1038,7 @@ func _update_hp_label() -> void:
 		max_hp = max(1, get_stats().hp)
 
 	var pct: float = clamp(float(current_hp) / float(max_hp), 0.0, 1.0)
-	var full_width: float = HP_BAR_WIDTH - 2.0
+	var full_width: float = HP_BAR_WIDTH - 4.0
 	_hp_bar_fill.size.x = full_width * pct
 
 	# Color shifts from green → yellow → red as HP drops, for an at-a-glance read.

@@ -1,0 +1,11 @@
+{
+  "id": "vital_bloom",
+  "name": "Vital Bloom",
+  "description": "Gain temporary HP equal to 2% of max HP each round. Temporary HP cannot stack.",
+  "type": "advanced",
+  "subtype": "talisman_talisman",
+  "tags": ["support"],
+  "effects": [
+    { "type": "custom", "custom_id": "vital_bloom" }
+  ]
+}

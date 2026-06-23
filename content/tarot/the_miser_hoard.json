@@ -1,0 +1,15 @@
+{
+  "id": "the_miser_hoard",
+  "name": "The Miser (Hoard)",
+  "description": "Start with +10 gold. For the first 5 stages, shop refresh costs 1 additional gold.",
+  "category": "blessed",
+  "rarity": "common",
+  "tags": [],
+  "stackable": false,
+  "max_stacks": 1,
+  "effects": [
+    { "type": "add_gold", "amount": 10 },
+    { "type": "modify_shop_price", "resource": "shop_refresh", "amount": 1, "multiplier": 1.0, "active_while": [ { "type": "stage_max", "value": 5 } ] }
+  ],
+  "notes": "active_while is RE-CHECKED every time ShopEngine prices a refresh, unlike the top-level conditions field (checked once, when the card is picked) -- this is what makes the price bump expire after stage 5 automatically."
+}

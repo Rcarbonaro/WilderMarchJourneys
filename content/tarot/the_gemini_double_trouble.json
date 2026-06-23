@@ -1,0 +1,23 @@
+{
+  "id": "the_gemini_double_trouble",
+  "name": "The Gemini (Double Trouble)",
+  "description": "When you recruit your first unit from the shop, instantly gain an additional copy of that character.",
+  "category": "blessed",
+  "rarity": "rare",
+  "tags": [],
+  "stackable": false,
+  "max_stacks": 1,
+  "effects": [],
+  "triggers": [
+    {
+      "id": "first_recruit_copy",
+      "event": "on_shop_purchase",
+      "once_per_run": true,
+      "condition": { "type": "event_payload_true", "field": "is_unit_purchase" },
+      "effects": [
+        { "type": "add_unit", "unit_id": "$event_payload.item_id" }
+      ]
+    }
+  ],
+  "notes": "\"$event_payload.item_id\" is the templating convention from FIELD_REFERENCE.md -- it's swapped for whatever unit was just bought, so this works for ANY first recruit, not one hardcoded unit. once_per_run guards it for the rest of the save file's life, not just one battle."
+}

@@ -1,0 +1,35 @@
+[gd_scene format=3 uid="uid://vinipsu72hpl"]
+
+[ext_resource type="Script" uid="uid://b4i6yv1khpobo" path="res://scripts/mainmenu/game_mode_select.gd" id="1_w3dmr"]
+
+[node name="GameModeSelect" type="Control" unique_id=209950630]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_w3dmr")
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=12145280]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 9.0
+offset_right = 1913.0
+offset_bottom = 1065.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer" unique_id=2129326040]
+layout_mode = 2
+
+[node name="RandomModeButton" type="Button" parent="CenterContainer/VBoxContainer" unique_id=1977217294]
+layout_mode = 2
+text = "Random Mode"
+
+[node name="DraftModeButton" type="Button" parent="CenterContainer/VBoxContainer" unique_id=844637385]
+layout_mode = 2
+text = "Draft Mode"
+
+[node name="BackButton" type="Button" parent="CenterContainer/VBoxContainer" unique_id=2002248690]
+layout_mode = 2
+text = "Back"

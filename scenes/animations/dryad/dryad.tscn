@@ -725,12 +725,13 @@ animations = [{
 }]
 
 [node name="WindMage" type="Node2D" unique_id=15020637]
+scale = Vector2(0.8, 0.8)
 script = ExtResource("1_k1a3b")
 unit_data = ExtResource("2_gm1q6")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1298568116]
-position = Vector2(-12, -37)
-scale = Vector2(0.5914415, 0.5733459)
+position = Vector2(5.000001, -7.500002)
+scale = Vector2(0.46, 0.447)
 sprite_frames = SubResource("SpriteFrames_grxbi")
 animation = &"barkguard_idle"
 autoplay = "idle"

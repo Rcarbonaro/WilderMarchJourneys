@@ -1,0 +1,10 @@
+{
+  "id": "draft",
+  "display_name": "Draft Mode",
+  "starting_gold": 0,
+  "starting_equipment_ids": [],
+  "party_size": 4,
+  "excluded_unit_ids": [],
+  "draft_budget": 12,
+  "notes": "draft_budget is the gold the player spends choosing their 4 units -- it does NOT replace starting_gold, it's added on top of it once the player confirms (leftover budget carries into the run, per project decision)."
+}

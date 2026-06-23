@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_qvh21"]
 [ext_resource type="Resource" uid="uid://cvdlkj4p02im2" path="res://resources/status_effects/slowed.tres" id="2_82lxo"]
-[ext_resource type="PackedScene" uid="uid://cvncq3xf6rqu6" path="res://scenes/animations/windmage/tornado.tscn" id="2_hnbcj"]
+[ext_resource type="PackedScene" uid="uid://cvncq3xf6rqu6" path="res://scenes/animations/firemage/firemage_projectile.tscn" id="2_hnbcj"]
 [ext_resource type="Texture2D" uid="uid://cnuluar0jmbkb" path="res://sprites/Wind Mage/Tornado_Icon.png" id="3_82lxo"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="4_rotjb"]
 

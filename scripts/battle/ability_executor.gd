@@ -86,6 +86,7 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 	print("🌵 execute_ability called: ", ability.display_name,
 		  " | target_cells: ", target_cells,
 		  " | caster: ", caster.unit_data.display_name)
+	CombatHooks.run_before_ability_used(caster, ability)
 
 	# ── STEP 1: APPLY COSTS ───────────────────────────────────────────────────
 	# Deduct mana and HP cost immediately (before damage resolves).
@@ -297,6 +298,7 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 			await _launch_projectile(caster, ability, target_cells[0])
 		else:
 			await _play_aoe_vfx(caster, ability, target_cells, origin_cell)
+	CombatHooks.run_after_ability_used(caster, ability)
 
 # ── DAMAGE APPLICATION (with Shield / Thorns / Guardian / Tether / Crit Overload) ──
 
@@ -348,6 +350,7 @@ func _apply_damage_with_effects(caster, target, ability: AbilityData, damage: in
 	# -- 3. APPLY DAMAGE TO TARGET ─────────────────────────────────────────────
 	var hp_before_damage: int = target.current_hp
 	var actual_damage = target.take_damage(damage, ability.damage_type)
+	CombatHooks.run_damage_applied_reactions(caster, target, actual_damage, _last_hit_was_crit)
 	_spawn_damage_number(actual_damage, target.position)
 
 	# -- 3.5 CRIT OVERLOAD ─────────────────────────────────────────────────────
@@ -404,6 +407,9 @@ func _apply_damage_with_effects(caster, target, ability: AbilityData, damage: in
 	# trigger on-kill effects. This also notifies Momentum via _trigger_on_kill.
 	if hp_before_damage > 0 and target.current_hp <= 0:
 		_trigger_on_kill(caster, ability, target)
+		EventBus.publish("on_enemy_defeated", {
+			"caster": caster, "target": target,
+			"overkill_amount": max(0, actual_damage - hp_before_damage),        })
 		print("DEBUG: Kill confirmed for ", target.unit_data.display_name)
 
 # ── ON-KILL HANDLER ───────────────────────────────────────────────────────────
@@ -562,7 +568,9 @@ func calculate_damage(caster, target, ability: AbilityData) -> int:
 			base *= (1.0 + ability.bonus_damage_isolated)
 			print("🎯 Isolated target bonus: +", ability.bonus_damage_isolated * 100, "%")
 
-	return max(1, int(base))
+	var final_damage = max(1, int(base))
+	final_damage = CombatHooks.run_outgoing_damage_modifiers(caster, target, final_damage, _last_hit_was_crit)
+	return final_damage
 
 
 func _is_target_isolated(target, check_range: int) -> bool:

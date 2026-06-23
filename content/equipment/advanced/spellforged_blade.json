@@ -1,0 +1,14 @@
+{
+  "id": "spellforged_blade",
+  "name": "Spellforged Blade",
+  "description": "+2 ATK, +2 MATK, +10 mana. Increase damage dealt by 10% for every 20 missing mana.",
+  "type": "advanced",
+  "subtype": "blade_spellbook",
+  "tags": ["melee", "magic"],
+  "effects": [
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "atk",  "amount": 2,  "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "matk", "amount": 2,  "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "mana", "amount": 10, "value_mode": "flat", "scope": "permanent" },
+    { "type": "custom", "custom_id": "spellforged_blade" }
+  ]
+}

@@ -1,0 +1,59 @@
+[gd_scene format=3 uid="uid://b3v07p5w2yovp"]
+
+[ext_resource type="Script" uid="uid://bqof712ajckgm" path="res://scripts/meta/draft_scene.gd" id="1_yqltk"]
+
+[node name="DraftScene" type="Control" unique_id=992857020]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_yqltk")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1647814019]
+layout_mode = 0
+offset_right = 1932.0
+offset_bottom = 1079.0
+color = Color(0, 0, 0, 0.09411765)
+
+[node name="TopBar" type="HBoxContainer" parent="." unique_id=1664350145]
+layout_mode = 0
+offset_top = 1000.0
+offset_right = 64.0
+offset_bottom = 1064.0
+
+[node name="GoldLabel" type="Label" parent="TopBar" unique_id=836525195]
+layout_mode = 2
+
+[node name="BackButton" type="Button" parent="TopBar" unique_id=954812102]
+layout_mode = 2
+text = "Back"
+
+[node name="RosterScrollContainer" type="ScrollContainer" parent="." unique_id=1070237830]
+layout_mode = 0
+offset_left = 39.0
+offset_top = 41.0
+offset_right = 1878.0
+offset_bottom = 903.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="RosterGrid" type="GridContainer" parent="RosterScrollContainer" unique_id=1128288556]
+layout_mode = 2
+columns = 5
+
+[node name="SelectedPartyContainer" type="HBoxContainer" parent="." unique_id=2078603299]
+layout_mode = 0
+offset_left = 509.0
+offset_top = 933.0
+offset_right = 1427.0
+offset_bottom = 1057.0
+alignment = 1
+
+[node name="BottomBar" type="HBoxContainer" parent="." unique_id=286779136]
+layout_mode = 0
+offset_left = 1595.0
+offset_top = 1000.0
+offset_right = 1711.0
+offset_bottom = 1064.0
+
+[node name="ConfirmButton" type="Button" parent="BottomBar" unique_id=2016516468]
+layout_mode = 2
+text = "Confirm Party"

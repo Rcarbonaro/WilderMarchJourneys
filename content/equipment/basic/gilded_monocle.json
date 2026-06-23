@@ -1,0 +1,13 @@
+{
+  "id": "gilded_monocle",
+  "name": "Gilded Monocle",
+  "description": "A keen eye for weak points. +10% critical chance.",
+  "type": "basic",
+  "subtype": "monocle",
+  "tags": ["forgeable"],
+  "effects": [
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "crit_chance", "amount": 10, "value_mode": "flat", "scope": "permanent" }
+  ],
+  "stackable": true,
+  "consumable": false
+}

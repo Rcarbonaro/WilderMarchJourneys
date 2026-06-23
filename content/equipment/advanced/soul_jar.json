@@ -1,0 +1,11 @@
+{
+  "id": "soul_jar",
+  "name": "Soul Jar",
+  "description": "When an enemy within 5 squares is defeated, gain 5% (rounded up) of maximum mana, up to maximum.",
+  "type": "advanced",
+  "subtype": "spellbook_spellbook",
+  "tags": ["magic"],
+  "effects": [
+    { "type": "custom", "custom_id": "soul_jar" }
+  ]
+}

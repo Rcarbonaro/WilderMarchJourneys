@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://cqfrd830tckb2"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_x681e"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_if6pe"]
+[ext_resource type="Resource" uid="uid://ddaf7ic4a2aal" path="res://resources/hazards/wallofthorns.tres" id="3_if6pe"]
+
+[resource]
+script = ExtResource("2_if6pe")
+id = "wallofthorns"
+display_name = "Wall of Thorns"
+description = "Create a wall of thorns to block enemy movement"
+cooldown_rounds = 5
+max_range = 4
+aoe_shape = "wall"
+aoe_size = 3
+base_damage_multiplier = 0.4
+damage_type = "magical"
+scaling_stat = "matk"
+spawns_hazard = ExtResource("3_if6pe")
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

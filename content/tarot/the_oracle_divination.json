@@ -1,0 +1,28 @@
+{
+  "id": "the_oracle_divination",
+  "name": "The Oracle (Divination)",
+  "description": "Start with a Divinator. Divinator cannot appear in shops. After each combat, there is a 20% chance to receive a copy of Divinator.",
+  "category": "blessed",
+  "rarity": "rare",
+  "tags": [],
+  "stackable": false,
+  "max_stacks": 1,
+  "effects": [
+    { "type": "add_unit", "unit_id": "divinator" },
+    { "type": "modify_drop_rate", "resource": "divinator", "multiplier": 0.0 }
+  ],
+  "triggers": [
+    {
+      "id": "post_combat_divinator_chance",
+      "event": "on_stage_complete",
+      "condition": { "type": "all_of", "conditions": [
+        { "type": "event_payload_true", "field": "was_combat" },
+        { "type": "random_chance", "value": 0.2 }
+      ]},
+      "effects": [
+        { "type": "add_unit", "unit_id": "divinator" }
+      ]
+    }
+  ],
+  "notes": "multiplier: 0.0 on modify_drop_rate is how 'cannot appear in shops at all' is expressed -- there's no separate 'exclude' effect type, a zero weight already does the job."
+}

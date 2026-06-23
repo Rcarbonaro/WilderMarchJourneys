@@ -1,0 +1,12 @@
+{
+  "id": "the_howl_threat",
+  "name": "The Howl (Threat)",
+  "description": "All enemies gain +1 to all stats. This effect can stack.",
+  "category": "cursed",
+  "rarity": "common",
+  "tags": [],
+  "stackable": true,
+  "max_stacks": 99,
+  "effects": [],
+  "notes": "This card has no effects of its own -- it works by being CHECKED for via a has_tarot (or tarot_stacks_min, for per-stack scaling) condition inside scaling configs, exactly like content/scaling/forest_scaling_stage_3.json's conditional_modifiers already demonstrate. See FIELD_REFERENCE.md's note on stacking + scaling for the current limitation around exact multi-stack math."
+}

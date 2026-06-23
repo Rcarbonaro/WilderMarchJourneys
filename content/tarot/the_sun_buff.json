@@ -1,0 +1,26 @@
+{
+  "id": "the_sun_buff",
+  "name": "The Sun (Buff)",
+  "description": "Units with the Buff tag are 30% more likely to appear. The first buff you cast each battle grants an extra +2 ATK and +2 DEF for 2 rounds.",
+  "category": "blessed",
+  "rarity": "common",
+  "tags": ["buff"],
+  "stackable": false,
+  "max_stacks": 1,
+  "effects": [
+    { "type": "modify_drop_rate", "resource": "buff", "multiplier": 1.3 }
+  ],
+  "triggers": [
+    {
+      "id": "first_buff_bonus",
+      "event": "on_buff_applied",
+      "once_per_battle": true,
+      "condition": { "type": "event_payload_true", "field": "is_buff" },
+      "effects": [
+        { "type": "add_stat", "target": "unit", "target_selector": "event_unit", "stat": "atk", "amount": 2, "value_mode": "flat", "scope": "temporary", "duration": 2 },
+        { "type": "add_stat", "target": "unit", "target_selector": "event_unit", "stat": "def", "amount": 2, "value_mode": "flat", "scope": "temporary", "duration": 2 }
+      ]
+    }
+  ],
+  "notes": "once_per_battle guards this so it only fires for the FIRST status applied each battle, then stays silent until EventBus.ON_BATTLE_START resets the guard for the next fight."
+}
