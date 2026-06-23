@@ -18,4 +18,5 @@ damage_type = "magical"
 trigger_on_end_of_turn = true
 is_wall_hazard = true
 wall_length = 5
+blocks_movement = false
 metadata/_custom_type_script = "uid://bv2ltgyye0n4f"

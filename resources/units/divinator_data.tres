@@ -2,7 +2,9 @@
 
 [ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="1_7nktg"]
 [ext_resource type="Resource" uid="uid://sdc3huc8tlsi" path="res://resources/stats/divinator_stats.tres" id="1_kgxn7"]
+[ext_resource type="Texture2D" uid="uid://bsbudr3ov7neu" path="res://sprites/divinator/divinator_sprite.png" id="2_5x0p8"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_tep1p"]
+[ext_resource type="Texture2D" uid="uid://hbvu5nsl7vkx" path="res://sprites/divinator/divinator_portrait.png" id="3_4u8hy"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_gwwja"]
 [ext_resource type="Resource" uid="uid://bwfq7c5swiq3b" path="res://resources/abilities/foresight.tres" id="4_8g4td"]
 [ext_resource type="Resource" uid="uid://b7psv2wn3dndy" path="res://resources/abilities/weal.tres" id="5_5x0p8"]
@@ -12,6 +14,8 @@
 script = ExtResource("1_7nktg")
 id = "divinator"
 display_name = "Divinator"
+portrait = ExtResource("3_4u8hy")
+battle_sprite = ExtResource("2_5x0p8")
 stats_by_level = Array[ExtResource("3_gwwja")]([ExtResource("1_kgxn7")])
 base_stats = ExtResource("1_kgxn7")
 starting_abilities = Array[ExtResource("2_tep1p")]([ExtResource("4_8g4td"), ExtResource("5_5x0p8"), ExtResource("6_4u8hy")])

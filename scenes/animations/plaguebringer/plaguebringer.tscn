@@ -410,8 +410,8 @@ script = ExtResource("1_jm5b8")
 unit_data = ExtResource("2_fu0xh")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1298568116]
-position = Vector2(3, -39)
-scale = Vector2(0.68865097, 0.6250386)
+position = Vector2(12.499997, -5.403702)
+scale = Vector2(0.4416244, 0.41518095)
 sprite_frames = SubResource("SpriteFrames_grxbi")
 animation = &"attack"
 autoplay = "idle"

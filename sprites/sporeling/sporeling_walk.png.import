@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dhuhftubrf7gt"
-path="res://.godot/imported/rogue_attack2.png-9271f82c601f9ddca541777868e97b85.ctex"
+uid="uid://b02kfg5p2t6s4"
+path="res://.godot/imported/sporeling_walk.png-d563f6c522d5eabbb168122b004553b5.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/rogue/rogue_attack2.png"
-dest_files=["res://.godot/imported/rogue_attack2.png-9271f82c601f9ddca541777868e97b85.ctex"]
+source_file="res://sprites/sporeling/sporeling_walk.png"
+dest_files=["res://.godot/imported/sporeling_walk.png-d563f6c522d5eabbb168122b004553b5.ctex"]
 
 [params]
 

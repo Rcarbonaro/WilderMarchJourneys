@@ -9,7 +9,6 @@ id = "skyfallslash"
 display_name = "Skyfall Slash"
 mana_cost = 25
 min_range = 1
-aoe_size = 4
 base_damage_multiplier = 1.5
 damage_type = "magical"
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

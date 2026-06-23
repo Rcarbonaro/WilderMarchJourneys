@@ -13,8 +13,13 @@
 #     can look them up during damage resolution.
 #   - Animated hazard visuals: entrance → idle (looping) → exit, instead of
 #     static sprites. Falls back to a static icon if no scenes are provided.
-#   - Wall hazards: a hazard spanning multiple cells that blocks movement
-#     (per a team filter) and optionally line of sight, instead of dealing damage.
+#   - Wall hazards: a hazard spanning multiple cells, placed in a straight
+#     line. Whether it blocks movement is now its OWN switch
+#     (HazardData.blocks_movement) instead of being automatic — so a wall
+#     hazard can deal damage to anyone who walks onto it instead of physically
+#     stopping them, while STILL independently choosing whether it blocks
+#     line of sight (HazardData.wall_blocks_line_of_sight). The two are no
+#     longer linked: a wall can block movement, block LOS, both, or neither.
 
 extends Node2D
 
@@ -54,7 +59,8 @@ var hazard_map: Dictionary = {}
 const HAZARD_MAX_TURNS: int = 3
 # Hard cap: no NON-WALL hazard can last more than 3 turns, regardless of HazardData.
 # Walls are exempt from this cap since they're often meant to persist as
-# battlefield-shaping terrain for the whole encounter.
+# battlefield-shaping terrain for the whole encounter. This exemption applies
+# to ANY wall-placed hazard, whether or not it blocks movement.
 
 # ── SPECIAL EFFECT MAPS ───────────────────────────────────────────────────────
 # These dictionaries are the "lookup tables" ability_executor reads during
@@ -207,7 +213,9 @@ func is_passable(cell: Vector2i) -> bool:
 
 func is_passable_for(unit, cell: Vector2i) -> bool:
 	# Team-aware passability check. Use this from pathfinding so wall hazards
-	# correctly respect their wall_blocks filter ("player", "enemies", "all").
+	# correctly respect their wall_blocks filter ("player", "enemies", "all")
+	# AND their blocks_movement switch (a wall hazard with blocks_movement =
+	# false never blocks anyone, regardless of the team filter).
 	if not is_valid_cell(cell): return false
 	if not tile_map.has(cell):  return false
 	var tile: TileTypeData = tile_map[cell]
@@ -223,7 +231,7 @@ func is_terrain_walkable(cell: Vector2i) -> bool:
 	# 2. Check if the tile exists in our data
 	if not tile_map.has(cell):  return false
 
-	# 3. ONLY check if it is a wall (terrain) or a wall HAZARD.
+	# 3. ONLY check if it is a wall (terrain) or a movement-blocking wall HAZARD.
 	# We purposefully exclude the 'unit_positions' check here, since this is
 	# used for things like dash paths that care about terrain, not occupancy.
 	var tile: TileTypeData = tile_map[cell]
@@ -242,7 +250,10 @@ func blocks_los(cell: Vector2i) -> bool:
 	if not tile_map.has(cell): return false
 	if tile_map[cell].blocks_line_of_sight or tile_map[cell].is_wall:
 		return true
-	# Wall hazards optionally block line of sight too, per their HazardData flag.
+	# Wall hazards optionally block line of sight too, per their HazardData
+	# flag. This check is INDEPENDENT of blocks_movement — a wall hazard can
+	# block LOS whether or not it also blocks movement, so we don't look at
+	# blocks_movement here at all.
 	if hazard_map.has(cell):
 		for hazard_id in hazard_map[cell]:
 			var entry = hazard_map[cell][hazard_id]
@@ -253,14 +264,21 @@ func blocks_los(cell: Vector2i) -> bool:
 
 
 func _is_blocked_by_wall_hazard(cell: Vector2i, unit) -> bool:
-	# Internal helper: checks if a wall hazard at this cell blocks the given unit.
-	# 'unit' may be null (team-agnostic check — blocks if ANY team would be blocked).
+	# Internal helper: checks if a wall hazard at this cell PHYSICALLY blocks
+	# the given unit from entering. 'unit' may be null (team-agnostic check —
+	# blocks if ANY team would be blocked).
 	if not hazard_map.has(cell):
 		return false
 	for hazard_id in hazard_map[cell]:
 		var entry = hazard_map[cell][hazard_id]
 		var hdata: HazardData = entry["data"]
 		if not hdata.is_wall_hazard:
+			continue
+		# NEW: a wall hazard only blocks movement at all if blocks_movement is
+		# true. If it's false, this is a "damaging wall" (it hurts units but
+		# never stops them) — skip straight to the next hazard without even
+		# looking at the wall_blocks team filter, since nothing is blocked.
+		if not hdata.blocks_movement:
 			continue
 		match hdata.wall_blocks:
 			"all":
@@ -334,7 +352,9 @@ func add_hazard(cell: Vector2i, hazard_data: HazardData, caster = null,
 		return
 
 	# New hazard type: calculate duration.
-	# Wall hazards are EXEMPT from the 3-turn cap.
+	# Wall hazards are EXEMPT from the 3-turn cap (regardless of whether they
+	# block movement — even a non-blocking "damaging wall" is still placed
+	# via the wall flow and is meant to persist as a battlefield feature).
 	var duration = hazard_data.duration_rounds if not hazard_data.is_permanent else 9999
 	if not hazard_data.is_wall_hazard:
 		duration = min(duration, HAZARD_MAX_TURNS)
@@ -550,7 +570,7 @@ func tick_hazards() -> void:
 
 
 func apply_hazard_to_unit(unit, cell: Vector2i, trigger: String) -> void:
-	# Applies damage and status from ALL non-wall hazards at 'cell' to 'unit',
+	# Applies damage and status from ALL eligible hazards at 'cell' to 'unit',
 	# but ONLY if the hazard's trigger condition matches 'trigger'.
 	#
 	# trigger can be:
@@ -558,8 +578,12 @@ func apply_hazard_to_unit(unit, cell: Vector2i, trigger: String) -> void:
 	#   "start_of_turn"— it is the start of the unit's turn
 	#   "end_of_turn"  — it is the end of the unit's turn
 	#
-	# Wall hazards never reach this function in practice (units can't enter
-	# a wall tile), but we skip them defensively anyway in case of edge cases.
+	# A TRUE impassable wall (is_wall_hazard=true AND blocks_movement=true)
+	# never reaches this function in practice (units can't enter a tile that
+	# blocks movement), but we skip it defensively anyway in case of edge
+	# cases. A "damaging wall" (is_wall_hazard=true AND blocks_movement=false)
+	# is NOT skipped — it deals damage exactly like a normal hazard, since
+	# units genuinely can stand on its tiles.
 
 	if not hazard_map.has(cell): return
 
@@ -567,8 +591,12 @@ func apply_hazard_to_unit(unit, cell: Vector2i, trigger: String) -> void:
 		var entry = hazard_map[cell][hazard_id]
 		var hdata: HazardData = entry["data"]
 
-		if hdata.is_wall_hazard:
-			continue   # Walls don't deal damage — they only block movement.
+		# Only skip damage for walls that ACTUALLY block movement. A wall
+		# hazard with blocks_movement = false has no one physically stopped
+		# from standing here, so it should hurt them like any other hazard —
+		# this is the whole point of a "damaging wall".
+		if hdata.is_wall_hazard and hdata.blocks_movement:
+			continue   # Impassable walls don't deal damage — they only block movement.
 
 		# Check if this hazard triggers for this timing.
 		var should_trigger = false
@@ -604,9 +632,15 @@ func place_wall(cells: Array, hazard_data: HazardData, caster = null) -> void:
 	for cell in cells:
 		if not is_valid_cell(cell):
 			continue
-		# A wall cannot be placed on top of an existing unit or terrain wall.
-		if unit_positions.has(cell):
+		# A TRUE impassable wall (blocks_movement = true) cannot be placed on
+		# top of an existing unit — that unit would have nowhere valid to be.
+		# A "damaging wall" (blocks_movement = false) has no such problem: it
+		# never physically blocks anyone, so it's fine to drop it on a tile a
+		# unit is already standing on, exactly like a normal hazard would be.
+		if hazard_data.blocks_movement and unit_positions.has(cell):
 			continue
+		# A wall (of either kind) still can't be placed on top of solid
+		# terrain — that tile is already impassable for an unrelated reason.
 		if tile_map.has(cell) and tile_map[cell].is_wall:
 			continue
 		add_hazard(cell, hazard_data, caster, wall_group_id)

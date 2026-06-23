@@ -98,7 +98,7 @@ animations = [{
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1108632739]
 position = Vector2(-1, -0.99999905)
-scale = Vector2(0.16477273, 0.20833331)
+scale = Vector2(0.4, 0.504)
 sprite_frames = SubResource("SpriteFrames_bwknb")
 frame = 11
 frame_progress = 1.0

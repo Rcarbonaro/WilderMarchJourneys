@@ -12,4 +12,5 @@ icon = ExtResource("2_x5pg5")
 duration_rounds = 4
 damage_type = "magical"
 applies_status = ExtResource("1_i1mmx")
+blocks_movement = false
 metadata/_custom_type_script = "uid://bv2ltgyye0n4f"

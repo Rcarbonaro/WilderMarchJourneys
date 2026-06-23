@@ -2,8 +2,10 @@
 
 [ext_resource type="Resource" uid="uid://cn1oao6ajt2kn" path="res://resources/stats/dragoon_stats.tres" id="1_4euss"]
 [ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="1_nda02"]
+[ext_resource type="Texture2D" uid="uid://dsn6blgg4k12b" path="res://sprites/dragoon/dragoon_sprite.png" id="2_le5di"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_nda02"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_4euss"]
+[ext_resource type="Texture2D" uid="uid://c0vv35b1yln6s" path="res://sprites/dragoon/dragoon_portrait.png" id="3_qc3qx"]
 [ext_resource type="Resource" uid="uid://c6oreioskft08" path="res://resources/abilities/dragoon_basic.tres" id="4_nicbd"]
 [ext_resource type="Resource" uid="uid://bw3q0dan042jh" path="res://resources/abilities/lunge.tres" id="5_0nwkx"]
 
@@ -11,6 +13,8 @@
 script = ExtResource("1_nda02")
 id = "dragoon"
 display_name = "Dragoon"
+portrait = ExtResource("3_qc3qx")
+battle_sprite = ExtResource("2_le5di")
 stats_by_level = Array[ExtResource("3_4euss")]([ExtResource("1_4euss")])
 base_stats = ExtResource("1_4euss")
 starting_abilities = Array[ExtResource("2_nda02")]([ExtResource("4_nicbd"), ExtResource("5_0nwkx")])

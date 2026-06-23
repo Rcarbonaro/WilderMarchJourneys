@@ -237,8 +237,8 @@ unit_data = ExtResource("2_vnw84")
 move_speed = 1.0
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1298568116]
-position = Vector2(-4.999999, -19)
-scale = Vector2(0.4222868, 0.42914903)
+position = Vector2(-1.0000014, -1.9999998)
+scale = Vector2(0.2811531, 0.26250052)
 sprite_frames = SubResource("SpriteFrames_grxbi")
 animation = &"idle"
 autoplay = "idle"
