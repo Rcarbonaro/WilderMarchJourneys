@@ -1,0 +1,110 @@
+[gd_scene format=3 uid="uid://buceu6437frun"]
+
+[ext_resource type="Texture2D" uid="uid://tn420mn8qksm" path="res://sprites/dryad/wallofthorns.png" id="1_nhxh2"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jlrgo"]
+atlas = ExtResource("1_nhxh2")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_iux4i"]
+atlas = ExtResource("1_nhxh2")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hek2i"]
+atlas = ExtResource("1_nhxh2")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nsl1a"]
+atlas = ExtResource("1_nhxh2")
+region = Rect2(768, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_k47o6"]
+atlas = ExtResource("1_nhxh2")
+region = Rect2(0, 256, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_28kab"]
+atlas = ExtResource("1_nhxh2")
+region = Rect2(256, 256, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4dj2r"]
+atlas = ExtResource("1_nhxh2")
+region = Rect2(512, 256, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_v8d2x"]
+atlas = ExtResource("1_nhxh2")
+region = Rect2(256, 512, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_n2kjo"]
+atlas = ExtResource("1_nhxh2")
+region = Rect2(512, 512, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7f4h7"]
+atlas = ExtResource("1_nhxh2")
+region = Rect2(768, 512, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_df6hc"]
+atlas = ExtResource("1_nhxh2")
+region = Rect2(0, 768, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qyxlb"]
+atlas = ExtResource("1_nhxh2")
+region = Rect2(256, 768, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_iumh0"]
+atlas = ExtResource("1_nhxh2")
+region = Rect2(512, 768, 256, 256)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_vm0cj"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jlrgo")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_iux4i")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hek2i")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nsl1a")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_k47o6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_28kab")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4dj2r")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_v8d2x")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_n2kjo")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7f4h7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_df6hc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qyxlb")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_iumh0")
+}],
+"loop": false,
+"name": &"default",
+"speed": 15.0
+}]
+
+[node name="WallofthornsEnter" type="Node2D" unique_id=595428933]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=947992716]
+scale = Vector2(0.5, 0.5)
+sprite_frames = SubResource("SpriteFrames_vm0cj")
+frame = 12
+frame_progress = 1.0

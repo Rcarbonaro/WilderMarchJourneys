@@ -35,8 +35,14 @@ var _info_box_vbox: VBoxContainer = null
 var _info_hp_bar_bg: ColorRect = null
 var _info_hp_bar_fill: ColorRect = null
 var _info_hp_label: Label = null
+var _info_mana_bar_holder: Control = null
+var _info_mana_bar_bg: ColorRect = null
+var _info_mana_bar_fill: ColorRect = null
 var _info_mana_label: Label = null
 var _info_name_label: Label = null
+var _info_stats_grid: GridContainer = null
+var _info_stat_labels: Dictionary = {}
+# Keys: "atk", "matk", "def", "mdef", "crit_chance", "crit_damage", "mov"
 var _info_status_count_label: Label = null
 var _info_status_icon_row: HFlowContainer = null
 
@@ -55,6 +61,12 @@ const STATUS_ICON_SIZE: float = 32.0
 const MISSING_ICON_COLOR: Color = Color(0, 0, 0, 1)
 # Used as the fallback "icon" for any StatusEffectData with no icon assigned —
 # a plain black box, per spec.
+
+const HP_BAR_BG_TEXTURE_PATH: String = "res://sprites/UI/Health & Mana Bars/hpbar_background.png"
+const MANA_BAR_BG_TEXTURE_PATH: String = "res://sprites/UI/Health & Mana Bars/manabar_background.png"
+# Your background/frame art for the info box's bars. Drawn as a Sprite2D
+# layered on top of the dark ColorRect base, scaled to exactly fit the bar's
+# pixel dimensions regardless of the source PNG's native size.
 
 
 func _ready() -> void:
@@ -188,6 +200,20 @@ func _build_info_box() -> void:
 	_info_hp_bar_bg.position = Vector2(0, 1)
 	hp_bar_holder.add_child(_info_hp_bar_bg)
 
+	# Background art drawn on top of the dark ColorRect base, same treatment
+	# as the mana bar below — see MANA_BAR_BG_TEXTURE_PATH for the pattern.
+	var hp_bg_texture: Texture2D = load(HP_BAR_BG_TEXTURE_PATH)
+	if hp_bg_texture != null:
+		var hp_bg_sprite := Sprite2D.new()
+		hp_bg_sprite.texture = hp_bg_texture
+		hp_bg_sprite.centered = false
+		var hp_tex_size: Vector2 = hp_bg_texture.get_size()
+		if hp_tex_size.x > 0 and hp_tex_size.y > 0:
+			hp_bg_sprite.scale = Vector2(196.0 / hp_tex_size.x, 16.0 / hp_tex_size.y)
+		_info_hp_bar_bg.add_child(hp_bg_sprite)
+	else:
+		printerr("⚠️ Could not load HP bar background at: ", HP_BAR_BG_TEXTURE_PATH)
+
 	_info_hp_bar_fill = ColorRect.new()
 	_info_hp_bar_fill.color = Color(0.2, 0.9, 0.2, 1.0)
 	_info_hp_bar_fill.size = Vector2(192, 12)
@@ -200,10 +226,67 @@ func _build_info_box() -> void:
 	_info_hp_label.size = Vector2(196, 16)
 	_info_hp_bar_bg.add_child(_info_hp_label)
 
-	# Mana label.
+	# ── MANA BAR ────────────────────────────────────────────────────────────────
+	# Built the same way as the HP bar (dark background + colored fill), wrapped
+	# in its own holder Control so the whole thing can be hidden when a unit has
+	# zero max mana (e.g. a melee-only enemy with no mana pool at all).
+	_info_mana_bar_holder = Control.new()
+	_info_mana_bar_holder.custom_minimum_size = Vector2(0, 18)
+	_info_box_vbox.add_child(_info_mana_bar_holder)
+
+	_info_mana_bar_bg = ColorRect.new()
+	_info_mana_bar_bg.color = Color(0.1, 0.1, 0.1, 0.9)
+	_info_mana_bar_bg.size = Vector2(196, 16)
+	_info_mana_bar_bg.position = Vector2(0, 1)
+	_info_mana_bar_holder.add_child(_info_mana_bar_bg)
+
+	# Background art drawn on top of the dark ColorRect base (acts as a frame/
+	# border graphic). If the texture fails to load, the plain dark ColorRect
+	# above still provides a usable background, so this fails gracefully.
+	var mana_bg_texture: Texture2D = load(MANA_BAR_BG_TEXTURE_PATH)
+	if mana_bg_texture != null:
+		var mana_bg_sprite := Sprite2D.new()
+		mana_bg_sprite.texture = mana_bg_texture
+		mana_bg_sprite.centered = false
+		var tex_size: Vector2 = mana_bg_texture.get_size()
+		if tex_size.x > 0 and tex_size.y > 0:
+			mana_bg_sprite.scale = Vector2(196.0 / tex_size.x, 16.0 / tex_size.y)
+		_info_mana_bar_bg.add_child(mana_bg_sprite)
+	else:
+		printerr("⚠️ Could not load mana bar background at: ", MANA_BAR_BG_TEXTURE_PATH)
+
+	_info_mana_bar_fill = ColorRect.new()
+	_info_mana_bar_fill.color = Color(0.25, 0.45, 0.95, 1.0)   # Blue, distinct from HP's green/red.
+	_info_mana_bar_fill.size = Vector2(192, 12)
+	_info_mana_bar_fill.position = Vector2(2, 3)
+	_info_mana_bar_bg.add_child(_info_mana_bar_fill)
+
 	_info_mana_label = Label.new()
-	_info_mana_label.add_theme_font_size_override("font_size", 14)
-	_info_box_vbox.add_child(_info_mana_label)
+	_info_mana_label.add_theme_font_size_override("font_size", 12)
+	_info_mana_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_info_mana_label.size = Vector2(196, 16)
+	_info_mana_bar_bg.add_child(_info_mana_label)
+
+	# ── EFFECTIVE STATS GRID ──────────────────────────────────────────────────────
+	# Shows ATK / MATK / DEF / MDEF / Crit% / Crit DMG / MOV, all read from the
+	# unit's get_effective_*() getters so status modifiers and Momentum aura
+	# bonuses are already baked in — exactly what the unit would actually use
+	# in combat right now, not just their base stats.
+	var stats_separator := HSeparator.new()
+	_info_box_vbox.add_child(stats_separator)
+
+	_info_stats_grid = GridContainer.new()
+	_info_stats_grid.columns = 2
+	_info_stats_grid.add_theme_constant_override("h_separation", 12)
+	_info_stats_grid.add_theme_constant_override("v_separation", 2)
+	_info_box_vbox.add_child(_info_stats_grid)
+
+	_info_stat_labels = {}
+	for stat_key in ["atk", "matk", "def", "mdef", "crit_chance", "crit_damage", "mov"]:
+		var lbl := Label.new()
+		lbl.add_theme_font_size_override("font_size", 13)
+		_info_stats_grid.add_child(lbl)
+		_info_stat_labels[stat_key] = lbl
 
 	# Status effect count label.
 	_info_status_count_label = Label.new()
@@ -246,8 +329,19 @@ func show_unit_info(unit) -> void:
 	_info_hp_label.text = "%d / %d" % [unit.current_hp, max_hp]
 
 	# ── MANA ────────────────────────────────────────────────────────────────────
+	# Only show the mana bar at all if this unit actually has a mana pool —
+	# some enemies (or melee-only units) may have max_mana == 0, in which case
+	# the whole bar holder is hidden rather than showing an empty "0 / 0" bar.
 	var max_mana: int = unit.get_stats().mana
-	_info_mana_label.text = "Mana: %d / %d" % [unit.current_mana, max_mana]
+	if max_mana > 0:
+		_info_mana_bar_holder.visible = true
+		var mana_pct: float = clamp(float(unit.current_mana) / float(max_mana), 0.0, 1.0)
+		_info_mana_bar_fill.size.x = 192.0 * mana_pct
+		_info_mana_label.text = "%d / %d" % [unit.current_mana, max_mana]
+	else:
+		_info_mana_bar_holder.visible = false
+
+	_update_stat_labels(unit)
 
 	# ── STATUS EFFECTS ──────────────────────────────────────────────────────────
 	_info_status_count_label.text = "Status Effects: %d" % unit.active_statuses.size()
@@ -264,6 +358,19 @@ func hide_unit_info() -> void:
 	_info_box.visible = false
 	_info_box_unit = null
 	_hide_status_tooltip()
+
+
+func _update_stat_labels(unit) -> void:
+	# Reads all seven get_effective_*() getters and writes them into the stats
+	# grid. These already include status modifiers AND Momentum aura bonuses —
+	# i.e. exactly the numbers the unit would actually fight with right now.
+	_info_stat_labels["atk"].text         = "ATK: %d" % unit.get_effective_atk()
+	_info_stat_labels["matk"].text        = "MATK: %d" % unit.get_effective_matk()
+	_info_stat_labels["def"].text         = "DEF: %d" % unit.get_effective_def()
+	_info_stat_labels["mdef"].text        = "MDEF: %d" % unit.get_effective_mdef()
+	_info_stat_labels["crit_chance"].text = "Crit %%: %.0f%%" % unit.get_effective_crit_chance()
+	_info_stat_labels["crit_damage"].text = "Crit DMG: %.0f%%" % unit.get_effective_crit_damage()
+	_info_stat_labels["mov"].text         = "MOV: %d" % unit.get_effective_mov()
 
 
 func refresh_unit_info_if_showing(unit) -> void:
@@ -295,7 +402,15 @@ func _refresh_info_box_live_values() -> void:
 	_info_hp_label.text = "%d / %d" % [unit.current_hp, max_hp]
 
 	var max_mana: int = unit.get_stats().mana
-	_info_mana_label.text = "Mana: %d / %d" % [unit.current_mana, max_mana]
+	if max_mana > 0:
+		_info_mana_bar_holder.visible = true
+		var mana_pct: float = clamp(float(unit.current_mana) / float(max_mana), 0.0, 1.0)
+		_info_mana_bar_fill.size.x = 192.0 * mana_pct
+		_info_mana_label.text = "%d / %d" % [unit.current_mana, max_mana]
+	else:
+		_info_mana_bar_holder.visible = false
+
+	_update_stat_labels(unit)
 
 	# Only rebuild the status icon row if something about it actually changed —
 	# comparing a cheap fingerprint string avoids flicker from rebuilding

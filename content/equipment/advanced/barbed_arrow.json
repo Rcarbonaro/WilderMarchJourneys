@@ -1,0 +1,15 @@
+{
+  "id": "barbed_arrow",
+  "name": "Barbed Arrow",
+  "description": "+3 ATK, +3 MATK, +20% critical chance. Increase critical damage by 40%.",
+  "type": "advanced",
+  "subtype": "blade_monocle",
+  "tags": ["ranged"],
+  "effects": [
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "atk",         "amount": 3,  "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "matk",        "amount": 3,  "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "crit_chance", "amount": 20, "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "crit_damage", "amount": 40, "value_mode": "flat", "scope": "permanent" }
+  ],
+  "notes": "No custom handler needed -- pure flat/percent stat bonuses."
+}

@@ -1,13 +1,16 @@
 [gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://b4whqdrv4e4x1"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_x734d"]
+[ext_resource type="PackedScene" uid="uid://cvncq3xf6rqu6" path="res://scenes/animations/firemage/firemage_projectile.tscn" id="2_nsnfm"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_s3j01"]
 
 [resource]
 script = ExtResource("2_s3j01")
 id = "firemagebasic"
 display_name = "Basic Attack"
-max_range = 3
+description = "Throw a small ball of fire"
+effect_scene = ExtResource("2_nsnfm")
+max_range = 4
 damage_type = "magical"
 scaling_stat = "matk"
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

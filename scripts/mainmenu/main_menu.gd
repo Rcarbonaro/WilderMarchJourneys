@@ -1,8 +1,9 @@
-# res://scripts/meta/main_menu.gd
+# res://scripts/mainmenu/main_menu.gd
 extends Control
 
 # Centralized scene paths for easy editing later
 # 📤 EXPORTS TO: SceneTree changes state when buttons are pressed
+const GAME_MODE_SELECT_SCENE_PATH: String = "res://scenes/mainmenu/GameModeSelectScene.tscn"
 const BATTLE_SCENE_PATH : String = "res://scenes/battle/BattleScene.tscn"
 const UPGRADES_SCENE_PATH: String = "res://scenes/meta/UpgradesScene.tscn"
 const SETTINGS_SCENE_PATH: String = "res://scenes/meta/SettingsScene.tscn"
@@ -21,17 +22,14 @@ func _ready() -> void:
 	achievements_button.pressed.connect(_on_achievements_pressed)
 	upgrades_button.pressed.connect(_on_upgrades_pressed)
 	settings_button.pressed.connect(_on_settings_pressed)
-	
+
 	# Determine if there is a save file or active run to continue
 	# If not, grey out the Continue button gracefully
 	_evaluate_continue_button_state()
 
 func _evaluate_continue_button_state() -> void:
 	# Checking if RunManager exists and holds structural data from a previous session
-	if RunManager.current_run != null:
-		continue_button.disabled = false
-	else:
-		continue_button.disabled = true
+	continue_button.disabled = (RunManager.current_run == null)
 
 func _on_continue_pressed() -> void:
 	print("Resuming previous run...")
@@ -39,28 +37,12 @@ func _on_continue_pressed() -> void:
 	_change_scene_to(BATTLE_SCENE_PATH)
 
 func _on_new_game_pressed() -> void:
-	print("Starting a completely fresh run! Initializing RunData...")
-	
-	RunManager.current_run = RunData.new()
-	
-	# 1. Load your character file 
-	var test_hero = load("res://resources/units/guardian_data.tres")
-	
-	# 2. Check if the resource loaded properly
-	if test_hero != null:
-		RunManager.current_run.party = [test_hero]
-		
-		# 3. DYNAMIC FIX: Safely grab the actual ID property from your unit resource
-		# If your UnitData script uses a different variable name (like 'unit_id' or 'name'), change '.id' below to match it!
-		var hero_id = test_hero.id if "id" in test_hero else "berserker"
-		
-		# 4. Correctly pair the level to that specific ID string
-		RunManager.current_run.unit_levels = { hero_id: 1 }
-		print("Hero registered in run with ID: ", hero_id)
-	else:
-		printerr("❌ Main Menu could not load berserker.tres!")
-	
-	_change_scene_to(BATTLE_SCENE_PATH)
+	# "New Game" no longer builds a run by hand here -- it just opens the
+	# small Random-vs-Draft choice screen. Game Mode Select is the one that
+	# actually calls RunManager.start_new_run(), once the player has either
+	# been randomly assigned a party (Random) or finished picking one (Draft).
+	print("Opening game mode selection...")
+	_change_scene_to(GAME_MODE_SELECT_SCENE_PATH)
 
 func _on_achievements_pressed() -> void:
 	print("Opening Achievements panel...")

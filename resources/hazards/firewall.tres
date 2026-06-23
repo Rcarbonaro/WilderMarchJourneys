@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="HazardData" format=3 uid="uid://cbh8s7n6r1bib"]
+
+[ext_resource type="PackedScene" uid="uid://cc68kgo6cfcot" path="res://scenes/animations/firemage/firewall_start.tscn" id="1_iaolu"]
+[ext_resource type="PackedScene" uid="uid://1cslfu5ltiqq" path="res://scenes/animations/firemage/firewall_end.tscn" id="2_i32r4"]
+[ext_resource type="PackedScene" uid="uid://bxjcvc58jdsch" path="res://scenes/animations/firemage/firewall_idle.tscn" id="3_tr1il"]
+[ext_resource type="Script" uid="uid://bv2ltgyye0n4f" path="res://scripts/data/hazard_data.gd" id="4_d0jrg"]
+
+[resource]
+script = ExtResource("4_d0jrg")
+id = "firewall"
+display_name = "Fire Wall"
+duration_rounds = 3
+entrance_scene = ExtResource("1_iaolu")
+idle_scene = ExtResource("3_tr1il")
+exit_scene = ExtResource("2_i32r4")
+damage_multiplier = 1.2
+damage_type = "magical"
+trigger_on_end_of_turn = true
+is_wall_hazard = true
+wall_length = 5
+metadata/_custom_type_script = "uid://bv2ltgyye0n4f"

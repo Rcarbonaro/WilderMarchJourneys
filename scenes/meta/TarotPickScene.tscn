@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://b04smw66d3km0"]
+
+[ext_resource type="Script" uid="uid://cycbaqo11pvoe" path="res://scripts/meta/tarot_pick_scene.gd" id="1_hf0j4"]
+
+[node name="TarotPickScene" type="Control" unique_id=339532502]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_hf0j4")
+
+[node name="ChoiceContainer" type="HBoxContainer" parent="." unique_id=742197247]
+layout_mode = 0
+offset_left = 9.0
+offset_top = 147.0
+offset_right = 1906.0
+offset_bottom = 926.0
+
+[node name="Label" type="Label" parent="." unique_id=2087681382]
+layout_mode = 0
+offset_left = 25.0
+offset_top = 37.0
+offset_right = 1882.0
+offset_bottom = 87.0
+text = "Select Tarot Card"
+horizontal_alignment = 1

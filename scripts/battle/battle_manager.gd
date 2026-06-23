@@ -95,6 +95,7 @@ var aura_manager: Node = null
 # ── STARTUP ───────────────────────────────────────────────────────────────────
 
 func _ready() -> void:
+	EventBus.publish(EventBus.ON_BATTLE_START, {})
 	# Null-safety first: print a clear error rather than crashing with a vague message.
 	if grid == null:
 		printerr("❌ BattleManager: 'grid' export slot is empty! Drag BattleGrid in.")
@@ -151,67 +152,52 @@ func _ready() -> void:
 
 
 func _spawn_player_party_from_run() -> void:
-	print("🧙 Spawning Player Party Units...")
-	var windmage_data      = load("res://resources/units/windmage_data.tres")
-	var hexweaver_data     = load("res://resources/units/hexweaver_data.tres")
-	var guardian_data      = load("res://resources/units/guardian_data.tres")
-	var dragoon_data       = load("res://resources/units/dragoon_data.tres")
-	var executioner_data   = load("res://resources/units/executioner_data.tres")
-	var spellsword_data    = load("res://resources/units/spellsword_data.tres")
-	var stonewarden_data   = load("res://resources/units/stonewarden_data.tres")
-	var plaguebringer_data = load("res://resources/units/plaguebringer_data.tres")
-	var divinator_data     = load("res://resources/units/divinator_data.tres")
-	var rogue_data         = load("res://resources/units/rogue_data.tres")
-	var dreadknight_data         = load("res://resources/units/dreadknight_data.tres")
-	var dryad_data         = load("res://resources/units/dryad_data.tres")
-	var sharpshooter_data         = load("res://resources/units/sharpshooter_data.tres")
-	var stormblade_data         = load("res://resources/units/stormblade_data.tres")
+	print("🧙 Spawning Player Party Units from RunManager...")
+
+	if RunManager.current_run == null:
+		printerr("❌ BattleManager: RunManager.current_run is null! Did you start a run from ",
+				 "the Main Menu (New Game → Random/Draft) before entering BattleScene directly?")
+		return
+
+	var party: Array = RunManager.current_run.party
+	if party.is_empty():
+		printerr("❌ BattleManager: RunManager.current_run.party is empty — nothing to spawn.")
+		return
+
+	# Lay the party out along the player's edge of the map, one tile apart.
+	# Add more entries here if you ever allow a starting party larger than 4.
+	var spawn_positions: Array[Vector2i] = [
+		Vector2i(2, 5), Vector2i(2, 6), Vector2i(3, 5), Vector2i(3, 6),
+	]
+
+	for i in range(party.size()):
+		if i >= spawn_positions.size():
+			printerr("⚠️ More than ", spawn_positions.size(),
+					 " party members saved — ran out of spawn positions, skipping the rest.")
+			break
+
+		var unit_entry: Dictionary = party[i]
+		var unit_id: String = unit_entry.get("unit_id", "")
+		var unit_data: UnitData = _load_unit_data(unit_id)
+		if unit_data == null:
+			printerr("❌ Could not load UnitData for unit_id '", unit_id, "' — skipped.")
+			continue
+
+		var level: int = unit_entry.get("level", 1)
+		spawn_unit(
+			unit_data, spawn_positions[i], true, level,
+			unit_entry.get("equipped_item_ids", []),
+			unit_entry.get("permanent_modifiers", [])
+		)
 
 
-
-
-	
-	#--- Isolation ---
-	if windmage_data      != null: spawn_unit(windmage_data,      Vector2i(1, 7), true, 1)
-	else: printerr("❌ Could not load windmage_data.tres!")
-	#if dragoon_data       != null: spawn_unit(dragoon_data,       Vector2i(3, 6), true, 1)
-	#else: printerr("❌ Could not load dragoon_data.tres!")
-	if dryad_data         != null: spawn_unit(dryad_data,         Vector2i(4, 4), true, 1)
-	else: printerr("❌ Could not load dryad_data.tres!")
-	if rogue_data         != null: spawn_unit(dryad_data,         Vector2i(4, 3), true, 1)
-	else: printerr("❌ Could not load dryad_data.tres!")
-	if stormblade_data != null: spawn_unit(stormblade_data, Vector2i(2, 5), true, 1)
-	else: printerr("❌ Could not load stormblade_data.tres!")
-
-	#--- Debuff ---
-	#if hexweaver_data     != null: spawn_unit(hexweaver_data,     Vector2i(2, 6), true, 1)
-	#else: printerr("❌ Could not load hexweaver_data.tres!")
-	#if dreadknight_data     != null: spawn_unit(dreadknight_data,     Vector2i(3, 6), true, 1)
-	#else: printerr("❌ Could not load dreadknigh_data.tres!")
-	#if executioner_data   != null: spawn_unit(executioner_data,   Vector2i(1, 6), true, 1)
-	#else: printerr("❌ Could not load executioner_data.tres!")
-	#if plaguebringer_data != null: spawn_unit(plaguebringer_data, Vector2i(2, 5), true, 1)
-	#else: printerr("❌ Could not load plaguebringer_data.tres!")
-	#if divinator_data     != null: spawn_unit(divinator_data,     Vector2i(3, 5), true, 1)
-	#else: printerr("❌ Could not load divinator_data.tres!")
-	
-	#--- Arcane ---
-	#if divinator_data     != null: spawn_unit(divinator_data,     Vector2i(3, 5), true, 1)
-	#else: printerr("❌ Could not load divinator_data.tres!")
-	#if spellsword_data    != null: spawn_unit(spellsword_data,    Vector2i(1, 5), true, 1)
-	#else: printerr("❌ Could not load spellsword_data.tres!")
-	#if stonewarden_data   != null: spawn_unit(stonewarden_data,   Vector2i(4, 5), true, 1)
-	#else: printerr("❌ Could not load stonewarden_data.tres!")
-	#if hexweaver_data     != null: spawn_unit(hexweaver_data,     Vector2i(2, 6), true, 1)
-	#else: printerr("❌ Could not load hexweaver_data.tres!")
-	
-	
-	#Extras (for now)
-	#if guardian_data      != null: spawn_unit(guardian_data,      Vector2i(2, 8), true, 1)
-	#else: printerr("❌ Could not load guardian_data.tres!")
-	#if sharpshooter_data      != null: spawn_unit(guardian_data,      Vector2i(3, 8), true, 1)
-	#else: printerr("❌ Could not load sharpshooter_data.tres!")
-	
+func _load_unit_data(unit_id: String) -> UnitData:
+	# Same path convention used everywhere else this project loads a unit by
+	# id (e.g. shop_engine.gd): res://resources/units/<unit_id>_data.tres
+	var path := "res://resources/units/" + unit_id + "_data.tres"
+	if not ResourceLoader.exists(path):
+		return null
+	return load(path) as UnitData
 
 
 func _spawn_stage_enemies() -> void:
@@ -235,9 +221,14 @@ func _spawn_stage_enemies() -> void:
 	print("🐺 Monster waves deployed!")
 
 
-func spawn_unit(unit_data: UnitData, cell: Vector2i, is_player: bool, level: int = 1) -> void:
+func spawn_unit(unit_data: UnitData, cell: Vector2i, is_player: bool, level: int = 1,
+				equipped_item_ids: Array = [], permanent_modifiers: Array = []) -> void:
 	# Instantiates a unit scene, places it on the grid, and registers it.
 	# Also handles large units (2×2 etc.) by reading tile_footprint from unit_data.
+	#
+	# equipped_item_ids / permanent_modifiers only matter for PLAYER units —
+	# they come straight from that unit's RunState.party entry (see
+	# _spawn_player_party_from_run above) and are simply ignored for enemies.
 
 	var folder_name := unit_data.display_name.to_lower().replace(" ", "")
 	var scene_path  := "res://scenes/animations/%s/%s.tscn" % [folder_name, folder_name]
@@ -275,6 +266,11 @@ func spawn_unit(unit_data: UnitData, cell: Vector2i, is_player: bool, level: int
 
 	if is_player:
 		player_units.append(unit)
+		# Applies equipment's stat bonuses + custom mechanics (Bloodthirster,
+		# Mirrorplate, etc.) and any permanent stat bonuses banked up over the
+		# run from tarot cards / encounter rewards. See equipment_runtime.gd.
+		EquipmentRuntime.apply_equipment_to_unit(unit, equipped_item_ids)
+		EquipmentRuntime.apply_permanent_modifiers_to_unit(unit, permanent_modifiers)
 		print("🛡️ Ally spawned: ", unit_data.display_name)
 	else:
 		enemy_units.append(unit)
@@ -289,6 +285,14 @@ func _on_unit_died(unit) -> void:
 	print(unit.unit_data.display_name, " has fallen!")
 	player_units.erase(unit)
 	enemy_units.erase(unit)
+
+	# Announces the death for anything that needs to react generically (e.g.
+	# tarot triggers like "The Pact"). Erased ABOVE first, on purpose, so
+	# "live_units" here never includes the unit that just died.
+	EventBus.publish(EventBus.ON_UNIT_DIED, {
+		"unit": unit, "is_player_unit": unit.is_player_unit,
+		"live_units": player_units if unit.is_player_unit else enemy_units,
+	})
 
 	# If the dead unit was selected, clean up the selection state.
 	if selected_unit == unit:
@@ -541,7 +545,7 @@ func cancel_unit_move() -> void:
 	# If this unit is an aura caster, snap the aura visuals back too (instant,
 	# matching the instant teleport of snap_to — no slide animation).
 	if aura_manager != null and _unit_has_active_aura(unit):
-		aura_manager.snap_caster_move(unit)
+		aura_manager.snap_to(unit)
 
 	if ui_manager and ui_manager.has_method("clear_abilities"):
 		ui_manager.clear_abilities()
@@ -880,6 +884,7 @@ func end_player_turn() -> void:
 			unit.has_moved       = false
 			unit.has_acted       = false
 			unit.can_cancel_move = false
+			CombatHooks.run_round_tick(unit)
 
 	# Count down enemy ability cooldowns so they become available again over time.
 	for unit in enemy_units:
@@ -914,6 +919,7 @@ func _on_enemy_turn_complete() -> void:
 			unit.has_moved       = false
 			unit.has_acted       = false
 			unit.can_cancel_move = false
+			CombatHooks.run_round_tick(unit)
 			for key in unit.ability_cooldowns:
 				unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
 

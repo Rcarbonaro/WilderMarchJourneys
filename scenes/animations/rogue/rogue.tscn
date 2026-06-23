@@ -431,12 +431,13 @@ animations = [{
 }]
 
 [node name="WindMage" type="Node2D" unique_id=15020637]
+scale = Vector2(0.8, 0.8)
 script = ExtResource("1_65bim")
 unit_data = ExtResource("2_hrywd")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1298568116]
-position = Vector2(-15, -23)
-scale = Vector2(0.46666667, 0.4711066)
+position = Vector2(1.25, -13.75)
+scale = Vector2(0.46, 0.465)
 sprite_frames = SubResource("SpriteFrames_grxbi")
 animation = &"idle"
 autoplay = "idle"

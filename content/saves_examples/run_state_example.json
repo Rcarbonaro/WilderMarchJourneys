@@ -1,0 +1,28 @@
+{
+  "run_id": "run_2026_06_20_001",
+  "player_seed": 123456,
+  "draft_or_random_mode": "random",
+  "difficulty": "normal",
+  "stage_index": 4,
+  "biome_sequence": ["forest", "swamp", "plains"],
+  "gold": 12,
+  "equipment_inventory": ["talisman_of_health"],
+  "party": [
+    {
+      "unit_id": "hexweaver",
+      "instance_id": "hexweaver_001",
+      "level": 1,
+      "equipped_item_ids": ["blade", null, null],
+      "permanent_modifiers": []
+    }
+  ],
+  "bench": [],
+  "tarot_cards": [ { "tarot_id": "the_execution_overkill", "stacks": 1 } ],
+  "flags": ["helped_caravan"],
+  "encounters_completed": ["the_broken_caravan"],
+  "shop_slot_modifier": 0,
+  "drop_rate_modifiers": [ { "resource": "overkill", "multiplier": 1.3 } ],
+  "shop_price_modifiers": [],
+  "shop_inventory": [],
+  "runtime_effect_state": {}
+}

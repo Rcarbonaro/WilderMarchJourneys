@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="HazardData" format=3 uid="uid://ddaf7ic4a2aal"]
+
+[ext_resource type="Script" uid="uid://bv2ltgyye0n4f" path="res://scripts/data/hazard_data.gd" id="1_11lma"]
+[ext_resource type="PackedScene" uid="uid://buceu6437frun" path="res://scenes/animations/dryad/wallofthorns_enter.tscn" id="1_b1dc8"]
+[ext_resource type="PackedScene" uid="uid://dkxah2ssv75fn" path="res://scenes/animations/dryad/wallofthorns_exit.tscn" id="2_c33bb"]
+[ext_resource type="PackedScene" uid="uid://bhro3rfwuant4" path="res://scenes/animations/dryad/wallofthorns_persist.tscn" id="3_cespw"]
+
+[resource]
+script = ExtResource("1_11lma")
+id = "wallofthorns"
+display_name = "Wall of Thorns"
+duration_rounds = 3
+entrance_scene = ExtResource("1_b1dc8")
+idle_scene = ExtResource("3_cespw")
+exit_scene = ExtResource("2_c33bb")
+is_wall_hazard = true
+wall_length = 4
+wall_blocks_line_of_sight = true
+metadata/_custom_type_script = "uid://bv2ltgyye0n4f"

@@ -269,8 +269,8 @@ script = ExtResource("1_34vxa")
 unit_data = ExtResource("2_uq1vy")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1298568116]
-position = Vector2(-15, -23)
-scale = Vector2(0.46666667, 0.4711066)
+position = Vector2(-1.9999987, -2.000002)
+scale = Vector2(0.34, 0.343)
 sprite_frames = SubResource("SpriteFrames_grxbi")
 animation = &"walk"
 autoplay = "idle"

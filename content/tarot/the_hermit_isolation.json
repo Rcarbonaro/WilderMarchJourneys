@@ -1,0 +1,15 @@
+{
+  "id": "the_hermit_isolation",
+  "name": "The Hermit (Isolation)",
+  "description": "Units with the Isolation tag are 30% more likely to appear. Your first attack each combat deals +20% damage if the target has no adjacent allies.",
+  "category": "blessed",
+  "rarity": "common",
+  "tags": ["isolation"],
+  "stackable": false,
+  "max_stacks": 1,
+  "effects": [
+    { "type": "modify_drop_rate", "resource": "isolation", "multiplier": 1.3 },
+    { "type": "custom", "custom_id": "the_hermit_isolation" }
+  ],
+  "notes": "The damage bonus needs to inspect the attack BEFORE it lands and return a bigger number, which a plain EventBus trigger can't do -- see custom_tarot_handlers.gd, registered under custom_id 'the_hermit_isolation'."
+}

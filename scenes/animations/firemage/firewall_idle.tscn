@@ -1,0 +1,47 @@
+[gd_scene format=3 uid="uid://bxjcvc58jdsch"]
+
+[ext_resource type="Texture2D" uid="uid://btpqwx5nnaijl" path="res://sprites/firemage/fire wall.png" id="1_y6j5l"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8h656"]
+atlas = ExtResource("1_y6j5l")
+region = Rect2(1056, 384, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nq55m"]
+atlas = ExtResource("1_y6j5l")
+region = Rect2(704, 384, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ifdfm"]
+atlas = ExtResource("1_y6j5l")
+region = Rect2(352, 384, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_v2r1q"]
+atlas = ExtResource("1_y6j5l")
+region = Rect2(0, 384, 352, 192)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_bwknb"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8h656")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nq55m")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ifdfm")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_v2r1q")
+}],
+"loop": true,
+"name": &"default",
+"speed": 14.0
+}]
+
+[node name="Fireball" type="Node2D" unique_id=1437919797]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1108632739]
+position = Vector2(-1, -0.99999905)
+scale = Vector2(0.16477273, 0.20833331)
+sprite_frames = SubResource("SpriteFrames_bwknb")
+frame_progress = 0.9723642

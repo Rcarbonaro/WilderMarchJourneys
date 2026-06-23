@@ -1,0 +1,23 @@
+{
+  "id": "the_chariot_momentum",
+  "name": "The Chariot (Momentum)",
+  "description": "Units with the Momentum tag are 30% more likely to appear. After defeating a target, the killer gains +1 ATK. Stacks, and resets at the end of the battle.",
+  "category": "blessed",
+  "rarity": "common",
+  "tags": ["momentum"],
+  "stackable": false,
+  "max_stacks": 1,
+  "effects": [
+    { "type": "modify_drop_rate", "resource": "momentum", "multiplier": 1.3 }
+  ],
+  "triggers": [
+    {
+      "id": "kill_atk_stack",
+      "event": "on_enemy_defeated",
+      "effects": [
+        { "type": "add_stat", "target": "unit", "target_selector": "event_caster", "stat": "atk", "amount": 1, "value_mode": "flat", "scope": "session" }
+      ]
+    }
+  ],
+  "notes": "target_selector 'event_caster' reads payload.caster from the on_enemy_defeated event -- only the unit who landed the kill gets the bonus, not the whole team. scope 'session' means the bonus never ticks down and is simply gone next battle (it's never written to save data)."
+}

@@ -1,0 +1,15 @@
+{
+  "id": "the_broken_caravan",
+  "title": "The Broken Caravan",
+  "description": "A smashed merchant caravan lies abandoned; survivors hide nearby.",
+  "biomes": ["forest"],
+  "stage_min": 1,
+  "stage_max": 30,
+  "spawn_weight": 1.0,
+  "flags_required": [],
+  "flags_blocked": ["burned_bridge"],
+  "flags_set_on_completion": ["helped_caravan"],
+  "dialogue_graph_id": "broken_caravan_graph",
+  "once_per_run": true,
+  "notes": "Rewards and any combat_request live entirely inside the dialogue graph, one per choice -- not duplicated here."
+}

@@ -1,0 +1,14 @@
+{
+  "id": "staff",
+  "name": "Staff",
+  "description": "A focusing rod for magic. +2 MATK.",
+  "type": "basic",
+  "subtype": "staff",
+  "tags": ["forgeable", "magic"],
+  "effects": [
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "matk", "amount": 2, "value_mode": "flat", "scope": "permanent" }
+  ],
+  "stackable": true,
+  "consumable": false,
+  "notes": "No advanced equipment combos use Staff yet -- reserved for later."
+}

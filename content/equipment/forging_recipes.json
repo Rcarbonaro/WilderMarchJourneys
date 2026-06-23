@@ -1,0 +1,17 @@
+[
+  { "id": "forge_blade_blade",         "inputs": ["blade", "blade"],         "output_equipment_id": "bloodthirster" },
+  { "id": "forge_blade_armor",         "inputs": ["blade", "armor"],         "output_equipment_id": "vanguards_edge" },
+  { "id": "forge_blade_talisman",      "inputs": ["blade", "talisman"],      "output_equipment_id": "heartpiercer" },
+  { "id": "forge_blade_spellbook",     "inputs": ["blade", "spellbook"],     "output_equipment_id": "spellforged_blade" },
+  { "id": "forge_blade_monocle",       "inputs": ["blade", "monocle"],       "output_equipment_id": "barbed_arrow" },
+  { "id": "forge_armor_armor",         "inputs": ["armor", "armor"],        "output_equipment_id": "heavy_plate" },
+  { "id": "forge_armor_talisman",      "inputs": ["armor", "talisman"],      "output_equipment_id": "stoneheart_mail" },
+  { "id": "forge_armor_spellbook",     "inputs": ["armor", "spellbook"],     "output_equipment_id": "aegis_codex" },
+  { "id": "forge_armor_monocle",       "inputs": ["armor", "monocle"],       "output_equipment_id": "mirrorplate" },
+  { "id": "forge_talisman_talisman",   "inputs": ["talisman", "talisman"],   "output_equipment_id": "vital_bloom" },
+  { "id": "forge_talisman_spellbook",  "inputs": ["talisman", "spellbook"],  "output_equipment_id": "soulweaver_charm" },
+  { "id": "forge_talisman_monocle",    "inputs": ["talisman", "monocle"],    "output_equipment_id": "bloody_mantle" },
+  { "id": "forge_spellbook_spellbook", "inputs": ["spellbook", "spellbook"], "output_equipment_id": "soul_jar" },
+  { "id": "forge_spellbook_monocle",   "inputs": ["spellbook", "monocle"],   "output_equipment_id": "oracles_lens" },
+  { "id": "forge_monocle_monocle",     "inputs": ["monocle", "monocle"],     "output_equipment_id": "crystal_sight" }
+]

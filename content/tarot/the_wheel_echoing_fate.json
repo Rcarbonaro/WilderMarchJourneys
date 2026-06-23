@@ -1,0 +1,25 @@
+{
+  "id": "the_wheel_echoing_fate",
+  "name": "The Wheel (Echoing Fate)",
+  "description": "Units you already own are 20% more likely to appear. When you buy a duplicate of a unit you already own, gain 1 gold.",
+  "category": "blessed",
+  "rarity": "uncommon",
+  "tags": [],
+  "stackable": false,
+  "max_stacks": 1,
+  "available_modes": ["random"],
+  "effects": [
+    { "type": "modify_drop_rate", "resource": "owned_units", "multiplier": 1.2 }
+  ],
+  "triggers": [
+    {
+      "id": "duplicate_gold",
+      "event": "on_shop_purchase",
+      "condition": { "type": "event_payload_true", "field": "was_duplicate" },
+      "effects": [
+        { "type": "add_gold", "amount": 1 }
+      ]
+    }
+  ],
+  "notes": "\"owned_units\" is the one special dynamic resource keyword ShopEngine recognizes -- it isn't matched as a static tag, it's computed fresh against the player's current party/bench every time the shop is weighted. \"available_modes\": [\"random\"] is new -- this card is now Random-mode-only, since Draft players already chose their team deliberately. Remove the field entirely (or set it to []) to make a card available in every mode again."
+}

@@ -1,0 +1,13 @@
+{
+  "id": "oracles_lens",
+  "name": "Oracle's Lens",
+  "description": "+10 mana, +10% critical chance. The first spell cast by this unit each battle gets +50% critical chance.",
+  "type": "advanced",
+  "subtype": "monocle_spellbook",
+  "tags": ["magic"],
+  "effects": [
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "mana",        "amount": 10, "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "crit_chance", "amount": 10, "value_mode": "flat", "scope": "permanent" },
+    { "type": "custom", "custom_id": "oracles_lens" }
+  ]
+}

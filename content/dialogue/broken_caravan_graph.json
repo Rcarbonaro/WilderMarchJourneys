@@ -1,0 +1,62 @@
+{
+  "id": "broken_caravan_graph",
+  "start_node": "start",
+  "nodes": [
+    {
+      "id": "start",
+      "text": "You find a smashed merchant caravan. Survivors hide nearby.",
+      "image": "res://content/dialogue/broken_caravan/scene1.png",
+      "conditions": [],
+      "choices": [
+        {
+          "id": "aid_survivors",
+          "text": "Aid the survivors",
+          "cost": { "type": "gold", "amount": 5 },
+          "conditions": [],
+          "effects": [
+            { "type": "set_flag", "flag_id": "helped_caravan" },
+            { "type": "add_equipment", "equipment_id": "talisman_of_health" }
+          ],
+          "next_node_id": "end_aid",
+          "leads_to_combat": false
+        },
+        {
+          "id": "salvage_goods",
+          "text": "Search the wreckage for goods",
+          "cost": null,
+          "conditions": [],
+          "effects": [
+            { "type": "modify_drop_rate", "resource": "equipment", "multiplier": 1.2 }
+          ],
+          "next_node_id": "end_salvage"
+        },
+        {
+          "id": "ignore",
+          "text": "Ignore them and move on",
+          "cost": null,
+          "conditions": [],
+          "effects": [
+            { "type": "set_flag", "flag_id": "ignored_caravan" }
+          ],
+          "next_node_id": "end_ignore"
+        }
+      ]
+    },
+    { "id": "end_aid", "text": "The survivors thank you and give you a small gift.", "choices": [] },
+    {
+      "id": "end_salvage",
+      "text": "You find some salvage but disturb a nest of bandits.",
+      "choices": [
+        {
+          "id": "fight_bandits",
+          "text": "Fight the bandits",
+          "effects": [],
+          "next_node_id": null,
+          "leads_to_combat": true,
+          "combat_request": { "enemy_group_id": "bandit_ambush_lvl_2", "modifiers": ["surprise"] }
+        }
+      ]
+    },
+    { "id": "end_ignore", "text": "You leave the wreckage behind.", "choices": [] }
+  ]
+}

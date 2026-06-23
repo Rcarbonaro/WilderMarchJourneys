@@ -420,15 +420,15 @@ script = ExtResource("1_es5eu")
 unit_data = ExtResource("2_61xk7")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1298568116]
-position = Vector2(-15, -23)
-scale = Vector2(0.46666667, 0.4711066)
+position = Vector2(-5.000004, -4.000008)
+scale = Vector2(0.3, 0.3)
 sprite_frames = SubResource("SpriteFrames_grxbi")
 animation = &"walk_up"
 autoplay = "idle"
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
-offset_left = -33.0
-offset_top = 45.0
-offset_right = 40.0
-offset_bottom = 62.0
+offset_left = -35.0
+offset_top = 12.0
+offset_right = 38.0
+offset_bottom = 29.0
 theme_override_font_sizes/font_size = 10
