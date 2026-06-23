@@ -5,7 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://2gocimofq214" path="res://sprites/dragoon/dragoon attack.png" id="4_nwtg2"]
 [ext_resource type="Texture2D" uid="uid://bbqmdev1iuf7q" path="res://sprites/Wind Mage/windmage_dead.png" id="4_y7v1o"]
 [ext_resource type="Texture2D" uid="uid://cayx8nwsj2joy" path="res://sprites/Wind Mage/windmage_hurt.png" id="5_hsps0"]
-[ext_resource type="Texture2D" uid="uid://cycijucjilm0s" path="res://sprites/dragoon/dragoon idle.png" id="7_pv6na"]
+[ext_resource type="Texture2D" uid="uid://d0qokvhad6lh" path="res://sprites/dragoon/dragoon_idle.png" id="6_av3sa"]
 [ext_resource type="Texture2D" uid="uid://c7t38jnrj1hix" path="res://sprites/dragoon/dragoon walk.png" id="8_h6wp4"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_uy17x"]
@@ -137,20 +137,16 @@ atlas = ExtResource("5_hsps0")
 region = Rect2(486, 0, 233, 309)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_maw6h"]
-atlas = ExtResource("7_pv6na")
-region = Rect2(0, 313, 286, 313)
+atlas = ExtResource("6_av3sa")
+region = Rect2(78, 0, 162, 249)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_eobgx"]
-atlas = ExtResource("7_pv6na")
-region = Rect2(286, 313, 286, 313)
+atlas = ExtResource("6_av3sa")
+region = Rect2(316, 0, 162, 249)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_l40hd"]
-atlas = ExtResource("7_pv6na")
-region = Rect2(572, 313, 286, 313)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_pnanm"]
-atlas = ExtResource("7_pv6na")
-region = Rect2(858, 313, 286, 313)
+atlas = ExtResource("6_av3sa")
+region = Rect2(554, 0, 162, 249)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_av3sa"]
 atlas = ExtResource("8_h6wp4")
@@ -352,9 +348,6 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_l40hd")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_pnanm")
 }],
 "loop": true,
 "name": &"idle",
@@ -394,12 +387,12 @@ script = ExtResource("1_w1b11")
 unit_data = ExtResource("2_8tl0x")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1298568116]
-position = Vector2(-20, -37)
-scale = Vector2(0.5914415, 0.5733459)
+position = Vector2(-1, -11.999998)
+scale = Vector2(0.52440363, 0.45257345)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"walk"
+animation = &"idle"
 autoplay = "idle"
-frame_progress = 0.82936484
+frame_progress = 0.07344945
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0

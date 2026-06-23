@@ -302,11 +302,12 @@ unit_data = ExtResource("2_ws1ep")
 is_spellsword = true
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1298568116]
-position = Vector2(1, -28)
-scale = Vector2(0.6550189, 0.69850576)
+position = Vector2(1.9999995, -9.000001)
+scale = Vector2(0.6224491, 0.6016362)
 sprite_frames = SubResource("SpriteFrames_grxbi")
 animation = &"arcana_charge"
 autoplay = "idle"
+frame_progress = 0.11683598
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0
