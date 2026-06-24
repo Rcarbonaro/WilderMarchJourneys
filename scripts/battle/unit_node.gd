@@ -1182,10 +1182,18 @@ func update_visuals() -> void:
 		sprite.modulate.a = 1.0   # Fully opaque otherwise.
 
 
+var _is_debugging_status := false
+
 func _debug_print_status_applied(status_data: StatusEffectData, stacks: int) -> void:
+	if _is_debugging_status:
+		return
+	_is_debugging_status = true
+
 	print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	print("📊 STATUS APPLIED: '", status_data.display_name, "' × ", stacks,
 		  " → ", unit_data.display_name)
 	print("   ATK:  base=", get_stats().atk,  "  effective=", get_effective_atk())
 	print("   DEF:  base=", get_stats().def,  "  effective=", get_effective_def())
 	print("   MOV:  base=", get_stats().mov,  "  effective=", get_effective_mov())
+
+	_is_debugging_status = false
