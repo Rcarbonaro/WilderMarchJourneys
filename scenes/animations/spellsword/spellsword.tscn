@@ -10,6 +10,7 @@
 [ext_resource type="Texture2D" uid="uid://buy5nf322k2vx" path="res://sprites/spellsword/spellsword charging.png" id="6_ws1ep"]
 [ext_resource type="Texture2D" uid="uid://cg1x24cm7auvs" path="res://sprites/spellsword/spellblade idle (2).png" id="8_htb4k"]
 [ext_resource type="Texture2D" uid="uid://mo5qj7ssvoub" path="res://sprites/spellsword/spellsword walk.png" id="9_0fpv8"]
+[ext_resource type="Texture2D" uid="uid://cvolf1t8hs51g" path="res://sprites/spellsword/spellsword2_fireattack.png" id="10_qcdl2"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_htb4k"]
 atlas = ExtResource("6_ws1ep")
@@ -110,6 +111,42 @@ region = Rect2(704, 192, 352, 192)
 [sub_resource type="AtlasTexture" id="AtlasTexture_u6ayx"]
 atlas = ExtResource("8_htb4k")
 region = Rect2(704, 0, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fsdg3"]
+atlas = ExtResource("10_qcdl2")
+region = Rect2(261, 0, 261, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jw50t"]
+atlas = ExtResource("10_qcdl2")
+region = Rect2(522, 0, 261, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_02ehi"]
+atlas = ExtResource("10_qcdl2")
+region = Rect2(0, 256, 261, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fb3ky"]
+atlas = ExtResource("10_qcdl2")
+region = Rect2(0, 512, 261, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tin1i"]
+atlas = ExtResource("10_qcdl2")
+region = Rect2(0, 768, 261, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hbxov"]
+atlas = ExtResource("10_qcdl2")
+region = Rect2(261, 512, 261, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mhuf5"]
+atlas = ExtResource("10_qcdl2")
+region = Rect2(522, 512, 261, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pjsiy"]
+atlas = ExtResource("10_qcdl2")
+region = Rect2(783, 0, 261, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6syk4"]
+atlas = ExtResource("10_qcdl2")
+region = Rect2(0, 0, 261, 256)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_5qmvu"]
 atlas = ExtResource("9_0fpv8")
@@ -269,6 +306,38 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_fsdg3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jw50t")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_02ehi")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fb3ky")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tin1i")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hbxov")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mhuf5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pjsiy")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6syk4")
+}],
+"loop": true,
+"name": &"new_animation",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_5qmvu")
 }, {
 "duration": 1.0,
@@ -305,9 +374,9 @@ is_spellsword = true
 position = Vector2(1.9999995, -9.000001)
 scale = Vector2(0.6224491, 0.6016362)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"arcana_charge"
+animation = &"new_animation"
 autoplay = "idle"
-frame_progress = 0.11683598
+frame_progress = 0.56193036
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0

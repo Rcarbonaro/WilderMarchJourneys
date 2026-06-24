@@ -447,7 +447,16 @@ func heal(amount: int) -> void:
 	_update_hp_label()
 
 
+var is_dying: bool = false
+
 func die() -> void:
+	if is_dying: return # Prevent double-death logic
+	is_dying = true     # <--- SET IMMEDIATELY
+	
+	if not is_inside_tree():
+		queue_free()
+		return
+		
 	if not is_inside_tree():
 		queue_free()
 		return
@@ -721,7 +730,6 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster 
 			s["remaining_rounds"] = status_data.duration_rounds
 			# Refresh the source caster too — re-taunting updates who to attack.
 			s["source_caster"] = source_caster
-			_debug_print_status_applied(status_data, s["stacks"])
 			return
 
 	# Brand new status — add it to the list.
@@ -732,7 +740,6 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster 
 		"source_caster":    source_caster,
 		"visual_phase":     "none",
 	})
-	_debug_print_status_applied(status_data, stacks)
 	update_visuals()
 	var is_buff := (status_data.atk_modifier > 0 or status_data.def_modifier > 0 or
 						status_data.matk_modifier > 0 or status_data.mdef_modifier > 0 or
@@ -1180,20 +1187,3 @@ func update_visuals() -> void:
 		sprite.modulate.a = 0.5   # 50% transparent when invisible.
 	else:
 		sprite.modulate.a = 1.0   # Fully opaque otherwise.
-
-
-var _is_debugging_status := false
-
-func _debug_print_status_applied(status_data: StatusEffectData, stacks: int) -> void:
-	if _is_debugging_status:
-		return
-	_is_debugging_status = true
-
-	print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	print("📊 STATUS APPLIED: '", status_data.display_name, "' × ", stacks,
-		  " → ", unit_data.display_name)
-	print("   ATK:  base=", get_stats().atk,  "  effective=", get_effective_atk())
-	print("   DEF:  base=", get_stats().def,  "  effective=", get_effective_def())
-	print("   MOV:  base=", get_stats().mov,  "  effective=", get_effective_mov())
-
-	_is_debugging_status = false
