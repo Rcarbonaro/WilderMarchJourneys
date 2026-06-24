@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://8rie2sjr5kxl"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_riw7g"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_egntn"]
+
+[resource]
+script = ExtResource("2_egntn")
+id = "hulkingsporelingbasic"
+display_name = "Basic Attack"
+base_damage_multiplier = 0.25
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="AuraData" format=3 uid="uid://dnyi5e3pb0tu6"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_tuibg"]
+[ext_resource type="Resource" uid="uid://cb6mxpdiy8s3j" path="res://resources/status_effects/hulkingsporelingaura.tres" id="2_0hg7q"]
+[ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="2_jhihc"]
+[ext_resource type="PackedScene" uid="uid://b1by4qink4war" path="res://scenes/animations/hulkingsporeling/hulkingsporeling_aura.tscn" id="3_jr27y"]
+
+[resource]
+script = ExtResource("2_jhihc")
+id = "hulkingsporelingaura"
+display_name = "Sporeling Aura"
+description = "Reduces unit's attack. Stacks 3 times."
+duration_rounds = 20
+is_permanent = true
+flat_damage = 0
+applies_statuses = Array[ExtResource("1_tuibg")]([ExtResource("2_0hg7q")])
+aura_color = Color(0.46740407, 0.0028181518, 0.934231, 0.2509804)
+aura_scene = ExtResource("3_jr27y")
+metadata/_custom_type_script = "uid://dlthrdiu5tc4w"

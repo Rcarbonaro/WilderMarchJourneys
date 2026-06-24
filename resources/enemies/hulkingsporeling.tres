@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://3ks8i3ejbjo2"]
+
+[ext_resource type="Resource" uid="uid://c03k8fyrsul51" path="res://resources/stats/hulkingsporeling.tres" id="1_gsv6k"]
+[ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="1_lpqtv"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_rdlt6"]
+[ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_gsv6k"]
+[ext_resource type="Resource" uid="uid://8rie2sjr5kxl" path="res://resources/abilities/hulkingsporelingbasic.tres" id="4_emfon"]
+
+[resource]
+script = ExtResource("1_lpqtv")
+id = "hulkingsporeling"
+display_name = "Hulking Sporeling"
+description = "A massive sporeling corrupted by unknown magic. It reduces atk and matk of nearby units."
+stats_by_level = Array[ExtResource("3_gsv6k")]([ExtResource("1_gsv6k")])
+base_stats = ExtResource("1_gsv6k")
+starting_abilities = Array[ExtResource("2_rdlt6")]([ExtResource("4_emfon")])
+metadata/_custom_type_script = "uid://utmj7y8m802a"

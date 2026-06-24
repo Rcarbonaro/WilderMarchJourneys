@@ -1,0 +1,61 @@
+[gd_scene format=3 uid="uid://b1by4qink4war"]
+
+[ext_resource type="Texture2D" uid="uid://c5ipxem2plkxv" path="res://sprites/corrupted sporeling/corruptedsporeling_aura.png" id="1_rl7o2"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6ybrs"]
+atlas = ExtResource("1_rl7o2")
+region = Rect2(0, 256, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4dp58"]
+atlas = ExtResource("1_rl7o2")
+region = Rect2(256, 256, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fwtrj"]
+atlas = ExtResource("1_rl7o2")
+region = Rect2(512, 256, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sckp8"]
+atlas = ExtResource("1_rl7o2")
+region = Rect2(768, 256, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_31kr7"]
+atlas = ExtResource("1_rl7o2")
+region = Rect2(0, 512, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mn281"]
+atlas = ExtResource("1_rl7o2")
+region = Rect2(256, 512, 256, 256)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_2y8su"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6ybrs")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4dp58")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fwtrj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sckp8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_31kr7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mn281")
+}],
+"loop": true,
+"name": &"default",
+"speed": 6.0
+}]
+
+[node name="HulkingsporelingAura" type="Node2D" unique_id=564293387]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1381526778]
+position = Vector2(1, -1)
+scale = Vector2(0.484375, 0.52734375)
+sprite_frames = SubResource("SpriteFrames_2y8su")
+frame_progress = 0.1684
