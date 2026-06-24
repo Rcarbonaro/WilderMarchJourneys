@@ -22,6 +22,10 @@
 #   - Aura activation: abilities marked is_aura activate an AuraData zone
 #   - Crit Overload: notifies AuraManager when a crit lands inside an aura
 #   - Momentum: notifies AuraManager when a kill happens inside an aura
+#   - Cluster-push fix: multi-target push/pull/scatter abilities now resolve
+#     ALL of their targets' movement together, in an order that won't leave
+#     a unit stuck behind a teammate who's also being pushed in the same
+#     cast — see _resolve_pending_displacements for the full explanation.
 
 extends Node
 
@@ -155,6 +159,12 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 	# have already hit so a 2×2 unit doesn't take damage 4 times from one AOE.
 	var already_hit: Array = []   # Filled with UnitNode references.
 
+	# Collected during the loop below, then resolved all at once AFTER the
+	# loop finishes (see _resolve_pending_displacements) — this is what fixes
+	# multi-target pushes/pulls/scatters on a cluster of enemies: we need to
+	# know about EVERY target before deciding the safe order to move them in.
+	var pending_displacements: Array = []   # [{ "target": UnitNode }, ...]
+
 	# If the caster was invisible, attacking reveals them.
 	if caster.has_status("invisible"):
 		caster.remove_status("invisible")
@@ -222,28 +232,12 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 			grid_ref.add_hazard(cell, ability.spawns_hazard, caster)
 
 		# ── DISPLACEMENT / KNOCKBACK / SCATTER ────────────────────────────────
-		# Moves the target unit away from, toward, or away from the AOE centre.
+		# Don't move the target yet — just remember that they need to be
+		# displaced. We resolve ALL of this cast's displacements together,
+		# right after this loop, in an order that won't get units stuck
+		# behind each other (see _resolve_pending_displacements for why).
 		if ability.displacement_squares != 0 and target != null:
-			match ability.displacement_type:
-				"manual":
-					_displace_unit_manual(
-						target,
-						ability.displacement_squares,
-						ability.displacement_manual_dir
-					)
-				"auto":
-					_displace_unit_auto(
-						caster,
-						target,
-						ability.displacement_squares
-					)
-				"scatter":
-					_displace_unit_scatter(
-						ability,
-						target,
-						ability.displacement_squares,
-						target_cells
-					)
+			pending_displacements.append({"target": target})
 
 		# ── HEALING ───────────────────────────────────────────────────────────
 		# Restores a percentage of the target's max HP (or the caster's if no target).
@@ -251,6 +245,12 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 			var heal_target = target if target != null else caster
 			var max_hp      = heal_target.get_stats().hp
 			heal_target.heal(int(max_hp * ability.heal_percent))
+
+	# ── STEP 3.3: RESOLVE DISPLACEMENT (PUSH/PULL/SCATTER) ────────────────────
+	# Now that every target this cast hit is known, actually move them — in
+	# an order that won't leave anyone stuck behind a teammate who's also
+	# about to move. See _resolve_pending_displacements for the full story.
+	_resolve_pending_displacements(caster, ability, pending_displacements, target_cells)
 
 	# ── STEP 3.4: SELF-STATUS APPLICATION ─────────────────────────────────────
 	# Applies any statuses in applies_statuses_to_self to the CASTER, once per
@@ -661,6 +661,30 @@ func _spawn_dash_trail(from_world: Vector2, to_world: Vector2,
 
 # ── DISPLACEMENT HELPERS ──────────────────────────────────────────────────────
 
+func _to_grid_direction(raw: Vector2i) -> Vector2i:
+	# Converts an arbitrary offset into one of the 8 grid directions (each
+	# component snapped to -1, 0, or +1) — i.e. "which way is this roughly
+	# pointing, snapped to the grid". Shared by all three displacement types
+	# (auto/scatter/manual) so they all snap directions identically, and also
+	# used by _resolve_pending_displacements() below to figure out who's at
+	# the "front of the line" for a manual-direction push.
+	if raw == Vector2i.ZERO:
+		return Vector2i.ZERO
+
+	var dir_f: Vector2 = Vector2(raw.x, raw.y).normalized()
+	var snapped: Vector2i = Vector2i(int(round(dir_f.x)), int(round(dir_f.y)))
+
+	if snapped == Vector2i.ZERO:
+		# A near-diagonal offset that rounded to zero on both axes — fall
+		# back to whichever axis has the larger magnitude.
+		if abs(raw.x) > abs(raw.y):
+			snapped = Vector2i(sign(raw.x), 0)
+		else:
+			snapped = Vector2i(0, sign(raw.y))
+
+	return snapped
+
+
 func _displace_unit_auto(caster, target, squares: int) -> void:
 	# Pushes (positive) or pulls (negative) the target relative to the caster.
 	var direction: Vector2i = target.grid_position - caster.grid_position
@@ -671,15 +695,7 @@ func _displace_unit_auto(caster, target, squares: int) -> void:
 	# produces a diagonal move_dir (e.g. (1,1)) whenever the target isn't
 	# perfectly aligned on a single axis with the caster — which is exactly
 	# what we want for a "pull to nearest adjacent tile" ability.
-	var dir_f: Vector2 = Vector2(direction.x, direction.y).normalized()
-	var move_dir: Vector2i = Vector2i(int(round(dir_f.x)), int(round(dir_f.y)))
-
-	if move_dir == Vector2i(0, 0):
-		if abs(direction.x) > abs(direction.y):
-			move_dir = Vector2i(sign(direction.x), 0)
-		else:
-			move_dir = Vector2i(0, sign(direction.y))
-
+	var move_dir: Vector2i = _to_grid_direction(direction)
 	move_dir *= sign(squares)
 
 	var steps: int = abs(squares)
@@ -733,14 +749,7 @@ func _displace_unit_scatter(ability: AbilityData, target, squares: int,
 	if direction == Vector2i(0, 0):
 		return
 
-	var dir_f: Vector2 = Vector2(direction.x, direction.y).normalized()
-	var move_dir: Vector2i = Vector2i(int(round(dir_f.x)), int(round(dir_f.y)))
-
-	if move_dir == Vector2i(0, 0):
-		if abs(direction.x) > abs(direction.y):
-			move_dir = Vector2i(sign(direction.x), 0)
-		else:
-			move_dir = Vector2i(0, sign(direction.y))
+	var move_dir: Vector2i = _to_grid_direction(direction)
 
 	var steps: int = squares
 	var current: Vector2i = target.grid_position
@@ -760,15 +769,7 @@ func _displace_unit_manual(target, squares: int, fixed_dir: Vector2i) -> void:
 	if fixed_dir == Vector2i(0, 0):
 		return
 
-	var dir_f: Vector2 = Vector2(fixed_dir.x, fixed_dir.y).normalized()
-	var move_dir: Vector2i = Vector2i(int(round(dir_f.x)), int(round(dir_f.y)))
-
-	if move_dir == Vector2i(0, 0):
-		if abs(fixed_dir.x) >= abs(fixed_dir.y):
-			move_dir = Vector2i(sign(fixed_dir.x), 0)
-		else:
-			move_dir = Vector2i(0, sign(fixed_dir.y))
-
+	var move_dir: Vector2i = _to_grid_direction(fixed_dir)
 	move_dir *= sign(squares)
 
 	var steps: int = abs(squares)
@@ -783,7 +784,106 @@ func _displace_unit_manual(target, squares: int, fixed_dir: Vector2i) -> void:
 	if current != target.grid_position:
 		target.move_to(current)
 
-# ── PROJECTILE VFX ────────────────────────────────────────────────────────────
+
+func _resolve_pending_displacements(caster, ability: AbilityData, pending: Array,
+									  target_cells: Array) -> void:
+	# THE CLUSTER-PUSH FIX.
+	#
+	# THE BUG: displacement used to happen immediately while looping over
+	# target_cells, one target at a time, in whatever order target_cells
+	# happened to list them — NOT necessarily front-to-back along the push
+	# direction. If a push lines up several enemies in a row, whichever one
+	# happened to be checked first tried to step onto the tile the unit "in
+	# front" of it was still standing on. That occupied tile reads exactly
+	# like a wall to is_passable_for(), so the push got blocked and that unit
+	# never moved at all — even though the unit blocking it was ALSO about to
+	# move out of the way moments later in the very same cast.
+	#
+	# THE FIX: don't displace anyone the instant they're found. Instead,
+	# collect every target hit by this cast first (done by the caller, in the
+	# main target_cells loop), and only once they're ALL known, sort them so
+	# whoever is at the very FRONT of their push line — i.e. has open space
+	# ahead and nothing of ours still in the way — gets displaced FIRST. That
+	# opens up the tile behind them before we ever try to move the unit that
+	# was "stuck" behind them. Each individual displacement call still does
+	# its own live grid_ref.is_passable_for() check, completely unchanged —
+	# this fix doesn't relax any collision rule, it just makes sure we check
+	# those tiles in an order where "the way is clear" actually gets a real
+	# chance to be true.
+	#
+	# NOTE: this resolves the common case — multiple targets pushed along the
+	# same or similar lines (the cluster scenario described). It does NOT run
+	# a full physics simulation of units crossing paths in unrelated
+	# directions; two targets converging on the same tile from very different
+	# angles could still rarely contest one tile, same as before.
+	if pending.is_empty():
+		return
+
+	# "auto" needs a living caster to compute push/pull direction from.
+	# "manual" and "scatter" don't depend on the caster at all, so they can
+	# still resolve normally even if the caster died mid-cast (e.g. killed by
+	# a Thorns reflect off one of the targets earlier in this same loop).
+	if ability.displacement_type == "auto" and not is_instance_valid(caster):
+		return
+
+	# Large units can occupy multiple target_cells — only displace each
+	# unique unit once per cast, exactly like the damage loop's dedup.
+	var unique_targets: Array = []
+	for entry in pending:
+		if not entry["target"] in unique_targets:
+			unique_targets.append(entry["target"])
+
+	match ability.displacement_type:
+		"manual":
+			# Push direction is the SAME for every target, so "front of the
+			# line" just means "furthest along that direction already" —
+			# they go first so the ones behind have somewhere to slide into.
+			var move_dir: Vector2i = _to_grid_direction(ability.displacement_manual_dir)
+			unique_targets.sort_custom(func(a, b):
+				var proj_a = a.grid_position.x * move_dir.x + a.grid_position.y * move_dir.y
+				var proj_b = b.grid_position.x * move_dir.x + b.grid_position.y * move_dir.y
+				return proj_a > proj_b   # Furthest along move_dir goes first.
+			)
+			for target in unique_targets:
+				_displace_unit_manual(target, ability.displacement_squares,
+									   ability.displacement_manual_dir)
+
+		"auto":
+			# Direction is computed per-target, radially away from (or toward,
+			# for a pull) the caster. Along any shared line, whoever is
+			# FARTHEST from the caster is at the front and goes first.
+			unique_targets.sort_custom(func(a, b):
+				var diff_a: Vector2i = a.grid_position - caster.grid_position
+				var diff_b: Vector2i = b.grid_position - caster.grid_position
+				var dist_a: int = diff_a.x * diff_a.x + diff_a.y * diff_a.y
+				var dist_b: int = diff_b.x * diff_b.x + diff_b.y * diff_b.y
+				return dist_a > dist_b   # Farthest from caster goes first.
+			)
+			for target in unique_targets:
+				_displace_unit_auto(caster, target, ability.displacement_squares)
+
+		"scatter":
+			# Direction is radially away from the AOE's centre. Whoever is
+			# farthest from that centre is at the front of their own line.
+			var sum_x: int = 0
+			var sum_y: int = 0
+			for cell in target_cells:
+				sum_x += cell.x
+				sum_y += cell.y
+			var center_x: float = sum_x / float(target_cells.size())
+			var center_y: float = sum_y / float(target_cells.size())
+			unique_targets.sort_custom(func(a, b):
+				var dx_a: float = a.grid_position.x - center_x
+				var dy_a: float = a.grid_position.y - center_y
+				var dx_b: float = b.grid_position.x - center_x
+				var dy_b: float = b.grid_position.y - center_y
+				var dist_a: float = dx_a * dx_a + dy_a * dy_a
+				var dist_b: float = dx_b * dx_b + dy_b * dy_b
+				return dist_a > dist_b   # Farthest from centre goes first.
+			)
+			for target in unique_targets:
+				_displace_unit_scatter(ability, target, ability.displacement_squares,
+										target_cells)
 
 func _launch_projectile(caster, ability: AbilityData, target_cell: Vector2i) -> void:
 	# Spawns a projectile that travels from the caster to the target cell.

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://11jpnqjwrrto"]
+
+[ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="1_6jv45"]
+[ext_resource type="Resource" uid="uid://ck2x1evme613q" path="res://resources/stats/sporeling_data.tres" id="1_36sv8"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_yd83b"]
+[ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_36sv8"]
+[ext_resource type="Resource" uid="uid://ddi4fgvxy6c56" path="res://resources/abilities/sporeling_basic.tres" id="4_brdrg"]
+
+[resource]
+script = ExtResource("1_6jv45")
+id = "sporeling"
+display_name = "Sporeling"
+stats_by_level = Array[ExtResource("3_36sv8")]([ExtResource("1_36sv8")])
+base_stats = ExtResource("1_36sv8")
+starting_abilities = Array[ExtResource("2_yd83b")]([ExtResource("4_brdrg")])
+metadata/_custom_type_script = "uid://utmj7y8m802a"

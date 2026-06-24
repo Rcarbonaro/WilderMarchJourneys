@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://ddi4fgvxy6c56"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_jb3bw"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_qs2yi"]
+
+[resource]
+script = ExtResource("2_qs2yi")
+id = "sporelingbasic"
+display_name = "Basic Attack"
+aoe_shape = "square"
+aoe_size = 2
+damage_type = "magical"
+scaling_stat = "matk"
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

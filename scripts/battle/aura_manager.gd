@@ -13,6 +13,11 @@
 #
 # BattleManager tells it WHEN to tick and when a kill/crit happened.
 # It figures out WHO is affected by reading grid_ref for unit positions.
+#
+# NEW: begin_caster_move() now accepts an explicit duration, so it can be
+# called once per tile during a unit's step-by-step walk (move_along_path()
+# in unit_node.gd) and still stay perfectly synced with the unit's sprite,
+# instead of always assuming one fixed-length slide for the whole move.
 # ==============================================================================
 
 extends Node
@@ -32,9 +37,11 @@ const VISUAL_FADE_DURATION: float = 0.4
 # How many seconds the aura visual takes to fade in or out.
 
 const VISUAL_MOVE_DURATION: float = 1.5
-# How many seconds the aura visuals take to slide to a new position when the
-# caster moves. Must match the default move_speed in unit_node.gd (also 1.5)
-# so the overlay stays perfectly in sync with the unit sprite underneath.
+# FALLBACK ONLY. begin_caster_move() below now always receives its actual
+# duration explicitly from unit_node.gd (move_speed for an old-style single
+# shove, or move_speed_per_tile for each step of a normal walk), so the two
+# stay in sync automatically. This constant only matters if begin_caster_move
+# is ever called without that argument.
 
 # ── LIVE AURA REGISTRY ────────────────────────────────────────────────────────
 # Each entry in this array is a Dictionary describing one live aura instance.
@@ -226,10 +233,20 @@ func on_enemy_unit_moved(unit) -> void:
 		_apply_statuses_to(unit, data)
 
 
-func begin_caster_move(caster, new_cell: Vector2i) -> void:
-	# Called by unit_node.move_to() BEFORE the slide tween starts.
-	# Fires the aura visual tween at the exact same moment as the unit tween,
-	# so the overlay moves in perfect lockstep with the sprite underneath.
+func begin_caster_move(caster, new_cell: Vector2i, duration: float = VISUAL_MOVE_DURATION) -> void:
+	# Called by unit_node.gd right BEFORE a slide tween starts — either once
+	# from the old single-shot move_to() (knockback/pull/scatter effects), or
+	# ONCE PER TILE from move_along_path() (normal turn movement). Either way,
+	# this fires the aura visual's tween at the exact same moment the unit's
+	# own tween starts, with the EXACT SAME duration, so the overlay moves in
+	# perfect lockstep with the sprite underneath — one tile-step at a time
+	# when walking normally, in step with each chunk of a forced shove.
+	#
+	# 'duration' defaults to the old fixed VISUAL_MOVE_DURATION for backwards
+	# compatibility with any caller that doesn't pass one explicitly, but
+	# unit_node.gd always passes its own move_speed / move_speed_per_tile
+	# value now so the two stay perfectly synced even though move_along_path()
+	# calls this many times in a row at a faster per-tile pace.
 	#
 	# Cell coverage and ally entry-buff logic are handled AFTER movement finishes
 	# in on_caster_moved() — this function is purely visual.
@@ -259,7 +276,7 @@ func begin_caster_move(caster, new_cell: Vector2i) -> void:
 						var tween = visual.create_tween()
 						tween.set_trans(Tween.TRANS_CUBIC)
 						tween.set_ease(Tween.EASE_OUT)
-						tween.tween_property(visual, "position", target_pos, VISUAL_MOVE_DURATION)
+						tween.tween_property(visual, "position", target_pos, duration)
 				# If cell count changed (map boundary edge case), do nothing here —
 				# _rebuild_visuals in on_caster_moved will handle it after arrival.
 
@@ -271,7 +288,7 @@ func begin_caster_move(caster, new_cell: Vector2i) -> void:
 					var tween = visual.create_tween()
 					tween.set_trans(Tween.TRANS_CUBIC)
 					tween.set_ease(Tween.EASE_OUT)
-					tween.tween_property(visual, "position", new_anchor_world, VISUAL_MOVE_DURATION)
+					tween.tween_property(visual, "position", new_anchor_world, duration)
 
 
 func on_caster_moved(caster) -> void:

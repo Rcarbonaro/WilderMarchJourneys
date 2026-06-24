@@ -1,0 +1,33 @@
+[gd_scene format=3 uid="uid://jvx5h73spew"]
+
+[ext_resource type="Texture2D" uid="uid://dymm4fnkt4fib" path="res://sprites/plaguebringer/plaguebringer_cloud.png" id="1_ws70o"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_e83ei"]
+atlas = ExtResource("1_ws70o")
+region = Rect2(666, 59, 222, 218)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f2wrg"]
+atlas = ExtResource("1_ws70o")
+region = Rect2(666, 322, 222, 218)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ys7mk"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_e83ei")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_f2wrg")
+}],
+"loop": true,
+"name": &"default",
+"speed": 9.0
+}]
+
+[node name="Poisoncloud" type="Node2D" unique_id=454031226]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1480068524]
+position = Vector2(0.9999962, 2)
+scale = Vector2(0.45945945, 0.44036698)
+sprite_frames = SubResource("SpriteFrames_ys7mk")
+frame_progress = 0.014063437

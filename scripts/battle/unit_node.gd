@@ -13,6 +13,16 @@
 #   - momentum_bonuses dictionary for Momentum aura stat tracking
 #   - get_effective_crit_damage() so Momentum crit bonuses apply
 #   - die() notifies AuraManager to strip bonuses and remove caster's auras
+#   - move_along_path(): walks the unit through a whole list of tiles, one at
+#     a time, with a smooth animation for each step — instead of move_to()'s
+#     single straight-line slide from A to B. This is what's used for normal
+#     turn movement now (tapping a destination, AI movement), so units
+#     actually walk AROUND obstacles tile-by-tile, and hazards (including
+#     "damaging wall" hazards that don't block movement) correctly hurt them
+#     as they cross each tile, not only if they land on the very last one.
+#     move_to() itself is unchanged and still used for instant forced
+#     shoves (knockback, pull, scatter), which should still feel like one
+#     continuous push rather than a tile-by-tile walk.
 
 extends Node2D
 
@@ -23,7 +33,18 @@ extends Node2D
 # abilities. Drag it in from the Inspector when placing the unit in the scene.
 
 @export var move_speed: float = 1.5
-# How many seconds the sliding movement animation takes per move.
+# How many seconds move_to()'s sliding animation takes for the ENTIRE move,
+# no matter how many tiles away the destination is. Used ONLY by move_to() —
+# i.e. instant forced shoves like knockback, pull, and scatter, which are
+# meant to feel like one continuous push, not a tile-by-tile walk.
+
+@export var move_speed_per_tile: float = 0.35
+# How many seconds move_along_path() spends animating EACH individual tile
+# step during normal turn movement (tap-to-move, post-attack moves, and AI
+# movement). A 4-tile walk takes roughly 4x as long as a 1-tile walk, instead
+# of always taking the same fixed amount of time no matter the distance.
+# Tune this to taste — lower = snappier/faster walking, higher = slower and
+# more deliberate.
 
 @export var faces_right_by_default: bool = true
 # CHECK for player/ally units (they face right toward the enemy side).
@@ -125,7 +146,9 @@ signal unit_died(unit)
 # Emitted when HP reaches 0. BattleManager listens to update team lists.
 
 signal movement_finished
-# Emitted when the slide tween completes. BattleManager awaits this.
+# Emitted once when movement fully completes — either move_to()'s single
+# slide, or move_along_path()'s full walk through every tile in its path.
+# BattleManager/AISystem await this exactly the same way either way.
 
 # ── LIFECYCLE ─────────────────────────────────────────────────────────────────
 
@@ -497,8 +520,18 @@ func _finish_death() -> void:
 # ── MOVEMENT ──────────────────────────────────────────────────────────────────
 
 func move_to(new_cell: Vector2i) -> void:
-	# Moves the unit to a new anchor cell, updating the grid registry and sliding
-	# the visual position smoothly with a Tween.
+	# Moves the unit DIRECTLY to a new anchor cell in one continuous slide,
+	# updating the grid registry and animating the visual position smoothly
+	# with a single Tween over move_speed seconds, no matter how far away
+	# new_cell is. This is the right tool for instant forced shoves — knockback,
+	# pull, and scatter (see ability_executor.gd) — which should feel like one
+	# continuous push, not a tile-by-tile walk.
+	#
+	# For NORMAL turn movement (tapping a destination tile, or AI movement),
+	# use move_along_path() below instead — it walks the unit through every
+	# tile of the actual route one at a time, which looks right when routing
+	# around obstacles and correctly triggers hazards on every tile crossed,
+	# not just the final one.
 	if grid_ref == null:
 		return
 
@@ -526,10 +559,11 @@ func move_to(new_cell: Vector2i) -> void:
 	var target_world_pos: Vector2 = grid_ref.grid_to_world(new_cell)
 
 	# ── NOTIFY AURA MANAGER — start visual tween NOW, before our own tween ────
-	# begin_caster_move() starts the aura overlay tween with the same duration
-	# and easing as our tween below, so both slide in perfect lockstep.
+	# begin_caster_move() starts the aura overlay tween with the SAME duration
+	# and easing as our tween below (we pass move_speed explicitly), so both
+	# slide in perfect lockstep.
 	if grid_ref.has_node("AuraManager"):
-		grid_ref.get_node("AuraManager").begin_caster_move(self, new_cell)
+		grid_ref.get_node("AuraManager").begin_caster_move(self, new_cell, move_speed)
 
 	var tween = create_tween()
 	tween.set_trans(Tween.TRANS_CUBIC)
@@ -539,6 +573,95 @@ func move_to(new_cell: Vector2i) -> void:
 		play_animation("idle")
 		movement_finished.emit()
 	)
+
+
+func move_along_path(path: Array) -> void:
+	# NEW: walks the unit smoothly through EVERY tile in 'path', one at a time,
+	# instead of move_to()'s single straight-line slide from start to finish.
+	# This is the normal-movement counterpart to move_to() — use this for
+	# tap-to-move, post-attack movement, and AI movement. 'path' should come
+	# from pathfinding_system.gd's reconstruct_path_to(), which already walks
+	# AROUND obstacles (other units, terrain walls, movement-blocking wall
+	# hazards) rather than cutting straight through them.
+	#
+	# 'path' is an Array of Vector2i, in walking order, NOT including the
+	# unit's current tile — e.g. if standing at (2,2) and walking to (2,5),
+	# path = [(2,3), (2,4), (2,5)].
+	#
+	# Why this matters for hazards: we register the unit onto EACH tile and
+	# fire its "enter" hazard trigger as we genuinely arrive there — so a
+	# "damaging wall" hazard (HazardData.is_wall_hazard = true with
+	# blocks_movement = false) correctly hurts the unit while CROSSING it,
+	# not just if they happen to end their move standing on it. The old
+	# move_to()-based movement only ever checked the single final tile,
+	# which is fine for a forced shove but was never correct for a hazard a
+	# unit is meant to be able to walk straight through.
+	if grid_ref == null or path.is_empty():
+		return
+
+	for step_cell in path:
+		# Bail out cleanly if we were freed mid-walk for some unrelated reason.
+		if not is_instance_valid(self):
+			return
+
+		# ── FACE + ANIMATE TOWARD THIS STEP ────────────────────────────────────
+		_set_facing_for_direction(step_cell)
+		var dy = step_cell.y - grid_position.y
+		if dy < 0:
+			play_animation("walk_up")
+		else:
+			play_animation("walk")
+
+		# ── UPDATE GRID REGISTRATION FOR THIS STEP ─────────────────────────────
+		# Done BEFORE the visual tween (same order as move_to()) so anything
+		# that looks up unit_positions mid-step sees the unit at its new tile.
+		if tile_footprint.size() > 1:
+			grid_ref.unregister_large_unit(self)
+			grid_position = step_cell
+			_update_occupied_cells()
+			grid_ref.register_large_unit(self, occupied_cells)
+		else:
+			grid_ref.unregister_unit(grid_position)
+			grid_position = step_cell
+			_update_occupied_cells()
+			grid_ref.register_unit(self, step_cell)
+
+		var step_world_pos: Vector2 = grid_ref.grid_to_world(step_cell)
+
+		# Keep any aura this unit owns sliding in lockstep, one tile at a time,
+		# using the SAME per-tile duration as the body sprite below.
+		if grid_ref.has_node("AuraManager"):
+			grid_ref.get_node("AuraManager").begin_caster_move(self, step_cell, move_speed_per_tile)
+
+		# ── SLIDE TO THIS TILE ──────────────────────────────────────────────────
+		# Linear trans/ease keeps consecutive tile-steps flowing into each
+		# other smoothly (no decelerate-then-reaccelerate stutter between
+		# tiles like a cubic ease-out would cause if repeated every step).
+		var tween = create_tween()
+		tween.set_trans(Tween.TRANS_LINEAR)
+		tween.set_ease(Tween.EASE_IN_OUT)
+		tween.tween_property(self, "position", step_world_pos, move_speed_per_tile)
+		await tween.finished
+
+		if not is_instance_valid(self):
+			return
+
+		# ── HAZARD CHECK FOR THIS TILE ───────────────────────────────────────────
+		# Fires the instant we actually arrive on this tile — works for both a
+		# normal hazard tile AND a non-blocking "damaging wall" hazard, since
+		# the unit genuinely stands here now, whether it's an intermediate
+		# step or the final destination.
+		grid_ref.apply_hazard_to_unit(self, step_cell, "enter")
+
+		# If that hazard was lethal, stop walking any further tiles — but we
+		# still fall through to emit movement_finished below so anything
+		# awaiting it (BattleManager, AI, post-move aura sync) doesn't hang.
+		if current_hp <= 0:
+			break
+
+	if is_instance_valid(self) and current_hp > 0:
+		play_animation("idle")
+	movement_finished.emit()
 
 
 func snap_to(new_cell: Vector2i) -> void:
