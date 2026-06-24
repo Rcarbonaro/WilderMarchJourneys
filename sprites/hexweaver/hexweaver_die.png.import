@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://0eka647nwgvu"
-path="res://.godot/imported/hexweaver_attack.png-58b61307abb1546042efb1386c254631.ctex"
+uid="uid://ccutkq6kov4y8"
+path="res://.godot/imported/hexweaver_die.png-fe6495f8ad1d3615cf5de14a0f1384a2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/hexweaver/hexweaver_attack.png"
-dest_files=["res://.godot/imported/hexweaver_attack.png-58b61307abb1546042efb1386c254631.ctex"]
+source_file="res://sprites/hexweaver/hexweaver_die.png"
+dest_files=["res://.godot/imported/hexweaver_die.png-fe6495f8ad1d3615cf5de14a0f1384a2.ctex"]
 
 [params]
 
