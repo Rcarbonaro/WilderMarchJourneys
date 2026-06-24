@@ -2,14 +2,15 @@
 
 [ext_resource type="Script" uid="uid://bv2ltgyye0n4f" path="res://scripts/data/hazard_data.gd" id="1_b6w67"]
 [ext_resource type="Resource" uid="uid://dxft4tccskmnc" path="res://resources/status_effects/poisoncloud.tres" id="1_i1mmx"]
-[ext_resource type="Texture2D" uid="uid://bt1kjmiiu8k0b" path="res://sprites/plaguebringer/poisoncloud.png" id="2_x5pg5"]
+[ext_resource type="PackedScene" uid="uid://jvx5h73spew" path="res://scenes/animations/plaguebringer/poisoncloud.tscn" id="2_i1mmx"]
 
 [resource]
 script = ExtResource("1_b6w67")
 id = "poisoncloud"
 display_name = "Poison Cloud"
-icon = ExtResource("2_x5pg5")
 duration_rounds = 4
+idle_scene = ExtResource("2_i1mmx")
+damage_multiplier = 0.15
 damage_type = "magical"
 applies_status = ExtResource("1_i1mmx")
 blocks_movement = false

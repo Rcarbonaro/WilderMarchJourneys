@@ -11,6 +11,13 @@
 #   After an enemy finishes moving, we notify the AuraManager so that any
 #   player aura the enemy just walked into deals its entry damage and status
 #   effects immediately — instead of waiting until end-of-round.
+#
+# MOVEMENT ADDITION:
+#   Enemies now walk their actual route tile-by-tile (move_along_path()) via
+#   pathfinder.reconstruct_path_to(), instead of sliding straight to the
+#   destination in one shot. This makes them visually route around obstacles
+#   and correctly take damage from any "damaging wall" hazard tiles they
+#   cross along the way, not just the tile they end up standing on.
 
 extends Node
 
@@ -190,19 +197,27 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 				best_move_dist = dist_to_target
 				best_move_cell = cell
 
-	# 5. Execute movement — slide the enemy sprite to the chosen tile.
+	# 5. Execute movement — walk the enemy tile-by-tile to the chosen cell.
 	if best_move_cell != enemy.grid_position:
 		enemy.look_at_target(best_move_cell)
-		enemy.move_to(best_move_cell)
+
+		# Reconstruct the actual walking route from the SAME search we just
+		# ran above (get_reachable_cells), so the enemy visually walks the
+		# real path — routing around any units/walls in the way — instead of
+		# sliding straight through them in one shot.
+		var walk_path: Array = pathfinder.reconstruct_path_to(best_move_cell)
+		enemy.move_along_path(walk_path)
 		await enemy.movement_finished
 
 		# ── ENTRY EFFECTS AFTER ENEMY MOVES ───────────────────────────────────
-		# The enemy may have died during the movement tween (e.g. from a Thorns
-		# or aura tick). Guard every access from here on.
+		# The enemy may have died during the walk (e.g. from a Thorns reflect,
+		# an aura tick, or a "damaging wall" hazard crossed partway through).
+		# Guard every access from here on.
 		if not is_instance_valid(enemy):
 			return
-		# Hazard: "enter" trigger fires for any hazard tile they landed on.
-		grid.apply_hazard_to_unit(enemy, enemy.grid_position, "enter")
+		# NOTE: hazard "enter" triggers for every tile along the path are now
+		# applied AUTOMATICALLY inside move_along_path() as the enemy crosses
+		# each one — no separate call needed here like there used to be.
 		# Aura: fire entry damage/status for any player aura they walked into.
 		if grid.has_node("AuraManager"):
 			grid.get_node("AuraManager").on_enemy_unit_moved(enemy)

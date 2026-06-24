@@ -15,6 +15,13 @@
 #   - Notifies AuraManager when any unit (player or enemy) finishes moving
 #   - Ticks auras at end of player round before the enemy turn starts
 #   - Clears all aura state at the start of each battle
+#
+# MOVEMENT ADDITION:
+#   Both the main tap-to-move flow and post-attack movement now walk the
+#   unit tile-by-tile along its actual route (move_along_path()) instead of
+#   sliding straight to the destination in one shot. The route itself comes
+#   from pathfinder.reconstruct_path_to(), reusing the same search that
+#   already calculated reachable_cells a moment earlier.
 
 extends Node
 
@@ -395,16 +402,24 @@ func on_tile_tapped(cell: Vector2i) -> void:
 			var moving_unit = selected_unit
 			moving_unit.pre_move_position = moving_unit.grid_position
 
+			# Reconstruct the actual tile-by-tile walking route from the unit's
+			# current position to 'cell', using the SAME search that already
+			# produced reachable_cells a moment ago (the pathfinder remembers
+			# it internally — see reconstruct_path_to() in pathfinding_system.gd).
+			var walk_path: Array = pathfinder.reconstruct_path_to(cell)
+
 			highlight.clear_highlights()
 			reachable_cells = {}
 
-			# Apply any enter-tile hazard effect at the destination.
-			grid.apply_hazard_to_unit(moving_unit, cell, "enter")
-
-			moving_unit.move_to(cell)
+			# NOTE: hazard "enter" effects are now applied AUTOMATICALLY by
+			# move_along_path() for EVERY tile the unit actually walks across —
+			# not just the final tile — so a "damaging wall" hazard (a wall
+			# hazard with blocks_movement = false) hurts the unit as they
+			# cross it, not only if they happen to land on it.
+			moving_unit.move_along_path(walk_path)
 			moving_unit.has_moved = true
 
-			# Wait for the slide animation to finish before doing anything else.
+			# Wait for the full walk (every tile) to finish before doing anything else.
 			await moving_unit.movement_finished
 
 			# ── NOTIFY AURA MANAGER AFTER PLAYER UNIT MOVES ───────────────────
@@ -800,7 +815,11 @@ func _try_post_attack_move(cell: Vector2i) -> void:
 
 	if reachable_cells.has(cell):
 		current_phase = TurnPhase.ANIMATION
-		selected_unit.move_to(cell)
+		# Walk tile-by-tile (same as the main move flow) so hazards trigger
+		# correctly on every tile crossed, and movement looks right when
+		# routing around obstacles.
+		var walk_path: Array = pathfinder.reconstruct_path_to(cell)
+		selected_unit.move_along_path(walk_path)
 		await selected_unit.movement_finished
 
 		# Shift the aura with the unit after their post-attack step too.
