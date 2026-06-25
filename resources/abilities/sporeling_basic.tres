@@ -7,6 +7,7 @@
 script = ExtResource("2_qs2yi")
 id = "sporelingbasic"
 display_name = "Basic Attack"
+description = "Sporeling unleashes a cloud of toxic spores, dealing magic damage in an area."
 aoe_shape = "square"
 aoe_size = 2
 damage_type = "magical"

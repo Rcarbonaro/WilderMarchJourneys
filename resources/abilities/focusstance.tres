@@ -8,8 +8,8 @@
 script = ExtResource("2_i2ntf")
 id = "focusstance"
 display_name = "Focus Stance"
-description = "Enter a deep focus, increasing critical hit chance, but reducing movement."
-cooldown_rounds = 5
+description = "Enter a deep focus, increasing critical hit chance, but reducing movement. Lasts 4 turns. Cooldown: 4"
+cooldown_rounds = 4
 max_range = 0
 affects_team = "allies"
 base_damage_multiplier = 0.0

@@ -8,6 +8,7 @@
 script = ExtResource("2_4lcoe")
 id = "sharpshooter"
 display_name = "Sharpshooter"
+description = "A long-ranged physical attack."
 min_range = 2
 max_range = 5
 applies_statuses = Array[ExtResource("1_x6qek")]([ExtResource("2_65yb4")])

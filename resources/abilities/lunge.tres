@@ -8,9 +8,11 @@
 script = ExtResource("2_pfl7k")
 id = "lunge"
 display_name = "Lunge"
+description = "A line attack dealing damage in a single line, the caster ending its turn at the end of the line. Cooldown: 2"
 cooldown_rounds = 2
 max_range = 4
-aoe_size = 6
+aoe_shape = "line"
+aoe_size = 5
 applies_statuses = Array[ExtResource("1_ui481")]([ExtResource("2_po7l4")])
 is_dash = true
 bonus_damage_isolated = 0.334

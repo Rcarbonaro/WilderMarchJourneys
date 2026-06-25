@@ -8,6 +8,7 @@
 script = ExtResource("2_leck8")
 id = "necroticaura"
 display_name = "Necrotic Aura"
+description = "Activate a permanent aura that deals damage to all enemies within the radius. Using another aura will end this aura."
 max_range = 0
 base_damage_multiplier = 0.0
 damage_type = "magical"

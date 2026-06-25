@@ -9,6 +9,7 @@
 script = ExtResource("2_1auvo")
 id = "hexweaverbasic"
 display_name = "Basic Attack"
+description = "A ranged magic attack that reduces enemy ATK for 1 turn."
 icon = ExtResource("3_yi5be")
 max_range = 4
 applies_statuses = Array[ExtResource("1_etlcb")]([ExtResource("2_yi5be")])

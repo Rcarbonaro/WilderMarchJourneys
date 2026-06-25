@@ -8,7 +8,7 @@
 script = ExtResource("2_fbj5v")
 id = "stonespike"
 display_name = "Stonespike Armor"
-description = "Surrounds himself with spiked stones, bolstering defense and damaging attackers for 1 round."
+description = "Surrounds the caster with spiked stones, bolstering defense and damaging attackers for 1 round. Cost: 10 mana"
 mana_cost = 10
 max_range = 0
 affects_team = "all"

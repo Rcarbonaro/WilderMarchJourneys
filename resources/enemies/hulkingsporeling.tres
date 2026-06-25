@@ -12,7 +12,7 @@
 script = ExtResource("1_lpqtv")
 id = "hulkingsporeling"
 display_name = "Hulking Sporeling"
-description = "A massive sporeling corrupted by unknown magic. It reduces atk and matk of nearby units."
+description = "A massive sporeling corrupted by unknown magic. Is tough and reduces ATK and MATK of its nearby targets."
 stats_by_level = Array[ExtResource("3_gsv6k")]([ExtResource("1_gsv6k")])
 base_stats = ExtResource("1_gsv6k")
 starting_abilities = Array[ExtResource("2_rdlt6")]([ExtResource("4_emfon")])

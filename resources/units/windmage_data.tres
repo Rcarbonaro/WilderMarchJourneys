@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://bqlcwr37h6vcj" path="res://sprites/Wind Mage/windmage_portrait.png" id="3_pdhkk"]
 [ext_resource type="Resource" uid="uid://bkhl370vs27t7" path="res://resources/abilities/windmage_basic.tres" id="5_1rute"]
 [ext_resource type="Resource" uid="uid://bv3n0jtrhicj" path="res://resources/abilities/pull.tres" id="5_a2ykl"]
+[ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_pdhkk"]
 [ext_resource type="Resource" uid="uid://d020c7xsebbes" path="res://resources/stats/windmage_stats.tres" id="6_1rute"]
 [ext_resource type="Resource" uid="uid://de4ctcun42qd1" path="res://resources/abilities/tempestgrasp.tres" id="6_5ptw1"]
 [ext_resource type="Resource" uid="uid://4hii3tx3d506" path="res://resources/abilities/tornado.tres" id="6_pjwqc"]
@@ -15,6 +16,7 @@
 script = ExtResource("1_mjyq5")
 id = "windmage"
 display_name = "windmage"
+description = "A wind magic specialist who excels at manipulating enemy positioning."
 portrait = ExtResource("3_pdhkk")
 battle_sprite = ExtResource("2_wxdo6")
 stats_by_level = Array[ExtResource("3_nfyw7")]([ExtResource("6_1rute")])

@@ -7,5 +7,6 @@
 script = ExtResource("2_egntn")
 id = "hulkingsporelingbasic"
 display_name = "Basic Attack"
+description = "A basic melee attack."
 base_damage_multiplier = 0.25
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

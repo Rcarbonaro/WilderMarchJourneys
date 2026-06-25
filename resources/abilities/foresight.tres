@@ -8,6 +8,7 @@
 script = ExtResource("2_0peli")
 id = "foresight"
 display_name = "Foresight"
+description = "Increase an ally's critical chance. Cost: 0 mana"
 max_range = 2
 affects_team = "allies"
 base_damage_multiplier = 0.0

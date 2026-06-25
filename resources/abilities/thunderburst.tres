@@ -7,6 +7,7 @@
 script = ExtResource("2_2fbi3")
 id = "thunderburst"
 display_name = "Thunderburst"
+description = "Deal massive damage to nearby enemies. Cost: 30 mana"
 mana_cost = 30
 max_range = 0
 aoe_shape = "square"

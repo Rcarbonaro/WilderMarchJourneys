@@ -8,12 +8,14 @@
 [ext_resource type="Texture2D" uid="uid://do7hnlhrc8g05" path="res://sprites/stonewarden/stonewarden_portrait.png" id="3_yv6xt"]
 [ext_resource type="Resource" uid="uid://naav1rvovg1e" path="res://resources/abilities/stonewarden_basic.tres" id="4_wia46"]
 [ext_resource type="Resource" uid="uid://b17unu8jwcih0" path="res://resources/abilities/stonespikearmor.tres" id="5_fci0h"]
+[ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_yv6xt"]
 [ext_resource type="Resource" uid="uid://yhyh5timeu7g" path="res://resources/abilities/earthquake.tres" id="6_wia46"]
 
 [resource]
 script = ExtResource("1_fasg0")
 id = "stonewarden"
 display_name = "Stonewarden"
+description = "A tough and heavily armored dwarf who specializes in earth magic to protect himself."
 portrait = ExtResource("3_yv6xt")
 battle_sprite = ExtResource("2_0gi82")
 stats_by_level = Array[ExtResource("3_dlrt0")]([ExtResource("1_tfom6")])

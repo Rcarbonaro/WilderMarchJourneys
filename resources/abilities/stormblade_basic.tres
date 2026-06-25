@@ -7,6 +7,7 @@
 script = ExtResource("2_kr1i0")
 id = "stormbladebasic"
 display_name = "Basic Attack"
+description = "An agile attack that allows the user to move 1 space after attacking."
 damage_type = "magical"
 scaling_stat = "matk"
 post_attack_move_squares = 1

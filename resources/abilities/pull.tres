@@ -7,6 +7,7 @@
 script = ExtResource("2_jpwo6")
 id = "pull"
 display_name = "Pull"
+description = "Pull an ally or enemy to the caster. Deals no damage. Cost: 0"
 max_range = 3
 affects_team = "all"
 base_damage_multiplier = 0.0

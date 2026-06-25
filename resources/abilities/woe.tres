@@ -7,7 +7,7 @@
 script = ExtResource("2_ac8s0")
 id = "woe"
 display_name = "Woe"
-description = "Reduce all enemy stats"
+description = "Reduce all enemy stats for 3 rounds. Cost: 20 mana"
 mana_cost = 20
 max_range = 2
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

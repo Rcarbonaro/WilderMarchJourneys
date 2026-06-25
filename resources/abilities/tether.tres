@@ -9,6 +9,7 @@
 script = ExtResource("2_7n4w4")
 id = "tether"
 display_name = "Tether"
+description = "Tether the targets in the area. When a \"Tethered\" target is hit by a single target attack, other \"Tethered\" enemies also take 50% of that damage. Cost: 30 mana"
 icon = ExtResource("2_c4x1a")
 mana_cost = 30
 max_range = 4
