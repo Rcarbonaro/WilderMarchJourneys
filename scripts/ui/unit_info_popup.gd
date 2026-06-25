@@ -48,34 +48,42 @@ const PORTRAIT_SIZE      := Vector2i(110, 180)
 const BATTLE_SPRITE_SIZE := Vector2i(80, 80)
 const ABILITY_ICON_SIZE  := Vector2i(40, 40)
 const ITEM_ICON_SIZE     := Vector2i(36, 36)
-const BACKDROP_COLOR     := Color(0, 0, 0, 0.55)
+const BACKDROP_COLOR     := Color(0, 0, 0, .1)
 
 var _card: PanelContainer = null
 
 
 func _ready() -> void:
-	# Make this wrapper cover the whole screen (so the backdrop reaches every
-	# edge no matter what it's parented under), and swallow all input itself
-	# so nothing underneath it can be clicked while the popup is open.
+	# 1. Setup root properties
 	set_anchors_preset(Control.PRESET_FULL_RECT)
-	mouse_filter = Control.MOUSE_FILTER_STOP
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	
+	# Notify Manager
+	PopupManager.open_popup(self)
 
+	# 2. Add the backdrop
 	var backdrop := ColorRect.new()
 	backdrop.color = BACKDROP_COLOR
 	backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
-	backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
-	backdrop.gui_input.connect(_on_backdrop_input)
+	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(backdrop)
 
-	_card = PanelContainer.new()
-	_card.set_anchors_preset(Control.PRESET_CENTER)
-	_card.offset_left   = -CARD_SIZE.x / 52.0
-	_card.offset_top    = -CARD_SIZE.y / 52.0
-	_card.offset_right  =  CARD_SIZE.x / 52.0
-	_card.offset_bottom =  CARD_SIZE.y / 52.0
-	_card.mouse_filter  = Control.MOUSE_FILTER_STOP   # don't let clicks on the card reach the backdrop
-	add_child(_card)
+	# 3. Create the layout containers
+	var center_container := CenterContainer.new()
+	center_container.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(center_container)
 
+	var margin_container := MarginContainer.new()
+	# Adjust these to position your card
+	margin_container.add_theme_constant_override("margin_left", 100)
+	margin_container.add_theme_constant_override("margin_top", 50)
+	center_container.add_child(margin_container)
+
+	# 4. Create the card
+	_card = PanelContainer.new()
+	_card.custom_minimum_size = CARD_SIZE
+	_card.mouse_filter = Control.MOUSE_FILTER_STOP
+	margin_container.add_child(_card)
 
 func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array = []) -> void:
 	# Builds the entire card's contents. Call this once, right after adding
@@ -227,6 +235,8 @@ func _on_backdrop_input(event: InputEvent) -> void:
 
 
 func _close() -> void:
+	if PopupManager.current_popup == self:
+		PopupManager.current_popup = null
 	closed.emit()
 	queue_free()
 
@@ -243,3 +253,12 @@ static func texture_or_black_box(tex: Texture2D, size: Vector2i) -> Texture2D:
 	var img := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
 	img.fill(Color.BLACK)
 	return ImageTexture.create_from_image(img)
+	
+	
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		# Check if the click is OUTSIDE the card's area
+		if not _card.get_global_rect().has_point(event.position):
+			_close()
+			# Mark the input as handled so other things don't trigger
+			get_viewport().set_input_as_handled()

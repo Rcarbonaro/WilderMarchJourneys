@@ -16,7 +16,7 @@
 script = ExtResource("1_ge75a")
 id = "stormblade"
 display_name = "Stormblade"
-description = "A nimble fighter who dances around the battlefield, sacrificing herself to deal massive damage. Can use lightning magic to enhance her combat abilities."
+description = "A nimble fighter who dances around the battlefield, sacrificing her HP to enhance her speed and damage. Can use lightning magic to enhance her combat abilities."
 portrait = ExtResource("3_slqco")
 battle_sprite = ExtResource("2_8cs0s")
 stats_by_level = Array[ExtResource("3_n4jxu")]([ExtResource("1_127on")])
