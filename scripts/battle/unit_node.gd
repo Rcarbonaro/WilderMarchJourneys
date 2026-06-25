@@ -38,7 +38,7 @@ extends Node2D
 # i.e. instant forced shoves like knockback, pull, and scatter, which are
 # meant to feel like one continuous push, not a tile-by-tile walk.
 
-@export var move_speed_per_tile: float = 0.35
+@export var move_speed_per_tile: float = 0.28
 # How many seconds move_along_path() spends animating EACH individual tile
 # step during normal turn movement (tap-to-move, post-attack moves, and AI
 # movement). A 4-tile walk takes roughly 4x as long as a 1-tile walk, instead
@@ -447,16 +447,7 @@ func heal(amount: int) -> void:
 	_update_hp_label()
 
 
-var is_dying: bool = false
-
 func die() -> void:
-	if is_dying: return # Prevent double-death logic
-	is_dying = true     # <--- SET IMMEDIATELY
-	
-	if not is_inside_tree():
-		queue_free()
-		return
-		
 	if not is_inside_tree():
 		queue_free()
 		return
@@ -730,6 +721,7 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster 
 			s["remaining_rounds"] = status_data.duration_rounds
 			# Refresh the source caster too — re-taunting updates who to attack.
 			s["source_caster"] = source_caster
+			_debug_print_status_applied(status_data, s["stacks"])
 			return
 
 	# Brand new status — add it to the list.
@@ -740,6 +732,7 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster 
 		"source_caster":    source_caster,
 		"visual_phase":     "none",
 	})
+	_debug_print_status_applied(status_data, stacks)
 	update_visuals()
 	var is_buff := (status_data.atk_modifier > 0 or status_data.def_modifier > 0 or
 						status_data.matk_modifier > 0 or status_data.mdef_modifier > 0 or
@@ -755,7 +748,8 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster 
 
 
 func remove_status(status_id: String) -> void:
-	# Removes a status by its id string. Used for cleanse/dispel effects.
+	# Removes a status by its id string. Used for cleanse/dispel effects, and
+	# for one-off reveals like "attacking breaks invisibility".
 	var removed_entry = null
 	for s in active_statuses:
 		if s["data"].id == status_id:
@@ -769,6 +763,39 @@ func remove_status(status_id: String) -> void:
 	# animation and restore the unit's normal look.
 	if removed_entry["data"].has_visual_override and _active_visual_override == removed_entry["data"]:
 		_end_visual_override(removed_entry["data"])
+
+	# Always refresh sprite transparency here — NOT just at the call sites
+	# that happen to remember to do it. This is what was missing for natural
+	# invisibility expiry: tick_statuses_end_of_round() below removes expired
+	# statuses through its own array logic rather than calling remove_status()
+	# (for performance, since it's iterating already), so it ALSO calls
+	# update_visuals() directly in its own cleanup loop — see below.
+	update_visuals()
+
+
+func cleanse_statuses() -> int:
+	# Called by ability_executor.gd when an ability with is_cleanse = true
+	# hits this unit. Removes every CURRENTLY ACTIVE status whose cleansable
+	# flag is checked (see status_effect_data.gd) — buffs and debuffs alike,
+	# since cleansable is a flag the designer sets per-status, not a hardcoded
+	# "debuffs only" rule. A status with cleansable = false survives no matter
+	# what (e.g. a stun specifically meant to be un-cleansable).
+	#
+	# Routes through remove_status() for each one, so visual override exit
+	# animations and sprite transparency (e.g. invisibility) are all handled
+	# automatically and consistently with every other removal path.
+	#
+	# Returns how many statuses were actually removed, in case a UI or combat
+	# log wants to report it (e.g. "Cleansed 2 effects from Sylvaris!").
+	var ids_to_cleanse: Array = []
+	for s in active_statuses:
+		if s["data"].cleansable:
+			ids_to_cleanse.append(s["data"].id)
+
+	for status_id in ids_to_cleanse:
+		remove_status(status_id)
+
+	return ids_to_cleanse.size()
 
 
 func tick_statuses_end_of_round(team_that_just_ended: String) -> void:
@@ -816,6 +843,14 @@ func tick_statuses_end_of_round(team_that_just_ended: String) -> void:
 		# animation and restore the unit's normal look.
 		if s["data"].has_visual_override and _active_visual_override == s["data"]:
 			_end_visual_override(s["data"])
+
+	# Refresh sprite transparency if anything actually expired this round —
+	# this is what makes invisibility correctly fade back to normal when the
+	# TURN LIMIT runs out, not just when attacking breaks it early. Done once
+	# after the loop (rather than once per removed status) since it's a single
+	# full recheck of has_status("invisible") either way.
+	if not to_remove.is_empty():
+		update_visuals()
 
 
 func _apply_dot_tick(status_entry: Dictionary) -> void:
@@ -1187,3 +1222,12 @@ func update_visuals() -> void:
 		sprite.modulate.a = 0.5   # 50% transparent when invisible.
 	else:
 		sprite.modulate.a = 1.0   # Fully opaque otherwise.
+
+
+func _debug_print_status_applied(status_data: StatusEffectData, stacks: int) -> void:
+	print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+	print("📊 STATUS APPLIED: '", status_data.display_name, "' × ", stacks,
+		  " → ", unit_data.display_name)
+	print("   ATK:  base=", get_stats().atk,  "  effective=", get_effective_atk())
+	print("   DEF:  base=", get_stats().def,  "  effective=", get_effective_def())
+	print("   MOV:  base=", get_stats().mov,  "  effective=", get_effective_mov())

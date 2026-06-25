@@ -11,6 +11,8 @@
 #   - Special effect architecture: Tether, Thorns, Shield, Guardian,
 #     On-Kill, Movement-after-attack, Conditional bonus damage
 #   - Aura ability support (is_aura, aura_data)
+#   - Cleanse ability support (is_cleanse) — strips cleansable statuses AND
+#     cleansable auras (curses the target themselves cast/carry) from a target
 
 class_name AbilityData
 extends Resource
@@ -132,6 +134,29 @@ extends Resource
 
 @export var heal_percent: float = 0.0
 # Fraction of max HP to restore. e.g. 0.3 = heals 30%.
+
+@export var is_cleanse: bool = false
+# Check this box to make this ability strip CLEANSABLE effects from every
+# target it hits (works alongside any other effects above — damage, healing,
+# statuses, etc. can all happen in the same cast as a cleanse).
+#
+# When a target is hit by a cleanse:
+#   1. Every status effect currently on them with cleansable = true (see
+#      status_effect_data.gd) is removed immediately — buffs and debuffs
+#      alike, since "cleansable" is a per-status flag the designer controls,
+#      not a hardcoded "debuffs only" rule. Leave cleansable UNCHECKED on any
+#      status that should always survive a cleanse.
+#   2. Any active AURA where the target is the CASTER/OWNER, and that aura's
+#      cleansable = true (see aura_data.gd), is also removed — this is for
+#      curse-style auras that are attached to (cast by) the afflicted unit
+#      themselves, e.g. a "Toxic Bloom" curse that makes them constantly hurt
+#      whoever stands near them. Auras the target merely happens to be
+#      standing INSIDE, cast by someone else, are never touched by this —
+#      cleansing only ever strips effects the target themselves owns or
+#      carries, never an enemy's battlefield-wide aura.
+#
+# No target cell (a "self" cast with nobody there)? Falls back to cleansing
+# the caster, exactly like heal_percent does above.
 
 # ── DISPLACEMENT (PUSH / PULL / KNOCKBACK) ────────────────────────────────────
 # "Displacement" moves the target relative to the caster.

@@ -10,6 +10,7 @@ script = ExtResource("2_jhihc")
 id = "hulkingsporelingaura"
 display_name = "Sporeling Aura"
 description = "Reduces unit's attack. Stacks 3 times."
+on_spawn = true
 duration_rounds = 20
 is_permanent = true
 flat_damage = 0

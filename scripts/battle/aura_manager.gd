@@ -154,6 +154,33 @@ func remove_all_auras_for(caster) -> void:
 			_remove_aura_entry(i)
 
 
+func cleanse_auras_for(unit) -> int:
+	# Called by ability_executor.gd when an ability with is_cleanse = true
+	# hits 'unit'. Removes every active aura CAST BY 'unit' whose cleansable
+	# flag is checked — e.g. a "Toxic Bloom" curse-aura that follows 'unit'
+	# around hurting anyone nearby, which a cleanse should be able to strip
+	# right along with their bad statuses.
+	#
+	# IMPORTANT: this only ever touches auras 'unit' themselves OWNS/CASTS.
+	# An aura cast by someone ELSE that 'unit' merely happens to be standing
+	# inside is completely untouched — cleansing yourself can never strip an
+	# enemy's battlefield aura out from under them.
+	#
+	# Returns how many auras were actually removed, in case a UI or combat
+	# log wants to report it.
+	var removed_count: int = 0
+	for i in range(_active_auras.size() - 1, -1, -1):
+		var entry = _active_auras[i]
+		if entry["caster"] == unit and entry["data"].cleansable:
+			# Fades the visuals out gracefully (same treatment a type_1 aura
+			# gets when replaced by a new one) rather than popping it away
+			# instantly — _fade_and_remove_aura already strips Momentum
+			# bonuses internally, so we don't need to do that here ourselves.
+			_fade_and_remove_aura(i)
+			removed_count += 1
+	return removed_count
+
+
 func clear_all() -> void:
 	# Called at the start of each new battle to wipe the slate clean.
 	for entry in _active_auras:

@@ -7,6 +7,7 @@
 script = ExtResource("2_5vf1h")
 id = "boltstepsurge"
 display_name = "Boltstep Surge"
+description = "A powerful lightning dash in a cardinal direction, dealing damage to all in the line and moving the caster to the end of the line."
 mana_cost = 30
 aoe_shape = "line"
 aoe_size = 4
@@ -16,5 +17,4 @@ scaling_stat = "matk"
 is_dash = true
 ability_type = "spell"
 bonus_damage_isolated = 0.1
-post_attack_move_squares = 1
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

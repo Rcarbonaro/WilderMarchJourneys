@@ -12,6 +12,8 @@
 #     at the unit who applied the taunt.
 #   - Damage-over-time (DoT): deals damage at the end of each enemy round,
 #     either flat or scaling off the caster's ATK/MATK with an adjustable %.
+#   - cleansable is now actually wired up: a cleanse ability (is_cleanse on
+#     AbilityData) reads this flag to decide what it can and can't strip.
 
 class_name StatusEffectData
 
@@ -46,6 +48,12 @@ extends Resource
 @export_enum("end_of_enemy_round", "end_of_player_round") var expires_at: String = "end_of_enemy_round"
 
 # Can it be cleansed?
+# Any ability with AbilityData.is_cleanse = true strips every status on its
+# target where this is checked, the instant it hits them (see
+# ability_executor.gd's CLEANSE step, and unit_node.gd's cleanse_statuses()).
+# Leave this UNCHECKED for a status that should survive a cleanse no matter
+# what — e.g. a stun or DoT from a source that's specifically meant to be
+# un-cleansable, or a buff you never want accidentally stripped.
 
 @export var cleansable: bool = true
 

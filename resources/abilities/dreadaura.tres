@@ -8,6 +8,7 @@
 script = ExtResource("2_i4dpk")
 id = "dreadaura"
 display_name = "Dread Aura"
+description = "Creates a permanent aura that reduces enemy ATK and movement. Using another aura will end this aura."
 max_range = 0
 base_damage_multiplier = 0.0
 damage_type = "magical"
