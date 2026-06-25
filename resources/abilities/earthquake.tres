@@ -7,7 +7,7 @@
 script = ExtResource("2_hp2hh")
 id = "earthquake"
 display_name = "Earthquake"
-description = "Rends the ground to deal massive damage to nearby enemies"
+description = "Rends the ground to deal damage to all nearby enemies. Cost: 30 mana"
 mana_cost = 30
 max_range = 0
 aoe_shape = "square"

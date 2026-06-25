@@ -7,6 +7,7 @@
 script = ExtResource("2_0bjim")
 id = "dragoonbasicattack"
 display_name = "Basic Attack"
+description = "A basic melee attack. Deals extra damage to isolated foes."
 bonus_damage_isolated = 0.75
 isolated_range = 2
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

@@ -8,6 +8,7 @@
 script = ExtResource("2_3hlq0")
 id = "decayingaura"
 display_name = "Decaying Aura"
+description = "Create a permanent aura that lowers enemy's offenses. Using another aura will end this aura. Debuff lasts 3 turns and can stack."
 max_range = 0
 base_damage_multiplier = 0.0
 damage_type = "magical"

@@ -10,7 +10,13 @@
 #   - What it looks like (color overlay, or a custom sprite/scene)
 #
 # You create one of these as a .tres file in the Inspector, then attach it to
-# an AbilityData resource via the "aura_data" field.
+# an AbilityData resource via the "aura_data" field — OR add it directly to a
+# unit's UnitData.spawn_auras list to have them start the battle with it
+# already active (see on_spawn below, and unit_data.gd).
+#
+# NEW: cleansable (a cleanse ability can strip this aura from its own
+# caster/owner) and on_spawn (marks this aura as designed to be carried from
+# battle start rather than cast).
 # ==============================================================================
 
 class_name AuraData
@@ -27,6 +33,31 @@ extends Resource
 
 @export var description: String = ""
 # Flavour text / tooltip description.
+
+@export var cleansable: bool = true
+# Mirrors StatusEffectData.cleansable, for the same reason: a cleanse ability
+# (AbilityData.is_cleanse) can strip this aura from the battlefield, but only
+# when the unit being cleansed is THIS aura's caster/owner — e.g. a "Toxic
+# Bloom" curse-aura attached to whoever it was cast on, which keeps hurting
+# anyone who stands near them until it's either cleansed or expires on its
+# own. Leave this UNCHECKED for an aura that should always survive a cleanse
+# (most ordinary self-buff stances probably want this OFF, since you usually
+# don't want an ally accidentally losing their own stance aura to a cleanse —
+# this defaults to true mainly for consistency with StatusEffectData, so set
+# it deliberately per-aura rather than assuming the default fits every case).
+
+@export var on_spawn: bool = false
+# Marks this aura as intended for UnitData.spawn_auras — i.e. a unit can be
+# born into battle already carrying this aura, with no ability cast needed.
+# This is purely a documentation / sanity-check flag: ticking it doesn't make
+# anything happen by itself. To actually give a unit this aura on spawn, add
+# this SAME AuraData resource to that unit's "Spawn Auras" list in
+# UnitData (see unit_data.gd). Leaving on_spawn unchecked while still adding
+# the aura to a unit's spawn_auras list will still work at runtime — it'll
+# just print a warning reminding you to tick this box, since an aura that was
+# only ever designed to be cast mid-battle might assume a caster who chose to
+# cast it (e.g. positioning), which doesn't apply the same way to something a
+# unit simply starts the battle with.
 
 # ── AURA TYPE ─────────────────────────────────────────────────────────────────
 

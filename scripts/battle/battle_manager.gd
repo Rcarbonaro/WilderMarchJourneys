@@ -283,6 +283,24 @@ func spawn_unit(unit_data: UnitData, cell: Vector2i, is_player: bool, level: int
 		enemy_units.append(unit)
 		print("⚔️ Enemy spawned: ", unit_data.display_name)
 
+	# ── SPAWN AURAS ────────────────────────────────────────────────────────────
+	# Some units carry an aura from the moment they appear on the field — no
+	# ability cast needed. We use the exact same AuraManager.activate_aura()
+	# an ability would use, so the aura behaves completely identically to a
+	# cast one (follows the unit, ticks, expires, can be cleansed, etc.).
+	if aura_manager != null:
+		for spawn_aura_data in unit_data.spawn_auras:
+			if spawn_aura_data == null:
+				continue
+			if not spawn_aura_data.on_spawn:
+				print("⚠️ '", spawn_aura_data.display_name, "' is in ",
+					  unit_data.display_name, "'s spawn_auras list but its ",
+					  "'on_spawn' box isn't checked — activating it anyway, ",
+					  "but check the aura resource if that wasn't intended.")
+			aura_manager.activate_aura(unit, spawn_aura_data)
+			print("🌀 Spawn aura activated: '", spawn_aura_data.id,
+				  "' on ", unit_data.display_name)
+
 # ── DEATH HANDLING ────────────────────────────────────────────────────────────
 
 func _on_unit_died(unit) -> void:

@@ -8,6 +8,8 @@
 script = ExtResource("1_6hig2")
 id = "dreadknightbasic"
 display_name = "Basic Attack"
+description = "A melee attack that deals moderate damage, taunts, and reduces enemy ATK."
+base_damage_multiplier = 0.8
 damage_type = "magical"
 scaling_stat = "matk"
 applies_statuses = Array[ExtResource("1_b0230")]([ExtResource("2_ff4w5")])

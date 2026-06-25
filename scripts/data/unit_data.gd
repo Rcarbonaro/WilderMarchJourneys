@@ -51,3 +51,18 @@ extends Resource
 # Ensure this is at the top of unit_node.gd, outside any functions
 @export var is_spellsword: bool = false
 var has_arcana_charge: bool = false
+
+# ── SPAWN AURAS ───────────────────────────────────────────────────────────────
+
+@export var spawn_auras: Array[AuraData] = []
+# Auras this unit carries from the MOMENT they spawn into battle — no ability
+# cast needed. Each entry should have its on_spawn box checked (see
+# aura_data.gd) — that's just a sanity flag, but leaving it unchecked will
+# print a warning at battle start as a reminder it's probably a mistake.
+#
+# Activated automatically in battle_manager.gd's spawn_unit(), right after
+# the unit is placed and registered on the grid, by calling the exact same
+# AuraManager.activate_aura() an ability cast would use — so everything
+# about how the aura behaves afterward (following the unit, ticking,
+# expiring, being cleansed if cleansable, etc.) works completely identically
+# to a normal cast aura. Works for both player units and enemies.

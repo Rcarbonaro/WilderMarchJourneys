@@ -16,6 +16,12 @@
 # sprite, and display_name. If portrait or battle_sprite is unset (null),
 # a plain black box is generated and shown in its place instead -- nothing
 # is ever left blank.
+#
+# DESCRIPTION BUTTON: each card also has a small "Description" button that
+# opens a read-only UnitInfoPopup (see unit_info_popup.gd) showing that
+# unit's portrait, sprite, name, description, abilities (icons + text), and
+# level-1 stats. It's purely informational -- there's no way to draft the
+# unit from inside it; close it and tap the card itself to pick them.
 
 extends Control
 
@@ -82,14 +88,14 @@ func _build_unit_card(unit_data: UnitData) -> Button:
 	portrait_rect.custom_minimum_size = Vector2(PORTRAIT_SIZE)
 	portrait_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	portrait_rect.texture = _get_texture_or_black_box(unit_data.portrait, PORTRAIT_SIZE)
+	portrait_rect.texture = UnitInfoPopup.texture_or_black_box(unit_data.portrait, PORTRAIT_SIZE)
 	vbox.add_child(portrait_rect)
 
 	var battle_sprite_rect := TextureRect.new()
 	battle_sprite_rect.custom_minimum_size = Vector2(BATTLE_SPRITE_SIZE)
 	battle_sprite_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	battle_sprite_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	battle_sprite_rect.texture = _get_texture_or_black_box(unit_data.battle_sprite, BATTLE_SPRITE_SIZE)
+	battle_sprite_rect.texture = UnitInfoPopup.texture_or_black_box(unit_data.battle_sprite, BATTLE_SPRITE_SIZE)
 	vbox.add_child(battle_sprite_rect)
 
 	var name_label := Label.new()
@@ -103,15 +109,56 @@ func _build_unit_card(unit_data: UnitData) -> Button:
 	cost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(cost_label)
 
+	# A real Button (unlike the rest of this card's children) captures its own
+	# clicks by default (mouse_filter = STOP), so tapping it fires ONLY its own
+	# pressed signal -- it does NOT also toggle the parent card's selection.
+	var description_button := Button.new()
+	description_button.text = "📜 Description"
+	description_button.add_theme_font_size_override("font_size", 11)
+	description_button.pressed.connect(_on_description_pressed.bind(unit_data))
+	vbox.add_child(description_button)
+
 	return card
 
 
-func _get_texture_or_black_box(tex: Texture2D, size: Vector2i) -> Texture2D:
-	if tex != null:
-		return tex
-	var img := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
-	img.fill(Color.BLACK)
-	return ImageTexture.create_from_image(img)
+func _on_description_pressed(unit_data: UnitData) -> void:
+	_show_description_popup(unit_data)
+
+
+func _show_description_popup(unit_data: UnitData) -> void:
+	# Read-only "character sheet" lookup -- no draft action lives in here.
+	# Close it, then tap the card itself if you want to actually pick them.
+	var popup := UnitInfoPopup.new()
+	add_child(popup)
+
+	# No live UnitNode exists yet during the draft (nobody's equipped
+	# anything or leveled up), so "effective stats" here just means this
+	# unit's LEVEL 1 base numbers straight from their UnitData -- the exact
+	# numbers they'll actually start the run with.
+	var stats: StatsData = null
+	if not unit_data.stats_by_level.is_empty():
+		stats = unit_data.stats_by_level[0]
+	elif unit_data.base_stats != null:
+		stats = unit_data.base_stats
+
+	var stat_lines: Array = []
+	if stats != null:
+		stat_lines.append("HP: " + str(stats.hp))
+		if stats.mana > 0:
+			stat_lines.append("Mana: " + str(stats.mana))
+		stat_lines.append("ATK: " + str(stats.atk))
+		stat_lines.append("MATK: " + str(stats.matk))
+		stat_lines.append("DEF: " + str(stats.def))
+		stat_lines.append("MDEF: " + str(stats.mdef))
+		stat_lines.append("MOV: " + str(stats.mov))
+		stat_lines.append("Crit %%: %.0f%%" % stats.crit_chance)
+		stat_lines.append("Crit DMG: %.0f%%" % stats.crit_damage)
+	else:
+		stat_lines.append("(No stats configured.)")
+
+	# No equipped_item_entries passed -- nobody has equipment yet during the
+	# draft, so the popup simply omits that section entirely.
+	popup.setup(unit_data, stat_lines)
 
 
 func _on_unit_card_pressed(unit_data: UnitData) -> void:
@@ -160,7 +207,7 @@ func _refresh_ui() -> void:
 			portrait_rect.custom_minimum_size = Vector2(PORTRAIT_SIZE)
 			portrait_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			portrait_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			portrait_rect.texture = _get_texture_or_black_box(unit_data.portrait, PORTRAIT_SIZE)
+			portrait_rect.texture = UnitInfoPopup.texture_or_black_box(unit_data.portrait, PORTRAIT_SIZE)
 			vbox.add_child(portrait_rect)
 			var name_label := Label.new()
 			name_label.text = unit_data.display_name
