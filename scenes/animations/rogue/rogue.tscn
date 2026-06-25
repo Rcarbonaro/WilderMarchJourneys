@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://2kq61ffy781p"]
 
 [ext_resource type="Script" uid="uid://01w1tymoafld" path="res://scripts/battle/unit_node.gd" id="1_65bim"]
-[ext_resource type="Resource" uid="uid://bwnaicxo5cl5n" path="res://resources/units/windmage_data.tres" id="2_hrywd"]
 [ext_resource type="Texture2D" uid="uid://b66ofoor4m31n" path="res://sprites/rogue/rogue_attack.png" id="3_iiqe3"]
 [ext_resource type="Texture2D" uid="uid://blr7d8wijtb17" path="res://sprites/rogue/rogue_hurtdie.png" id="4_kfvwb"]
 [ext_resource type="Texture2D" uid="uid://b0cir84fix1d5" path="res://sprites/rogue/rogue_stealth.png" id="6_7eol0"]
@@ -383,10 +382,9 @@ animations = [{
 "speed": 5.0
 }]
 
-[node name="WindMage" type="Node2D" unique_id=15020637]
+[node name="Rogue" type="Node2D" unique_id=15020637]
 scale = Vector2(0.8, 0.8)
 script = ExtResource("1_65bim")
-unit_data = ExtResource("2_hrywd")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1298568116]
 position = Vector2(1.25, -13.75)

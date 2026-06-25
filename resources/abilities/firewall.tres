@@ -7,14 +7,14 @@
 [resource]
 script = ExtResource("2_k36vv")
 id = "firewall"
-display_name = "Fire Wall"
+display_name = "Wall of Fire"
 description = "Create a large wall of fire for 3 turns. Cost: 20 mana"
 mana_cost = 20
 max_range = 4
 affects_team = "all"
 aoe_shape = "wall"
 aoe_size = 5
-base_damage_multiplier = 1.2
+base_damage_multiplier = 0.8
 damage_type = "magical"
 scaling_stat = "matk"
 spawns_hazard = ExtResource("3_k36vv")

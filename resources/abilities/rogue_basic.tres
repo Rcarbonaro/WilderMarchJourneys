@@ -9,6 +9,7 @@ script = ExtResource("2_mrr0b")
 id = "roguebasic"
 display_name = "Basic Attack"
 description = "A stealthy attack that deals bonus damage to isolated targets. If this defeats a target, user becomes invisible. Move 1 space after use."
+attack_animation_name = "attack"
 bonus_damage_isolated = 0.5
 has_on_kill_effect = true
 on_kill_trigger_on_caster = true

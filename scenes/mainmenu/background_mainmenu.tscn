@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://dbn3svysq86qw"]
+
+[ext_resource type="Script" uid="uid://1qtdygmimvdu" path="res://scenes/mainmenu/test_mainmenu.gd" id="1_xldlb"]
+[ext_resource type="Texture2D" uid="uid://cvorwxcfhr31k" path="res://sprites/UI/mainmenu/mainmenu_background.png" id="2_xt3f5"]
+
+[node name="BackgroundMainmenu" type="Node2D" unique_id=667703875]
+
+[node name="ParallaxBackground" type="ParallaxBackground" parent="." unique_id=2018535633]
+script = ExtResource("1_xldlb")
+
+[node name="TextureRect" type="TextureRect" parent="ParallaxBackground" unique_id=439214946]
+offset_left = -527.0
+offset_top = -435.0
+offset_right = 497.0
+offset_bottom = 416.0
+texture = ExtResource("2_xt3f5")

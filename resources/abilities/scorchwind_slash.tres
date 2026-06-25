@@ -8,6 +8,7 @@ script = ExtResource("2_4e7tr")
 id = "scorchwindslash"
 display_name = "Scorchwind Slash"
 description = "Imbue your blade with fire to unleash a powerful fiery swing in a cone in front of the caster. Cost: 25 mana or Arcana Charge."
+attack_animation_name = "attack_fire"
 mana_cost = 25
 max_range = 3
 aoe_shape = "cone"
