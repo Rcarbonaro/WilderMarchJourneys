@@ -2,10 +2,13 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_bxgln"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_hj54k"]
+[ext_resource type="PackedScene" uid="uid://cbaxlv6fxi1ku" path="res://scenes/animations/spellsword/spellsword.tscn" id="2_rxtw3"]
 
 [resource]
 script = ExtResource("2_hj54k")
 id = "spellswordbasic"
 display_name = "Basic Attack"
 description = "A basic melee attack dealing physical damage."
+effect_scene = ExtResource("2_rxtw3")
+attack_animation_name = "attack"
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"
