@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_vbst1"]
 [ext_resource type="Resource" uid="uid://tlfhiuoy00iq" path="res://resources/abilities/dreadknight_basic.tres" id="4_qrjy0"]
 [ext_resource type="Resource" uid="uid://dydp4ke8y2nja" path="res://resources/abilities/dreadaura.tres" id="5_okrl5"]
+[ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_q1tm6"]
 [ext_resource type="Resource" uid="uid://bjma8xvpwa6hd" path="res://resources/abilities/decayingaura.tres" id="6_q1tm6"]
 [ext_resource type="Resource" uid="uid://p5escbmdbpqu" path="res://resources/abilities/necroticaura.tres" id="7_5a3vv"]
 
@@ -15,6 +16,7 @@
 script = ExtResource("1_26kf2")
 id = "dreadknight"
 display_name = "Dreadknight"
+description = "A heavily armored dark knight who uses magic to weaken their foes."
 portrait = ExtResource("3_q1tm6")
 battle_sprite = ExtResource("2_okrl5")
 stats_by_level = Array[ExtResource("3_vbst1")]([ExtResource("1_38sw1")])

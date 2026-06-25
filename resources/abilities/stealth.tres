@@ -8,6 +8,7 @@
 script = ExtResource("2_xu7bv")
 id = "stealth"
 display_name = "Stealth"
+description = "User becomes invisible. Expires at the end of the next turn."
 max_range = 0
 affects_team = "all"
 base_damage_multiplier = 0.0

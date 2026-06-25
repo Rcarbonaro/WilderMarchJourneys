@@ -7,5 +7,6 @@
 script = ExtResource("2_yla35")
 id = "basic_attack"
 display_name = "Basic Attack"
+description = "A basic melee attack."
 min_range = 1
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

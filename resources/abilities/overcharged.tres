@@ -8,6 +8,7 @@
 script = ExtResource("2_q2xyi")
 id = "overcharge"
 display_name = "Overcharge"
+description = "Sacrifice 40% of max health to boost movement and MATK for 5 rounds."
 hp_cost_percent = 0.4
 max_range = 0
 affects_team = "all"

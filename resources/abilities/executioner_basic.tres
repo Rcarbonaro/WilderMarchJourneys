@@ -7,6 +7,7 @@
 script = ExtResource("2_dcnnm")
 id = "basicattack"
 display_name = "Basic Attack"
+description = "A melee attack that deals extra damage based on the number of enemy debuffs."
 bonus_per_target_debuff = 0.25
 bonus_per_target_debuff_max = 2.0
 bonus_atk_per_caster_buff = 5

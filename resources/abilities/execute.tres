@@ -7,7 +7,7 @@
 script = ExtResource("2_etaya")
 id = "execute"
 display_name = "Execute"
-description = "A powerful swing that deals bonus damage based on number of debuffs on the enemy."
+description = "A powerful swing that deals bonus damage based on number of debuffs on the enemy. Cooldown: 5"
 cooldown_rounds = 5
 base_damage_multiplier = 1.25
 has_on_kill_effect = true

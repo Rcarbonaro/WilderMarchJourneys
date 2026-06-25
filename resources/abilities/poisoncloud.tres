@@ -10,7 +10,7 @@
 script = ExtResource("2_emqve")
 id = "poisoncloud"
 display_name = "Poison Cloud"
-description = "places a poison cloud and slows the targets"
+description = "Unleashes a poison cloud that deals damage and slows both enemies and allies within its effect. Cost: 20 mana"
 mana_cost = 20
 max_range = 6
 affects_team = "all"

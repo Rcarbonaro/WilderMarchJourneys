@@ -9,7 +9,7 @@
 script = ExtResource("4_rotjb")
 id = "tornado"
 display_name = "Tornado"
-description = "Deals damage and pushes enemies"
+description = "Deals damage and scatters enemies. Cost: 20 mana"
 effect_scene = ExtResource("3_qvh21")
 mana_cost = 20
 min_range = 1

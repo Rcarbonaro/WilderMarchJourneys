@@ -7,7 +7,7 @@
 script = ExtResource("2_5vf1h")
 id = "boltstepsurge"
 display_name = "Boltstep Surge"
-description = "A powerful lightning dash in a cardinal direction, dealing damage to all in the line and moving the caster to the end of the line."
+description = "A powerful lightning dash in a cardinal direction, dealing damage to all in the line and moving the caster to the end of the line. Cost: 30 mana"
 mana_cost = 30
 aoe_shape = "line"
 aoe_size = 4

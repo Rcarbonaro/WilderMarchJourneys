@@ -8,9 +8,9 @@
 script = ExtResource("2_s3j01")
 id = "firemagebasic"
 display_name = "Basic Attack"
-description = "Throw a small ball of fire"
+description = "Throw a small ball of fire. Range: 3"
 effect_scene = ExtResource("2_nsnfm")
-max_range = 4
+max_range = 3
 damage_type = "magical"
 scaling_stat = "matk"
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

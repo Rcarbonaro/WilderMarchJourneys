@@ -8,11 +8,13 @@
 [ext_resource type="Texture2D" uid="uid://cjlhhbqm3ol1h" path="res://sprites/sharpshooter/sharpshooter_portrait.png" id="3_wybnv"]
 [ext_resource type="Resource" uid="uid://dxf13gtkhyi5o" path="res://resources/abilities/sharpshooterbasic.tres" id="4_e2uu1"]
 [ext_resource type="Resource" uid="uid://bx8ncmffrc8ro" path="res://resources/abilities/focusstance.tres" id="5_00g4e"]
+[ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_wybnv"]
 
 [resource]
 script = ExtResource("1_r2f4j")
 id = "sharpshooter"
 display_name = "Sharpshooter"
+description = "A long-range fighter who focuses on targeting enemy weak spots and dealing critical damage to single targets."
 portrait = ExtResource("3_wybnv")
 battle_sprite = ExtResource("2_udbhy")
 stats_by_level = Array[ExtResource("3_fwn01")]([ExtResource("1_jdtuf")])

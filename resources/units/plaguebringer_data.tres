@@ -8,12 +8,14 @@
 [ext_resource type="Resource" uid="uid://b406fvrri3tpy" path="res://resources/abilities/plaguebringer_basic.tres" id="3_ke88r"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_t3yht"]
 [ext_resource type="Resource" uid="uid://d2c88a0y67m3r" path="res://resources/abilities/miasmaburst.tres" id="4_ypgtm"]
+[ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_112sh"]
 [ext_resource type="Resource" uid="uid://bcsrdfepw47tw" path="res://resources/abilities/poisoncloud.tres" id="5_temkm"]
 
 [resource]
 script = ExtResource("1_h1x5s")
 id = "plaguebringer"
 display_name = "Plaguebringer"
+description = "A magic user who specialises in poisons."
 portrait = ExtResource("3_112sh")
 battle_sprite = ExtResource("2_4bakh")
 stats_by_level = Array[ExtResource("3_t3yht")]([ExtResource("1_ypgtm")])

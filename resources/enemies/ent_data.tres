@@ -12,6 +12,7 @@
 script = ExtResource("2_cg23b")
 id = "ent"
 display_name = "ent"
+description = "A slow but powerful tree creature, able to both take and deal high amounts of damage."
 stats_by_level = Array[ExtResource("5_lqift")]([ExtResource("1_7qgsm")])
 base_stats = ExtResource("1_7qgsm")
 starting_abilities = Array[ExtResource("3_r02jj")]([ExtResource("4_snmq7")])

@@ -8,7 +8,7 @@
 script = ExtResource("2_546e4")
 id = "fireball"
 display_name = "Fireball"
-description = "Create a large explosion of fire, damaging all creatures within."
+description = "Create a large explosion of fire, damaging all creatures within. Cost: 20 mana"
 effect_scene = ExtResource("2_vwgc1")
 mana_cost = 20
 min_range = 2

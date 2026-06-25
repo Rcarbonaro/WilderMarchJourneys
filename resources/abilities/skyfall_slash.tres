@@ -7,6 +7,7 @@
 script = ExtResource("2_1cpc6")
 id = "skyfallslash"
 display_name = "Skyfall Slash"
+description = "Imbue your sword with lightning to deal massive damage to a single target. Cost: 25 mana or Arcana Charge"
 mana_cost = 25
 min_range = 1
 base_damage_multiplier = 1.5

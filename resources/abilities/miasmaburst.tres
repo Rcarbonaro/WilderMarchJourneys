@@ -8,6 +8,7 @@
 script = ExtResource("3_rxojs")
 id = "acidburst"
 display_name = "Miasma Burst"
+description = "A cone attack dealing bonus damage based on the number of enemy debuffs. Cost: 10 mana"
 mana_cost = 10
 max_range = 4
 aoe_shape = "cone"

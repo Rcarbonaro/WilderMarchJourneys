@@ -8,7 +8,7 @@
 script = ExtResource("2_if6pe")
 id = "wallofthorns"
 display_name = "Wall of Thorns"
-description = "Create a wall of thorns to block enemy movement"
+description = "Create a wall of thorns to block enemy movement Cooldown: 5 rounds"
 cooldown_rounds = 5
 max_range = 4
 aoe_shape = "wall"

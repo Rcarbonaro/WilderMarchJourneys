@@ -8,11 +8,13 @@
 [ext_resource type="Texture2D" uid="uid://c0vv35b1yln6s" path="res://sprites/dragoon/dragoon_portrait.png" id="3_qc3qx"]
 [ext_resource type="Resource" uid="uid://c6oreioskft08" path="res://resources/abilities/dragoon_basic.tres" id="4_nicbd"]
 [ext_resource type="Resource" uid="uid://bw3q0dan042jh" path="res://resources/abilities/lunge.tres" id="5_0nwkx"]
+[ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_qc3qx"]
 
 [resource]
 script = ExtResource("1_nda02")
 id = "dragoon"
 display_name = "Dragoon"
+description = "A tough fighter who can leap across the battlefield. Particularly effective against isolated foes."
 portrait = ExtResource("3_qc3qx")
 battle_sprite = ExtResource("2_le5di")
 stats_by_level = Array[ExtResource("3_4euss")]([ExtResource("1_4euss")])

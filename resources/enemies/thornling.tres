@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="1_kdnd5"]
 [ext_resource type="Resource" uid="uid://b2g3fmlhyymtd" path="res://resources/stats/thornling_stats.tres" id="1_xres7"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_q1omw"]
+[ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="3_4tfxj"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_xres7"]
 [ext_resource type="Resource" uid="uid://42eyrp0inbky" path="res://resources/abilities/thornling_basic.tres" id="4_4tfxj"]
 
@@ -10,6 +11,7 @@
 script = ExtResource("1_kdnd5")
 id = "thornling"
 display_name = "Thornling"
+description = "A small creature that launches spikes from its tail to attack when it feels threatened."
 stats_by_level = Array[ExtResource("3_xres7")]([ExtResource("1_xres7")])
 base_stats = ExtResource("1_xres7")
 starting_abilities = Array[ExtResource("2_q1omw")]([ExtResource("4_4tfxj")])
