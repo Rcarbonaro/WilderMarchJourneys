@@ -29,6 +29,7 @@ ScalingEngine="*uid://dbsm0v4aautuk"
 ShopEngine="*uid://cm1l25qux5p36"
 DialogueEngine="*uid://c26bd2fopgnjh"
 EncounterEngine="*uid://byswddcebqjfn"
+PopupManager="*uid://cj8b1ppnreund"
 
 [display]
 
