@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://tjflb2kstay0"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_4r6dx"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_bmu26"]
+
+[resource]
+script = ExtResource("2_bmu26")
+id = "bearbasic"
+display_name = "Maul"
+description = "The bear mauls an adjacent target."
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

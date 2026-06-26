@@ -415,7 +415,7 @@ animations = [{
 "speed": 5.0
 }]
 
-[node name="WindMage" type="Node2D" unique_id=15020637]
+[node name="Divinator" type="Node2D" unique_id=15020637]
 script = ExtResource("1_2gj0y")
 unit_data = ExtResource("2_i4nte")
 
@@ -423,8 +423,9 @@ unit_data = ExtResource("2_i4nte")
 position = Vector2(2.0242648, -26.477959)
 scale = Vector2(0.5319805, 0.5437514)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"attack"
+animation = &"idle"
 autoplay = "idle"
+frame_progress = 0.7235592
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0

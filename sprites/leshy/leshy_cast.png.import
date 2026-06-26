@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cap1rqhcwt6fy"
-path="res://.godot/imported/spellsword2_fireattack.png-35ffc1801da12ac6322d23bc9f14d7fb.ctex"
+uid="uid://d1j7qwwjjwh6b"
+path="res://.godot/imported/leshy_cast.png-52e62d6eb7fbd0b39922ceec640a943d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/spellsword/spellsword2_fireattack.png"
-dest_files=["res://.godot/imported/spellsword2_fireattack.png-35ffc1801da12ac6322d23bc9f14d7fb.ctex"]
+source_file="res://sprites/leshy/leshy_cast.png"
+dest_files=["res://.godot/imported/leshy_cast.png-52e62d6eb7fbd0b39922ceec640a943d.ctex"]
 
 [params]
 

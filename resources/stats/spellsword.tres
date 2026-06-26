@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1_xodko")
 hp = 19
-atk = 22
-matk = 22
+atk = 20
+matk = 19
 def = 7
 mdef = 10
 mana = 25

@@ -488,12 +488,12 @@ script = ExtResource("1_pprem")
 unit_data = ExtResource("2_8odgd")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1298568116]
-position = Vector2(0, -3)
-scale = Vector2(0.16875, 0.14921875)
+position = Vector2(1.0000005, 0)
+scale = Vector2(0.31171876, 0.33613282)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"walk"
+animation = &"idle"
 autoplay = "idle"
-frame_progress = 0.32234925
+frame_progress = 0.24227774
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -35.0

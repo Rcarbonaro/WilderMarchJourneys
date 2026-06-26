@@ -2,11 +2,11 @@
 
 [ext_resource type="Script" uid="uid://01w1tymoafld" path="res://scripts/battle/unit_node.gd" id="1_8ofag"]
 [ext_resource type="Texture2D" uid="uid://c80ob0qsredmg" path="res://sprites/spellsword/spellsword2_basicswing.png" id="4_5o51m"]
+[ext_resource type="Texture2D" uid="uid://0fx5pk52cui2" path="res://sprites/spellsword/spellsword2_fireslash.png" id="5_dydvd"]
 [ext_resource type="Texture2D" uid="uid://cu65afu7r2rsd" path="res://sprites/spellsword/spellsword2_idle.png" id="6_htb4k"]
 [ext_resource type="Texture2D" uid="uid://67aln4m13pb4" path="res://sprites/spellsword/spellsword2_charging.png" id="7_ws1ep"]
 [ext_resource type="Texture2D" uid="uid://bypvt1tgpyemm" path="res://sprites/spellsword/spellsword2_lightningattack.png" id="8_ws1ep"]
 [ext_resource type="Texture2D" uid="uid://bk0irh46iuoyi" path="res://sprites/spellsword/spellsword2_hurtdie.png" id="9_ws1ep"]
-[ext_resource type="Texture2D" uid="uid://cvolf1t8hs51g" path="res://sprites/spellsword/spellsword2_fireattack.png" id="10_qcdl2"]
 [ext_resource type="Texture2D" uid="uid://dlycm4nxwmklh" path="res://sprites/spellsword/spellsword2_walk.png" id="11_0fpv8"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_qcdl2"]
@@ -97,45 +97,65 @@ region = Rect2(0, 576, 344, 192)
 atlas = ExtResource("4_5o51m")
 region = Rect2(344, 576, 344, 192)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_5o51m"]
+atlas = ExtResource("6_htb4k")
+region = Rect2(344, 192, 344, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ws1ep"]
+atlas = ExtResource("5_dydvd")
+region = Rect2(344, 192, 344, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_htb4k"]
+atlas = ExtResource("5_dydvd")
+region = Rect2(0, 192, 344, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0fpv8"]
+atlas = ExtResource("5_dydvd")
+region = Rect2(344, 0, 344, 192)
+
 [sub_resource type="AtlasTexture" id="AtlasTexture_1h62d"]
-atlas = ExtResource("10_qcdl2")
-region = Rect2(256, 0, 256, 256)
+atlas = ExtResource("5_dydvd")
+region = Rect2(688, 0, 344, 192)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_4p62h"]
-atlas = ExtResource("10_qcdl2")
-region = Rect2(512, 0, 256, 256)
+atlas = ExtResource("5_dydvd")
+region = Rect2(1032, 0, 344, 192)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_prj03"]
-atlas = ExtResource("10_qcdl2")
-region = Rect2(768, 0, 256, 256)
+atlas = ExtResource("5_dydvd")
+region = Rect2(688, 192, 344, 192)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_bjts5"]
-atlas = ExtResource("10_qcdl2")
-region = Rect2(0, 256, 256, 256)
+atlas = ExtResource("5_dydvd")
+region = Rect2(0, 384, 344, 192)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_vughi"]
-atlas = ExtResource("10_qcdl2")
-region = Rect2(256, 256, 256, 256)
+atlas = ExtResource("5_dydvd")
+region = Rect2(344, 384, 344, 192)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_hsrkc"]
-atlas = ExtResource("10_qcdl2")
-region = Rect2(0, 512, 256, 256)
+atlas = ExtResource("5_dydvd")
+region = Rect2(688, 384, 344, 192)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_kxdlq"]
-atlas = ExtResource("10_qcdl2")
-region = Rect2(768, 512, 256, 256)
+atlas = ExtResource("5_dydvd")
+region = Rect2(1032, 384, 344, 192)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_oeepf"]
-atlas = ExtResource("10_qcdl2")
-region = Rect2(256, 512, 256, 256)
+atlas = ExtResource("5_dydvd")
+region = Rect2(344, 576, 344, 192)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ranup"]
-atlas = ExtResource("10_qcdl2")
-region = Rect2(512, 512, 256, 256)
+atlas = ExtResource("5_dydvd")
+region = Rect2(688, 576, 344, 192)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_02xma"]
-atlas = ExtResource("10_qcdl2")
-region = Rect2(0, 768, 256, 256)
+atlas = ExtResource("6_htb4k")
+region = Rect2(0, 0, 344, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ogkiw"]
+atlas = ExtResource("6_htb4k")
+region = Rect2(344, 0, 344, 192)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_8qfog"]
 atlas = ExtResource("6_htb4k")
@@ -221,17 +241,9 @@ region = Rect2(344, 576, 344, 192)
 atlas = ExtResource("6_htb4k")
 region = Rect2(688, 576, 344, 192)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_fb3ky"]
-atlas = ExtResource("6_htb4k")
-region = Rect2(1032, 384, 344, 192)
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_tin1i"]
 atlas = ExtResource("6_htb4k")
 region = Rect2(1032, 192, 344, 192)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_hbxov"]
-atlas = ExtResource("6_htb4k")
-region = Rect2(688, 192, 344, 192)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_mhuf5"]
 atlas = ExtResource("6_htb4k")
@@ -381,6 +393,18 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_5o51m")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ws1ep")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_htb4k")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0fpv8")
+}, {
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_1h62d")
 }, {
 "duration": 1.0,
@@ -409,10 +433,13 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_02xma")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ogkiw")
 }],
-"loop": true,
+"loop": false,
 "name": &"attack_fire",
-"speed": 5.0
+"speed": 11.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -585,13 +612,7 @@ animations = [{
 "texture": SubResource("AtlasTexture_02ehi")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_fb3ky")
-}, {
-"duration": 1.0,
 "texture": SubResource("AtlasTexture_tin1i")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_hbxov")
 }, {
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_mhuf5")
@@ -616,7 +637,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"idle",
-"speed": 5.0
+"speed": 7.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -695,6 +716,7 @@ scale = Vector2(0.51167244, 0.5091514)
 sprite_frames = SubResource("SpriteFrames_grxbi")
 animation = &"arcana_charge"
 autoplay = "idle"
+frame_progress = 0.4021384
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0
