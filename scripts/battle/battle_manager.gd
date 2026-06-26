@@ -211,19 +211,34 @@ func _spawn_stage_enemies() -> void:
 	print("🐺 Spawning Monster Waves...")
 	var wolf_data     = load("res://resources/enemies/wolf_data.tres")
 	var sylvaris_data = load("res://resources/enemies/sylvaris_data.tres")
+	var sporeling_data     = load("res://resources/enemies/sporeling_data.tres")
+	var thornling_data     = load("res://resources/enemies/thornling_data.tres")
+	var bear_data = load("res://resources/enemies/bear_data.tres")
+	
+	## Elite Enemies (1-2)
 	var ent_data      = load("res://resources/enemies/ent_data.tres")
+	var hulkingsporeling_data      = load("res://resources/enemies/hulkingsporeling_data.tres")
+	var leshy_data      = load("res://resources/enemies/leshy_data.tres")
 
 	if wolf_data == null:
 		printerr("❌ Could not load wolf_data.tres!")
 		return
 
-	spawn_unit(wolf_data,     Vector2i(10, 1), false, 1)
-	spawn_unit(wolf_data,     Vector2i(10, 2), false, 1)
-	spawn_unit(wolf_data,     Vector2i(12, 2), false, 1)
-	spawn_unit(wolf_data,     Vector2i(10, 3), false, 1)
-	if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(13, 3), false, 1)
-	if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(15, 2), false, 1)
-	if ent_data      != null: spawn_unit(ent_data,      Vector2i(18, 8), false, 1)
+	#spawn_unit(wolf_data,     Vector2i(10, 1), false, 1)
+	#spawn_unit(wolf_data,     Vector2i(10, 2), false, 1)
+	#spawn_unit(wolf_data,     Vector2i(12, 2), false, 1)
+	#spawn_unit(wolf_data,     Vector2i(10, 3), false, 1)
+	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(13, 3), false, 1)
+	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(15, 2), false, 1)
+	#if ent_data      != null: spawn_unit(ent_data,      Vector2i(18, 8), false, 1)
+
+
+	if sporeling_data != null: spawn_unit(sporeling_data, Vector2i(13, 2), false, 1)
+	if sporeling_data != null: spawn_unit(sporeling_data, Vector2i(15, 1), false, 1)
+	if bear_data != null: spawn_unit(bear_data, Vector2i(14, 3), false, 1)
+	if thornling_data != null: spawn_unit(thornling_data, Vector2i(15, 2), false, 1)
+	if hulkingsporeling_data      != null: spawn_unit(hulkingsporeling_data,      Vector2i(15, 8), false, 1)
+	if leshy_data      != null: spawn_unit(leshy_data,      Vector2i(15, 5), false, 1)
 
 	print("🐺 Monster waves deployed!")
 

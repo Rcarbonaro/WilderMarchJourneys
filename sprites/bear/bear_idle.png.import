@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cap1rqhcwt6fy"
-path="res://.godot/imported/spellsword2_fireattack.png-35ffc1801da12ac6322d23bc9f14d7fb.ctex"
+uid="uid://b6mhrq0utbg0h"
+path="res://.godot/imported/bear_idle.png-718123d27712ede511bd55f175e0956f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/spellsword/spellsword2_fireattack.png"
-dest_files=["res://.godot/imported/spellsword2_fireattack.png-35ffc1801da12ac6322d23bc9f14d7fb.ctex"]
+source_file="res://sprites/bear/bear_idle.png"
+dest_files=["res://.godot/imported/bear_idle.png-718123d27712ede511bd55f175e0956f.ctex"]
 
 [params]
 
