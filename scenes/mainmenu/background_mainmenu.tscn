@@ -9,8 +9,8 @@
 script = ExtResource("1_xldlb")
 
 [node name="TextureRect" type="TextureRect" parent="ParallaxBackground" unique_id=439214946]
-offset_left = -527.0
-offset_top = -435.0
-offset_right = 497.0
-offset_bottom = 416.0
+offset_left = -52.0
+offset_top = -41.0
+offset_right = 1964.0
+offset_bottom = 1133.0
 texture = ExtResource("2_xt3f5")
