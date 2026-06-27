@@ -17,10 +17,11 @@
 #     buffs, and auras) and their actual equipped items.
 #
 # This popup is entirely self-contained:
-#   - It builds its own dim backdrop behind the card, full-screen, so the
-#     player's attention is pulled to the card and the rest of the screen
-#     can't be accidentally interacted with while it's open.
-#   - Tapping the backdrop OR the Close button both close and free it.
+#   - It builds its own dim backdrop behind the card, full-screen.
+#   - PopupManager.open_popup(self) is called on _ready() so only one of
+#     these (or whatever else uses PopupManager) is ever open at a time.
+#   - Tapping anywhere outside the card closes it (handled in
+#     _unhandled_input below), and so does the Close button.
 #   - It's read-only -- there is no "confirm/pick/equip" action here. It's
 #     purely an information lookup.
 #
@@ -37,53 +38,83 @@
 # 'equipped_item_entries' is an Array of Dictionaries shaped like
 # { "icon": Texture2D (or null), "name": String }. Leave it as the default
 # empty array to skip the "Equipped Items" section entirely.
+#
+# CUSTOMIZING THE LOOK: set 'theme_resource' to a UnitInfoPopupTheme resource
+# (see unit_info_popup_theme.gd) BEFORE calling setup() if you want a custom
+# border, background, per-section plates, or backdrop transparency:
+#   popup.theme_resource = preload("res://resources/ui/default_unit_info_theme.tres")
+#   popup.setup(unit_data, stat_lines)
+# Leave theme_resource unset entirely to keep today's plain default look.
 
 class_name UnitInfoPopup
 extends Control
 
 signal closed
 
-const CARD_SIZE          := Vector2(380, 560)
+# ── POSITION & SIZE ────────────────────────────────────────────────────────────
+# Adjust these two constants to move or resize the card. The card is always
+# centered on whatever this popup is added as a child of (normally the full
+# screen) -- CARD_CENTER_OFFSET then nudges it away from dead-center if you
+# want, in pixels (positive X = right, positive Y = down; (0, 0) = perfectly
+# centered). This is the ONLY place you need to touch for position/size --
+# everything below is built relative to these two values.
+
+const CARD_SIZE          := Vector2(380, 860)   # Width, height of the card itself.
+const CARD_CENTER_OFFSET := Vector2(450, 450)        # Shift from dead-center, in pixels.
+
 const PORTRAIT_SIZE      := Vector2i(110, 180)
 const BATTLE_SPRITE_SIZE := Vector2i(80, 80)
 const ABILITY_ICON_SIZE  := Vector2i(40, 40)
 const ITEM_ICON_SIZE     := Vector2i(36, 36)
-const BACKDROP_COLOR     := Color(0, 0, 0, .1)
+
+var theme_resource: UnitInfoPopupTheme = null
+# Optional. Set this BEFORE calling setup() to customize border/background/
+# plates/backdrop transparency -- see the file header above. If left null,
+# setup() creates a blank default theme automatically (today's plain look).
 
 var _card: PanelContainer = null
+var _backdrop: ColorRect = null
 
 
 func _ready() -> void:
-	# 1. Setup root properties
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	
-	# Notify Manager
+
 	PopupManager.open_popup(self)
 
-	# 2. Add the backdrop
-	var backdrop := ColorRect.new()
-	backdrop.color = BACKDROP_COLOR
-	backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
-	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(backdrop)
+	# ── BACKDROP ──────────────────────────────────────────────────────────────
+	# Dims the screen behind the card. Its actual color/alpha gets set from
+	# theme_resource.backdrop_color in setup() below (or left at this plain
+	# fallback if setup() is somehow never called). mouse_filter is IGNORE
+	# here -- outside-click-to-close is handled by _unhandled_input at the
+	# bottom of this file instead, so the backdrop doesn't need to capture
+	# clicks itself.
+	_backdrop = ColorRect.new()
+	_backdrop.color = Color(0, 0, 0, 0.55)
+	_backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_backdrop)
 
-	# 3. Create the layout containers
-	var center_container := CenterContainer.new()
-	center_container.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(center_container)
-
-	var margin_container := MarginContainer.new()
-	# Adjust these to position your card
-	margin_container.add_theme_constant_override("margin_left", 100)
-	margin_container.add_theme_constant_override("margin_top", 50)
-	center_container.add_child(margin_container)
-
-	# 4. Create the card
+	# ── CARD ──────────────────────────────────────────────────────────────────
+	# Centered directly via anchors (PRESET_CENTER anchors all 4 sides to the
+	# midpoint of whatever this popup is parented under, then the 4 offsets
+	# below carve out an exact CARD_SIZE rectangle around that midpoint). This
+	# is what makes the card track to the center of the VISIBLE screen rather
+	# than the top-left corner: it's relative to this popup's own parent size,
+	# not a fixed pixel position, so it stays centered regardless of
+	# resolution. To move or resize the card, edit CARD_SIZE /
+	# CARD_CENTER_OFFSET at the top of this file -- don't add extra
+	# CenterContainer/MarginContainer wrappers here, they just make this
+	# harder to reason about.
 	_card = PanelContainer.new()
-	_card.custom_minimum_size = CARD_SIZE
-	_card.mouse_filter = Control.MOUSE_FILTER_STOP
-	margin_container.add_child(_card)
+	_card.set_anchors_preset(Control.PRESET_CENTER)
+	_card.offset_left   = -CARD_SIZE.x / 2.0 + CARD_CENTER_OFFSET.x
+	_card.offset_top    = -CARD_SIZE.y / 2.0 + CARD_CENTER_OFFSET.y
+	_card.offset_right  =  CARD_SIZE.x / 2.0 + CARD_CENTER_OFFSET.x
+	_card.offset_bottom =  CARD_SIZE.y / 2.0 + CARD_CENTER_OFFSET.y
+	_card.mouse_filter  = Control.MOUSE_FILTER_STOP   # Clicks on the card itself never close it.
+	add_child(_card)
+
 
 func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array = []) -> void:
 	# Builds the entire card's contents. Call this once, right after adding
@@ -91,6 +122,18 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 	if unit_data == null:
 		push_warning("UnitInfoPopup.setup() called with a null UnitData.")
 		return
+
+	if theme_resource == null:
+		theme_resource = UnitInfoPopupTheme.new()   # Blank theme = today's plain default look.
+
+	_backdrop.color = theme_resource.backdrop_color
+
+	# ── CARD BACKGROUND ────────────────────────────────────────────────────────
+	# Replaces the card's default flat panel color with a custom texture, if
+	# one was provided. Left untouched (today's plain look) otherwise.
+	if theme_resource.card_background != null:
+		_card.add_theme_stylebox_override("panel", _make_plate_stylebox(
+			theme_resource.card_background, theme_resource.card_background_patch_margin))
 
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = CARD_SIZE
@@ -140,7 +183,8 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 		description_label.text = unit_data.description
 		description_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		description_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-		content.add_child(description_label)
+		content.add_child(_wrap_in_plate(description_label,
+			theme_resource.description_plate, theme_resource.description_plate_patch_margin))
 
 	content.add_child(HSeparator.new())
 
@@ -152,11 +196,12 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 
 	var stats_grid := GridContainer.new()
 	stats_grid.columns = 2
-	content.add_child(stats_grid)
 	for line in stat_lines:
 		var stat_label := Label.new()
 		stat_label.text = line
 		stats_grid.add_child(stat_label)
+	content.add_child(_wrap_in_plate(stats_grid,
+		theme_resource.stats_plate, theme_resource.stats_plate_patch_margin))
 
 	content.add_child(HSeparator.new())
 
@@ -174,7 +219,6 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 
 		var ability_row := HBoxContainer.new()
 		ability_row.add_theme_constant_override("separation", 8)
-		content.add_child(ability_row)
 
 		var ability_icon := TextureRect.new()
 		ability_icon.custom_minimum_size = Vector2(ABILITY_ICON_SIZE)
@@ -198,6 +242,9 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 			ability_desc_label.add_theme_font_size_override("font_size", 12)
 			ability_text.add_child(ability_desc_label)
 
+		content.add_child(_wrap_in_plate(ability_row,
+			theme_resource.ability_plate, theme_resource.ability_plate_patch_margin))
+
 	if not any_ability_shown:
 		var no_abilities_label := Label.new()
 		no_abilities_label.text = "No abilities."
@@ -215,7 +262,6 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 		for item_entry in equipped_item_entries:
 			var item_row := HBoxContainer.new()
 			item_row.add_theme_constant_override("separation", 8)
-			content.add_child(item_row)
 
 			var item_icon := TextureRect.new()
 			item_icon.custom_minimum_size = Vector2(ITEM_ICON_SIZE)
@@ -228,10 +274,50 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 			item_name_label.text = item_entry.get("name", "Unknown Item")
 			item_row.add_child(item_name_label)
 
+			content.add_child(_wrap_in_plate(item_row,
+				theme_resource.equipped_item_plate, theme_resource.equipped_item_plate_patch_margin))
 
-func _on_backdrop_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed:
-		_close()
+	# ── CARD BORDER ───────────────────────────────────────────────────────────
+	# Drawn LAST so it's the topmost child of _card, on top of 'scroll' and
+	# everything in it -- meant for a frame graphic with a transparent middle.
+	# mouse_filter = IGNORE so it never blocks clicks/scrolling on the content
+	# underneath it.
+	if theme_resource.card_border != null:
+		var border_rect := NinePatchRect.new()
+		border_rect.texture = theme_resource.card_border
+		border_rect.patch_margin_left   = theme_resource.card_border_patch_margin
+		border_rect.patch_margin_top    = theme_resource.card_border_patch_margin
+		border_rect.patch_margin_right  = theme_resource.card_border_patch_margin
+		border_rect.patch_margin_bottom = theme_resource.card_border_patch_margin
+		border_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_card.add_child(border_rect)
+
+
+func _make_plate_stylebox(texture: Texture2D, patch_margin: int) -> StyleBox:
+	# Turns a plain uploaded texture into a StyleBoxTexture -- Godot's native
+	# "use this image as a panel's background, 9-sliced by these margins"
+	# resource. This is what every plate/background/border slot in
+	# UnitInfoPopupTheme ultimately becomes when applied.
+	var sb := StyleBoxTexture.new()
+	sb.texture = texture
+	sb.texture_margin_left   = patch_margin
+	sb.texture_margin_top    = patch_margin
+	sb.texture_margin_right  = patch_margin
+	sb.texture_margin_bottom = patch_margin
+	return sb
+
+
+func _wrap_in_plate(inner: Control, texture: Texture2D, patch_margin: int) -> Control:
+	# Wraps 'inner' in a PanelContainer using 'texture' as its background
+	# plate (sized to fit snugly around 'inner', not the whole card) -- or
+	# returns 'inner' completely UNWRAPPED if texture is null, which is
+	# exactly today's plain look (no visible plate at all) for that section.
+	if texture == null:
+		return inner
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", _make_plate_stylebox(texture, patch_margin))
+	panel.add_child(inner)
+	return panel
 
 
 func _close() -> void:
@@ -239,6 +325,16 @@ func _close() -> void:
 		PopupManager.current_popup = null
 	closed.emit()
 	queue_free()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		# Check if the click is OUTSIDE the card's area.
+		if not _card.get_global_rect().has_point(event.position):
+			_close()
+			# Mark the input as handled so it doesn't also trigger whatever's
+			# underneath the popup (a draft card, a battle grid tile, etc.).
+			get_viewport().set_input_as_handled()
 
 
 static func texture_or_black_box(tex: Texture2D, size: Vector2i) -> Texture2D:
@@ -253,12 +349,3 @@ static func texture_or_black_box(tex: Texture2D, size: Vector2i) -> Texture2D:
 	var img := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
 	img.fill(Color.BLACK)
 	return ImageTexture.create_from_image(img)
-	
-	
-func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed:
-		# Check if the click is OUTSIDE the card's area
-		if not _card.get_global_rect().has_point(event.position):
-			_close()
-			# Mark the input as handled so other things don't trigger
-			get_viewport().set_input_as_handled()

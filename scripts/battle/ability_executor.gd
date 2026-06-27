@@ -68,7 +68,8 @@ var _last_hit_was_crit: bool = false
 # ── MAIN ENTRY POINT ──────────────────────────────────────────────────────────
 
 func execute_ability(caster, ability: AbilityData, target_cells: Array,
-					 origin_cell: Vector2i = Vector2i(-1, -1)) -> void:
+					 origin_cell: Vector2i = Vector2i(-1, -1),
+					 raw_target_cells: Array = []) -> void:
 	# Called by BattleManager (player) and AISystem (enemy).
 	#
 	# Parameters:
@@ -77,6 +78,15 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 	#   target_cells — The list of grid cells to affect (already filtered by team).
 	#   origin_cell  — For line/cone shapes, the cell the player aimed at
 	#                  (used to determine dash direction).
+	#   raw_target_cells — ONLY used for dash abilities. The SAME line, but
+	#                  BEFORE team-filtering removed any cells. Dash needs the
+	#                  complete, gapless line (including ally-occupied cells)
+	#                  to correctly figure out where it physically has to stop
+	#                  — team-filtering is appropriate for deciding who takes
+	#                  DAMAGE, but it actively breaks distance/obstacle
+	#                  calculations if used for the MOVEMENT part of a dash.
+	#                  Falls back to target_cells if left empty, which keeps
+	#                  every existing non-dash caller working unmodified.
 
 	# ── STEP 0: CASTER VALIDITY + MANA GATE ──────────────────────────────────
 	# Check the caster is still alive first. It's possible for an aura's entry
@@ -131,13 +141,31 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 		print("💉 HP cost paid: ", hp_cost_paid, " | Total HP consumed this battle: ", total_hp_consumed)
 
 	# ── STEP 2: DASH ──────────────────────────────────────────────────────────
-	# A "dash" is a line AOE where the CASTER physically moves to the last valid
-	# tile. We resolve the caster's movement BEFORE applying damage so the caster
-	# lands in the correct position first.
+	# A "dash" is a line AOE where the CASTER physically moves to the last
+	# valid tile. We resolve the caster's movement BEFORE applying damage so
+	# the caster lands in the correct position first.
 	var dash_landing_cell: Vector2i = Vector2i(-1, -1)
 
 	if ability.is_dash and ability.aoe_shape == "line":
-		dash_landing_cell = await _execute_dash(caster, ability, target_cells)
+		# Use the COMPLETE, unfiltered line for movement (see the
+		# raw_target_cells doc above) — team-filtering must never be allowed
+		# to put gaps in the line dash physically travels through.
+		var dash_line_cells: Array = raw_target_cells if not raw_target_cells.is_empty() else target_cells
+		dash_landing_cell = await _execute_dash(caster, ability, dash_line_cells)
+
+		# Bound the DAMAGE-relevant cells to only what the caster actually
+		# dashed through. Without this, a dash that gets physically stopped
+		# partway down the line (by a wall, or by another unit standing in
+		# the way) would still damage enemies further down the line that the
+		# caster never came anywhere near.
+		var landing_index: int = dash_line_cells.find(dash_landing_cell)
+		if landing_index != -1:
+			var truncated_cells: Array = []
+			for cell in target_cells:
+				var cell_index: int = dash_line_cells.find(cell)
+				if cell_index != -1 and cell_index <= landing_index:
+					truncated_cells.append(cell)
+			target_cells = truncated_cells
 
 	# ── STEP 2.5: WALL PLACEMENT ───────────────────────────────────────────────
 	# Wall abilities don't damage units or apply statuses through the normal
@@ -612,33 +640,55 @@ func _is_target_isolated(target, check_range: int) -> bool:
 # ── DASH ──────────────────────────────────────────────────────────────────────
 
 func _execute_dash(caster, ability: AbilityData, line_cells: Array) -> Vector2i:
-	# Moves the caster along a line, stopping at the last walkable tile.
-	# Returns the final landing cell.
+	# Moves the caster along a line, stopping at the LAST tile that's both
+	# walkable AND unoccupied. Returns the final landing cell.
+	#
+	# THE FIX: this used to check grid_ref.is_terrain_walkable(cell), which
+	# deliberately ignores whether a UNIT is standing there (it only cares
+	# about walls/terrain) — so a dash could land directly on top of another
+	# unit. That silently overwrote them in battle_grid's unit_positions
+	# registry, making THEM permanently unclickable for the rest of the
+	# battle even though they were still standing right there on screen.
+	# is_passable(cell) checks walls AND unit occupancy AND movement-blocking
+	# hazards all together, so the dash now correctly stops one tile short of
+	# anything solid in its way — a wall, an ally, or an enemy.
 	if line_cells.is_empty():
 		return caster.grid_position
 
 	var landing_cell: Vector2i = caster.grid_position
 
 	for cell in line_cells:
-		if grid_ref.is_terrain_walkable(cell):
+		if grid_ref.is_passable(cell):
 			landing_cell = cell
 		else:
-			break   # Hit a wall or map edge; stop here.
+			break   # Hit a wall, hazard, or another unit; stop here.
 
 	var end_world: Vector2 = grid_ref.grid_to_world(landing_cell)
-	caster.snap_to(landing_cell)
+	var start_world: Vector2 = caster.position
 
-	# Spawn an optional trail texture along the dash line.
+	# snap_to() updates BOTH the grid registration (so other game logic
+	# already sees the caster as standing at landing_cell — needed before the
+	# damage loop runs) AND the visual position (it jumps caster.position
+	# straight to end_world as its very last line). We want the grid update
+	# right away, but NOT the instant visual jump — that's what the tween
+	# below is for. So immediately after snap_to(), we put the VISUAL
+	# position back to where the caster actually started, and let the tween
+	# carry it the rest of the way. Without this, the tween below would
+	# animate from end_world to end_world (since snap_to already moved it)
+	# and the dash would just look like an instant teleport with no slide.
+	caster.snap_to(landing_cell)
+	caster.position = start_world
+
+	# Spawn an optional trail texture along the dash line. Uses 'start_world'
+	# and 'end_world' directly (captured above) rather than caster.position,
+	# since caster.position only reflects the true starting point for a
+	# brief moment here before the tween below starts moving it.
 	if ability.dash_trail_texture != null:
-		_spawn_dash_trail(caster.position, grid_ref.grid_to_world(landing_cell),
-						  ability.dash_trail_texture)
+		_spawn_dash_trail(start_world, end_world, ability.dash_trail_texture)
 
 	# Animate the caster sprite racing to the destination.
-	var start_world: Vector2 = caster.position
-	var distance:    float   = start_world.distance_to(end_world)
-	var duration:    float   = distance / ability.dash_speed
-
-	caster.snap_to(landing_cell)   # Grid registry updated before the tween.
+	var distance: float = start_world.distance_to(end_world)
+	var duration: float = distance / ability.dash_speed
 
 	var tween = get_tree().create_tween()
 	tween.tween_property(caster, "position", end_world, duration)\

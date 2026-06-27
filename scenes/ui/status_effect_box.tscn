@@ -21,3 +21,6 @@ layout_mode = 2
 
 [node name="StatusIconContainer" type="HFlowContainer" parent="VBoxContainer" unique_id=1131483826]
 layout_mode = 2
+
+[node name="Button" type="Button" parent="VBoxContainer" unique_id=1654642601]
+layout_mode = 2

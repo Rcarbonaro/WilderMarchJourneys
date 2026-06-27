@@ -7,47 +7,7 @@
 			"type": "scene_tree"
 		},
 		{
-			"path": "res://scenes/animations/rogue/rogue.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/mainmenu/main_menu.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/executioner/executioner.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/meta/ShopScene.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/stonewarden/stonewarden.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://test.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/dreadknight/dreadknight.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/battle/UnitNode.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/sylvaris/sylvaris.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/hexweaver/hexweaver.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/windmage/windmage.tscn",
+			"path": "res://scenes/ui/UnitStatusBox.tscn",
 			"type": "scene_tree"
 		},
 		{
@@ -55,7 +15,47 @@
 			"type": "scene_tree"
 		},
 		{
-			"path": "res://scenes/ui/UnitStatusBox.tscn",
+			"path": "res://scenes/animations/windmage/windmage.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/hexweaver/hexweaver.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/sylvaris/sylvaris.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/battle/UnitNode.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/dreadknight/dreadknight.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://test.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/stonewarden/stonewarden.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/meta/ShopScene.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/executioner/executioner.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/mainmenu/main_menu.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/rogue/rogue.tscn",
 			"type": "scene_tree"
 		},
 		{
@@ -63,47 +63,7 @@
 			"type": "scene_tree"
 		},
 		{
-			"path": "res://scenes/ui/status_effect_box.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/sharpshooter/sharpshooter.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/battle/BattleScene.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/guardian/guardian.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/stormblade/stormblade.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/battle/BattleUI.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/ent/ent.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/battle/BattleGrid.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/windmage/tornado.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/plaguebringer/plaguebringer.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/dryad/dryad.tscn",
+			"path": "res://scenes/encounter/EncounterScene.tscn",
 			"type": "scene_tree"
 		},
 		{
@@ -111,12 +71,56 @@
 			"type": "scene_tree"
 		},
 		{
-			"path": "res://scenes/encounter/EncounterScene.tscn",
+			"path": "res://scenes/animations/dryad/dryad.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/plaguebringer/plaguebringer.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/windmage/tornado.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/battle/BattleGrid.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/ent/ent.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/battle/BattleUI.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/stormblade/stormblade.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/guardian/guardian.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/battle/BattleScene.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/sharpshooter/sharpshooter.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/ui/status_effect_box.tscn",
 			"type": "scene_tree"
 		},
 		{
 			"path": "res://scenes/animations/wolf/wolf.tscn",
 			"type": "scene_tree"
+		},
+		{
+			"path": "res://scripts/ui/unit_info_popup_theme.gd",
+			"type": "script"
 		},
 		{
 			"path": "res://scripts/battle/aura_manager.gd",
@@ -175,59 +179,11 @@
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/data/aura_data.gd",
+			"path": "res://scripts/autoloads/popup_manager.gd",
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/data/unit_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/synergy_buff_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/special_effect_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/battle_manager.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/battle_grid.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/ai_system.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/ability_executor.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/ability_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/pathfinding_system.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/run_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/managers/shop_manager.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/status_effect_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/ui/ui_manager.gd",
+			"path": "res://scripts/data/conditional_stat_bonus.gd",
 			"type": "script"
 		},
 		{
@@ -235,7 +191,67 @@
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/data/conditional_stat_bonus.gd",
+			"path": "res://scripts/ui/ui_manager.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/status_effect_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/managers/shop_manager.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/run_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/pathfinding_system.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/ability_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/ability_executor.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/ai_system.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/battle_grid.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/battle_manager.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/special_effect_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/synergy_buff_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/unit_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/ui/unit_info_popup.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/aura_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/utils/unit_roster_utils.gd",
 			"type": "script"
 		}
 	],

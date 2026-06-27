@@ -420,8 +420,8 @@ script = ExtResource("1_2gj0y")
 unit_data = ExtResource("2_i4nte")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1298568116]
-position = Vector2(2.0242648, -26.477959)
-scale = Vector2(0.5319805, 0.5437514)
+position = Vector2(3.9999998, 8)
+scale = Vector2(0.40767327, 0.3838632)
 sprite_frames = SubResource("SpriteFrames_grxbi")
 animation = &"idle"
 autoplay = "idle"
