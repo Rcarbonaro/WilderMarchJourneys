@@ -46,6 +46,9 @@ var _info_stat_labels: Dictionary = {}
 var _info_status_count_label: Label = null
 var _info_status_icon_row: HFlowContainer = null
 
+#Description button
+var _info_description_button: Button = null
+
 var _info_box_unit = null
 # The unit the info box currently displays. Used so we can refresh it on a
 # timer/poll if you want live updates — see show_unit_info() for details.
@@ -298,6 +301,19 @@ func _build_info_box() -> void:
 	_info_status_icon_row.add_theme_constant_override("h_separation", 4)
 	_info_status_icon_row.add_theme_constant_override("v_separation", 4)
 	_info_box_vbox.add_child(_info_status_icon_row)
+	
+	var btn_separator := HSeparator.new()
+	_info_box_vbox.add_child(btn_separator)
+	
+	_info_description_button = Button.new()
+	_info_description_button.text = "More Information"
+	_info_description_button.custom_minimum_size = Vector2(0, 30)
+	_info_description_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	
+	# Connect the press event to our new method
+	_info_description_button.pressed.connect(_on_description_button_pressed)
+	
+	_info_box_vbox.add_child(_info_description_button)
 
 
 func show_unit_info(unit) -> void:
@@ -353,13 +369,44 @@ func show_unit_info(unit) -> void:
 		var status_data: StatusEffectData = status_entry["data"]
 		_add_status_icon(status_data, status_entry["stacks"])
 
-
 func hide_unit_info() -> void:
 	_info_box.visible = false
 	_info_box_unit = null
 	_hide_status_tooltip()
 
-
+func _on_description_button_pressed() -> void:
+	if not is_instance_valid(_info_box_unit):
+		return
+		
+	print("📋 Instantiating script-only UnitInfoPopup for: ", _info_box_unit.unit_data.display_name)
+	
+	# 1. Instantiate the script-only class using .new()
+	var popup_instance = UnitInfoPopup.new()
+	
+	# 2. Add it to this UI canvas so it renders on screen
+	add_child(popup_instance)
+	
+	# 3. Format your live, effective combat stats into strings for the popup grid
+	var unit = _info_box_unit
+	var live_stat_lines: Array[String] = [
+		"ATK: %d" % unit.get_effective_atk(),
+		"MATK: %d" % unit.get_effective_matk(),
+		"DEF: %d" % unit.get_effective_def(),
+		"MDEF: %d" % unit.get_effective_mdef(),
+		"Crit %%: %.0f%%" % unit.get_effective_crit_chance(),
+		"Crit DMG: %.0f%%" % unit.get_effective_crit_damage(),
+		"MOV: %d" % unit.get_effective_mov()
+	]
+	
+	# 4. Pull equipped items data if your unit structure supports it
+	var items: Array = []
+	if "equipped_items" in unit and unit.equipped_items != null:
+		items = unit.equipped_items
+	
+	# 5. Initialize the popup layout with your live data
+	# Setup expects: setup(unit_data, stat_lines, equipped_item_entries)
+	popup_instance.setup(unit.unit_data, live_stat_lines, items)
+	
 func _update_stat_labels(unit) -> void:
 	# Reads all seven get_effective_*() getters and writes them into the stats
 	# grid. These already include status modifiers AND Momentum aura bonuses —

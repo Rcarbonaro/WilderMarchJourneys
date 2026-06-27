@@ -20,6 +20,14 @@
 #     stopping them, while STILL independently choosing whether it blocks
 #     line of sight (HazardData.wall_blocks_line_of_sight). The two are no
 #     longer linked: a wall can block movement, block LOS, both, or neither.
+#   - Stacked-unit safety net: register_unit()/register_large_unit() now
+#     automatically detect when they're about to silently overwrite another
+#     unit's spot in unit_positions (which used to leave that unit standing
+#     on screen but permanently unclickable for the rest of the battle — no
+#     cell anywhere pointed back to them anymore). They now relocate
+#     whoever was there to the nearest free tile first. This is a safety
+#     net, not the primary fix — see ability_executor.gd's dash code for the
+#     actual root cause it was guarding against.
 
 extends Node2D
 
@@ -296,6 +304,20 @@ func _is_blocked_by_wall_hazard(cell: Vector2i, unit) -> bool:
 func register_unit(unit, cell: Vector2i) -> void:
 	# Marks a cell as occupied by this unit.
 	# For multi-tile units, call this for EVERY cell they occupy.
+	#
+	# SAFETY NET: if some OTHER unit is already registered at this exact
+	# cell, just overwriting that dictionary entry would silently orphan
+	# them — unit_positions would no longer point back to them from ANYWHERE
+	# on the board, making them permanently unclickable for the rest of the
+	# battle even though they're still standing right there on screen. This
+	# can happen if something moves a unit onto a cell without first
+	# checking it's actually free (a dash that stopped on the wrong tile, or
+	# a cancelled move snapping back onto a tile an ally has since moved
+	# into). Rather than let that happen, we rescue the unit that was
+	# already here to the nearest free tile FIRST.
+	var displaced = unit_positions.get(cell)
+	if displaced != null and displaced != unit:
+		_rescue_displaced_unit(displaced, cell)
 	unit_positions[cell] = unit
 
 
@@ -312,7 +334,11 @@ func get_unit_at(cell: Vector2i):
 func register_large_unit(unit, cells: Array) -> void:
 	# Convenience: registers a unit across ALL cells it occupies.
 	# unit.occupied_cells should already be set before calling this.
+	# Same safety net as register_unit() above, applied per-cell.
 	for cell in cells:
+		var displaced = unit_positions.get(cell)
+		if displaced != null and displaced != unit:
+			_rescue_displaced_unit(displaced, cell)
 		unit_positions[cell] = unit
 
 
@@ -322,6 +348,48 @@ func unregister_large_unit(unit) -> void:
 	if "occupied_cells" in unit:
 		for cell in unit.occupied_cells:
 			unit_positions.erase(cell)
+
+
+func _rescue_displaced_unit(displaced, conflicting_cell: Vector2i) -> void:
+	# Called automatically by register_unit/register_large_unit above. Moves
+	# 'displaced' to the nearest free tile so they're never left as an
+	# unclickable "ghost" — still rendered on screen, but with no cell
+	# anywhere pointing back to them. This is a LAST-RESORT safety net, not
+	# meant to be relied on as the normal way units move — anything that
+	# deliberately moves a unit should already be checking the destination
+	# is free beforehand (see is_passable/is_passable_for).
+	var free_cell = _find_nearest_free_cell(conflicting_cell, conflicting_cell)
+	if free_cell == Vector2i(-1, -1):
+		push_warning("BattleGrid: no free tile anywhere to rescue a displaced unit — they may stay unclickable!")
+		return
+
+	var displaced_name = "a unit"
+	if "unit_data" in displaced and displaced.unit_data != null:
+		displaced_name = displaced.unit_data.display_name
+
+	print("⚠️ ", displaced_name, " was about to be silently overwritten at ", conflicting_cell,
+		  " by something else landing on the same tile — relocating them to ", free_cell,
+		  " instead so they stay clickable.")
+	displaced.snap_to(free_cell)
+
+
+func _find_nearest_free_cell(from: Vector2i, exclude_cell: Vector2i = Vector2i(-1, -1)) -> Vector2i:
+	# Expanding-ring search outward from 'from' for the nearest tile that's
+	# fully passable (not a wall, not a movement-blocking hazard, not
+	# occupied) and isn't 'exclude_cell' itself. Returns Vector2i(-1, -1) if
+	# the entire map somehow has no free tile at all.
+	var max_radius: int = max(GRID_WIDTH, GRID_HEIGHT)
+	for radius in range(0, max_radius + 1):
+		for dx in range(-radius, radius + 1):
+			for dy in range(-radius, radius + 1):
+				if max(abs(dx), abs(dy)) != radius:
+					continue   # Only check the OUTER ring at this radius — smaller rings were already checked.
+				var c = from + Vector2i(dx, dy)
+				if c == exclude_cell:
+					continue
+				if is_valid_cell(c) and is_passable(c):
+					return c
+	return Vector2i(-1, -1)
 
 # ── HAZARD SYSTEM ─────────────────────────────────────────────────────────────
 
