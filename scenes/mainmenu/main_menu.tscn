@@ -1,6 +1,8 @@
 [gd_scene format=3 uid="uid://c3rra5qt3dpkj"]
 
 [ext_resource type="Script" uid="uid://4yplkjtvhlcm" path="res://scripts/mainmenu/main_menu.gd" id="1_ysd44"]
+[ext_resource type="PackedScene" uid="uid://dfxpiwska75hr" path="res://scenes/mainmenu/main_menu_animation.tscn" id="2_sq05c"]
+[ext_resource type="Texture2D" uid="uid://dbw2xejdbw3o7" path="res://sprites/UI/mainmenu/WilderMarch_Title.png" id="3_jl081"]
 
 [node name="MainMenu" type="Control" unique_id=2002266331]
 layout_mode = 3
@@ -11,20 +13,27 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_ysd44")
 
+[node name="MainMenuBackground" parent="." unique_id=995279455 instance=ExtResource("2_sq05c")]
+
 [node name="Background" type="ColorRect" parent="." unique_id=1924426610]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 851.0
+offset_top = 561.0
+offset_right = -854.0
+offset_bottom = -124.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0, 0, 1)
+color = Color(0, 0, 0, 0.58431375)
 
 [node name="CenterContainer" type="CenterContainer" parent="." unique_id=1070491812]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_top = 431.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -50,4 +59,13 @@ text = "Upgrades"
 
 [node name="SettingsButton" type="Button" parent="CenterContainer/VBoxContainer" unique_id=1047274423]
 layout_mode = 2
-text = "SettingsButton"
+text = "Settings"
+
+[node name="QuitButton" type="Button" parent="CenterContainer/VBoxContainer" unique_id=1388496409]
+layout_mode = 2
+text = "Quit"
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=351886747]
+position = Vector2(967.00006, 314)
+scale = Vector2(0.7428977, 0.6516927)
+texture = ExtResource("3_jl081")

@@ -1,6 +1,8 @@
 [gd_scene format=3 uid="uid://vinipsu72hpl"]
 
 [ext_resource type="Script" uid="uid://b4i6yv1khpobo" path="res://scripts/mainmenu/game_mode_select.gd" id="1_w3dmr"]
+[ext_resource type="Texture2D" uid="uid://dbw2xejdbw3o7" path="res://sprites/UI/mainmenu/WilderMarch_Title.png" id="2_snbla"]
+[ext_resource type="Texture2D" uid="uid://cc012godmfct5" path="res://sprites/UI/gamemodemenu/test.png" id="3_yx7ac"]
 
 [node name="GameModeSelect" type="Control" unique_id=209950630]
 layout_mode = 3
@@ -12,10 +14,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 10.0
-offset_top = 9.0
-offset_right = 1913.0
-offset_bottom = 1065.0
+offset_left = 7.0
+offset_top = 458.0
+offset_right = 1910.0
+offset_bottom = 994.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -33,3 +35,26 @@ text = "Draft Mode"
 [node name="BackButton" type="Button" parent="CenterContainer/VBoxContainer" unique_id=2002248690]
 layout_mode = 2
 text = "Back"
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=223128544]
+position = Vector2(963, 319)
+scale = Vector2(0.57990056, 0.5774739)
+texture = ExtResource("2_snbla")
+
+[node name="Sprite2D2" type="Sprite2D" parent="." unique_id=1515970278]
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1180904379]
+z_index = -3
+layout_mode = 0
+offset_left = 881.0
+offset_top = 665.0
+offset_right = 1041.0
+offset_bottom = 805.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.3529412)
+
+[node name="Sprite2D3" type="Sprite2D" parent="." unique_id=1195883113]
+z_index = -6
+position = Vector2(954, 534)
+scale = Vector2(1.1371158, 1.1892474)
+texture = ExtResource("3_yx7ac")

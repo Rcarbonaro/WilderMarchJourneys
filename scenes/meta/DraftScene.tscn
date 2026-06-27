@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://b3v07p5w2yovp"]
 
 [ext_resource type="Script" uid="uid://bqof712ajckgm" path="res://scripts/meta/draft_scene.gd" id="1_yqltk"]
+[ext_resource type="Texture2D" uid="uid://cc012godmfct5" path="res://sprites/UI/gamemodemenu/test.png" id="2_a4tp1"]
 
 [node name="DraftScene" type="Control" unique_id=992857020]
 layout_mode = 3
@@ -58,3 +59,9 @@ offset_bottom = 1017.0
 [node name="ConfirmButton" type="Button" parent="BottomBar" unique_id=2016516468]
 layout_mode = 2
 text = "Confirm Party"
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1392260819]
+z_index = -17
+position = Vector2(968.0001, 546.5)
+scale = Vector2(1.1406618, 1.1580645)
+texture = ExtResource("2_a4tp1")
