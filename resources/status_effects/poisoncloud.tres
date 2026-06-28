@@ -7,5 +7,7 @@ script = ExtResource("1_ayoup")
 id = "poisoncloud"
 display_name = "Poison Cloud"
 description = "Inside Plaguebringer's poison cloud"
+duration_rounds = 3
+atk_modifier = -1
 mov_modifier = -1
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

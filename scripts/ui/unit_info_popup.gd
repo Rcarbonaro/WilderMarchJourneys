@@ -174,7 +174,7 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 	var name_label := Label.new()
 	name_label.text = unit_data.display_name
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.add_theme_font_size_override("font_size", 22)
+	name_label.add_theme_font_size_override("font_size", 30)
 	content.add_child(name_label)
 
 	# ── DESCRIPTION ───────────────────────────────────────────────────────────
@@ -189,26 +189,69 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 	content.add_child(HSeparator.new())
 
 	# ── STATS ─────────────────────────────────────────────────────────────────
+# ── STATS ─────────────────────────────────────────────────────────────────
 	var stats_header := Label.new()
 	stats_header.text = "Stats"
-	stats_header.add_theme_font_size_override("font_size", 16)
+	stats_header.add_theme_font_size_override("font_size", 24)
 	content.add_child(stats_header)
 
 	var stats_grid := GridContainer.new()
 	stats_grid.columns = 2
+	stats_grid.add_theme_constant_override("h_separation", 24)
+	stats_grid.add_theme_constant_override("v_separation", 22)
+
+	# 1. Map icons cleanly (No colors applied, per requirement)
+	var stat_icons := {
+		"HP": preload("res://sprites/UI/Icons/hp_icon.png"),     # Add your path here
+		"Mana": preload("res://sprites/UI/Icons/mana_icon.png"), # Add your path here
+		"ATK": preload("res://sprites/UI/Icons/atk_icon.png"),
+		"MATK": preload("res://sprites/UI/Icons/matk_icon.png"),
+		"DEF": preload("res://sprites/UI/Icons/def_icon.png"),
+		"MDEF": preload("res://sprites/UI/Icons/mdef_icon.png"),
+		"Crit %": preload("res://sprites/UI/Icons/crit%_icon.png"),
+		"Crit DMG": preload("res://sprites/UI/Icons/critdmg_icon.png"),
+		"MOV": preload("res://sprites/UI/Icons/mov_icon.png")
+	}
+
 	for line in stat_lines:
+		var parts: PackedStringArray = line.split(": ")
+		var stat_name: String = parts[0]
+		var stat_value: String = parts[1] if parts.size() > 1 else ""
+
+		var stat_row := HBoxContainer.new()
+		stat_row.add_theme_constant_override("separation", 6)
+
+		if stat_name == "HP" or stat_name == "Mana":
+			stat_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+		# Increased from Vector2(16, 16) to matching Vector2(22, 22)
+		var icon_rect := TextureRect.new()
+		icon_rect.custom_minimum_size = Vector2(42, 42) 
+		icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		
+		if stat_icons.has(stat_name):
+			icon_rect.texture = stat_icons[stat_name]
+		else:
+			icon_rect.texture = texture_or_black_box(null, Vector2i(16, 16))
+		stat_row.add_child(icon_rect)
+
 		var stat_label := Label.new()
 		stat_label.text = line
-		stats_grid.add_child(stat_label)
+		stat_label.add_theme_font_size_override("font_size", 19) 
+		stat_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+		stat_label.add_theme_constant_override("outline_size", 4)
+
+		stat_row.add_child(stat_label)
+		stats_grid.add_child(stat_row)
+
 	content.add_child(_wrap_in_plate(stats_grid,
 		theme_resource.stats_plate, theme_resource.stats_plate_patch_margin))
-
-	content.add_child(HSeparator.new())
 
 	# ── ABILITIES ─────────────────────────────────────────────────────────────
 	var abilities_header := Label.new()
 	abilities_header.text = "Abilities"
-	abilities_header.add_theme_font_size_override("font_size", 16)
+	abilities_header.add_theme_font_size_override("font_size", 19)
 	content.add_child(abilities_header)
 
 	var any_ability_shown := false
@@ -239,7 +282,7 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 			var ability_desc_label := Label.new()
 			ability_desc_label.text = ability.description
 			ability_desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-			ability_desc_label.add_theme_font_size_override("font_size", 12)
+			ability_desc_label.add_theme_font_size_override("font_size", 14)
 			ability_text.add_child(ability_desc_label)
 
 		content.add_child(_wrap_in_plate(ability_row,

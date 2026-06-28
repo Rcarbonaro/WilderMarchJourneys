@@ -46,8 +46,22 @@ func run_enemy_turn(enemies: Array, players: Array, grid: Node,
 	# Stores the callback and kicks off the enemy-by-enemy processing loop.
 	active_done_callback = done_callback
 
-	# Filter out any enemies that are already dead or have already acted.
-	active_enemies = enemies.filter(func(e): return is_instance_valid(e) and not e.has_acted)
+	# Filter out any enemies that are already dead (current_hp <= 0), already
+	# acted, or freed. THE FIX: this used to only check is_instance_valid() and
+	# has_acted — but a unit that just died (e.g. from a hazard, DoT, or Thorns
+	# reflect) ISN'T freed immediately; unit_node.gd's die() plays a death
+	# animation first and only actually removes/frees the unit (and emits
+	# unit_died, which is what removes them from enemy_units) AFTER that
+	# animation finishes. During that window, is_instance_valid(e) is still
+	# true and has_acted is still false, so without checking current_hp here
+	# too, a unit that's already functionally dead could still get a full
+	# turn — including firing off an attack — before the game catches up and
+	# removes them. This was most noticeable as "the last enemy gets one more
+	# attack in before finally dying," but could happen to any enemy that
+	# dies mid-round before its own turn comes up in this loop.
+	active_enemies = enemies.filter(func(e):
+		return is_instance_valid(e) and e.current_hp > 0 and not e.has_acted
+	)
 
 	if active_enemies.is_empty():
 		# No enemies to process — call the callback and finish immediately.
@@ -71,7 +85,12 @@ func _process_next_enemy(players: Array, grid: Node,
 		return
 
 	var enemy = active_enemies[current_enemy_index]
-	if is_instance_valid(enemy) and not enemy.has_acted:
+	# Re-check here too (not just in the filter above) — time has passed
+	# since that filter ran (earlier enemies in this same loop have already
+	# acted, possibly triggering Thorns/hazard/aura damage), so this enemy
+	# could have died in the meantime even though it passed the filter
+	# originally.
+	if is_instance_valid(enemy) and enemy.current_hp > 0 and not enemy.has_acted:
 		await _run_single_enemy(enemy, players, grid, pathfinder, executor)
 
 	current_enemy_index += 1
