@@ -4,8 +4,8 @@
 
 [resource]
 script = ExtResource("1_5iwgc")
-hp = 26
-atk = 21
+hp = 28
+atk = 23
 def = 11
 mdef = 11
 mov = 4

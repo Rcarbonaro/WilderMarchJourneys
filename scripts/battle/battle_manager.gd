@@ -209,23 +209,71 @@ func _load_unit_data(unit_id: String) -> UnitData:
 
 func _spawn_stage_enemies() -> void:
 	print("🐺 Spawning Monster Waves...")
+	print("🐺 Spawning Monster Waves...")
 	var wolf_data     = load("res://resources/enemies/wolf_data.tres")
 	var sylvaris_data = load("res://resources/enemies/sylvaris_data.tres")
 	var ent_data      = load("res://resources/enemies/ent_data.tres")
+	var sporeling_data      = load("res://resources/enemies/sporeling_data.tres")
+	var thornling_data = load("res://resources/enemies/thornling_data.tres")
+	var bear_data      = load("res://resources/enemies/bear_data.tres")
+	var hulkingsporeling_data      = load("res://resources/enemies/hulkingsporeling_data.tres")
+	var leshy_data      = load("res://resources/enemies/leshy_data.tres")
+
 
 	if wolf_data == null:
 		printerr("❌ Could not load wolf_data.tres!")
 		return
 
-	spawn_unit(wolf_data,     Vector2i(10, 1), false, 1)
-	spawn_unit(wolf_data,     Vector2i(10, 2), false, 1)
-	spawn_unit(wolf_data,     Vector2i(12, 2), false, 1)
-	spawn_unit(wolf_data,     Vector2i(10, 3), false, 1)
-	if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(13, 3), false, 1)
-	if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(15, 2), false, 1)
-	if ent_data      != null: spawn_unit(ent_data,      Vector2i(18, 8), false, 1)
+#Encounter 1
+	#spawn_unit(wolf_data,     Vector2i(10, 1), false, 1)
+	#spawn_unit(wolf_data,     Vector2i(10, 2), false, 1)
+	#spawn_unit(wolf_data,     Vector2i(12, 2), false, 1)
+	#spawn_unit(wolf_data,     Vector2i(10, 3), false, 1)
+	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(13, 3), false, 1)
+	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(15, 2), false, 1)
+	#if ent_data      != null: spawn_unit(ent_data,      Vector2i(18, 8), false, 1)
+	#print("🐺 Monster waves deployed!")
 
+#Encounter 2
+	#if bear_data != null: spawn_unit(bear_data, Vector2i(13, 2), false, 1)
+	#if sporeling_data != null: spawn_unit(sporeling_data, Vector2i(13, 1), false, 1)
+	#if sporeling_data != null: spawn_unit(sporeling_data, Vector2i(14, 3), false, 1)
+	#if thornling_data != null: spawn_unit(thornling_data, Vector2i(14, 2), false, 1)
+	#if thornling_data != null: spawn_unit(thornling_data, Vector2i(15, 4), false, 1)
+	#if sporeling_data != null: spawn_unit(sporeling_data, Vector2i(12, 2), false, 1)
+	#if hulkingsporeling_data      != null: spawn_unit(ent_data,      Vector2i(18, 8), false, 1)
+	#print("🐺 Monster waves deployed!")
+
+
+#Encounter 3
+	#if bear_data != null: spawn_unit(bear_data, Vector2i(14, 3), false, 1)
+	#if bear_data != null: spawn_unit(bear_data, Vector2i(14, 2), false, 1)
+	#if wolf_data != null: spawn_unit(wolf_data, Vector2i(13, 3), false, 1)
+	#if wolf_data != null: spawn_unit(wolf_data, Vector2i(13, 3), false, 1)
+	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(15, 2), false, 1)
+	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(13, 1), false, 1)
+	#if hulkingsporeling_data      != null: spawn_unit(hulkingsporeling_data,      Vector2i(17, 6), false, 1)
+	#if sporeling_data      != null: spawn_unit(sporeling_data,      Vector2i(16, 4), false, 1)
+	#if leshy_data      != null: spawn_unit(leshy_data,      Vector2i(18, 8), false, 1)
+	#print("🐺 Monster waves deployed!")
+
+#Encounter 4 (hard)
+	if bear_data != null: spawn_unit(bear_data, Vector2i(9, 3), false, 1)
+	if bear_data != null: spawn_unit(bear_data, Vector2i(10, 2), false, 1)
+	if wolf_data != null: spawn_unit(wolf_data, Vector2i(13, 3), false, 1)
+	if wolf_data != null: spawn_unit(wolf_data, Vector2i(14, 3), false, 1)
+	if wolf_data != null: spawn_unit(wolf_data, Vector2i(13, 2), false, 1)
+	if thornling_data != null: spawn_unit(thornling_data, Vector2i(15, 2), false, 1)
+	if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(14, 2), false, 1)
+	if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(13, 1), false, 1)
+	if hulkingsporeling_data      != null: spawn_unit(hulkingsporeling_data,      Vector2i(17, 6), false, 1)
+	if ent_data      != null: spawn_unit(ent_data,      Vector2i(18, 8), false, 1)
+	if sporeling_data      != null: spawn_unit(sporeling_data,      Vector2i(16, 4), false, 1)
+	if sporeling_data      != null: spawn_unit(sporeling_data,      Vector2i(18, 3), false, 1)
+	if leshy_data      != null: spawn_unit(leshy_data,      Vector2i(18, 8), false, 1)
+	if leshy_data      != null: spawn_unit(leshy_data,      Vector2i(19, 9), false, 1)
 	print("🐺 Monster waves deployed!")
+
 
 
 func spawn_unit(unit_data: UnitData, cell: Vector2i, is_player: bool, level: int = 1,
@@ -900,19 +948,41 @@ func end_player_turn() -> void:
 
 	print("--- ENEMY TURN (Round ", round_number, ") ---")
 
+	# ── APPLY HAZARD DAMAGE AT END OF EACH PLAYER TURN ────────────────────────
+	# Every player unit standing on a hazard tile with trigger_on_end_of_turn
+	# checked takes damage now, since the player's turn is officially over.
+	# (This previously never fired anywhere in the project — trigger_on_enter
+	# and trigger_on_start_of_turn both worked, but nothing ever actually
+	# called apply_hazard_to_unit with "end_of_turn", so checking that box on
+	# a hazard had no effect at all.)
+	for unit in player_units:
+		if is_instance_valid(unit):
+			grid.apply_hazard_to_unit(unit, unit.grid_position, "end_of_turn")
+
 	# ── TICK AURAS (end of player round) ──────────────────────────────────────
 	# This applies aura damage and status effects to all enemies currently inside
 	# any active aura zone. It also counts down aura durations and removes any
 	# that have expired. This runs BEFORE hazard ticking so the order each round is:
-	#   1. Aura end-of-round effects (damage + statuses on targets in range)
-	#   2. Hazard duration countdown (grid.tick_all_effects)
-	#   3. Enemy start-of-turn hazard damage
+	#   1. Player end-of-turn hazard damage (above)
+	#   2. Aura end-of-round effects (damage + statuses on targets in range)
+	#   3. Shield / Thorns / Guardian duration countdown
+	#   4. Enemy start-of-turn hazard damage
+	#   5. Hazard duration countdown — now at the END of the enemy's turn, see
+	#      _on_enemy_turn_complete below.
 	if aura_manager != null:
 		aura_manager.tick_auras_end_of_player_round(player_units, enemy_units)
 
-	# ── TICK HAZARDS ──────────────────────────────────────────────────────────
-	# Counts down all hazard durations once per round and removes expired ones.
-	grid.tick_all_effects()
+	# ── TICK SHIELDS / THORNS / GUARDIANS ─────────────────────────────────────
+	# Hazard ticking used to happen here too (as part of grid.tick_all_effects())
+	# but has been MOVED to the end of the ENEMY's turn instead (see
+	# _on_enemy_turn_complete below) — a hazard placed during the player's turn
+	# now survives through the enemy's response to it before its duration
+	# counts down, instead of potentially expiring before the enemy ever gets
+	# a turn to react to it. Shields/Thorns/Guardian durations were NOT asked
+	# to move, so they still tick here, unchanged.
+	grid.tick_shields()
+	grid.tick_thorns()
+	grid.tick_guardians()
 
 	# ── APPLY HAZARD DAMAGE AT START OF EACH ENEMY TURN ──────────────────────
 	# Every enemy unit standing on a hazard tile at the start of the enemy turn
@@ -952,6 +1022,26 @@ func _on_enemy_turn_complete() -> void:
 	# with hp_cost_percent also feed total_hp_consumed on the executor — this
 	# poll picks those up since AISystem has no direct line to BattleManager).
 	_check_unleash_threshold()
+
+	# ── APPLY HAZARD DAMAGE AT END OF EACH ENEMY TURN ─────────────────────────
+	# Same as the player end-of-turn version above — every enemy unit standing
+	# on a hazard tile with trigger_on_end_of_turn checked takes damage now,
+	# since the enemy's turn is officially over. Runs BEFORE hazard ticking so
+	# an about-to-expire hazard still gets to apply this one last time.
+	for unit in enemy_units:
+		if is_instance_valid(unit):
+			grid.apply_hazard_to_unit(unit, unit.grid_position, "end_of_turn")
+
+	# ── TICK HAZARDS ──────────────────────────────────────────────────────────
+	# Moved here (end of the ENEMY's turn) from end_player_turn() above, so a
+	# hazard's duration only counts down after BOTH the player's turn that
+	# placed/refreshed it AND the enemy's full turn to react to it have
+	# happened — instead of potentially expiring before the enemy ever got a
+	# turn near it. This also means a hazard about to expire still gets to
+	# apply its "start_of_turn" damage (below, from end_player_turn) and any
+	# "end_of_turn" damage during the enemy's turn before being removed,
+	# rather than vanishing partway through its last useful round.
+	grid.tick_hazards()
 
 	# Apply start-of-turn hazard damage to player units.
 	for unit in player_units:

@@ -1228,6 +1228,6 @@ func _debug_print_status_applied(status_data: StatusEffectData, stacks: int) -> 
 	print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	print("📊 STATUS APPLIED: '", status_data.display_name, "' × ", stacks,
 		  " → ", unit_data.display_name)
-#	print("   ATK:  base=", get_stats().atk,  "  effective=", get_effective_atk())
-	print("   DEF:  base=", get_stats().def,  "  effective=", get_effective_def())
-	print("   MOV:  base=", get_stats().mov,  "  effective=", get_effective_mov())
+	#print("   ATK:  base=", get_stats().atk,  "  effective=", get_effective_atk())
+	#print("   DEF:  base=", get_stats().def,  "  effective=", get_effective_def())
+	#print("   MOV:  base=", get_stats().mov,  "  effective=", get_effective_mov())

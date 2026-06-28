@@ -4,10 +4,10 @@
 # ==============================================================================
 # Draws the ability hotbar buttons when a unit is selected, manages the
 # Cancel Move button, and now also:
-#   - Shows a unit info box (top-left) when ANY unit (ally or enemy) is tapped:
-#     exact HP bar + numbers, mana, status effect count, and clickable status
-#     icons that show a description tooltip on click.
-#   - A grid-lines toggle button that turns the battlefield grid overlay on/off.
+#    - Shows a unit info box (top-left) when ANY unit (ally or enemy) is tapped:
+#      exact HP bar + numbers, mana, status effect count, and clickable status
+#      icons that show a description tooltip on click.
+#    - A grid-lines toggle button that turns the battlefield grid overlay on/off.
 # ==============================================================================
 
 extends CanvasLayer
@@ -23,7 +23,7 @@ extends CanvasLayer
 @onready var end_turn_button      = $VBoxContainer/EndTurnButton
 @onready var cancel_move_button   = $VBoxContainer/CancelMoveButton
 # ⚠️ You must add a Button node named "CancelMoveButton" inside VBoxContainer
-#    in your BattleUI.tscn scene tree for this line to work.
+#     in your BattleUI.tscn scene tree for this line to work.
 
 # ── UNIT INFO BOX (built entirely in code — no scene changes required) ───────
 # A small panel anchored near the top-left of the screen. Rebuilt from scratch
@@ -46,7 +46,7 @@ var _info_stat_labels: Dictionary = {}
 var _info_status_count_label: Label = null
 var _info_status_icon_row: HFlowContainer = null
 
-#Description button
+# Description button
 var _info_description_button: Button = null
 
 var _info_box_unit = null
@@ -176,7 +176,7 @@ func _build_info_box() -> void:
 	# Constructs the info box once at startup, hidden by default.
 	# Anchored near the top-left of the screen via a Control's anchor/offset.
 	_info_box = PanelContainer.new()
-	_info_box.custom_minimum_size = Vector2(220, 0)
+	_info_box.custom_minimum_size = Vector2(260, 0) # Slightly wider to prevent clipping from larger fonts
 	_info_box.position = Vector2(16, 16)   # Top-left corner with a small margin.
 	_info_box.visible = false
 	_info_box.z_index = 50
@@ -203,8 +203,7 @@ func _build_info_box() -> void:
 	_info_hp_bar_bg.position = Vector2(0, 1)
 	hp_bar_holder.add_child(_info_hp_bar_bg)
 
-	# Background art drawn on top of the dark ColorRect base, same treatment
-	# as the mana bar below — see MANA_BAR_BG_TEXTURE_PATH for the pattern.
+	# Background art drawn on top of the dark ColorRect base
 	var hp_bg_texture: Texture2D = load(HP_BAR_BG_TEXTURE_PATH)
 	if hp_bg_texture != null:
 		var hp_bg_sprite := Sprite2D.new()
@@ -230,9 +229,6 @@ func _build_info_box() -> void:
 	_info_hp_bar_bg.add_child(_info_hp_label)
 
 	# ── MANA BAR ────────────────────────────────────────────────────────────────
-	# Built the same way as the HP bar (dark background + colored fill), wrapped
-	# in its own holder Control so the whole thing can be hidden when a unit has
-	# zero max mana (e.g. a melee-only enemy with no mana pool at all).
 	_info_mana_bar_holder = Control.new()
 	_info_mana_bar_holder.custom_minimum_size = Vector2(0, 18)
 	_info_box_vbox.add_child(_info_mana_bar_holder)
@@ -243,9 +239,6 @@ func _build_info_box() -> void:
 	_info_mana_bar_bg.position = Vector2(0, 1)
 	_info_mana_bar_holder.add_child(_info_mana_bar_bg)
 
-	# Background art drawn on top of the dark ColorRect base (acts as a frame/
-	# border graphic). If the texture fails to load, the plain dark ColorRect
-	# above still provides a usable background, so this fails gracefully.
 	var mana_bg_texture: Texture2D = load(MANA_BAR_BG_TEXTURE_PATH)
 	if mana_bg_texture != null:
 		var mana_bg_sprite := Sprite2D.new()
@@ -259,7 +252,7 @@ func _build_info_box() -> void:
 		printerr("⚠️ Could not load mana bar background at: ", MANA_BAR_BG_TEXTURE_PATH)
 
 	_info_mana_bar_fill = ColorRect.new()
-	_info_mana_bar_fill.color = Color(0.25, 0.45, 0.95, 1.0)   # Blue, distinct from HP's green/red.
+	_info_mana_bar_fill.color = Color(0.25, 0.45, 0.95, 1.0)
 	_info_mana_bar_fill.size = Vector2(192, 12)
 	_info_mana_bar_fill.position = Vector2(2, 3)
 	_info_mana_bar_bg.add_child(_info_mana_bar_fill)
@@ -271,24 +264,44 @@ func _build_info_box() -> void:
 	_info_mana_bar_bg.add_child(_info_mana_label)
 
 	# ── EFFECTIVE STATS GRID ──────────────────────────────────────────────────────
-	# Shows ATK / MATK / DEF / MDEF / Crit% / Crit DMG / MOV, all read from the
-	# unit's get_effective_*() getters so status modifiers and Momentum aura
-	# bonuses are already baked in — exactly what the unit would actually use
-	# in combat right now, not just their base stats.
 	var stats_separator := HSeparator.new()
 	_info_box_vbox.add_child(stats_separator)
 
 	_info_stats_grid = GridContainer.new()
 	_info_stats_grid.columns = 2
-	_info_stats_grid.add_theme_constant_override("h_separation", 12)
-	_info_stats_grid.add_theme_constant_override("v_separation", 2)
+	_info_stats_grid.add_theme_constant_override("h_separation", 16)
+	_info_stats_grid.add_theme_constant_override("v_separation", 6)
 	_info_box_vbox.add_child(_info_stats_grid)
+
+	var panel_icons := {
+		"atk": preload("res://sprites/UI/Icons/atk_icon.png"),
+		"matk": preload("res://sprites/UI/Icons/matk_icon.png"),
+		"def": preload("res://sprites/UI/Icons/def_icon.png"),
+		"mdef": preload("res://sprites/UI/Icons/mdef_icon.png"),
+		"crit_chance": preload("res://sprites/UI/Icons/crit%_icon.png"),
+		"crit_damage": preload("res://sprites/UI/Icons/critdmg_icon.png"),
+		"mov": preload("res://sprites/UI/Icons/mov_icon.png")
+	}
 
 	_info_stat_labels = {}
 	for stat_key in ["atk", "matk", "def", "mdef", "crit_chance", "crit_damage", "mov"]:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		
+		var icon := TextureRect.new()
+		icon.custom_minimum_size = Vector2(18, 18)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture = panel_icons[stat_key]
+		row.add_child(icon)
+		
 		var lbl := Label.new()
-		lbl.add_theme_font_size_override("font_size", 13)
-		_info_stats_grid.add_child(lbl)
+		lbl.add_theme_font_size_override("font_size", 14)
+		lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+		lbl.add_theme_constant_override("outline_size", 4)
+		row.add_child(lbl)
+		
+		_info_stats_grid.add_child(row)
 		_info_stat_labels[stat_key] = lbl
 
 	# Status effect count label.
@@ -309,24 +322,19 @@ func _build_info_box() -> void:
 	_info_description_button.text = "More Information"
 	_info_description_button.custom_minimum_size = Vector2(0, 30)
 	_info_description_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	
-	# Connect the press event to our new method
 	_info_description_button.pressed.connect(_on_description_button_pressed)
-	
 	_info_box_vbox.add_child(_info_description_button)
 
 
 func show_unit_info(unit) -> void:
-	# Populates and shows the info box for exactly ONE unit (ally or enemy).
-	# Called by battle_manager.gd whenever any unit is tapped.
 	if not is_instance_valid(unit):
 		hide_unit_info()
 		return
 
 	_info_box_unit = unit
 	_info_box.visible = true
-	_hide_status_tooltip()   # A new unit's info shouldn't leave a stale tooltip up.
-	_last_status_fingerprint = ""   # Force the next _process poll to rebuild icons.
+	_hide_status_tooltip()
+	_last_status_fingerprint = ""
 
 	# ── NAME ────────────────────────────────────────────────────────────────────
 	var team_tag := "🛡️" if unit.is_player_unit else "⚔️"
@@ -345,9 +353,6 @@ func show_unit_info(unit) -> void:
 	_info_hp_label.text = "%d / %d" % [unit.current_hp, max_hp]
 
 	# ── MANA ────────────────────────────────────────────────────────────────────
-	# Only show the mana bar at all if this unit actually has a mana pool —
-	# some enemies (or melee-only units) may have max_mana == 0, in which case
-	# the whole bar holder is hidden rather than showing an empty "0 / 0" bar.
 	var max_mana: int = unit.get_stats().mana
 	if max_mana > 0:
 		_info_mana_bar_holder.visible = true
@@ -369,10 +374,12 @@ func show_unit_info(unit) -> void:
 		var status_data: StatusEffectData = status_entry["data"]
 		_add_status_icon(status_data, status_entry["stacks"])
 
+
 func hide_unit_info() -> void:
 	_info_box.visible = false
 	_info_box_unit = null
 	_hide_status_tooltip()
+
 
 func _on_description_button_pressed() -> void:
 	if not is_instance_valid(_info_box_unit):
@@ -380,15 +387,16 @@ func _on_description_button_pressed() -> void:
 		
 	print("📋 Instantiating script-only UnitInfoPopup for: ", _info_box_unit.unit_data.display_name)
 	
-	# 1. Instantiate the script-only class using .new()
 	var popup_instance = UnitInfoPopup.new()
-	
-	# 2. Add it to this UI canvas so it renders on screen
 	add_child(popup_instance)
 	
-	# 3. Format your live, effective combat stats into strings for the popup grid
 	var unit = _info_box_unit
+	var max_hp: int = max(1, unit.get_stats().hp)
+	var max_mana: int = unit.get_stats().mana
+	
 	var live_stat_lines: Array[String] = [
+		"HP: %d / %d" % [unit.current_hp, max_hp],
+		"Mana: %d / %d" % [unit.current_mana, max_mana],
 		"ATK: %d" % unit.get_effective_atk(),
 		"MATK: %d" % unit.get_effective_matk(),
 		"DEF: %d" % unit.get_effective_def(),
@@ -398,19 +406,14 @@ func _on_description_button_pressed() -> void:
 		"MOV: %d" % unit.get_effective_mov()
 	]
 	
-	# 4. Pull equipped items data if your unit structure supports it
 	var items: Array = []
 	if "equipped_items" in unit and unit.equipped_items != null:
 		items = unit.equipped_items
 	
-	# 5. Initialize the popup layout with your live data
-	# Setup expects: setup(unit_data, stat_lines, equipped_item_entries)
 	popup_instance.setup(unit.unit_data, live_stat_lines, items)
-	
+
+
 func _update_stat_labels(unit) -> void:
-	# Reads all seven get_effective_*() getters and writes them into the stats
-	# grid. These already include status modifiers AND Momentum aura bonuses —
-	# i.e. exactly the numbers the unit would actually fight with right now.
 	_info_stat_labels["atk"].text         = "ATK: %d" % unit.get_effective_atk()
 	_info_stat_labels["matk"].text        = "MATK: %d" % unit.get_effective_matk()
 	_info_stat_labels["def"].text         = "DEF: %d" % unit.get_effective_def()
@@ -421,20 +424,11 @@ func _update_stat_labels(unit) -> void:
 
 
 func refresh_unit_info_if_showing(unit) -> void:
-	# Call this after anything that changes a unit's HP/mana/statuses (damage,
-	# healing, a status tick, etc.) so the box stays live while it's open.
-	# Safe to call unconditionally — does nothing if this unit's box isn't open.
-	# NOTE: the _process() poll above already keeps the box live automatically,
-	# so calling this manually is optional/redundant but harmless.
 	if _info_box_unit == unit and _info_box.visible:
 		show_unit_info(unit)
 
 
 func _refresh_info_box_live_values() -> void:
-	# Lightweight per-frame refresh: updates HP/mana numbers and the status
-	# count/icons WITHOUT doing the full show_unit_info() teardown each time,
-	# to avoid icon flicker. Only rebuilds the icon row if the status count
-	# (or any status's stack count) actually changed since last frame.
 	var unit = _info_box_unit
 
 	var max_hp: int = max(1, unit.get_stats().hp)
@@ -459,9 +453,6 @@ func _refresh_info_box_live_values() -> void:
 
 	_update_stat_labels(unit)
 
-	# Only rebuild the status icon row if something about it actually changed —
-	# comparing a cheap fingerprint string avoids flicker from rebuilding
-	# identical icons every single frame.
 	var fingerprint := ""
 	for s in unit.active_statuses:
 		fingerprint += "%s:%d|" % [s["data"].id, s["stacks"]]
@@ -477,13 +468,9 @@ func _refresh_info_box_live_values() -> void:
 
 
 var _last_status_fingerprint: String = ""
-# Used by _refresh_info_box_live_values to detect when the status icon row
-# actually needs rebuilding, vs. when only HP/mana numbers changed.
 
 
 func _add_status_icon(status_data: StatusEffectData, stacks: int) -> void:
-	# Builds one clickable icon button for a single active status effect.
-	# Uses status_data.icon if assigned, otherwise a plain black box fallback.
 	var icon_button := TextureButton.new()
 	icon_button.custom_minimum_size = Vector2(STATUS_ICON_SIZE, STATUS_ICON_SIZE)
 	icon_button.ignore_texture_size = true
@@ -493,7 +480,6 @@ func _add_status_icon(status_data: StatusEffectData, stacks: int) -> void:
 	if status_data.icon != null:
 		icon_button.texture_normal = status_data.icon
 	else:
-		# Fallback: a flat black square texture, generated on the fly.
 		var img := Image.create(int(STATUS_ICON_SIZE), int(STATUS_ICON_SIZE), false, Image.FORMAT_RGBA8)
 		img.fill(MISSING_ICON_COLOR)
 		icon_button.texture_normal = ImageTexture.create_from_image(img)
@@ -504,7 +490,6 @@ func _add_status_icon(status_data: StatusEffectData, stacks: int) -> void:
 
 	_info_status_icon_row.add_child(icon_button)
 
-	# If the status is stacked, overlay a small stack-count label in the corner.
 	if stacks > 1:
 		var stack_label := Label.new()
 		stack_label.text = "x%d" % stacks
@@ -513,13 +498,12 @@ func _add_status_icon(status_data: StatusEffectData, stacks: int) -> void:
 		stack_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		icon_button.add_child(stack_label)
 
+
 # ══════════════════════════════════════════════════════════════════════════════
-# STATUS TOOLTIP (click an icon → see its description)
+# STATUS TOOLTIP
 # ══════════════════════════════════════════════════════════════════════════════
 
 func _show_status_tooltip(status_data: StatusEffectData, anchor_node: Control) -> void:
-	# Shows a small popup near the clicked icon with its name + description.
-	# Clicking anywhere else on screen dismisses it — see _unhandled_input.
 	_hide_status_tooltip()
 
 	_status_tooltip = PanelContainer.new()
@@ -542,8 +526,6 @@ func _show_status_tooltip(status_data: StatusEffectData, anchor_node: Control) -
 	desc.add_theme_font_size_override("font_size", 13)
 	vbox.add_child(desc)
 
-	# Position the tooltip just below-right of the icon that was clicked,
-	# clamped so it doesn't run off the right/bottom edge of the screen.
 	var anchor_global_pos: Vector2 = anchor_node.global_position
 	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
 	var tooltip_pos: Vector2 = anchor_global_pos + Vector2(0, STATUS_ICON_SIZE + 4)
@@ -559,9 +541,6 @@ func _hide_status_tooltip() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# Dismiss the status tooltip on any click that isn't on the tooltip itself.
-	# We check for mouse button press OR a touch screen press, since this is a
-	# mobile-and-desktop project (per the broader UI patterns already in use).
 	if _status_tooltip == null:
 		return
 
@@ -582,13 +561,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not is_click:
 		return
 
-	# If the click landed inside the tooltip's own rect, let it be (clicking
-	# the tooltip itself shouldn't dismiss it — only clicking AWAY from it should).
 	var tooltip_rect := Rect2(_status_tooltip.global_position, _status_tooltip.size)
 	if tooltip_rect.has_point(click_pos):
 		return
 
 	_hide_status_tooltip()
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # GRID LINES TOGGLE
@@ -597,8 +575,6 @@ func _unhandled_input(event: InputEvent) -> void:
 var _grid_toggle_button: Button = null
 
 func _build_grid_toggle_button() -> void:
-	# Adds a simple toggle button into the existing VBoxContainer alongside
-	# the End Turn / Cancel Move buttons, so no scene-tree edits are required.
 	_grid_toggle_button = Button.new()
 	_grid_toggle_button.text = "🔳 Grid: Off"
 	_grid_toggle_button.toggle_mode = true
@@ -609,8 +585,7 @@ func _build_grid_toggle_button() -> void:
 
 func _on_grid_toggle_pressed() -> void:
 	if grid == null or not grid.has_method("set_grid_lines_visible"):
-		printerr("⚠️ UIManager: grid reference missing or set_grid_lines_visible() ",
-				 "not found on BattleGrid — cannot toggle grid lines.")
+		printerr("⚠️ UIManager: grid reference missing or set_grid_lines_visible() not found on BattleGrid.")
 		return
 
 	var now_visible: bool = _grid_toggle_button.button_pressed

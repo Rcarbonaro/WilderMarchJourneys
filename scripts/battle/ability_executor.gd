@@ -297,7 +297,13 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 	# Now that every target this cast hit is known, actually move them — in
 	# an order that won't leave anyone stuck behind a teammate who's also
 	# about to move. See _resolve_pending_displacements for the full story.
-	_resolve_pending_displacements(caster, ability, pending_displacements, target_cells)
+	# AWAITED so this ability's execution doesn't fully complete (and let
+	# whoever called us move on to ending the turn, ticking hazards, etc.)
+	# until every pushed/pulled/scattered unit has visually finished sliding
+	# to their new tile — this is the fix for sprites ending up out of sync
+	# with their actual grid position when a displacement happens to be the
+	# last thing that occurs in a round.
+	await _resolve_pending_displacements(caster, ability, pending_displacements, target_cells)
 
 	# ── STEP 3.4: SELF-STATUS APPLICATION ─────────────────────────────────────
 	# Applies any statuses in applies_statuses_to_self to the CASTER, once per
@@ -795,11 +801,14 @@ func _try_step_with_wall_drag(target, current: Vector2i, move_dir: Vector2i) -> 
 	return current   # Every option blocked — nowhere left to drag to.
 
 
-func _displace_unit_auto(caster, target, squares: int) -> void:
+func _displace_unit_auto(caster, target, squares: int) -> bool:
 	# Pushes (positive) or pulls (negative) the target relative to the caster.
+	# Returns true if the target actually moved (i.e. move_to() was called and
+	# will eventually emit movement_finished) — _resolve_pending_displacements
+	# uses this to know exactly which targets it needs to wait on afterward.
 	var direction: Vector2i = target.grid_position - caster.grid_position
 	if direction == Vector2i(0, 0):
-		return
+		return false
 
 	# Normalize the direction toward/away from the caster. This naturally
 	# produces a diagonal move_dir (e.g. (1,1)) whenever the target isn't
@@ -843,11 +852,15 @@ func _displace_unit_auto(caster, target, squares: int) -> void:
 
 	if current != target.grid_position:
 		target.move_to(current)
+		return true
+	return false
 
 
 func _displace_unit_scatter(ability: AbilityData, target, squares: int,
-							target_cells: Array) -> void:
+							target_cells: Array) -> bool:
 	# Scatters the target outward from the centre of the AOE.
+	# Returns true if the target actually moved (see _displace_unit_auto's
+	# doc comment above for why this matters).
 	var sum_x: int = 0
 	var sum_y: int = 0
 	var count: int = target_cells.size()
@@ -859,7 +872,7 @@ func _displace_unit_scatter(ability: AbilityData, target, squares: int,
 	var center: Vector2i = Vector2i(sum_x / count, sum_y / count)
 	var direction: Vector2i = target.grid_position - center
 	if direction == Vector2i(0, 0):
-		return
+		return false
 
 	var move_dir: Vector2i = _to_grid_direction(direction)
 
@@ -874,12 +887,16 @@ func _displace_unit_scatter(ability: AbilityData, target, squares: int,
 
 	if current != target.grid_position:
 		target.move_to(current)
+		return true
+	return false
 
 
-func _displace_unit_manual(target, squares: int, fixed_dir: Vector2i) -> void:
+func _displace_unit_manual(target, squares: int, fixed_dir: Vector2i) -> bool:
 	# Displaces the target in a fixed designer-chosen direction.
+	# Returns true if the target actually moved (see _displace_unit_auto's
+	# doc comment above for why this matters).
 	if fixed_dir == Vector2i(0, 0):
-		return
+		return false
 
 	var move_dir: Vector2i = _to_grid_direction(fixed_dir)
 	move_dir *= sign(squares)
@@ -895,6 +912,8 @@ func _displace_unit_manual(target, squares: int, fixed_dir: Vector2i) -> void:
 
 	if current != target.grid_position:
 		target.move_to(current)
+		return true
+	return false
 
 
 func _resolve_pending_displacements(caster, ability: AbilityData, pending: Array,
@@ -945,6 +964,11 @@ func _resolve_pending_displacements(caster, ability: AbilityData, pending: Array
 		if not entry["target"] in unique_targets:
 			unique_targets.append(entry["target"])
 
+	# Tracks which targets ACTUALLY moved (move_to() was called on them), so
+	# we know exactly who to wait on below — see the big comment above
+	# _displace_unit_auto for why we can't just await everyone unconditionally.
+	var moved_targets: Array = []
+
 	match ability.displacement_type:
 		"manual":
 			# Push direction is the SAME for every target, so "front of the
@@ -957,8 +981,10 @@ func _resolve_pending_displacements(caster, ability: AbilityData, pending: Array
 				return proj_a > proj_b   # Furthest along move_dir goes first.
 			)
 			for target in unique_targets:
-				_displace_unit_manual(target, ability.displacement_squares,
-									   ability.displacement_manual_dir)
+				var did_move: bool = _displace_unit_manual(target, ability.displacement_squares,
+										   ability.displacement_manual_dir)
+				if did_move:
+					moved_targets.append(target)
 
 		"auto":
 			# Direction is computed per-target, radially away from (or toward,
@@ -972,7 +998,9 @@ func _resolve_pending_displacements(caster, ability: AbilityData, pending: Array
 				return dist_a > dist_b   # Farthest from caster goes first.
 			)
 			for target in unique_targets:
-				_displace_unit_auto(caster, target, ability.displacement_squares)
+				var did_move: bool = _displace_unit_auto(caster, target, ability.displacement_squares)
+				if did_move:
+					moved_targets.append(target)
 
 		"scatter":
 			# Direction is radially away from the AOE's centre. Whoever is
@@ -994,8 +1022,34 @@ func _resolve_pending_displacements(caster, ability: AbilityData, pending: Array
 				return dist_a > dist_b   # Farthest from centre goes first.
 			)
 			for target in unique_targets:
-				_displace_unit_scatter(ability, target, ability.displacement_squares,
+				var did_move: bool = _displace_unit_scatter(ability, target, ability.displacement_squares,
 										target_cells)
+				if did_move:
+					moved_targets.append(target)
+
+	# ── WAIT FOR EVERY DISPLACEMENT TO VISUALLY FINISH ────────────────────────
+	# THE WINDMAGE FIX: every _displace_unit_* call above kicks off a
+	# move_to() tween but doesn't wait for it — they're all started back to
+	# back here, in the same frame, so multiple pushed units visually slide
+	# at once instead of one at a time. But until now, NOTHING ever waited
+	# for those tweens to actually finish before this whole function (and
+	# therefore execute_ability) returned. That meant whoever called the
+	# ability — BattleManager ending the player's turn, or AISystem moving on
+	# to start/end the enemy's turn — could proceed immediately afterward
+	# while a pushed unit's sprite was still mid-slide. If that displacement
+	# happened to be the LAST thing to happen before a turn transition (e.g.
+	# Windmage's push being the last action of the round), nothing was left
+	# to let that tween finish gracefully — the pushed enemy's VISUAL
+	# position (still catching up) and its LOGICAL grid_position (updated
+	# instantly, the moment move_to() was called) could end up out of sync
+	# for the rest of the battle, since nothing forced the animation to
+	# actually complete before everything else moved on. Now we explicitly
+	# wait for every unit that actually moved before returning, so by the
+	# time this ability is fully resolved, every sprite has genuinely caught
+	# up to its grid position.
+	for target in moved_targets:
+		if is_instance_valid(target):
+			await target.movement_finished
 
 func _launch_projectile(caster, ability: AbilityData, target_cell: Vector2i) -> void:
 	# Spawns a projectile that travels from the caster to the target cell.
