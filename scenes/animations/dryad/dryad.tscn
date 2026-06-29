@@ -648,7 +648,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_w414l")
 }, {
-"duration": 1.0,
+"duration": 10.0,
 "texture": SubResource("AtlasTexture_kxx48")
 }],
 "loop": false,
@@ -733,9 +733,8 @@ unit_data = ExtResource("2_gm1q6")
 position = Vector2(5.000001, -7.500002)
 scale = Vector2(0.46, 0.447)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"barkguard_idle"
+animation = &"die"
 autoplay = "idle"
-frame_progress = 0.6754338
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0

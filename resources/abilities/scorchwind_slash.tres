@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_g5off"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_4e7tr"]
 [ext_resource type="Texture2D" uid="uid://bekvd18nwwxw3" path="res://sprites/UI/skill icons/skill_icons_scorchwindslash.png" id="2_7c18j"]
+[ext_resource type="PackedScene" uid="uid://7f73binoe852" path="res://scenes/animations/spellsword/scorchwindslash.tscn" id="2_iu5re"]
 
 [resource]
 script = ExtResource("2_4e7tr")
@@ -10,6 +11,7 @@ id = "scorchwindslash"
 display_name = "Scorchwind Slash"
 description = "Imbue your blade with fire to unleash a powerful fiery swing in a cone in front of the caster. Cost: 25 mana or Arcana Charge."
 icon = ExtResource("2_7c18j")
+effect_scene = ExtResource("2_iu5re")
 attack_animation_name = "attack_fire"
 mana_cost = 25
 max_range = 3

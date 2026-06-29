@@ -70,23 +70,19 @@ region = Rect2(688, 576, 344, 192)
 atlas = ExtResource("3_npgt8")
 region = Rect2(344, 0, 344, 192)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_1go3v"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_3vcq5"]
 atlas = ExtResource("4_ja12y")
-region = Rect2(688, 0, 344, 192)
+region = Rect2(344, 0, 344, 192)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_4ogv8"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_ujfh7"]
 atlas = ExtResource("4_ja12y")
-region = Rect2(0, 192, 344, 192)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_cyb6s"]
-atlas = ExtResource("4_ja12y")
-region = Rect2(344, 192, 344, 192)
+region = Rect2(688, 192, 344, 192)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_nco2i"]
 atlas = ExtResource("4_ja12y")
 region = Rect2(688, 384, 344, 192)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_mxlui"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_npgt8"]
 atlas = ExtResource("4_ja12y")
 region = Rect2(688, 576, 344, 192)
 
@@ -213,6 +209,9 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_m8npj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3u5n4")
 }],
 "loop": false,
 "name": &"attack",
@@ -337,23 +336,20 @@ animations = [{
 "texture": SubResource("AtlasTexture_dt27w")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_1go3v")
+"texture": SubResource("AtlasTexture_3vcq5")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_4ogv8")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_cyb6s")
+"texture": SubResource("AtlasTexture_ujfh7")
 }, {
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_nco2i")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_mxlui")
+"texture": SubResource("AtlasTexture_npgt8")
 }],
 "loop": false,
 "name": &"die",
-"speed": 11.0
+"speed": 9.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -465,10 +461,10 @@ is_spellsword = null
 position = Vector2(-2, 1)
 scale = Vector2(0.5031008, 0.4924821)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"walk"
+animation = &"attack"
 autoplay = "idle"
-frame = 1
-frame_progress = 0.0306549
+frame = 15
+frame_progress = 1.0
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0

@@ -286,7 +286,7 @@ animations = [{
 "speed": 5.0
 }]
 
-[node name="hexweaver" type="Node2D" unique_id=15020637]
+[node name="stonewarden" type="Node2D" unique_id=15020637]
 script = ExtResource("1_ers6n")
 unit_data = ExtResource("2_7p4xf")
 
@@ -294,7 +294,7 @@ unit_data = ExtResource("2_7p4xf")
 position = Vector2(0.46538734, 0.9367695)
 scale = Vector2(0.48202795, 0.42038706)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"attack"
+animation = &"die"
 autoplay = "idle"
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]

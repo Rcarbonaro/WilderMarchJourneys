@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://c4xtg4mviym7d"]
+
+[ext_resource type="Texture2D" uid="uid://swkbqfgdrgp3" path="res://sprites/dryad/dryadbasic.png" id="1_oih64"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_oih64"]
+atlas = ExtResource("1_oih64")
+region = Rect2(384, 330, 384, 349)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_1cqjx"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_oih64")
+}],
+"loop": false,
+"name": &"default",
+"speed": 6.0
+}]
+
+[node name="Dryadbasic" type="Node2D" unique_id=239486943]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=938586447]
+position = Vector2(4, 1.0000019)
+scale = Vector2(0.5885417, 0.5795129)
+sprite_frames = SubResource("SpriteFrames_1cqjx")
+frame_progress = 1.0

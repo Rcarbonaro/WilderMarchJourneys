@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://da7mpdinj6a44" path="res://sprites/dryad/dryad_sprite.png" id="3_s482d"]
 [ext_resource type="Resource" uid="uid://dhahkkqd0uqq8" path="res://resources/abilities/dryad_basic.tres" id="4_pdaka"]
 [ext_resource type="Resource" uid="uid://d1k2q6fywpued" path="res://resources/abilities/barkguard.tres" id="5_s482d"]
+[ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_u3dep"]
 [ext_resource type="Resource" uid="uid://cqfrd830tckb2" path="res://resources/abilities/wallofthorns.tres" id="6_57uqc"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="6_u3dep"]
 

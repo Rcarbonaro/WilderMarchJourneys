@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_qndft"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_3hlq0"]
 [ext_resource type="Resource" uid="uid://4mj6cbd74k2s" path="res://resources/auras/decayingaura.tres" id="2_o4bc2"]
+[ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="3_kr55i"]
 [ext_resource type="Texture2D" uid="uid://bjwp1u5kiqyw7" path="res://sprites/UI/skill icons/skill_icons_decayingaura.png" id="3_o4bc2"]
 
 [resource]
@@ -11,6 +12,7 @@ id = "decayingaura"
 display_name = "Decaying Aura"
 description = "Create a permanent aura that lowers enemy's offenses. Using another aura will end this aura. Debuff lasts 3 turns and can stack."
 icon = ExtResource("3_o4bc2")
+effect_scene = ExtResource("3_kr55i")
 max_range = 0
 base_damage_multiplier = 0.0
 damage_type = "magical"

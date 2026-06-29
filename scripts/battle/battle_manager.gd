@@ -224,6 +224,16 @@ func _spawn_stage_enemies() -> void:
 		printerr("❌ Could not load wolf_data.tres!")
 		return
 
+
+#Encounter 0
+	spawn_unit(wolf_data,     Vector2i(10, 1), false, 1)
+	spawn_unit(wolf_data,     Vector2i(10, 2), false, 1)
+	spawn_unit(wolf_data,     Vector2i(12, 2), false, 1)
+	spawn_unit(wolf_data,     Vector2i(10, 3), false, 1)
+	if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(15, 2), false, 1)
+	print("🐺 Monster waves deployed!")
+	
+	
 #Encounter 1
 	#spawn_unit(wolf_data,     Vector2i(10, 1), false, 1)
 	#spawn_unit(wolf_data,     Vector2i(10, 2), false, 1)
@@ -235,14 +245,14 @@ func _spawn_stage_enemies() -> void:
 	#print("🐺 Monster waves deployed!")
 
 #Encounter 2
-	if bear_data != null: spawn_unit(bear_data, Vector2i(13, 2), false, 1)
-	if sporeling_data != null: spawn_unit(sporeling_data, Vector2i(13, 1), false, 1)
-	if sporeling_data != null: spawn_unit(sporeling_data, Vector2i(14, 3), false, 1)
-	if thornling_data != null: spawn_unit(thornling_data, Vector2i(14, 2), false, 1)
-	if thornling_data != null: spawn_unit(thornling_data, Vector2i(15, 4), false, 1)
-	if sporeling_data != null: spawn_unit(sporeling_data, Vector2i(12, 2), false, 1)
-	if hulkingsporeling_data      != null: spawn_unit(ent_data,      Vector2i(18, 8), false, 1)
-	print("🐺 Monster waves deployed!")
+	#if bear_data != null: spawn_unit(bear_data, Vector2i(13, 2), false, 1)
+	#if sporeling_data != null: spawn_unit(sporeling_data, Vector2i(13, 1), false, 1)
+	#if sporeling_data != null: spawn_unit(sporeling_data, Vector2i(14, 3), false, 1)
+	#if thornling_data != null: spawn_unit(thornling_data, Vector2i(14, 2), false, 1)
+	#if thornling_data != null: spawn_unit(thornling_data, Vector2i(15, 4), false, 1)
+	#if sporeling_data != null: spawn_unit(sporeling_data, Vector2i(12, 2), false, 1)
+	#if hulkingsporeling_data      != null: spawn_unit(ent_data,      Vector2i(18, 8), false, 1)
+	#print("🐺 Monster waves deployed!")
 
 
 #Encounter 3

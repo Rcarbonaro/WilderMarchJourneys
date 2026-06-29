@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://bg66ynyakit7"]
+
+[ext_resource type="Texture2D" uid="uid://dsnmqw287cmnw" path="res://sprites/hexweaver/Hexweaver Basic.png" id="1_scldc"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qh2ii"]
+atlas = ExtResource("1_scldc")
+region = Rect2(0, 0, 992, 552)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_075ax"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qh2ii")
+}],
+"loop": false,
+"name": &"default",
+"speed": 5.0
+}]
+
+[node name="Hexweaverbasic" type="Node2D" unique_id=812207508]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1396825420]
+position = Vector2(0.9999924, 3)
+scale = Vector2(0.25504038, 0.28894934)
+sprite_frames = SubResource("SpriteFrames_075ax")

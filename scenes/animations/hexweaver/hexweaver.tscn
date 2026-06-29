@@ -452,7 +452,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_kjq3r")
 }, {
-"duration": 1.0,
+"duration": 10.0,
 "texture": SubResource("AtlasTexture_sb6p4")
 }],
 "loop": false,
@@ -578,10 +578,8 @@ unit_data = ExtResource("2_5ua66")
 position = Vector2(1, 9.536743e-07)
 scale = Vector2(0.3284167, 0.31030422)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"attack_down"
+animation = &"die"
 autoplay = "idle"
-frame = 14
-frame_progress = 1.0
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0

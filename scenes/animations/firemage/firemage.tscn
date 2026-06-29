@@ -288,7 +288,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_htceo")
 }, {
-"duration": 1.0,
+"duration": 10.0,
 "texture": SubResource("AtlasTexture_v3gka")
 }],
 "loop": false,
@@ -367,9 +367,8 @@ is_spellsword = null
 position = Vector2(-0.45665598, -0.99999857)
 scale = Vector2(0.39784738, 0.39457783)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"idle"
+animation = &"die"
 autoplay = "idle"
-frame_progress = 0.54679286
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0

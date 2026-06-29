@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://bplo8onrk421q"]
+
+[ext_resource type="Texture2D" uid="uid://sfamyf7y7l4i" path="res://sprites/thornling/thornling spikes.png" id="1_t8c63"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tr5jm"]
+atlas = ExtResource("1_t8c63")
+region = Rect2(0, 0, 427, 329)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_wj0iy"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tr5jm")
+}],
+"loop": false,
+"name": &"default",
+"speed": 5.0
+}]
+
+[node name="ThornlingBasic" type="Node2D" unique_id=997227970]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1826986394]
+sprite_frames = SubResource("SpriteFrames_wj0iy")

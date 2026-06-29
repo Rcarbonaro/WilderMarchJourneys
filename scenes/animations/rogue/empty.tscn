@@ -1,0 +1,30 @@
+[gd_scene format=3 uid="uid://b3komthg26brl"]
+
+[ext_resource type="Texture2D" uid="uid://l5k0yhxa525g" path="res://sprites/spellsword/scorchwindslash.png" id="1_m8li2"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_e171l"]
+atlas = ExtResource("1_m8li2")
+region = Rect2(0, 0, 128, 96)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_e3y37"]
+atlas = ExtResource("1_m8li2")
+region = Rect2(128, 0, 128, 96)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_3o5qr"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_e171l")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_e3y37")
+}],
+"loop": false,
+"name": &"default",
+"speed": 5.0
+}]
+
+[node name="RogueBasic" type="Node2D" unique_id=503533548]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1554387630]
+sprite_frames = SubResource("SpriteFrames_3o5qr")

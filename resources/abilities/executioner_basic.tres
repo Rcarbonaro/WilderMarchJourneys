@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_5gsx2"]
 [ext_resource type="Texture2D" uid="uid://cvdfewo8c8v3l" path="res://sprites/UI/skill icons/skill_icons_greataxe.png" id="2_akasm"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_dcnnm"]
+[ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="2_g0xya"]
 
 [resource]
 script = ExtResource("2_dcnnm")
@@ -10,6 +11,7 @@ id = "basicattack"
 display_name = "Basic Attack"
 description = "A melee attack that deals extra damage based on the number of enemy debuffs."
 icon = ExtResource("2_akasm")
+effect_scene = ExtResource("2_g0xya")
 bonus_per_target_debuff = 0.25
 bonus_per_target_debuff_max = 2.0
 bonus_atk_per_caster_buff = 5

@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_6nsvo"]
 [ext_resource type="Texture2D" uid="uid://cbt1r5o77jgvc" path="res://sprites/UI/skill icons/skill_icons_oakclaw.png" id="2_k604m"]
+[ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="2_mvtr5"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="3_mvtr5"]
 
 [resource]
@@ -10,5 +11,6 @@ id = "basic_attack"
 display_name = "Oakenclaw"
 description = "Rend with oaken claws"
 icon = ExtResource("2_k604m")
+effect_scene = ExtResource("2_mvtr5")
 min_range = 1
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

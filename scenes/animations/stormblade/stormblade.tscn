@@ -313,7 +313,7 @@ animations = [{
 "speed": 5.0
 }]
 
-[node name="WindMage" type="Node2D" unique_id=15020637]
+[node name="Stormblade" type="Node2D" unique_id=15020637]
 script = ExtResource("1_4wo1x")
 unit_data = ExtResource("2_v5wpe")
 
@@ -321,10 +321,8 @@ unit_data = ExtResource("2_v5wpe")
 position = Vector2(2, -3.999999)
 scale = Vector2(0.4, 0.403)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"attack"
+animation = &"die"
 autoplay = "idle"
-frame = 7
-frame_progress = 1.0
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0

@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_6w36y"]
 [ext_resource type="Resource" uid="uid://dcddpxfvt7s8e" path="res://resources/status_effects/miasma.tres" id="2_vnqjn"]
+[ext_resource type="PackedScene" uid="uid://coak3qga3hk76" path="res://scenes/animations/plaguebringer/miasmaburst.tscn" id="3_cy1up"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="3_rxojs"]
 [ext_resource type="Texture2D" uid="uid://52hn184qn2xv" path="res://sprites/UI/skill icons/skill_icons_miasmaburst.png" id="3_vnqjn"]
 
@@ -11,6 +12,7 @@ id = "acidburst"
 display_name = "Miasma Burst"
 description = "A cone attack dealing bonus damage based on the number of enemy debuffs. Cost: 10 mana"
 icon = ExtResource("3_vnqjn")
+effect_scene = ExtResource("3_cy1up")
 mana_cost = 10
 max_range = 4
 aoe_shape = "cone"
