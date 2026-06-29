@@ -348,7 +348,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_eckoe")
 }, {
-"duration": 1.0,
+"duration": 10.0,
 "texture": SubResource("AtlasTexture_ccqw5")
 }],
 "loop": false,
@@ -423,7 +423,7 @@ unit_data = ExtResource("2_61xk7")
 position = Vector2(-5.000004, -4.000008)
 scale = Vector2(0.3, 0.3)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"walk_up"
+animation = &"die"
 autoplay = "idle"
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]

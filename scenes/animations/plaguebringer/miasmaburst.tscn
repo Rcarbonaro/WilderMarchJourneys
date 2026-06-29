@@ -1,0 +1,83 @@
+[gd_scene format=3 uid="uid://coak3qga3hk76"]
+
+[ext_resource type="Texture2D" uid="uid://dhjun8v7j1ixn" path="res://sprites/plaguebringer/miasmaburst2.png" id="1_wnmi3"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ywqmw"]
+atlas = ExtResource("1_wnmi3")
+region = Rect2(0, 0, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_y5btg"]
+atlas = ExtResource("1_wnmi3")
+region = Rect2(0, 384, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qank0"]
+atlas = ExtResource("1_wnmi3")
+region = Rect2(704, 192, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8auvh"]
+atlas = ExtResource("1_wnmi3")
+region = Rect2(352, 384, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_goy82"]
+atlas = ExtResource("1_wnmi3")
+region = Rect2(704, 384, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_84uyg"]
+atlas = ExtResource("1_wnmi3")
+region = Rect2(1056, 384, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_o8y8p"]
+atlas = ExtResource("1_wnmi3")
+region = Rect2(0, 576, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_r06xt"]
+atlas = ExtResource("1_wnmi3")
+region = Rect2(352, 576, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mroju"]
+atlas = ExtResource("1_wnmi3")
+region = Rect2(704, 576, 352, 192)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_hei42"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ywqmw")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_y5btg")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qank0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8auvh")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_goy82")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_84uyg")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_o8y8p")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_r06xt")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mroju")
+}],
+"loop": false,
+"name": &"default",
+"speed": 12.0
+}]
+
+[node name="Miasmaburst" type="Node2D" unique_id=1601585759]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=603563050]
+position = Vector2(0, -25.5)
+scale = Vector2(1, 1.265625)
+sprite_frames = SubResource("SpriteFrames_hei42")
+frame = 8
+frame_progress = 1.0

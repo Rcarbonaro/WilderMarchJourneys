@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_645ic"]
 [ext_resource type="Texture2D" uid="uid://cjkd5yav1fn0h" path="res://sprites/UI/skill icons/skill_icons_stormbladeslash.png" id="2_31gfn"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_kr1i0"]
+[ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="2_q5qm3"]
 
 [resource]
 script = ExtResource("2_kr1i0")
@@ -10,6 +11,7 @@ id = "stormbladebasic"
 display_name = "Basic Attack"
 description = "An agile attack that allows the user to move 1 space after attacking."
 icon = ExtResource("2_31gfn")
+effect_scene = ExtResource("2_q5qm3")
 damage_type = "magical"
 scaling_stat = "matk"
 post_attack_move_squares = 1

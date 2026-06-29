@@ -416,8 +416,8 @@ script = ExtResource("1_vwt1h")
 unit_data = ExtResource("2_17s0t")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1298568116]
-position = Vector2(2.0242648, -26.477959)
-scale = Vector2(0.5319805, 0.5437514)
+position = Vector2(5.4653816, 0.5611124)
+scale = Vector2(0.44948924, 0.42625868)
 sprite_frames = SubResource("SpriteFrames_grxbi")
 animation = &"walk_up"
 autoplay = "idle"

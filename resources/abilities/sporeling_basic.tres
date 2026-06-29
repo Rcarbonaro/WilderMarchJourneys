@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://ddi4fgvxy6c56"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_jb3bw"]
+[ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="2_d2q47"]
 [ext_resource type="Texture2D" uid="uid://c178r0452wrrf" path="res://sprites/UI/skill icons/skill_icons_spores.png" id="2_hbmw4"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_qs2yi"]
 
@@ -10,6 +11,7 @@ id = "sporelingbasic"
 display_name = "Spore Cloud"
 description = "Sporeling unleashes a small cloud of toxic spores, dealing magic damage."
 icon = ExtResource("2_hbmw4")
+effect_scene = ExtResource("2_d2q47")
 aoe_shape = "square"
 aoe_size = 3
 damage_type = "magical"

@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://b2fskimaby3vf"]
+
+[ext_resource type="Texture2D" uid="uid://bmpqsghfaejwp" path="res://sprites/plaguebringer/plaguebringer_blightbolt.png" id="1_tigav"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bwt2y"]
+atlas = ExtResource("1_tigav")
+region = Rect2(228, 292, 228, 292)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_iag5u"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bwt2y")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[node name="Blightbolt" type="Node2D" unique_id=1151706705]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=865497224]
+position = Vector2(-1, 1.9999847)
+scale = Vector2(0.34210527, 0.30136988)
+sprite_frames = SubResource("SpriteFrames_iag5u")

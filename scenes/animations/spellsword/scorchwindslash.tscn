@@ -1,0 +1,62 @@
+[gd_scene format=3 uid="uid://7f73binoe852"]
+
+[ext_resource type="Texture2D" uid="uid://l5k0yhxa525g" path="res://sprites/spellsword/scorchwindslash.png" id="1_nvd75"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nvd75"]
+atlas = ExtResource("1_nvd75")
+region = Rect2(39, 0, 456, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8gojq"]
+atlas = ExtResource("1_nvd75")
+region = Rect2(495, 0, 456, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1dmvo"]
+atlas = ExtResource("1_nvd75")
+region = Rect2(951, 0, 456, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7m0vn"]
+atlas = ExtResource("1_nvd75")
+region = Rect2(39, 384, 456, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4keoq"]
+atlas = ExtResource("1_nvd75")
+region = Rect2(495, 384, 456, 384)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_s6yak"]
+atlas = ExtResource("1_nvd75")
+region = Rect2(951, 384, 456, 384)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_bwknb"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nvd75")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8gojq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1dmvo")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7m0vn")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4keoq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_s6yak")
+}],
+"loop": false,
+"name": &"default",
+"speed": 15.0
+}]
+
+[node name="Fireball" type="Node2D" unique_id=1437919797]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1108632739]
+position = Vector2(4.999999, 1)
+scale = Vector2(0.13636364, 0.16145834)
+sprite_frames = SubResource("SpriteFrames_bwknb")
+frame = 5
+frame_progress = 1.0

@@ -1,0 +1,125 @@
+[gd_scene format=3 uid="uid://x76bwbwn02jj"]
+
+[ext_resource type="Texture2D" uid="uid://bu4pgnhwsom2l" path="res://sprites/Sylvaris/sylvaris_orb.png" id="1_kmeq6"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ibh18"]
+atlas = ExtResource("1_kmeq6")
+region = Rect2(263, 205, 263, 205)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pvrso"]
+atlas = ExtResource("1_kmeq6")
+region = Rect2(263, 0, 263, 205)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_w45ns"]
+atlas = ExtResource("1_kmeq6")
+region = Rect2(263, 615, 263, 205)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_uplaq"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ibh18")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pvrso")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w45ns")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ibh18")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pvrso")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w45ns")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ibh18")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pvrso")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w45ns")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ibh18")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pvrso")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w45ns")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ibh18")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pvrso")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w45ns")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ibh18")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pvrso")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w45ns")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ibh18")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pvrso")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w45ns")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ibh18")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pvrso")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w45ns")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ibh18")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pvrso")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w45ns")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ibh18")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pvrso")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w45ns")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ibh18")
+}],
+"loop": false,
+"name": &"default",
+"speed": 7.0
+}]
+
+[node name="Sylvarisorb" type="Node2D" unique_id=777563975]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=76012473]
+position = Vector2(-1.9999924, 6)
+scale = Vector2(0.40874526, 0.44634145)
+sprite_frames = SubResource("SpriteFrames_uplaq")
+frame = 2
+frame_progress = 1.0

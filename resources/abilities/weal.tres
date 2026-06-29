@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_4qs6l"]
 [ext_resource type="Resource" uid="uid://drv0ggphou2p8" path="res://resources/status_effects/weal.tres" id="2_oeq2y"]
 [ext_resource type="Texture2D" uid="uid://vdkymeds3oum" path="res://sprites/UI/skill icons/skill_icons_weal.png" id="3_oeq2y"]
+[ext_resource type="PackedScene" uid="uid://b242uyy8mkpgo" path="res://scenes/animations/divinator/weal.tscn" id="3_quu4m"]
 
 [resource]
 script = ExtResource("2_4qs6l")
@@ -11,9 +12,11 @@ id = "weal"
 display_name = "Weal"
 description = "Forcibly shape fate to increase all of an ally's stats for 3 rounds. Cost: 20 mana"
 icon = ExtResource("3_oeq2y")
+effect_scene = ExtResource("3_quu4m")
 mana_cost = 20
 max_range = 2
 affects_team = "allies"
+aoe_shape = "square"
 base_damage_multiplier = 0.0
 applies_statuses = Array[ExtResource("1_gc45a")]([ExtResource("2_oeq2y")])
 ability_type = "spell"

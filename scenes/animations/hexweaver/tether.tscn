@@ -1,0 +1,123 @@
+[gd_scene format=3 uid="uid://b8tkt4gm52ihd"]
+
+[ext_resource type="Texture2D" uid="uid://k8ja748lsmy6" path="res://sprites/hexweaver/tether.png" id="1_80mpc"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_i0u8g"]
+atlas = ExtResource("1_80mpc")
+region = Rect2(0, 0, 244, 270)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cx245"]
+atlas = ExtResource("1_80mpc")
+region = Rect2(244, 0, 244, 270)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7xpo4"]
+atlas = ExtResource("1_80mpc")
+region = Rect2(488, 0, 244, 270)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gkw6m"]
+atlas = ExtResource("1_80mpc")
+region = Rect2(732, 0, 244, 270)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_n3t5o"]
+atlas = ExtResource("1_80mpc")
+region = Rect2(0, 270, 244, 270)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vfy4b"]
+atlas = ExtResource("1_80mpc")
+region = Rect2(244, 270, 244, 270)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_uqwg0"]
+atlas = ExtResource("1_80mpc")
+region = Rect2(488, 270, 244, 270)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ibyoo"]
+atlas = ExtResource("1_80mpc")
+region = Rect2(732, 270, 244, 270)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rhact"]
+atlas = ExtResource("1_80mpc")
+region = Rect2(0, 540, 244, 270)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_e21oi"]
+atlas = ExtResource("1_80mpc")
+region = Rect2(244, 540, 244, 270)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_50bqk"]
+atlas = ExtResource("1_80mpc")
+region = Rect2(488, 540, 244, 270)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_s0ng6"]
+atlas = ExtResource("1_80mpc")
+region = Rect2(732, 540, 244, 270)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cvqqt"]
+atlas = ExtResource("1_80mpc")
+region = Rect2(0, 810, 244, 270)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8viph"]
+atlas = ExtResource("1_80mpc")
+region = Rect2(244, 810, 244, 270)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dp4bt"]
+atlas = ExtResource("1_80mpc")
+region = Rect2(488, 810, 244, 270)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_067tc"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_i0u8g")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_cx245")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7xpo4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gkw6m")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_n3t5o")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vfy4b")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_uqwg0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ibyoo")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rhact")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_e21oi")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_50bqk")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_s0ng6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_cvqqt")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8viph")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dp4bt")
+}],
+"loop": false,
+"name": &"default",
+"speed": 10.0
+}]
+
+[node name="Tether" type="Node2D" unique_id=600437171]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=137049950]
+sprite_frames = SubResource("SpriteFrames_067tc")
+frame = 14
+frame_progress = 1.0

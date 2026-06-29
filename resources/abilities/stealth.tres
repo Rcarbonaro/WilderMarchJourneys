@@ -4,6 +4,7 @@
 [ext_resource type="Resource" uid="uid://dqbwq32fco5nj" path="res://resources/status_effects/invisible.tres" id="2_4exvk"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_xu7bv"]
 [ext_resource type="Texture2D" uid="uid://tmfncqyhehif" path="res://sprites/UI/skill icons/skill_icons_stealth.png" id="3_4exvk"]
+[ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="3_wkgf7"]
 
 [resource]
 script = ExtResource("2_xu7bv")
@@ -11,6 +12,7 @@ id = "stealth"
 display_name = "Stealth"
 description = "User becomes invisible. Expires at the end of the next turn."
 icon = ExtResource("3_4exvk")
+effect_scene = ExtResource("3_wkgf7")
 attack_animation_name = "stealth"
 max_range = 0
 affects_team = "all"

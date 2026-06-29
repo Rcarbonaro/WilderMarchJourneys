@@ -10,7 +10,7 @@
 script = ExtResource("2_ev3ev")
 id = "iceshell"
 display_name = "Ice Shell"
-description = "Surround an ally with ice armor, increasing their DEF and MDEF for 2 rounds."
+description = "Surround an ally with ice armor, increasing their DEF and MDEF for 2 rounds and reflecting a small amount of damage. Cost: 20 mana"
 icon = ExtResource("4_van27")
 effect_scene = ExtResource("3_3uqhq")
 mana_cost = 10

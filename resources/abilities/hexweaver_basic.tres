@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_etlcb"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_1auvo"]
 [ext_resource type="Resource" uid="uid://dsi53tejx35hr" path="res://resources/status_effects/weakened.tres" id="2_yi5be"]
+[ext_resource type="PackedScene" uid="uid://bg66ynyakit7" path="res://scenes/animations/hexweaver/hexweaverbasic.tscn" id="3_8p1jv"]
 [ext_resource type="Texture2D" uid="uid://b6l7nu7erlla1" path="res://sprites/UI/skill icons/skill_icons_purplehand.png" id="3_yi5be"]
 
 [resource]
@@ -11,6 +12,7 @@ id = "hexweaverbasic"
 display_name = "Basic Attack"
 description = "A ranged magic attack that reduces enemy ATK for 1 turn."
 icon = ExtResource("3_yi5be")
+effect_scene = ExtResource("3_8p1jv")
 max_range = 4
 applies_statuses = Array[ExtResource("1_etlcb")]([ExtResource("2_yi5be")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

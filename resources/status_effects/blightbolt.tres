@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://cakcsif54475e"]
+
+[ext_resource type="Texture2D" uid="uid://tt2js060qc81" path="res://sprites/UI/skill icons/skill_icons_blightbolt.png" id="1_6j08b"]
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_40pkv"]
+
+[resource]
+script = ExtResource("1_40pkv")
+id = "blightbolt"
+display_name = "Blightbolt"
+description = "Takes 5% more damage for 1 round."
+icon = ExtResource("1_6j08b")
+damage_taken_modifier = 0.05
+metadata/_custom_type_script = "uid://gsbk18mmfnol"

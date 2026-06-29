@@ -565,7 +565,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_b0lob")
 }, {
-"duration": 1.0,
+"duration": 10.0,
 "texture": SubResource("AtlasTexture_yn5m3")
 }],
 "loop": false,
@@ -714,9 +714,10 @@ is_spellsword = true
 position = Vector2(0.99999976, -1)
 scale = Vector2(0.51167244, 0.5091514)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"arcana_charge"
+animation = &"die"
 autoplay = "idle"
-frame_progress = 0.4021384
+frame = 7
+frame_progress = 1.0
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0

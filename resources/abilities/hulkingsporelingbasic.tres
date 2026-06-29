@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_riw7g"]
 [ext_resource type="Texture2D" uid="uid://cbt1r5o77jgvc" path="res://sprites/UI/skill icons/skill_icons_oakclaw.png" id="2_1lr8y"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_egntn"]
+[ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="2_lb26a"]
 
 [resource]
 script = ExtResource("2_egntn")
@@ -10,5 +11,6 @@ id = "hulkingsporelingbasic"
 display_name = "Corrupted Fist"
 description = "Punch with a corrupted fist, dealing physical damage."
 icon = ExtResource("2_1lr8y")
+effect_scene = ExtResource("2_lb26a")
 base_damage_multiplier = 0.25
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"
