@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_qvh21"]
 [ext_resource type="Resource" uid="uid://cvdlkj4p02im2" path="res://resources/status_effects/slowed.tres" id="2_82lxo"]
 [ext_resource type="PackedScene" uid="uid://c14rsw05sr8j2" path="res://scenes/animations/windmage/tornado.tscn" id="3_qvh21"]
+[ext_resource type="Texture2D" uid="uid://dx3s0auqke0sq" path="res://sprites/UI/skill icons/skill_icons_tornado2.png" id="4_hnbcj"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="4_rotjb"]
 
 [resource]
@@ -10,6 +11,7 @@ script = ExtResource("4_rotjb")
 id = "tornado"
 display_name = "Tornado"
 description = "Deals damage and scatters enemies. Cost: 20 mana"
+icon = ExtResource("4_hnbcj")
 effect_scene = ExtResource("3_qvh21")
 mana_cost = 20
 min_range = 1

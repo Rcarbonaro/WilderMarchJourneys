@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://ofamf1d87qd0"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_vaph7"]
+[ext_resource type="Texture2D" uid="uid://cbt1r5o77jgvc" path="res://sprites/UI/skill icons/skill_icons_oakclaw.png" id="2_clg0u"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_jp5qa"]
 
 [resource]
@@ -8,5 +9,6 @@ script = ExtResource("2_jp5qa")
 id = "leshybasic"
 display_name = "Rend"
 description = "Tears at the enemy with wicked claws. Especially effective against lightly armored targets."
+icon = ExtResource("2_clg0u")
 base_damage_multiplier = 2.0
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

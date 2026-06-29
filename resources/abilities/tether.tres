@@ -3,14 +3,14 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_xv7mr"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_7n4w4"]
 [ext_resource type="Resource" uid="uid://6oeegldom1yq" path="res://resources/status_effects/exposed.tres" id="2_38v47"]
-[ext_resource type="Texture2D" uid="uid://1gb6f8ipghme" path="res://sprites/hexweaver/hexweaver square.png" id="2_c4x1a"]
+[ext_resource type="Texture2D" uid="uid://txsgiv2pwwh" path="res://sprites/UI/skill icons/skill_icons_tether.png" id="3_c4x1a"]
 
 [resource]
 script = ExtResource("2_7n4w4")
 id = "tether"
 display_name = "Tether"
 description = "Tether the targets in the area. When a \"Tethered\" target is hit by a single target attack, other \"Tethered\" enemies also take 50% of that damage. Cost: 30 mana"
-icon = ExtResource("2_c4x1a")
+icon = ExtResource("3_c4x1a")
 mana_cost = 30
 max_range = 4
 aoe_shape = "cross"

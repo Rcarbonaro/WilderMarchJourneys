@@ -15,7 +15,7 @@
 [resource]
 script = ExtResource("1_mjyq5")
 id = "windmage"
-display_name = "windmage"
+display_name = "Windmage"
 description = "A wind magic specialist who excels at manipulating enemy positioning."
 portrait = ExtResource("3_pdhkk")
 battle_sprite = ExtResource("2_wxdo6")

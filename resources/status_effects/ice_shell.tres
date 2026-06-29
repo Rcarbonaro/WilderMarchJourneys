@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://b2d4isamx87fv"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_ymjpt"]
+
+[resource]
+script = ExtResource("1_ymjpt")
+id = "iceshell"
+display_name = "Ice Shell"
+description = "Increase an ally's DEF and MDEF for 3 rounds. Cost: 20 mana.."
+duration_rounds = 2
+def_modifier = 2
+mdef_modifier = 4
+metadata/_custom_type_script = "uid://gsbk18mmfnol"

@@ -3,6 +3,8 @@
 [ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="1_1vwcd"]
 [ext_resource type="Resource" uid="uid://bon40ui0d1syn" path="res://resources/stats/sylvaris_stats.tres" id="1_r0s07"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_6ccxf"]
+[ext_resource type="Texture2D" uid="uid://cn6m38augn0i" path="res://sprites/Sylvaris/sylvaris_sprite.png" id="2_x5441"]
+[ext_resource type="Texture2D" uid="uid://db8kvfcotoguh" path="res://sprites/Sylvaris/sylvaris_portrait.png" id="3_k1jh7"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_r0s07"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="3_u11g4"]
 [ext_resource type="Resource" uid="uid://b45ggi28imxoq" path="res://resources/abilities/sylavris_basic.tres" id="4_r0s07"]
@@ -12,6 +14,8 @@ script = ExtResource("1_1vwcd")
 id = "sylvaris"
 display_name = "Sylvaris"
 description = "A quick and mysterious creature that uses its magic to weaken and slow targets."
+portrait = ExtResource("3_k1jh7")
+battle_sprite = ExtResource("2_x5441")
 stats_by_level = Array[ExtResource("3_r0s07")]([ExtResource("1_r0s07")])
 base_stats = ExtResource("1_r0s07")
 starting_abilities = Array[ExtResource("2_6ccxf")]([ExtResource("4_r0s07")])

@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://dg1nd6bcy6vj8"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_30484"]
+[ext_resource type="Resource" uid="uid://b2d4isamx87fv" path="res://resources/status_effects/ice_shell.tres" id="2_3uqhq"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_ev3ev"]
+[ext_resource type="PackedScene" uid="uid://bigp3lru0g2wv" path="res://scenes/animations/icemage/iceshell.tscn" id="3_3uqhq"]
+[ext_resource type="Texture2D" uid="uid://cnbog526w4p6a" path="res://sprites/UI/skill icons/skill_icons_iceshell.png" id="4_van27"]
+
+[resource]
+script = ExtResource("2_ev3ev")
+id = "iceshell"
+display_name = "Ice Shell"
+description = "Surround an ally with ice armor, increasing their DEF and MDEF for 2 rounds."
+icon = ExtResource("4_van27")
+effect_scene = ExtResource("3_3uqhq")
+mana_cost = 10
+max_range = 3
+affects_team = "allies"
+aoe_shape = "square"
+base_damage_multiplier = 0.0
+applies_statuses = Array[ExtResource("1_30484")]([ExtResource("2_3uqhq")])
+ability_type = "spell"
+applies_thorns = true
+thorns_reflect_percent = 0.5
+thorns_scaling_stat = "mdef"
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

@@ -3,12 +3,14 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_sgw4n"]
 [ext_resource type="Resource" uid="uid://dqbwq32fco5nj" path="res://resources/status_effects/invisible.tres" id="2_m4sct"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_mrr0b"]
+[ext_resource type="Texture2D" uid="uid://oq40px4e8p3s" path="res://sprites/UI/skill icons/skill_icons_assasinate.png" id="2_q7sey"]
 
 [resource]
 script = ExtResource("2_mrr0b")
 id = "roguebasic"
 display_name = "Basic Attack"
 description = "A stealthy attack that deals bonus damage to isolated targets. If this defeats a target, user becomes invisible. Move 1 space after use."
+icon = ExtResource("2_q7sey")
 attack_animation_name = "attack"
 bonus_damage_isolated = 0.5
 has_on_kill_effect = true

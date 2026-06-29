@@ -3,12 +3,14 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_o0tno"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_leck8"]
 [ext_resource type="Resource" uid="uid://bys2b1xudatox" path="res://resources/auras/necroticaura.tres" id="2_q3w4j"]
+[ext_resource type="Texture2D" uid="uid://piehfg1se3g3" path="res://sprites/UI/skill icons/skill_iconsnecroticaura.png" id="3_q3w4j"]
 
 [resource]
 script = ExtResource("2_leck8")
 id = "necroticaura"
 display_name = "Necrotic Aura"
 description = "Activate a permanent aura that deals damage to all enemies within the radius. Using another aura will end this aura."
+icon = ExtResource("3_q3w4j")
 max_range = 0
 base_damage_multiplier = 0.0
 damage_type = "magical"

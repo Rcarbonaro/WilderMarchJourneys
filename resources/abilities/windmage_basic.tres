@@ -2,11 +2,13 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_tfied"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_8h26d"]
+[ext_resource type="Texture2D" uid="uid://cyt2vb0g4cfmk" path="res://sprites/UI/skill icons/skill_icons_windblades.png" id="2_eh863"]
 
 [resource]
 script = ExtResource("2_8h26d")
 id = "windmagebasic"
 display_name = "Basic Attack"
+icon = ExtResource("2_eh863")
 min_range = 1
 max_range = 4
 damage_type = "magical"

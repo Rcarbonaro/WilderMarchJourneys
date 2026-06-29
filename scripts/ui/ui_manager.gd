@@ -427,7 +427,7 @@ func refresh_unit_info_if_showing(unit) -> void:
 	if _info_box_unit == unit and _info_box.visible:
 		show_unit_info(unit)
 
-
+var _is_refreshing: bool = false
 func _refresh_info_box_live_values() -> void:
 	var unit = _info_box_unit
 
@@ -465,6 +465,8 @@ func _refresh_info_box_live_values() -> void:
 		for status_entry in unit.active_statuses:
 			var status_data: StatusEffectData = status_entry["data"]
 			_add_status_icon(status_data, status_entry["stacks"])
+	_is_refreshing = false
+			
 
 
 var _last_status_fingerprint: String = ""

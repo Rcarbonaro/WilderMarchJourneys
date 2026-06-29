@@ -3,11 +3,13 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_gfxts"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_b8v1m"]
 [ext_resource type="Resource" uid="uid://q7oq7jdgur76" path="res://resources/status_effects/taunt2.tres" id="2_o5bgn"]
+[ext_resource type="Texture2D" uid="uid://cj3wctbynp3e2" path="res://sprites/UI/skill icons/skill_icons_hammercrush.png" id="3_o5bgn"]
 
 [resource]
 script = ExtResource("2_b8v1m")
 id = "stonewardenbasic"
 display_name = "Basic Attack"
 description = "A basic attack that taunts the enemy."
+icon = ExtResource("3_o5bgn")
 applies_statuses = Array[ExtResource("1_gfxts")]([ExtResource("2_o5bgn")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

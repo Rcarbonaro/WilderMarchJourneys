@@ -63,36 +63,36 @@ var _subscribers: Dictionary = {}
 # ---- PUBLIC API --------------------------------------------------------------
 
 func subscribe(event_name: String, callback: Callable) -> void:
-    # Registers 'callback' to run every time 'event_name' is published.
-    # callback should accept exactly ONE argument: a Dictionary "payload".
-    if not _subscribers.has(event_name):
-        _subscribers[event_name] = []
-    if not _subscribers[event_name].has(callback):
-        _subscribers[event_name].append(callback)
+	# Registers 'callback' to run every time 'event_name' is published.
+	# callback should accept exactly ONE argument: a Dictionary "payload".
+	if not _subscribers.has(event_name):
+		_subscribers[event_name] = []
+	if not _subscribers[event_name].has(callback):
+		_subscribers[event_name].append(callback)
 
 
 func unsubscribe(event_name: String, callback: Callable) -> void:
-    # Stops 'callback' from being notified about 'event_name' in the future.
-    # IMPORTANT: always unsubscribe when something is freed (a unit dying,
-    # a piece of equipment being unequipped) or you'll eventually try to call
-    # a Callable bound to an object that no longer exists.
-    if _subscribers.has(event_name):
-        _subscribers[event_name].erase(callback)
+	# Stops 'callback' from being notified about 'event_name' in the future.
+	# IMPORTANT: always unsubscribe when something is freed (a unit dying,
+	# a piece of equipment being unequipped) or you'll eventually try to call
+	# a Callable bound to an object that no longer exists.
+	if _subscribers.has(event_name):
+		_subscribers[event_name].erase(callback)
 
 
 func publish(event_name: String, payload: Dictionary = {}) -> void:
-    # Announces that 'event_name' just happened, with extra info in 'payload'.
-    # Every subscriber registered for this event_name gets called immediately,
-    # in the order they subscribed.
-    if not _subscribers.has(event_name):
-        return
-    # We loop over a COPY of the array, because a callback might subscribe or
-    # unsubscribe something while we're in the middle of looping, which would
-    # otherwise corrupt the loop we're iterating.
-    for callback in _subscribers[event_name].duplicate():
-        if callback.is_valid():
-            callback.call(payload)
-        else:
-            # The object this callback belonged to was freed without
-            # unsubscribing first -- clean it up so it doesn't pile up forever.
-            _subscribers[event_name].erase(callback)
+	# Announces that 'event_name' just happened, with extra info in 'payload'.
+	# Every subscriber registered for this event_name gets called immediately,
+	# in the order they subscribed.
+	if not _subscribers.has(event_name):
+		return
+	# We loop over a COPY of the array, because a callback might subscribe or
+	# unsubscribe something while we're in the middle of looping, which would
+	# otherwise corrupt the loop we're iterating.
+	for callback in _subscribers[event_name].duplicate():
+		if callback.is_valid():
+			callback.call(payload)
+		else:
+			# The object this callback belonged to was freed without
+			# unsubscribing first -- clean it up so it doesn't pile up forever.
+			_subscribers[event_name].erase(callback)

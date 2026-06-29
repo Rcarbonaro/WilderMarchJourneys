@@ -4,6 +4,7 @@
 [ext_resource type="Resource" uid="uid://dxft4tccskmnc" path="res://resources/status_effects/poisoncloud.tres" id="2_3deaq"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_emqve"]
 [ext_resource type="Resource" uid="uid://cvdlkj4p02im2" path="res://resources/status_effects/slowed.tres" id="3_tgt34"]
+[ext_resource type="Texture2D" uid="uid://dge2o34isxty" path="res://sprites/UI/skill icons/skill_icons_poisongas.png" id="4_tgt34"]
 [ext_resource type="Resource" uid="uid://ru4n7oosj1qw" path="res://resources/hazards/poisoncloud.tres" id="5_0xn76"]
 
 [resource]
@@ -11,6 +12,7 @@ script = ExtResource("2_emqve")
 id = "poisoncloud"
 display_name = "Poison Cloud"
 description = "Unleashes a poison cloud that deals damage and slows both enemies and allies within its effect. Cost: 20 mana"
+icon = ExtResource("4_tgt34")
 mana_cost = 20
 max_range = 6
 affects_team = "all"

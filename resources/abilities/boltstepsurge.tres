@@ -2,12 +2,14 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_bfdwf"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_5vf1h"]
+[ext_resource type="Texture2D" uid="uid://bpqeopj6ukji2" path="res://sprites/UI/skill icons/skill_icons_boltstep.png" id="2_exror"]
 
 [resource]
 script = ExtResource("2_5vf1h")
 id = "boltstepsurge"
 display_name = "Boltstep Surge"
 description = "A powerful lightning dash in a cardinal direction, dealing damage to all in the line and moving the caster to the end of the line. Cost: 30 mana"
+icon = ExtResource("2_exror")
 mana_cost = 30
 aoe_shape = "line"
 aoe_size = 4

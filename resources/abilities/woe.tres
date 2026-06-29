@@ -3,12 +3,14 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_2hleg"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_ac8s0"]
 [ext_resource type="Resource" uid="uid://c6pctxu3kxgxt" path="res://resources/status_effects/woe.tres" id="2_qy2st"]
+[ext_resource type="Texture2D" uid="uid://ks226l21h7ha" path="res://sprites/UI/skill icons/skill_icons_woe.png" id="3_qy2st"]
 
 [resource]
 script = ExtResource("2_ac8s0")
 id = "woe"
 display_name = "Woe"
 description = "Forcibly shape fate to reduce all enemy stats for 3 rounds. Cost: 20 mana"
+icon = ExtResource("3_qy2st")
 mana_cost = 20
 max_range = 2
 applies_statuses = Array[ExtResource("1_2hleg")]([ExtResource("2_qy2st")])
