@@ -8,12 +8,13 @@
 [ext_resource type="Texture2D" uid="uid://cni4uxqu0wpby" path="res://sprites/firemage/drow firemage_portrait.png" id="3_yo7tp"]
 [ext_resource type="Resource" uid="uid://b4whqdrv4e4x1" path="res://resources/abilities/firemage_basic.tres" id="4_7nqrm"]
 [ext_resource type="Resource" uid="uid://bbki47ewle1jj" path="res://resources/abilities/fireball.tres" id="5_fiqcd"]
+[ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_yo7tp"]
 [ext_resource type="Resource" uid="uid://bejqlpl63p8km" path="res://resources/abilities/firewall.tres" id="6_yo7tp"]
 
 [resource]
 script = ExtResource("1_ig4kd")
 id = "firemage"
-display_name = "Fire Mage"
+display_name = "Firemage"
 description = "A fire magic specialist who focuses on damage in large areas."
 portrait = ExtResource("3_yo7tp")
 battle_sprite = ExtResource("2_fiqcd")

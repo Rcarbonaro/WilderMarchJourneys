@@ -2,8 +2,10 @@
 
 [ext_resource type="Resource" uid="uid://kk3y86gubuhv" path="res://resources/stats/bear_stats.tres" id="1_2jb21"]
 [ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="1_qx68b"]
+[ext_resource type="Texture2D" uid="uid://uehbxpgt0y5x" path="res://sprites/bear/bear_sprite.png" id="2_25712"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="2_cvb7u"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="3_2jb21"]
+[ext_resource type="Texture2D" uid="uid://buvqjma0oweyy" path="res://sprites/bear/bear_portrait.png" id="3_lfg4g"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="4_i60ip"]
 [ext_resource type="Resource" uid="uid://tjflb2kstay0" path="res://resources/abilities/bear_basicattack.tres" id="5_i60ip"]
 
@@ -12,6 +14,8 @@ script = ExtResource("1_qx68b")
 id = "bear"
 display_name = "Bear"
 description = "A large and tough woodland creature."
+portrait = ExtResource("3_lfg4g")
+battle_sprite = ExtResource("2_25712")
 stats_by_level = Array[ExtResource("4_i60ip")]([ExtResource("1_2jb21")])
 base_stats = ExtResource("1_2jb21")
 starting_abilities = Array[ExtResource("3_2jb21")]([ExtResource("5_i60ip")])

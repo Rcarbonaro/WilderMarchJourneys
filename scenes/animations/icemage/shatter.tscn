@@ -1,0 +1,101 @@
+[gd_scene format=3 uid="uid://dc6iq5hufh7em"]
+
+[ext_resource type="Texture2D" uid="uid://daax24mf8rfiy" path="res://sprites/icemage/shatter.png" id="1_80t03"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_80t03"]
+atlas = ExtResource("1_80t03")
+region = Rect2(66, 0, 219, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sppgu"]
+atlas = ExtResource("1_80t03")
+region = Rect2(412, 0, 219, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gbrfx"]
+atlas = ExtResource("1_80t03")
+region = Rect2(758, 0, 219, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_n3lpm"]
+atlas = ExtResource("1_80t03")
+region = Rect2(66, 192, 219, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_alyrp"]
+atlas = ExtResource("1_80t03")
+region = Rect2(1104, 0, 219, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jbrne"]
+atlas = ExtResource("1_80t03")
+region = Rect2(412, 192, 219, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ws1t8"]
+atlas = ExtResource("1_80t03")
+region = Rect2(66, 384, 219, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8dooc"]
+atlas = ExtResource("1_80t03")
+region = Rect2(412, 384, 219, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gm0se"]
+atlas = ExtResource("1_80t03")
+region = Rect2(758, 384, 219, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_majk0"]
+atlas = ExtResource("1_80t03")
+region = Rect2(1104, 384, 219, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8rwa8"]
+atlas = ExtResource("1_80t03")
+region = Rect2(66, 576, 219, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h57h3"]
+atlas = ExtResource("1_80t03")
+region = Rect2(758, 576, 219, 192)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_bwknb"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_80t03")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sppgu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gbrfx")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_n3lpm")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_alyrp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jbrne")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ws1t8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8dooc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gm0se")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_majk0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8rwa8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_h57h3")
+}],
+"loop": false,
+"name": &"default",
+"speed": 30.0
+}]
+
+[node name="Shatter" type="Node2D" unique_id=1437919797]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1108632739]
+scale = Vector2(0.13636364, 0.16145834)
+sprite_frames = SubResource("SpriteFrames_bwknb")

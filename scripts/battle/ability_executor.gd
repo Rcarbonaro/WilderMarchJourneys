@@ -151,19 +151,23 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 		# raw_target_cells doc above) — team-filtering must never be allowed
 		# to put gaps in the line dash physically travels through.
 		var dash_line_cells: Array = raw_target_cells if not raw_target_cells.is_empty() else target_cells
-		dash_landing_cell = await _execute_dash(caster, ability, dash_line_cells)
+		var dash_result: Dictionary = await _execute_dash(caster, ability, dash_line_cells)
+		dash_landing_cell = dash_result["landing_cell"]
+		var max_reach_cell: Vector2i = dash_result["max_reach_cell"]
 
-		# Bound the DAMAGE-relevant cells to only what the caster actually
-		# dashed through. Without this, a dash that gets physically stopped
-		# partway down the line (by a wall, or by another unit standing in
-		# the way) would still damage enemies further down the line that the
-		# caster never came anywhere near.
-		var landing_index: int = dash_line_cells.find(dash_landing_cell)
-		if landing_index != -1:
+		# Bound the DAMAGE-relevant cells to the dash's full PIERCE range
+		# (max_reach_cell — stops only at a real wall/hazard), NOT to where
+		# the caster's body specifically landed (dash_landing_cell — stops at
+		# the first occupied tile, since the caster can't overlap a unit).
+		# Using landing_cell here was the bug: a dash through multiple
+		# enemies would stop counting damage right after the FIRST one,
+		# since that's as far as the caster's own body could go.
+		var reach_index: int = dash_line_cells.find(max_reach_cell)
+		if reach_index != -1:
 			var truncated_cells: Array = []
 			for cell in target_cells:
 				var cell_index: int = dash_line_cells.find(cell)
-				if cell_index != -1 and cell_index <= landing_index:
+				if cell_index != -1 and cell_index <= reach_index:
 					truncated_cells.append(cell)
 			target_cells = truncated_cells
 
@@ -645,29 +649,51 @@ func _is_target_isolated(target, check_range: int) -> bool:
 
 # ── DASH ──────────────────────────────────────────────────────────────────────
 
-func _execute_dash(caster, ability: AbilityData, line_cells: Array) -> Vector2i:
-	# Moves the caster along a line, stopping at the LAST tile that's both
-	# walkable AND unoccupied. Returns the final landing cell.
+func _execute_dash(caster, ability: AbilityData, line_cells: Array) -> Dictionary:
+	# Moves the caster along a line. Returns a Dictionary with TWO different
+	# cells, because a dash needs to track two different things at once:
 	#
-	# THE FIX: this used to check grid_ref.is_terrain_walkable(cell), which
-	# deliberately ignores whether a UNIT is standing there (it only cares
-	# about walls/terrain) — so a dash could land directly on top of another
-	# unit. That silently overwrote them in battle_grid's unit_positions
-	# registry, making THEM permanently unclickable for the rest of the
-	# battle even though they were still standing right there on screen.
-	# is_passable(cell) checks walls AND unit occupancy AND movement-blocking
-	# hazards all together, so the dash now correctly stops one tile short of
-	# anything solid in its way — a wall, an ally, or an enemy.
+	#   "landing_cell"   — where the caster's BODY actually ends up. This is
+	#                      the FARTHEST tile in the line that's both walkable
+	#                      AND unoccupied. The caster can never end up
+	#                      standing on the same tile as another unit, but it
+	#                      CAN keep going past/through units to reach an
+	#                      empty tile further down the line (e.g. landing in
+	#                      a gap beyond a cluster of enemies).
+	#   "max_reach_cell" — how far the dash's effect reaches for DAMAGE
+	#                      purposes. This only stops at an actual wall or
+	#                      movement-blocking hazard — it completely ignores
+	#                      whether units are standing in the way, so the dash
+	#                      correctly pierces through and damages every enemy
+	#                      along the whole line, not just up to wherever the
+	#                      caster's body happens to physically stop.
+	#
+	# THE BUG THIS FIXES: an earlier fix (for units becoming permanently
+	# unclickable when a dash landed on top of them) made the line-walking
+	# loop stop dead at the FIRST occupied tile — treating an enemy exactly
+	# like a wall. That accidentally also capped the damage range at "right
+	# before the first enemy," so a dash with multiple enemies in its line
+	# would only ever reach (and not even damage) the very first one. Tracking
+	# landing and damage-reach separately fixes both: the caster still never
+	# overlaps another unit, but the dash now actually runs THROUGH everyone
+	# in the line and damages all of them, same as it's supposed to.
 	if line_cells.is_empty():
-		return caster.grid_position
+		return {"landing_cell": caster.grid_position, "max_reach_cell": caster.grid_position}
 
 	var landing_cell: Vector2i = caster.grid_position
+	var max_reach_cell: Vector2i = caster.grid_position
 
 	for cell in line_cells:
+		# A real wall or movement-blocking hazard stops the line completely
+		# — nothing (caster OR damage) can get past this point.
+		if not grid_ref.is_terrain_walkable(cell):
+			break
+		max_reach_cell = cell   # Damage reach extends here regardless of who's standing on it.
 		if grid_ref.is_passable(cell):
-			landing_cell = cell
-		else:
-			break   # Hit a wall, hazard, or another unit; stop here.
+			landing_cell = cell   # Only update where the caster can LAND if this tile is actually free.
+		# (If the tile is occupied, we just don't update landing_cell — but
+		# we keep scanning further down the line in case there's empty space
+		# beyond this unit to land in instead.)
 
 	var end_world: Vector2 = grid_ref.grid_to_world(landing_cell)
 	var start_world: Vector2 = caster.position
@@ -703,8 +729,7 @@ func _execute_dash(caster, ability: AbilityData, line_cells: Array) -> Vector2i:
 
 	await tween.finished
 	caster.play_animation("idle")
-	return landing_cell
-
+	return {"landing_cell": landing_cell, "max_reach_cell": max_reach_cell}
 
 func _spawn_dash_trail(from_world: Vector2, to_world: Vector2,
 					   trail_texture: Texture2D) -> void:
@@ -810,10 +835,18 @@ func _displace_unit_auto(caster, target, squares: int) -> bool:
 	if direction == Vector2i(0, 0):
 		return false
 
-	# Normalize the direction toward/away from the caster. This naturally
-	# produces a diagonal move_dir (e.g. (1,1)) whenever the target isn't
-	# perfectly aligned on a single axis with the caster — which is exactly
-	# what we want for a "pull to nearest adjacent tile" ability.
+	if squares < 0:
+		# PULL: always lands on whichever tile next to the caster is
+		# genuinely closest to the target — see _pull_unit_toward_caster for
+		# why this needs its own dedicated logic instead of the simple
+		# walk below (that walk is what caused diagonal pulls to land on the
+		# wrong tile).
+		return _pull_unit_toward_caster(caster, target, abs(squares))
+
+	# PUSH: walks straight away from the caster, dragging along any wall it
+	# grazes (see _try_step_with_wall_drag). Pushing doesn't need a "snap to
+	# the best tile" step the way pulling does — there's no single specific
+	# destination tile it's aiming for, just "as far as it can get."
 	var move_dir: Vector2i = _to_grid_direction(direction)
 	move_dir *= sign(squares)
 
@@ -821,30 +854,6 @@ func _displace_unit_auto(caster, target, squares: int) -> bool:
 	var current: Vector2i = target.grid_position
 
 	for _i in range(steps):
-		var intended_next: Vector2i = current + move_dir
-		if intended_next == caster.grid_position:
-			break   # Never let the target land exactly on the caster's tile.
-
-		# ── ADJACENCY CHECK ────────────────────────────────────────────────────
-		# Stop once we're adjacent to the caster, INCLUDING diagonal adjacency.
-		# Chebyshev distance (the largest of the x/y offsets) is the correct
-		# "grid adjacency" measure: it's exactly 1 for ANY of the 8 surrounding
-		# tiles, including diagonals (unlike Euclidean distance, which is
-		# sqrt(2) for a diagonal neighbour and would never match a check for
-		# exactly 1). This is checked against the intended diagonal tile —
-		# reaching the caster's vicinity ends a pull immediately, before wall
-		# drag even gets a chance to keep it going further.
-		var chebyshev_dist: int = max(abs(intended_next.x - caster.grid_position.x),
-									   abs(intended_next.y - caster.grid_position.y))
-		if chebyshev_dist <= 1:
-			# 'intended_next' is adjacent to the caster (cardinally or
-			# diagonally). Only commit to it if it's actually free to stand
-			# on; otherwise stay at 'current' and stop here either way — this
-			# is the "closest available tile to the caster" behaviour.
-			if grid_ref.is_passable_for(target, intended_next):
-				current = intended_next
-			break
-
 		var next: Vector2i = _try_step_with_wall_drag(target, current, move_dir)
 		if next == current:
 			break   # Truly stuck — diagonal AND both single axes all blocked.
@@ -855,6 +864,74 @@ func _displace_unit_auto(caster, target, squares: int) -> bool:
 		return true
 	return false
 
+
+func _pull_unit_toward_caster(caster, target, max_steps: int) -> bool:
+	# THE DIAGONAL PULL FIX.
+	#
+	# Figures out which of the 8 tiles immediately surrounding the caster is
+	# genuinely CLOSEST to the target's current position, then walks the
+	# target toward that one specific tile — recalculating direction fresh
+	# at every step, rather than committing to a single rounded direction up
+	# front and blindly repeating it (which is what used to make diagonal
+	# pulls overshoot onto the wrong, cardinal tile — see the explanation
+	# above _displace_unit_auto for the full story with a worked example).
+	#
+	# 'max_steps' is the ability's pull strength (abs(displacement_squares)).
+	# If the target starts further away than that, they get pulled max_steps
+	# closer toward the best tile without necessarily reaching it yet — same
+	# idea as before, just aimed correctly now.
+	var caster_cell: Vector2i = caster.grid_position
+	var start_cell: Vector2i = target.grid_position
+
+	# All 8 tiles around the caster, ranked by REAL distance (squared
+	# Euclidean — avoids a sqrt, and ordering is identical either way) to
+	# the target's starting position, closest first. This ranking is what
+	# "the closest adjacent square" actually means.
+	var candidates: Array = []
+	for dx in range(-1, 2):
+		for dy in range(-1, 2):
+			if dx == 0 and dy == 0:
+				continue
+			candidates.append(caster_cell + Vector2i(dx, dy))
+
+	candidates.sort_custom(func(a, b):
+		var da: Vector2i = a - start_cell
+		var db: Vector2i = b - start_cell
+		return (da.x * da.x + da.y * da.y) < (db.x * db.x + db.y * db.y)
+	)
+
+	# Try each candidate tile, closest first. For each one, walk toward IT
+	# specifically (not a generic direction) for up to max_steps tiles.
+	for destination in candidates:
+		if destination == start_cell:
+			return false   # Already standing on the best tile — nothing to do.
+
+		var current: Vector2i = start_cell
+		for _i in range(max_steps):
+			if current == destination:
+				break
+			# Recalculated every step, aimed at THIS destination specifically
+			# — this is what correctly traces the line instead of a single
+			# direction computed once at the start.
+			var step_dir: Vector2i = _to_grid_direction(destination - current)
+			var next: Vector2i = _try_step_with_wall_drag(target, current, step_dir)
+			if next == current:
+				break   # Stuck on the way to this candidate.
+			current = next
+
+		if current != start_cell:
+			# Made progress toward this candidate — whether or not it fully
+			# reached it. We commit to that rather than abandoning it for a
+			# totally different side of the caster just because that other
+			# side happened to have a clearer path; getting pulled PARTWAY
+			# toward the genuinely closest tile reads better than getting
+			# yanked around to somewhere unrelated.
+			target.move_to(current)
+			return true
+		# Zero progress at all toward this candidate (blocked on the very
+		# first step) — fall through and try the next-closest one instead.
+
+	return false   # No reachable, passable tile next to the caster at all.
 
 func _displace_unit_scatter(ability: AbilityData, target, squares: int,
 							target_cells: Array) -> bool:

@@ -2,8 +2,10 @@
 
 [ext_resource type="Resource" uid="uid://dbscnlhdaag4q" path="res://resources/stats/leshy_stats.tres" id="1_0wd04"]
 [ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="1_np7oy"]
+[ext_resource type="Texture2D" uid="uid://q04h55vx60yl" path="res://sprites/leshy/leshy_sprite.png" id="2_juy1n"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="2_ujydo"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="3_vvgxq"]
+[ext_resource type="Texture2D" uid="uid://5r54ufkoym4q" path="res://sprites/leshy/leshy_portrait.png" id="3_xcb5m"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="4_0wd04"]
 [ext_resource type="Resource" uid="uid://ofamf1d87qd0" path="res://resources/abilities/leshy_basic.tres" id="5_pkp5g"]
 [ext_resource type="Resource" uid="uid://bmxang47a8ttl" path="res://resources/abilities/sylvansunder.tres" id="6_juy1n"]
@@ -13,6 +15,8 @@ script = ExtResource("1_np7oy")
 id = "leshy"
 display_name = "Leshy"
 description = "A dreadful and feared creature of the forest, twisted by dark magic. Its claws are particularly effective at rending unarmored targets, and it can unleash a powerful spell in a straight line."
+portrait = ExtResource("3_xcb5m")
+battle_sprite = ExtResource("2_juy1n")
 stats_by_level = Array[ExtResource("4_0wd04")]([ExtResource("1_0wd04")])
 base_stats = ExtResource("1_0wd04")
 starting_abilities = Array[ExtResource("3_vvgxq")]([ExtResource("5_pkp5g"), ExtResource("6_juy1n")])

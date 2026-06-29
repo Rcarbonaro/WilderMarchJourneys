@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://cjgpud8omqp8n"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_trdws"]
+[ext_resource type="Resource" uid="uid://cvdlkj4p02im2" path="res://resources/status_effects/slowed.tres" id="2_30ako"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_um2vd"]
+[ext_resource type="PackedScene" uid="uid://dc6iq5hufh7em" path="res://scenes/animations/icemage/shatter.tscn" id="3_30ako"]
+[ext_resource type="Texture2D" uid="uid://gqplgagj2bpc" path="res://sprites/UI/skill icons/skill_icons_shatter.png" id="4_udi8o"]
+
+[resource]
+script = ExtResource("2_um2vd")
+id = "shatter"
+display_name = "Shatter"
+description = "Form ice and shatter it, dealing damage in a cross shape. Range: 3 Cost: 20 mana"
+icon = ExtResource("4_udi8o")
+effect_scene = ExtResource("3_30ako")
+mana_cost = 20
+max_range = 3
+aoe_shape = "cross"
+base_damage_multiplier = 1.25
+damage_type = "magical"
+scaling_stat = "matk"
+applies_statuses = Array[ExtResource("1_trdws")]([ExtResource("2_30ako")])
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

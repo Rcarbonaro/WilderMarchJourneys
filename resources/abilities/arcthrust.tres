@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://cvo30h186mrer"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_l007f"]
+[ext_resource type="Texture2D" uid="uid://db3nbovig2s7y" path="res://sprites/UI/skill icons/skill_icons_arcthrust.png" id="2_l007f"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="3_ssgvl"]
 
 [resource]
@@ -8,6 +9,7 @@ script = ExtResource("3_ssgvl")
 id = "arcthrust"
 display_name = "Arc Thrust"
 description = "Imbue your sword with lightning to deal massive damage in a straight line. Cost: 25 mana or Arcana Charge"
+icon = ExtResource("2_l007f")
 attack_animation_name = "attack_lightning"
 mana_cost = 25
 min_range = 1

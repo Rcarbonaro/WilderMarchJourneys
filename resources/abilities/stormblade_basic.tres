@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://ckxyxawivmesh"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_645ic"]
+[ext_resource type="Texture2D" uid="uid://cjkd5yav1fn0h" path="res://sprites/UI/skill icons/skill_icons_stormbladeslash.png" id="2_31gfn"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_kr1i0"]
 
 [resource]
@@ -8,6 +9,7 @@ script = ExtResource("2_kr1i0")
 id = "stormbladebasic"
 display_name = "Basic Attack"
 description = "An agile attack that allows the user to move 1 space after attacking."
+icon = ExtResource("2_31gfn")
 damage_type = "magical"
 scaling_stat = "matk"
 post_attack_move_squares = 1

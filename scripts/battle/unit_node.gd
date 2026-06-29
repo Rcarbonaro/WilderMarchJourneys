@@ -1214,14 +1214,17 @@ func _update_hp_label() -> void:
 	else:
 		_hp_bar_fill.color = Color(0.9, 0.15, 0.15, 1.0)
 
-
+var _is_updating_visuals: bool = false
 func update_visuals() -> void:
+	if _is_updating_visuals: return # Break the recursion
+	_is_updating_visuals = true
 	# Refreshes the unit's sprite transparency based on invisible status.
 	var sprite = $AnimatedSprite2D
 	if has_status("invisible"):
 		sprite.modulate.a = 0.5   # 50% transparent when invisible.
 	else:
 		sprite.modulate.a = 1.0   # Fully opaque otherwise.
+	_is_updating_visuals = false
 
 
 func _debug_print_status_applied(status_data: StatusEffectData, stacks: int) -> void:
@@ -1231,3 +1234,16 @@ func _debug_print_status_applied(status_data: StatusEffectData, stacks: int) -> 
 	#print("   ATK:  base=", get_stats().atk,  "  effective=", get_effective_atk())
 	#print("   DEF:  base=", get_stats().def,  "  effective=", get_effective_def())
 	#print("   MOV:  base=", get_stats().mov,  "  effective=", get_effective_mov())
+
+# Replace 'reset_unit_state' and 'is_attacking' with the actual names in your script
+func _on_attack_animation_finished():
+	# Look for a function in your script that handles resetting the unit
+	# Example: end_turn(), set_state(IDLE), or deselect()
+	call_deferred("your_actual_reset_function_name") 
+
+func force_idle_state() -> void:
+	if has_node("AnimatedSprite2D"):
+		play_animation("idle")
+	# If your grid manager or battle manager needs to know the attack is done:
+	# (Look in your BattleManager for a function like "deselect_unit" or "clear_selection")
+	# If you aren't sure, calling play_animation("idle") is the safest first step.

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://l5hef417he5m"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_nu44h"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_18ua7"]
+[ext_resource type="Resource" uid="uid://cvdlkj4p02im2" path="res://resources/status_effects/slowed.tres" id="2_bbweq"]
+[ext_resource type="PackedScene" uid="uid://cwbtn61qef387" path="res://scenes/animations/icemage/icebolt.tscn" id="3_mcssj"]
+[ext_resource type="Texture2D" uid="uid://bnqbt0qb47isq" path="res://sprites/UI/skill icons/skill_icons_icespear.png" id="4_mcssj"]
+
+[resource]
+script = ExtResource("2_18ua7")
+id = "icemagebasic"
+display_name = "Basic Attack"
+description = "A basic ranged attack that reduces target's speed by 1 for 1 round."
+icon = ExtResource("4_mcssj")
+effect_scene = ExtResource("3_mcssj")
+max_range = 2
+applies_statuses = Array[ExtResource("1_nu44h")]([ExtResource("2_bbweq")])
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

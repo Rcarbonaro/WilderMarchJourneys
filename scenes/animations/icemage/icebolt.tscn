@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://cwbtn61qef387"]
+
+[ext_resource type="Texture2D" uid="uid://dmu62rx7s17sx" path="res://sprites/icemage/ice spear.png" id="1_ajr83"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sppgu"]
+atlas = ExtResource("1_ajr83")
+region = Rect2(0, 0, 261, 86)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_bwknb"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sppgu")
+}],
+"loop": false,
+"name": &"default",
+"speed": 27.0
+}]
+
+[node name="icebolt" type="Node2D" unique_id=1437919797]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1108632739]
+position = Vector2(1.999999, 1)
+scale = Vector2(0.13636364, 0.16145834)
+sprite_frames = SubResource("SpriteFrames_bwknb")
+frame_progress = 1.0

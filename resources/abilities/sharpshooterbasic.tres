@@ -3,13 +3,15 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_x6qek"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_4lcoe"]
 [ext_resource type="Resource" uid="uid://ckm52uiuq03ql" path="res://resources/status_effects/sharpshooter_momentum.tres" id="2_65yb4"]
+[ext_resource type="Texture2D" uid="uid://bu4y8gpm4iccv" path="res://sprites/UI/skill icons/skill_icons_crossbow.png" id="3_65yb4"]
 
 [resource]
 script = ExtResource("2_4lcoe")
 id = "sharpshooter"
 display_name = "Sharpshooter"
 description = "A long-ranged physical attack."
+icon = ExtResource("3_65yb4")
 min_range = 2
-max_range = 5
+max_range = 6
 applies_statuses = Array[ExtResource("1_x6qek")]([ExtResource("2_65yb4")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

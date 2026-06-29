@@ -2,12 +2,14 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_6iaqw"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_302y2"]
+[ext_resource type="Texture2D" uid="uid://b3bk0cwp7hpbc" path="res://sprites/UI/skill icons/skill_icons_magicbolt.png" id="2_tr8kg"]
 
 [resource]
 script = ExtResource("2_302y2")
 id = "sylvansunder"
 display_name = "Sylvan's Sunder"
 description = "Deals damage in a straight line. Cooldown: 4"
+icon = ExtResource("2_tr8kg")
 attack_animation_name = "cast"
 cooldown_rounds = 4
 affects_team = "all"

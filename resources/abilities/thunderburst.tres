@@ -2,12 +2,14 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_w1xmm"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_2fbi3"]
+[ext_resource type="Texture2D" uid="uid://bwq47ucyn863j" path="res://sprites/UI/skill icons/skill_icons_thunderburst.png" id="2_2j2id"]
 
 [resource]
 script = ExtResource("2_2fbi3")
 id = "thunderburst"
 display_name = "Thunderburst"
 description = "Deal massive damage to nearby enemies. Cost: 30 mana"
+icon = ExtResource("2_2j2id")
 mana_cost = 30
 max_range = 0
 aoe_shape = "square"

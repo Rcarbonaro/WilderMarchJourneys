@@ -2,12 +2,14 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_bxgln"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_hj54k"]
+[ext_resource type="Texture2D" uid="uid://c6nn7nj545keb" path="res://sprites/UI/skill icons/skill_icons_swordslash.png" id="2_rxtw3"]
 
 [resource]
 script = ExtResource("2_hj54k")
 id = "spellswordbasic"
 display_name = "Basic Attack"
 description = "A basic melee attack dealing physical damage."
+icon = ExtResource("2_rxtw3")
 attack_animation_name = "attack"
 post_attack_move_squares = 1
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

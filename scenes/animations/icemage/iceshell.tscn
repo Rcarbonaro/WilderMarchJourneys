@@ -1,0 +1,97 @@
+[gd_scene format=3 uid="uid://bigp3lru0g2wv"]
+
+[ext_resource type="Texture2D" uid="uid://cex6kq4p6sp81" path="res://sprites/icemage/ice shell.png" id="1_g7u4n"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_g7u4n"]
+atlas = ExtResource("1_g7u4n")
+region = Rect2(39, 0, 277, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4cx7c"]
+atlas = ExtResource("1_g7u4n")
+region = Rect2(386, 0, 277, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_now0b"]
+atlas = ExtResource("1_g7u4n")
+region = Rect2(733, 192, 277, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jk8yv"]
+atlas = ExtResource("1_g7u4n")
+region = Rect2(1080, 192, 277, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7536h"]
+atlas = ExtResource("1_g7u4n")
+region = Rect2(39, 384, 277, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fki1e"]
+atlas = ExtResource("1_g7u4n")
+region = Rect2(386, 384, 277, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mo4ci"]
+atlas = ExtResource("1_g7u4n")
+region = Rect2(733, 384, 277, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hsos0"]
+atlas = ExtResource("1_g7u4n")
+region = Rect2(1080, 384, 277, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_n5g5t"]
+atlas = ExtResource("1_g7u4n")
+region = Rect2(39, 576, 277, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_k8y3a"]
+atlas = ExtResource("1_g7u4n")
+region = Rect2(386, 576, 277, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ksrcx"]
+atlas = ExtResource("1_g7u4n")
+region = Rect2(733, 576, 277, 192)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_bwknb"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_g7u4n")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4cx7c")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_now0b")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jk8yv")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7536h")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fki1e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mo4ci")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hsos0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_n5g5t")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_k8y3a")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ksrcx")
+}],
+"loop": false,
+"name": &"default",
+"speed": 14.0
+}]
+
+[node name="icebolt" type="Node2D" unique_id=1437919797]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1108632739]
+position = Vector2(-1, 1)
+scale = Vector2(0.16411208, 0.16145834)
+sprite_frames = SubResource("SpriteFrames_bwknb")
+frame = 10
+frame_progress = 1.0

@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://bejqlpl63p8km"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_v0us8"]
+[ext_resource type="Texture2D" uid="uid://0rxe02kkj7ax" path="res://sprites/UI/skill icons/skill_icons_walloffire.png" id="2_6ttbg"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_k36vv"]
 [ext_resource type="Resource" uid="uid://cbh8s7n6r1bib" path="res://resources/hazards/firewall.tres" id="3_k36vv"]
 
@@ -9,6 +10,7 @@ script = ExtResource("2_k36vv")
 id = "firewall"
 display_name = "Wall of Fire"
 description = "Create a large wall of fire for 3 turns. Cost: 20 mana"
+icon = ExtResource("2_6ttbg")
 mana_cost = 20
 max_range = 4
 affects_team = "all"

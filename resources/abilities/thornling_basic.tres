@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://42eyrp0inbky"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_571my"]
+[ext_resource type="Texture2D" uid="uid://bi4htpcd6comc" path="res://sprites/UI/skill icons/skill_icons_thorns.png" id="2_0qmaf"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_rj4dt"]
 
 [resource]
@@ -8,6 +9,7 @@ script = ExtResource("2_rj4dt")
 id = "thornlingbasic"
 display_name = "Basic Attack"
 description = "A long-ranged physical attack that cannot be used up close."
+icon = ExtResource("2_0qmaf")
 min_range = 3
 max_range = 5
 base_damage_multiplier = 0.6
