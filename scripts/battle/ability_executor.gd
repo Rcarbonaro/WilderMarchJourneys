@@ -1105,27 +1105,35 @@ func _resolve_pending_displacements(caster, ability: AbilityData, pending: Array
 					moved_targets.append(target)
 
 	# ── WAIT FOR EVERY DISPLACEMENT TO VISUALLY FINISH ────────────────────────
-	# THE WINDMAGE FIX: every _displace_unit_* call above kicks off a
+	# THE WINDMAGE FIX (PART 2): every _displace_unit_* call above kicks off a
 	# move_to() tween but doesn't wait for it — they're all started back to
 	# back here, in the same frame, so multiple pushed units visually slide
-	# at once instead of one at a time. But until now, NOTHING ever waited
-	# for those tweens to actually finish before this whole function (and
-	# therefore execute_ability) returned. That meant whoever called the
-	# ability — BattleManager ending the player's turn, or AISystem moving on
-	# to start/end the enemy's turn — could proceed immediately afterward
-	# while a pushed unit's sprite was still mid-slide. If that displacement
-	# happened to be the LAST thing to happen before a turn transition (e.g.
-	# Windmage's push being the last action of the round), nothing was left
-	# to let that tween finish gracefully — the pushed enemy's VISUAL
-	# position (still catching up) and its LOGICAL grid_position (updated
-	# instantly, the moment move_to() was called) could end up out of sync
-	# for the rest of the battle, since nothing forced the animation to
-	# actually complete before everything else moved on. Now we explicitly
-	# wait for every unit that actually moved before returning, so by the
-	# time this ability is fully resolved, every sprite has genuinely caught
-	# up to its grid position.
+	# at once instead of one at a time.
+	#
+	# THE BUG: the original fix awaited "target.movement_finished" for every
+	# moved target in a plain sequential loop. Since every move_to() tween
+	# uses the SAME fixed move_speed duration and they were all started in
+	# the same frame, they also all FINISH at essentially the same real time.
+	# That means by the time this loop got around to awaiting the SECOND (or
+	# third, etc.) target's movement_finished, that target's tween had often
+	# already completed and already emitted the signal — and in GDScript,
+	# `await some_signal` only ever catches a FUTURE emission. Awaiting a
+	# signal that already fired hangs forever, waiting for an emission that
+	# is never coming again. That hang is exactly what showed up as Windmage
+	# abilities taking a "really long delay" (or never resolving at all) any
+	# time a push/pull/scatter moved more than one unit.
+	#
+	# THE FIX: check unit_node's _is_moving flag (set true the instant
+	# move_to()/move_along_path() starts, false right before movement_finished
+	# fires) immediately before deciding to await. If the tween already
+	# finished by the time we get here, _is_moving is already false and we
+	# skip the await entirely instead of blocking on a signal that's never
+	# coming. If it's still mid-tween, we await it normally. Checking the
+	# flag right at the top of each loop iteration is safe even though a
+	# previous await let frames pass — nothing else runs between the check
+	# and the await in the same iteration, so there's no new race introduced.
 	for target in moved_targets:
-		if is_instance_valid(target):
+		if is_instance_valid(target) and target._is_moving:
 			await target.movement_finished
 
 func _launch_projectile(caster, ability: AbilityData, target_cell: Vector2i) -> void:
@@ -1189,7 +1197,7 @@ func _play_aoe_vfx(caster, ability: AbilityData, target_cells: Array,
 	var vfx_node: Node2D
 	if ability.effect_scene != null:
 		vfx_node = ability.effect_scene.instantiate()
-		_apply_vfx_scaling(vfx_node, target_size, TILE_SIZE)
+		_apply_vfx_scaling(vfx_node, target_size, TILE_SIZE, ability.scale_vfx_to_fit_aoe)
 	else:
 		var sprite := Sprite2D.new()
 		if ability.icon != null:
@@ -1227,14 +1235,28 @@ func _play_aoe_vfx(caster, ability: AbilityData, target_cells: Array,
 
 # ── SHARED HELPERS ────────────────────────────────────────────────────────────
 
-func _apply_vfx_scaling(node: Node2D, target_size: Vector2, tile_size: float) -> void:
+func _apply_vfx_scaling(node: Node2D, target_size: Vector2, tile_size: float,
+						 stretch_to_fit: bool = true) -> void:
 	# Scales a VFX node to fit the target area.
+	#
+	# stretch_to_fit = true  (old/default behaviour): non-uniform scale —
+	#   target_size / original_size on EACH axis independently. This exactly
+	#   fills the AOE's bounding box but warps the art's aspect ratio
+	#   whenever the AOE isn't square (e.g. a 1x3 line) or the original
+	#   texture isn't square to begin with.
+	#
+	# stretch_to_fit = false: uniform scale — the SAME factor on both axes,
+	#   chosen so the art fits entirely within the bounding box (the smaller
+	#   of the two axis ratios, like CSS "contain"). The visual stays
+	#   proportionally correct and is centred on the AOE; it may not
+	#   perfectly fill a very non-square area, but it never looks squashed
+	#   or stretched.
 	if node is AnimatedSprite2D:
 		var sf = node.sprite_frames
 		if sf and sf.has_animation("default"):
 			var ft = sf.get_frame_texture("default", 0)
 			if ft:
-				node.scale = target_size / ft.get_size()
+				node.scale = _compute_vfx_scale(target_size, ft.get_size(), stretch_to_fit)
 				return
 	if node.has_node("AnimatedSprite2D"):
 		var cs = node.get_node("AnimatedSprite2D") as AnimatedSprite2D
@@ -1242,9 +1264,19 @@ func _apply_vfx_scaling(node: Node2D, target_size: Vector2, tile_size: float) ->
 		if sf and sf.has_animation("default"):
 			var ft = sf.get_frame_texture("default", 0)
 			if ft:
-				cs.scale = target_size / ft.get_size()
+				cs.scale = _compute_vfx_scale(target_size, ft.get_size(), stretch_to_fit)
 				return
-	node.scale = target_size / Vector2(tile_size, tile_size)
+	node.scale = _compute_vfx_scale(target_size, Vector2(tile_size, tile_size), stretch_to_fit)
+
+
+func _compute_vfx_scale(target_size: Vector2, original_size: Vector2, stretch_to_fit: bool) -> Vector2:
+	if original_size.x == 0 or original_size.y == 0:
+		return Vector2.ONE
+	var per_axis: Vector2 = target_size / original_size
+	if stretch_to_fit:
+		return per_axis
+	var uniform: float = min(per_axis.x, per_axis.y)
+	return Vector2(uniform, uniform)
 
 
 func _get_spawn_root() -> Node:

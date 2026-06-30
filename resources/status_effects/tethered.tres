@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://bv7sadolaliac"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_i4asj"]
+[ext_resource type="Texture2D" uid="uid://txsgiv2pwwh" path="res://sprites/UI/skill icons/skill_icons_tether.png" id="1_remcw"]
+
+[resource]
+script = ExtResource("1_i4asj")
+id = "tethered"
+display_name = "Tethered"
+description = "When one \"tethered\" target takes damage, other \"tethered\" targets also take 50% of the original damage."
+icon = ExtResource("1_remcw")
+metadata/_custom_type_script = "uid://gsbk18mmfnol"

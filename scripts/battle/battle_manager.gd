@@ -226,12 +226,12 @@ func _spawn_stage_enemies() -> void:
 
 
 #Encounter 0
-	spawn_unit(wolf_data,     Vector2i(10, 1), false, 1)
-	spawn_unit(wolf_data,     Vector2i(10, 2), false, 1)
-	spawn_unit(wolf_data,     Vector2i(12, 2), false, 1)
-	spawn_unit(wolf_data,     Vector2i(10, 3), false, 1)
-	if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(15, 2), false, 1)
-	print("🐺 Monster waves deployed!")
+	#spawn_unit(wolf_data,     Vector2i(10, 1), false, 1)
+	#spawn_unit(wolf_data,     Vector2i(10, 2), false, 1)
+	#spawn_unit(wolf_data,     Vector2i(12, 2), false, 1)
+	#spawn_unit(wolf_data,     Vector2i(10, 3), false, 1)
+	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(15, 2), false, 1)
+	#print("🐺 Monster waves deployed!")
 	
 	
 #Encounter 1
@@ -268,21 +268,21 @@ func _spawn_stage_enemies() -> void:
 	#print("🐺 Monster waves deployed!")
 
 #Encounter 4 (hard)
-	#if bear_data != null: spawn_unit(bear_data, Vector2i(9, 3), false, 1)
-	#if bear_data != null: spawn_unit(bear_data, Vector2i(10, 2), false, 1)
-	#if wolf_data != null: spawn_unit(wolf_data, Vector2i(13, 3), false, 1)
-	#if wolf_data != null: spawn_unit(wolf_data, Vector2i(14, 3), false, 1)
-	#if wolf_data != null: spawn_unit(wolf_data, Vector2i(13, 2), false, 1)
-	#if thornling_data != null: spawn_unit(thornling_data, Vector2i(15, 2), false, 1)
-	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(14, 2), false, 1)
-	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(13, 1), false, 1)
-	#if hulkingsporeling_data      != null: spawn_unit(hulkingsporeling_data,      Vector2i(17, 6), false, 1)
-	#if ent_data      != null: spawn_unit(ent_data,      Vector2i(18, 8), false, 1)
-	#if sporeling_data      != null: spawn_unit(sporeling_data,      Vector2i(16, 4), false, 1)
-	#if sporeling_data      != null: spawn_unit(sporeling_data,      Vector2i(18, 3), false, 1)
-	#if leshy_data      != null: spawn_unit(leshy_data,      Vector2i(18, 8), false, 1)
-	#if leshy_data      != null: spawn_unit(leshy_data,      Vector2i(19, 9), false, 1)
-	#print("🐺 Monster waves deployed!")
+	if bear_data != null: spawn_unit(bear_data, Vector2i(9, 3), false, 1)
+	if bear_data != null: spawn_unit(bear_data, Vector2i(10, 2), false, 1)
+	if wolf_data != null: spawn_unit(wolf_data, Vector2i(13, 3), false, 1)
+	if wolf_data != null: spawn_unit(wolf_data, Vector2i(14, 3), false, 1)
+	if wolf_data != null: spawn_unit(wolf_data, Vector2i(13, 2), false, 1)
+	if thornling_data != null: spawn_unit(thornling_data, Vector2i(15, 2), false, 1)
+	if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(14, 2), false, 1)
+	if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(13, 1), false, 1)
+	if hulkingsporeling_data      != null: spawn_unit(hulkingsporeling_data,      Vector2i(17, 6), false, 1)
+	if ent_data      != null: spawn_unit(ent_data,      Vector2i(18, 8), false, 1)
+	if sporeling_data      != null: spawn_unit(sporeling_data,      Vector2i(16, 4), false, 1)
+	if sporeling_data      != null: spawn_unit(sporeling_data,      Vector2i(18, 3), false, 1)
+	if leshy_data      != null: spawn_unit(leshy_data,      Vector2i(18, 8), false, 1)
+	if leshy_data      != null: spawn_unit(leshy_data,      Vector2i(19, 9), false, 1)
+	print("🐺 Monster waves deployed!")
 
 
 
@@ -466,7 +466,23 @@ func on_tile_tapped(cell: Vector2i) -> void:
 
 		# Tapping the unit's own tile: skip movement, show ability choices.
 		if cell == selected_unit.grid_position:
-			selected_unit.has_moved = true
+			selected_unit.pre_move_position = selected_unit.grid_position
+			selected_unit.has_moved         = true
+			selected_unit.can_cancel_move   = true
+			highlight.clear_highlights()
+			reachable_cells = {}
+			_show_abilities_for(selected_unit)
+
+		# Tapping an enemy while a unit is selected (but hasn't moved/acted
+		# yet): skip straight to ability selection on that unit, exactly like
+		# tapping their own tile above — this lets the player immediately
+		# target the enemy they just tapped instead of having to tap their
+		# own tile or an ability button first. Still fully cancelable back to
+		# movement (can_cancel_move = true, same as the own-tile branch).
+		elif is_instance_valid(grid.get_unit_at(cell)) and not grid.get_unit_at(cell).is_player_unit:
+			selected_unit.pre_move_position = selected_unit.grid_position
+			selected_unit.has_moved         = true
+			selected_unit.can_cancel_move   = true
 			highlight.clear_highlights()
 			reachable_cells = {}
 			_show_abilities_for(selected_unit)
@@ -614,6 +630,18 @@ func _show_abilities_for(unit) -> void:
 func cancel_unit_move() -> void:
 	# Called when the player presses "Cancel Move".
 	# Teleports the selected unit back to their pre-move position.
+	#
+	# BUGFIX: can_cancel_move/pre_move_position used to only get set after an
+	# ACTUAL move finished (see the reachable_cells branch below), so a unit
+	# that skipped straight to ability selection without moving — by tapping
+	# their own tile, or now also by tapping an enemy (see on_tile_tapped's
+	# STATE C branches above) — could never cancel back out of ability
+	# selection into movement choice. Both of those branches now set
+	# pre_move_position to the unit's CURRENT cell and can_cancel_move = true
+	# even when nothing actually moved, so snap_to(origin) below is a no-op
+	# teleport-to-self in that case, and the important part — has_moved being
+	# reset to false and select_unit() recomputing reachable_cells — runs
+	# exactly the same either way.
 	if selected_unit == null or not is_instance_valid(selected_unit):
 		return
 	if not selected_unit.can_cancel_move:

@@ -20,6 +20,6 @@ animations = [{
 [node name="Hexweaverbasic" type="Node2D" unique_id=812207508]
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1396825420]
-position = Vector2(0.9999924, 3)
-scale = Vector2(0.25504038, 0.28894934)
+position = Vector2(-1.0000038, 0)
+scale = Vector2(0.13760085, 0.1680254)
 sprite_frames = SubResource("SpriteFrames_075ax")

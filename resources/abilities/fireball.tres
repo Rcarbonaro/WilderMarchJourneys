@@ -12,6 +12,7 @@ display_name = "Fireball"
 description = "Create a large explosion of fire, damaging all creatures within. Cost: 20 mana"
 icon = ExtResource("3_vwgc1")
 effect_scene = ExtResource("2_vwgc1")
+scale_vfx_to_fit_aoe = false
 mana_cost = 20
 min_range = 2
 max_range = 4

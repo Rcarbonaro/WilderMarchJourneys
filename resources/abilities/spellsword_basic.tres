@@ -13,5 +13,4 @@ description = "A basic melee attack dealing physical damage."
 icon = ExtResource("2_rxtw3")
 effect_scene = ExtResource("2_vfnjq")
 attack_animation_name = "attack"
-post_attack_move_squares = 1
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

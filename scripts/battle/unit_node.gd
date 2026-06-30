@@ -123,6 +123,15 @@ var pre_move_position: Vector2i = Vector2i(-1, -1)
 var can_cancel_move: bool = false
 # True only between "unit finished moving" and "unit used an ability".
 
+var _is_moving: bool = false
+# True from the moment move_to()/move_along_path() starts until the instant
+# movement_finished actually fires. Lets callers that kick off SEVERAL units'
+# movement back-to-back (see ability_executor.gd's _resolve_pending_displacements)
+# check "is this unit's tween still running RIGHT NOW" before deciding whether
+# to await movement_finished — awaiting a signal that already fired hangs
+# forever in GDScript, which is what caused the long delay on multi-target
+# Windmage pushes. See move_to()/move_along_path() for where this flips.
+
 var pending_post_attack_moves: int = 0
 # If an ability has post_attack_move_squares > 0, this is set after the attack
 # so BattleManager can grant the unit extra movement.
@@ -306,6 +315,18 @@ func _set_facing_for_direction(target_pos: Vector2i) -> void:
 	if not has_node("AnimatedSprite2D"):
 		return
 	var sprite := $AnimatedSprite2D as AnimatedSprite2D
+
+	# Self-targeted abilities (target_pos == grid_position): there's no real
+	# direction to face, since target_pos.x > grid_position.x is FALSE when
+	# they're equal. That used to fall through to "face left" whenever
+	# faces_right_by_default was true. Instead, snap back to this unit's
+	# default facing (the same flip _apply_default_facing() uses) so a unit
+	# buffing/healing itself faces right by default instead of always
+	# flipping left.
+	if target_pos == grid_position:
+		sprite.flip_h = not faces_right_by_default
+		return
+
 	var target_is_right: bool = target_pos.x > grid_position.x
 	sprite.flip_h = (target_is_right != faces_right_by_default)
 
@@ -535,6 +556,7 @@ func move_to(new_cell: Vector2i) -> void:
 	if grid_ref == null:
 		return
 
+	_is_moving = true
 	_set_facing_for_direction(new_cell)
 
 	var dy = new_cell.y - grid_position.y
@@ -571,6 +593,7 @@ func move_to(new_cell: Vector2i) -> void:
 	tween.tween_property(self, "position", target_world_pos, move_speed)
 	tween.tween_callback(func():
 		play_animation("idle")
+		_is_moving = false
 		movement_finished.emit()
 	)
 
@@ -599,6 +622,7 @@ func move_along_path(path: Array) -> void:
 	if grid_ref == null or path.is_empty():
 		return
 
+	_is_moving = true
 	for step_cell in path:
 		# Bail out cleanly if we were freed mid-walk for some unrelated reason.
 		if not is_instance_valid(self):
@@ -661,6 +685,7 @@ func move_along_path(path: Array) -> void:
 
 	if is_instance_valid(self) and current_hp > 0:
 		play_animation("idle")
+	_is_moving = false
 	movement_finished.emit()
 
 
@@ -1216,14 +1241,19 @@ func _update_hp_label() -> void:
 
 var _is_updating_visuals: bool = false
 func update_visuals() -> void:
-	if _is_updating_visuals: return # Break the recursion
+	if _is_updating_visuals: 
+		print("Recursion blocked!")
+		return 
+	
 	_is_updating_visuals = true
-	# Refreshes the unit's sprite transparency based on invisible status.
+	
 	var sprite = $AnimatedSprite2D
-	if has_status("invisible"):
-		sprite.modulate.a = 0.5   # 50% transparent when invisible.
-	else:
-		sprite.modulate.a = 1.0   # Fully opaque otherwise.
+	# Wrap this in a try-catch equivalent or debug print to see if it's the trigger
+	print("Checking status...")
+	var is_invisible = has_status("invisible") 
+	
+	sprite.modulate.a = 0.5 if is_invisible else 1.0
+	
 	_is_updating_visuals = false
 
 

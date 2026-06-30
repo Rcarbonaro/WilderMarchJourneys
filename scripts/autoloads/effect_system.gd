@@ -162,8 +162,9 @@ func _resolve_live_units(effect: Dictionary, context: Dictionary) -> Array:
 			return []
 
 # ---- BUILT-IN HANDLERS --------------------------------------------------------
-
+var is_processing_logic: bool = false
 func _do_add_stat(effect: Dictionary, context: Dictionary) -> void:
+	is_processing_logic = true
 	var stat: String = effect.get("stat", "atk")
 	var amount = effect.get("amount", 0.0)
 	var value_mode: String = effect.get("value_mode", "flat")
@@ -187,6 +188,7 @@ func _do_add_stat(effect: Dictionary, context: Dictionary) -> void:
 		push_warning("EffectSystem: '" + scope + "' scoped add_stat fired with no live units " +
 					 "available -- this only works when triggered during a battle. Skipped.")
 		return
+	is_processing_logic = false
 
 	for live_unit in live_units:
 		if not is_instance_valid(live_unit):
