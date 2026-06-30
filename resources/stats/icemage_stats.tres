@@ -6,7 +6,7 @@
 script = ExtResource("1_if8sp")
 hp = 14
 atk = 3
-matk = 15
+matk = 16
 def = 6
 mdef = 8
 mana = 60

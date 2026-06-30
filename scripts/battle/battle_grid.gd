@@ -350,6 +350,39 @@ func unregister_large_unit(unit) -> void:
 			unit_positions.erase(cell)
 
 
+var _units_currently_being_rescued: Array = []
+# THE INFINITE RECURSION FIX.
+#
+# THE BUG: _rescue_displaced_unit() below picks "the nearest free cell" via
+# _find_nearest_free_cell() and snaps the displaced unit there. snap_to()
+# then calls register_unit()/register_large_unit() again to claim that new
+# cell — which, if THAT cell is occupied too, calls _rescue_displaced_unit()
+# again, and so on. For a 1×1 unit this was nearly always harmless, because
+# _find_nearest_free_cell() only ever returns a cell with NOTHING registered
+# on it.
+#
+# But for a multi-tile (e.g. 2x2) unit, _find_nearest_free_cell() used to
+# only check the SINGLE anchor cell for occupancy — not the unit's whole
+# footprint. A large unit could get "rescued" onto an anchor cell that's
+# itself empty but whose other 3 footprint cells overlap a different unit
+# (possibly ALSO a large unit). That triggers another rescue, which can
+# overlap back onto cells near the first unit's new spot, and so on — on a
+# crowded map with multiple large units this could chain indefinitely and
+# blow the call stack, which is what showed up as an occasional "infinite
+# recursion" crash.
+#
+# THE FIX is two-pronged:
+#   1. _find_nearest_free_cell() now takes the displaced unit's FULL
+#      footprint and only accepts a candidate anchor cell if EVERY cell of
+#      the footprint is genuinely free there — so a rescue can no longer
+#      land a unit somewhere that immediately conflicts with someone else.
+#   2. As a defence-in-depth backstop (in case some other unrelated path
+#      ever produces a genuine cycle), this array tracks which units are
+#      mid-rescue RIGHT NOW. If a rescue is asked to rescue a unit that's
+#      already being rescued further up the call stack, we know we've
+#      looped back on ourselves — stop immediately with a warning instead
+#      of recursing again.
+
 func _rescue_displaced_unit(displaced, conflicting_cell: Vector2i) -> void:
 	# Called automatically by register_unit/register_large_unit above. Moves
 	# 'displaced' to the nearest free tile so they're never left as an
@@ -358,9 +391,20 @@ func _rescue_displaced_unit(displaced, conflicting_cell: Vector2i) -> void:
 	# meant to be relied on as the normal way units move — anything that
 	# deliberately moves a unit should already be checking the destination
 	# is free beforehand (see is_passable/is_passable_for).
-	var free_cell = _find_nearest_free_cell(conflicting_cell, conflicting_cell)
-	if free_cell == Vector2i(-1, -1):
+	if displaced in _units_currently_being_rescued:
+		push_warning("BattleGrid: rescue loop detected for a unit already mid-rescue — " +
+					 "aborting this nested rescue instead of recursing further.")
+		return
+	_units_currently_being_rescued.append(displaced)
+
+	var footprint: Array = [Vector2i(0, 0)]
+	if "tile_footprint" in displaced and displaced.tile_footprint.size() > 0:
+		footprint = displaced.tile_footprint
+
+	var free_anchor = _find_nearest_free_cell(conflicting_cell, conflicting_cell, footprint)
+	if free_anchor == Vector2i(-1, -1):
 		push_warning("BattleGrid: no free tile anywhere to rescue a displaced unit — they may stay unclickable!")
+		_units_currently_being_rescued.erase(displaced)
 		return
 
 	var displaced_name = "a unit"
@@ -368,28 +412,47 @@ func _rescue_displaced_unit(displaced, conflicting_cell: Vector2i) -> void:
 		displaced_name = displaced.unit_data.display_name
 
 	print("⚠️ ", displaced_name, " was about to be silently overwritten at ", conflicting_cell,
-		  " by something else landing on the same tile — relocating them to ", free_cell,
+		  " by something else landing on the same tile — relocating them to ", free_anchor,
 		  " instead so they stay clickable.")
-	displaced.snap_to(free_cell)
+	displaced.snap_to(free_anchor)
+
+	_units_currently_being_rescued.erase(displaced)
 
 
-func _find_nearest_free_cell(from: Vector2i, exclude_cell: Vector2i = Vector2i(-1, -1)) -> Vector2i:
-	# Expanding-ring search outward from 'from' for the nearest tile that's
-	# fully passable (not a wall, not a movement-blocking hazard, not
-	# occupied) and isn't 'exclude_cell' itself. Returns Vector2i(-1, -1) if
-	# the entire map somehow has no free tile at all.
+func _find_nearest_free_cell(from: Vector2i, exclude_cell: Vector2i = Vector2i(-1, -1),
+							  footprint: Array = [Vector2i(0, 0)]) -> Vector2i:
+	# Expanding-ring search outward from 'from' for the nearest ANCHOR cell
+	# where the unit's ENTIRE footprint (every offset in 'footprint', as used
+	# by multi-tile units) would land on fully passable, unoccupied tiles —
+	# not just the single anchor cell. 'exclude_cell' is treated as occupied
+	# regardless of its actual contents (used to stop a unit being "rescued"
+	# right back onto the cell that displaced it). Returns Vector2i(-1, -1)
+	# if no valid anchor position exists anywhere on the map.
 	var max_radius: int = max(GRID_WIDTH, GRID_HEIGHT)
 	for radius in range(0, max_radius + 1):
 		for dx in range(-radius, radius + 1):
 			for dy in range(-radius, radius + 1):
 				if max(abs(dx), abs(dy)) != radius:
 					continue   # Only check the OUTER ring at this radius — smaller rings were already checked.
-				var c = from + Vector2i(dx, dy)
-				if c == exclude_cell:
+				var anchor = from + Vector2i(dx, dy)
+				if anchor == exclude_cell:
 					continue
-				if is_valid_cell(c) and is_passable(c):
-					return c
+				if _footprint_fully_free(anchor, footprint, exclude_cell):
+					return anchor
 	return Vector2i(-1, -1)
+
+
+func _footprint_fully_free(anchor: Vector2i, footprint: Array, exclude_cell: Vector2i) -> bool:
+	# True only if EVERY cell of the footprint, anchored at 'anchor', is a
+	# valid, passable, unoccupied tile. exclude_cell is always treated as
+	# occupied (see _find_nearest_free_cell above).
+	for offset in footprint:
+		var c: Vector2i = anchor + offset
+		if c == exclude_cell:
+			return false
+		if not is_valid_cell(c) or not is_passable(c):
+			return false
+	return true
 
 # ── HAZARD SYSTEM ─────────────────────────────────────────────────────────────
 

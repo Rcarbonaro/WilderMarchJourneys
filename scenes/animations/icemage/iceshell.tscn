@@ -90,8 +90,8 @@ animations = [{
 [node name="icebolt" type="Node2D" unique_id=1437919797]
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1108632739]
-position = Vector2(-1, 1)
-scale = Vector2(0.16411208, 0.16145834)
+position = Vector2(0.9999974, 9.536742e-07)
+scale = Vector2(0.2973457, 0.33203122)
 sprite_frames = SubResource("SpriteFrames_bwknb")
 frame = 10
 frame_progress = 1.0

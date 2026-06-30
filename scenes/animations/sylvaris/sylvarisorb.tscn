@@ -118,8 +118,8 @@ animations = [{
 [node name="Sylvarisorb" type="Node2D" unique_id=777563975]
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=76012473]
-position = Vector2(-1.9999924, 6)
-scale = Vector2(0.40874526, 0.44634145)
+position = Vector2(-4.000004, -9.536743e-07)
+scale = Vector2(0.21958172, 0.23292682)
 sprite_frames = SubResource("SpriteFrames_uplaq")
 frame = 2
 frame_progress = 1.0

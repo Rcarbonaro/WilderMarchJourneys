@@ -9,6 +9,7 @@
 [ext_resource type="Script" uid="uid://dg0jjul5epkv3" path="res://scripts/battle/highlight_manager.gd" id="6_4ro08"]
 [ext_resource type="Script" uid="uid://b7ttftkyy71c8" path="res://scripts/battle/ai_system.gd" id="7_5u8xp"]
 [ext_resource type="Script" uid="uid://tmqx7l74t3pp" path="res://scripts/battle/input_handler.gd" id="8_yvj2l"]
+[ext_resource type="PackedScene" uid="uid://brhj26oifku43" path="res://scenes/animations/hexweaver/tethermanager.tscn" id="10_rpe18"]
 
 [node name="BattleScene" type="Node2D" unique_id=1882324266]
 script = ExtResource("1_nnhtb")
@@ -58,3 +59,5 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 expand_mode = 1
+
+[node name="Tethervisualizer" parent="." unique_id=216494790 instance=ExtResource("10_rpe18")]

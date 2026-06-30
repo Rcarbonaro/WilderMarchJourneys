@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_ui481"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_pfl7k"]
 [ext_resource type="Resource" uid="uid://6oeegldom1yq" path="res://resources/status_effects/exposed.tres" id="2_po7l4"]
+[ext_resource type="PackedScene" uid="uid://4dm4begunh2j" path="res://scenes/animations/dragoon/dragoon_lunge.tscn" id="3_dylrp"]
 [ext_resource type="Texture2D" uid="uid://5ak3ab1d5qbg" path="res://sprites/UI/skill icons/skill_icons_lunge.png" id="3_po7l4"]
 
 [resource]
@@ -11,11 +12,12 @@ id = "lunge"
 display_name = "Lunge"
 description = "A line attack dealing damage in a single line, the caster ending its turn at the end of the line. Cooldown: 2"
 icon = ExtResource("3_po7l4")
+effect_scene = ExtResource("3_dylrp")
 cooldown_rounds = 2
-max_range = 4
+max_range = 5
 aoe_shape = "line"
 aoe_size = 5
 applies_statuses = Array[ExtResource("1_ui481")]([ExtResource("2_po7l4")])
 is_dash = true
-bonus_damage_isolated = 0.334
+bonus_damage_isolated = 0.75
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

@@ -1,0 +1,96 @@
+[gd_scene format=3 uid="uid://brhj26oifku43"]
+
+[ext_resource type="Script" uid="uid://cg6dosad2ttp8" path="res://scripts/battle/tethervisualizer.gd" id="1_keoax"]
+[ext_resource type="Shader" uid="uid://bo5ku88mm1c8r" path="res://scenes/animations/hexweaver/tether_effect.gdshader" id="2_2lhqv"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_pie7x"]
+shader = ExtResource("2_2lhqv")
+shader_parameter/wave_amplitude = 10.0
+shader_parameter/wave_frequency = 2.0
+shader_parameter/wave_speed = 1.0
+shader_parameter/line_color = Color(0.5, 0, 0.5, 1)
+
+[node name="Tethervisualizer" type="Node2D" unique_id=216494790]
+script = ExtResource("1_keoax")
+
+[node name="Groups" type="Node2D" parent="." unique_id=2058362142]
+
+[node name="tethered" type="Node2D" parent="Groups" unique_id=1474161908]
+
+[node name="Line2D" type="Line2D" parent="Groups/tethered" unique_id=1142128660]
+material = SubResource("ShaderMaterial_pie7x")
+points = PackedVector2Array(0, 2, -78, -45)
+
+[node name="Line2D2" type="Line2D" parent="Groups/tethered" unique_id=1349157410]
+material = SubResource("ShaderMaterial_pie7x")
+points = PackedVector2Array(0, 2, -78, -45, 0, 0)
+
+[node name="Line2D3" type="Line2D" parent="Groups/tethered" unique_id=2105542458]
+material = SubResource("ShaderMaterial_pie7x")
+points = PackedVector2Array(0, 2, -78, -45, 0, 0, 0, 0)
+
+[node name="Line2D4" type="Line2D" parent="Groups/tethered" unique_id=623992159]
+material = SubResource("ShaderMaterial_pie7x")
+points = PackedVector2Array(0, 2, -78, -45, 0, 0, 0, 0, 0, 0)
+
+[node name="Line2D5" type="Line2D" parent="Groups/tethered" unique_id=536291859]
+material = SubResource("ShaderMaterial_pie7x")
+points = PackedVector2Array(0, 2, -78, -45, 0, 0, 0, 0, 0, 0, 0, 0)
+
+[node name="Line2D6" type="Line2D" parent="Groups/tethered" unique_id=351030140]
+material = SubResource("ShaderMaterial_pie7x")
+points = PackedVector2Array(0, 2, -78, -45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+[node name="Line2D7" type="Line2D" parent="Groups/tethered" unique_id=1444441547]
+material = SubResource("ShaderMaterial_pie7x")
+points = PackedVector2Array(0, 2, -78, -45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+[node name="Line2D8" type="Line2D" parent="Groups/tethered" unique_id=2060488823]
+material = SubResource("ShaderMaterial_pie7x")
+points = PackedVector2Array(0, 2, -78, -45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+[node name="Line2D9" type="Line2D" parent="Groups/tethered" unique_id=948608522]
+material = SubResource("ShaderMaterial_pie7x")
+points = PackedVector2Array(0, 2, -78, -45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+[node name="Line2D10" type="Line2D" parent="Groups/tethered" unique_id=772920122]
+material = SubResource("ShaderMaterial_pie7x")
+points = PackedVector2Array(0, 2, -78, -45)
+
+[node name="tether_id_2" type="Node2D" parent="." unique_id=2000022122]
+
+[node name="Line2D" type="Line2D" parent="tether_id_2" unique_id=2123378133]
+material = SubResource("ShaderMaterial_pie7x")
+points = PackedVector2Array(0, 2, -78, -45)
+
+[node name="Line2D2" type="Line2D" parent="tether_id_2" unique_id=1483533237]
+material = SubResource("ShaderMaterial_pie7x")
+points = PackedVector2Array(0, 2, -78, -45)
+
+[node name="Line2D3" type="Line2D" parent="tether_id_2" unique_id=1923028294]
+material = SubResource("ShaderMaterial_pie7x")
+points = PackedVector2Array(0, 2, -78, -45)
+
+[node name="Line2D4" type="Line2D" parent="tether_id_2" unique_id=50129096]
+material = SubResource("ShaderMaterial_pie7x")
+points = PackedVector2Array(0, 2, -78, -45)
+
+[node name="Line2D5" type="Line2D" parent="tether_id_2" unique_id=623485236]
+material = SubResource("ShaderMaterial_pie7x")
+points = PackedVector2Array(0, 2, -78, -45)
+
+[node name="Line2D6" type="Line2D" parent="tether_id_2" unique_id=1244079640]
+material = SubResource("ShaderMaterial_pie7x")
+points = PackedVector2Array(0, 2, -78, -45)
+
+[node name="Line2D7" type="Line2D" parent="tether_id_2" unique_id=240981447]
+material = SubResource("ShaderMaterial_pie7x")
+points = PackedVector2Array(0, 2, -78, -45)
+
+[node name="Line2D8" type="Line2D" parent="tether_id_2" unique_id=594262364]
+material = SubResource("ShaderMaterial_pie7x")
+points = PackedVector2Array(0, 2, -78, -45)
+
+[node name="Line2D9" type="Line2D" parent="tether_id_2" unique_id=981015614]
+material = SubResource("ShaderMaterial_pie7x")
+points = PackedVector2Array(0, 2, -78, -45, 0, 0, 0, 0, 0, 0)

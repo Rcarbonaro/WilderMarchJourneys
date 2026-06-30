@@ -1,0 +1,116 @@
+[gd_scene format=3 uid="uid://4dm4begunh2j"]
+
+[ext_resource type="Texture2D" uid="uid://2gocimofq214" path="res://sprites/dragoon/dragoon attack.png" id="1_7b684"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_a1x0e"]
+atlas = ExtResource("1_7b684")
+region = Rect2(0, 313, 313, 313)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_seoki"]
+atlas = ExtResource("1_7b684")
+region = Rect2(313, 313, 313, 313)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bhy72"]
+atlas = ExtResource("1_7b684")
+region = Rect2(626, 313, 313, 313)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_swgda"]
+atlas = ExtResource("1_7b684")
+region = Rect2(939, 313, 313, 313)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lchhc"]
+atlas = ExtResource("1_7b684")
+region = Rect2(0, 626, 313, 313)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4817x"]
+atlas = ExtResource("1_7b684")
+region = Rect2(313, 626, 313, 313)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_u5tus"]
+atlas = ExtResource("1_7b684")
+region = Rect2(626, 626, 313, 313)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bjbg5"]
+atlas = ExtResource("1_7b684")
+region = Rect2(939, 626, 313, 313)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_0wv6f"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bhy72")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_swgda")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lchhc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4817x")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_u5tus")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bjbg5")
+}],
+"loop": false,
+"name": &"default",
+"speed": 10.0
+}]
+
+[node name="DragoonLunge" type="Node2D" unique_id=455114487]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1392960259]
+sprite_frames = SubResource("SpriteFrames_0wv6f")
+frame = 21
+frame_progress = 1.0

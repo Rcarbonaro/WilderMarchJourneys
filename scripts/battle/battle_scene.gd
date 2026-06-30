@@ -25,12 +25,22 @@ func _ready() -> void:
 	_setup_test_map()
 
 func _setup_test_map() -> void:
-	# Creates a flat 10x10 grid of dirt tiles
+	# Creates a flat grid of dirt tiles.
+	#
+	# BUGFIX: this used to loop `range(10)` for y, generating a 10-row map —
+	# but battle_grid.gd's GRID_HEIGHT constant is 9, and is_valid_cell()
+	# rejects any row >= GRID_HEIGHT. That meant row 9 (the 10th, bottom-most
+	# row) was drawn and given grid-line outlines like any other tile, but
+	# units could never move to it, target it, or be spawned on it — a
+	# visible "dead" row at the bottom of the map. Looping to $BattleGrid's
+	# own GRID_HEIGHT instead keeps the drawn map and the usable map in sync
+	# by construction, so this can't drift out of sync again if GRID_HEIGHT
+	# ever changes.
 	# 📥 CALLS FROM: tile_dirt resource you made in Phase 1
 	var dirt_tile = preload("res://resources/tiles/tile_dirt.tres")
 	var map_data = {}
 	for x in range(25):
-		for y in range(10):
+		for y in range($BattleGrid.GRID_HEIGHT):
 			map_data[Vector2i(x, y)] = dirt_tile
 	$BattleGrid.setup_grid(map_data)
 

@@ -36,6 +36,21 @@ extends Resource
 # Optional scene used for projectile travel or AOE display.
 # Falls back to icon, then a white square if neither is set.
 
+@export var scale_vfx_to_fit_aoe: bool = true
+# CHECK (default, unchanged behaviour): the effect_scene/icon visual is
+# stretched/squashed non-uniformly so it exactly fills the AOE's bounding
+# box, however many tiles wide/tall that turns out to be.
+#
+# UNCHECK: the visual keeps its own art's natural proportions instead of
+# being warped to fit the tile area. It's still scaled up/down to roughly
+# match the AOE's footprint, but uniformly (same scale on both axes, fit
+# entirely within the bounding box) so circular/asymmetric VFX and any
+# distinct walk/idle/attack animation frames don't get squished or
+# stretched into a rectangle. Turn this off for AOE visuals that look wrong
+# warped — e.g. a round explosion or an animated character-shaped effect
+# spawned at a multi-tile AOE size.
+# See ability_executor.gd's _apply_vfx_scaling() for where this is read.
+
 # ── CUSTOM ATTACK ANIMATION ───────────────────────────────────────────────────
 
 @export var attack_animation_name: String = ""
