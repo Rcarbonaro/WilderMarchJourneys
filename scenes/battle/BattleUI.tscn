@@ -1,6 +1,10 @@
 [gd_scene format=3 uid="uid://cex0ecyqllq4k"]
 
 [ext_resource type="Script" uid="uid://bbil00pq8wpri" path="res://scripts/ui/ui_manager.gd" id="1_o3edr"]
+[ext_resource type="Texture2D" uid="uid://coh76byxy7u0x" path="res://sprites/UI/Health & Mana Bars/hpbar_background.png" id="2_ps24t"]
+[ext_resource type="Texture2D" uid="uid://b681ekra18dmx" path="res://sprites/UI/Health & Mana Bars/hpbar_inside.png" id="3_h6rtp"]
+[ext_resource type="Texture2D" uid="uid://do3k06g4jg2u" path="res://sprites/UI/Health & Mana Bars/manabar_background.png" id="4_v1sni"]
+[ext_resource type="Texture2D" uid="uid://dsxpkt4c2lkkd" path="res://sprites/UI/Health & Mana Bars/manabar_inside.png" id="5_trk6y"]
 
 [node name="UIManager" type="CanvasLayer" unique_id=493660787]
 script = ExtResource("1_o3edr")
@@ -30,52 +34,93 @@ stretch_mode = 5
 layout_mode = 2
 
 [node name="UnitInfoColumn" type="VBoxContainer" parent="BottomBar/HBoxContainer" unique_id=1492408727]
+custom_minimum_size = Vector2(450, 0)
 layout_mode = 2
-size_flags_horizontal = 3
 
 [node name="NameLabel" type="Label" parent="BottomBar/HBoxContainer/UnitInfoColumn" unique_id=2031297830]
-layout_mode = 2
-theme_override_font_sizes/font_size = 32
-
-[node name="HPBarBG" type="Control" parent="BottomBar/HBoxContainer/UnitInfoColumn" unique_id=1033715114]
-custom_minimum_size = Vector2(600, 40)
+custom_minimum_size = Vector2(450, 20)
+layout_direction = 2
 layout_mode = 2
 size_flags_horizontal = 0
+theme_override_font_sizes/font_size = 32
 
-[node name="HPBarFill" type="ColorRect" parent="BottomBar/HBoxContainer/UnitInfoColumn/HPBarBG" unique_id=1436368385]
-custom_minimum_size = Vector2(600, 40)
-layout_mode = 0
+[node name="HPBarBG" type="TextureRect" parent="BottomBar/HBoxContainer/UnitInfoColumn" unique_id=1558301112]
+custom_minimum_size = Vector2(400, 50)
+layout_mode = 2
+size_flags_horizontal = 0
+texture = ExtResource("2_ps24t")
+expand_mode = 1
+
+[node name="HPBarFill" type="Control" parent="BottomBar/HBoxContainer/UnitInfoColumn/HPBarBG" unique_id=1551990271]
+clip_contents = true
+custom_minimum_size = Vector2(400, 40)
+anchors_preset = 0
 offset_top = 2.0
-offset_right = 50.0
-offset_bottom = 17.0
-color = Color(5.9200825e-06, 0.7494148, 0.002695322, 1)
+offset_right = 400.0
+offset_bottom = 42.0
+mouse_filter = 2
+
+[node name="HPBarFillTexture" type="TextureRect" parent="BottomBar/HBoxContainer/UnitInfoColumn/HPBarBG/HPBarFill" unique_id=1833875141]
+custom_minimum_size = Vector2(200, 20)
+layout_mode = 0
+offset_left = 41.913956
+offset_top = 8.214908
+offset_right = 381.41357
+offset_bottom = 35.759525
+texture = ExtResource("3_h6rtp")
+expand_mode = 1
 
 [node name="HPLabel" type="Label" parent="BottomBar/HBoxContainer/UnitInfoColumn/HPBarBG" unique_id=1168712820]
 layout_mode = 0
-offset_right = 50.0
-offset_bottom = 23.0
+offset_left = 178.91945
+offset_top = 7.4112706
+offset_right = 265.91943
+offset_bottom = 35.41127
 theme_override_font_sizes/font_size = 20
-text = "100/100"
+text = "min/max"
 horizontal_alignment = 1
 
 [node name="ManaBarHolder" type="Control" parent="BottomBar/HBoxContainer/UnitInfoColumn" unique_id=938069764]
-custom_minimum_size = Vector2(600, 40)
+custom_minimum_size = Vector2(300, 40)
 layout_mode = 2
 size_flags_horizontal = 0
 
-[node name="ManaBarFill" type="ColorRect" parent="BottomBar/HBoxContainer/UnitInfoColumn/ManaBarHolder" unique_id=243886861]
-custom_minimum_size = Vector2(600, 40)
+[node name="ManaBarBG" type="TextureRect" parent="BottomBar/HBoxContainer/UnitInfoColumn/ManaBarHolder" unique_id=1722353227]
+custom_minimum_size = Vector2(300, 40)
 layout_mode = 0
-offset_right = 50.0
-offset_bottom = 16.0
-color = Color(0.2784314, 0.3372549, 0.9647059, 1)
+offset_right = 300.0
+offset_bottom = 40.0
+texture = ExtResource("4_v1sni")
+expand_mode = 1
+
+[node name="ManaBarFill" type="TextureRect" parent="BottomBar/HBoxContainer/UnitInfoColumn/ManaBarHolder" unique_id=2069702818]
+custom_minimum_size = Vector2(200, 20)
+layout_mode = 0
+offset_left = 32.843643
+offset_top = 6.2019844
+offset_right = 284.27075
+offset_bottom = 28.495747
+texture = ExtResource("5_trk6y")
+expand_mode = 1
 
 [node name="ManaLabel" type="Label" parent="BottomBar/HBoxContainer/UnitInfoColumn/ManaBarHolder" unique_id=1438872432]
 custom_minimum_size = Vector2(50, 20)
 layout_mode = 0
-offset_right = 40.0
-offset_bottom = 23.0
-theme_override_font_sizes/font_size = 20
+offset_left = 143.84209
+offset_top = 7.361061
+offset_right = 220.84209
+offset_bottom = 35.36106
+theme_override_font_sizes/font_size = 15
+text = "100/100"
+
+[node name="StatusCountLabel" type="Label" parent="BottomBar/HBoxContainer/UnitInfoColumn" unique_id=158613167]
+layout_mode = 2
+size_flags_vertical = 1
+theme_override_font_sizes/font_size = 16
+text = "Status Effects: 0"
+
+[node name="StatusIconRow" type="HFlowContainer" parent="BottomBar/HBoxContainer/UnitInfoColumn" unique_id=894336184]
+layout_mode = 2
 
 [node name="VSeparator2" type="VSeparator" parent="BottomBar/HBoxContainer" unique_id=289556420]
 layout_mode = 2
@@ -90,7 +135,7 @@ columns = 2
 
 [node name="MoreInfoButton" type="Button" parent="BottomBar/HBoxContainer/VBoxContainer" unique_id=1068180445]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 17
 text = "More Information"
 
 [node name="VSeparator3" type="VSeparator" parent="BottomBar/HBoxContainer" unique_id=1860422220]
@@ -104,15 +149,6 @@ size_flags_horizontal = 3
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="StatusCountLabel" type="Label" parent="BottomBar/HBoxContainer/ActionColumn" unique_id=158613167]
-layout_mode = 2
-size_flags_vertical = 1
-theme_override_font_sizes/font_size = 16
-text = "Status Effects: 0"
-
-[node name="StatusIconRow" type="HFlowContainer" parent="BottomBar/HBoxContainer/ActionColumn" unique_id=894336184]
-layout_mode = 2
-
 [node name="HBoxContainer" type="HBoxContainer" parent="BottomBar/HBoxContainer/ActionColumn" unique_id=909855157]
 layout_mode = 2
 
@@ -121,12 +157,19 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "Cancel Movement"
 
-[node name="EndTurnButton" type="Button" parent="BottomBar/HBoxContainer/ActionColumn/HBoxContainer" unique_id=1015176717]
-layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "End Round"
-
 [node name="GridToggleButton" type="Button" parent="BottomBar/HBoxContainer/ActionColumn/HBoxContainer" unique_id=1345672608]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "Toggle Grid"
+
+[node name="VSeparator4" type="VSeparator" parent="BottomBar/HBoxContainer" unique_id=1404341109]
+custom_minimum_size = Vector2(0, 15)
+layout_mode = 2
+
+[node name="EndTurnButton" type="Button" parent="BottomBar/HBoxContainer" unique_id=1015176717]
+layout_mode = 2
+theme_override_colors/icon_normal_color = Color(0.5186307, 0, 0.05360259, 1)
+theme_override_colors/icon_focus_color = Color(1, 1, 1, 1)
+theme_override_colors/icon_hover_color = Color(0.5176471, 0, 0.05490196, 1)
+theme_override_font_sizes/font_size = 16
+text = "End Round"

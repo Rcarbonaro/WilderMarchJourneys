@@ -1,5 +1,6 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://bofmi1ba06wrj"]
 
+[ext_resource type="Texture2D" uid="uid://dlo5qi85wvxgm" path="res://sprites/UI/skill icons/skill_icons_foresight.png" id="1_1yecg"]
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_2kkyl"]
 
 [resource]
@@ -7,5 +8,6 @@ script = ExtResource("1_2kkyl")
 id = "foresight"
 display_name = "Foresight"
 description = "Increased critical hit chance"
+icon = ExtResource("1_1yecg")
 crit_chance_modifier = 15.0
 metadata/_custom_type_script = "uid://gsbk18mmfnol"
