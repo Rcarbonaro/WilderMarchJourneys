@@ -18,12 +18,12 @@ var _hermit_attacked_this_battle: bool = false
 
 
 func _ready() -> void:
-    EffectSystem.register_custom_handler("the_hermit_isolation", Callable(self, "_setup_hermit_isolation"))
-    EventBus.subscribe(EventBus.ON_BATTLE_START, Callable(self, "_on_battle_start"))
+	EffectSystem.register_custom_handler("the_hermit_isolation", Callable(self, "_setup_hermit_isolation"))
+	EventBus.subscribe(EventBus.ON_BATTLE_START, Callable(self, "_on_battle_start"))
 
 
 func _on_battle_start(_payload: Dictionary) -> void:
-    _hermit_attacked_this_battle = false
+	_hermit_attacked_this_battle = false
 
 # ==============================================================================
 # THE HERMIT (Isolation)
@@ -36,33 +36,33 @@ func _on_battle_start(_payload: Dictionary) -> void:
 # ==============================================================================
 
 func _setup_hermit_isolation(effect: Dictionary, context: Dictionary) -> void:
-    # Called once when "The Hermit" is acquired.
-    var callback := Callable(self, "_hermit_modify_damage")
-    if not CombatHooks.outgoing_damage_modifiers.has(callback):
-        CombatHooks.outgoing_damage_modifiers.append(callback)
+	# Called once when "The Hermit" is acquired.
+	var callback := Callable(self, "_hermit_modify_damage")
+	if not CombatHooks.outgoing_damage_modifiers.has(callback):
+		CombatHooks.outgoing_damage_modifiers.append(callback)
 
 
 func _hermit_modify_damage(attacker, target, damage: int, is_crit: bool) -> int:
-    if _hermit_attacked_this_battle:
-        return damage
-    if attacker == null or target == null or not is_instance_valid(attacker) or not attacker.is_player_unit:
-        return damage   # Only the player's FIRST attack counts -- ignore enemy attacks entirely.
-    _hermit_attacked_this_battle = true
-    if _is_target_isolated(target):
-        return int(damage * 1.2)
-    return damage
+	if _hermit_attacked_this_battle:
+		return damage
+	if attacker == null or target == null or not is_instance_valid(attacker) or not attacker.is_player_unit:
+		return damage   # Only the player's FIRST attack counts -- ignore enemy attacks entirely.
+	_hermit_attacked_this_battle = true
+	if _is_target_isolated(target):
+		return int(damage * 1.2)
+	return damage
 
 
 func _is_target_isolated(target) -> bool:
-    # Mirrors ability_executor.gd's own _is_target_isolated() check at range 1.
-    if target.grid_ref == null:
-        return false
-    for dx in range(-1, 2):
-        for dy in range(-1, 2):
-            if dx == 0 and dy == 0:
-                continue
-            var check_cell = target.grid_position + Vector2i(dx, dy)
-            var unit_there = target.grid_ref.get_unit_at(check_cell)
-            if unit_there != null and unit_there != target and unit_there.is_player_unit == target.is_player_unit:
-                return false
-    return true
+	# Mirrors ability_executor.gd's own _is_target_isolated() check at range 1.
+	if target.grid_ref == null:
+		return false
+	for dx in range(-1, 2):
+		for dy in range(-1, 2):
+			if dx == 0 and dy == 0:
+				continue
+			var check_cell = target.grid_position + Vector2i(dx, dy)
+			var unit_there = target.grid_ref.get_unit_at(check_cell)
+			if unit_there != null and unit_there != target and unit_there.is_player_unit == target.is_player_unit:
+				return false
+	return true

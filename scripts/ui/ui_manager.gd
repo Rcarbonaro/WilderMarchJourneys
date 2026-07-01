@@ -1,13 +1,42 @@
 # res://scripts/ui/ui_manager.gd
 # ==============================================================================
-# THE USER INTERFACE MANAGER
+# THE USER INTERFACE MANAGER — BOTTOM BAR VERSION
 # ==============================================================================
-# Draws the ability hotbar buttons when a unit is selected, manages the
-# Cancel Move button, and now also:
-#    - Shows a unit info box (top-left) when ANY unit (ally or enemy) is tapped:
-#      exact HP bar + numbers, mana, status effect count, and clickable status
-#      icons that show a description tooltip on click.
-#    - A grid-lines toggle button that turns the battlefield grid overlay on/off.
+# All visual layout now lives in BattleUI.tscn. This script:
+#   1. Finds named nodes in the scene and connects their signals
+#   2. Populates the unit info section when a unit is tapped
+#   3. Populates the ability button bar when a unit is selected for action
+#   4. Refreshes HP/mana/status values every frame while the bar is visible
+#
+# The public function names (show_unit_info, hide_unit_info, show_unit_abilities,
+# clear_abilities, set_cancel_move_visible) are UNCHANGED so BattleManager
+# doesn't need any edits.
+#
+# ── REQUIRED NODE NAMES IN BattleUI.tscn ────────────────────────────────────
+# The script searches the scene recursively for these exact names (case-
+# sensitive). You can nest them however you like inside BottomBar as long as
+# the names match.
+#
+#   BottomBar          PanelContainer   The whole bar. Anchored full-width at
+#                                       the bottom of the viewport.
+#   PortraitRect       TextureRect      Unit portrait art. (Optional)
+#   NameLabel          Label            Unit name + team emoji.
+#   HPBarBG            Control          The background track of the HP bar.
+#   HPBarFill          ColorRect        The coloured fill strip inside HPBarBG.
+#   HPLabel            Label            "current / max" numbers on the HP bar.
+#   ManaBarHolder      Control          Wraps the whole mana section. Hidden
+#                                       for units that have no mana stat.
+#   ManaBarFill        ColorRect        The blue fill strip inside ManaBarHolder.
+#   ManaLabel          Label            Mana numbers.
+#   StatsGrid          GridContainer    Script adds rows here. Set Columns = 2.
+#   StatusCountLabel   Label            "Status Effects: N"
+#   StatusIconRow      HFlowContainer   Script adds clickable status icons here.
+#   MoreInfoButton     Button           Opens the full character-sheet popup.
+#   AbilityBar         HBoxContainer    Script adds ability buttons here at
+#                                       runtime when a unit is selected.
+#   CancelMoveButton   Button           Cancels the current unit's movement.
+#   EndRoundButton      Button           Ends the player's turn.
+#   GridToggleButton   Button (opt.)    Toggles the battlefield grid overlay.
 # ==============================================================================
 
 extends CanvasLayer
@@ -16,500 +45,397 @@ extends CanvasLayer
 # Drag the BattleManager node here in the Inspector.
 
 @export var grid: Node
-# Drag BattleGrid here in the Inspector — needed so the grid-toggle button
-# can tell battle_grid.gd to show/hide its GridLinesLayer.
+# Drag BattleGrid here in the Inspector (needed for the grid toggle button).
 
-@onready var ability_bar          = $VBoxContainer/AbilityBar
-@onready var end_turn_button      = $VBoxContainer/EndTurnButton
-@onready var cancel_move_button   = $VBoxContainer/CancelMoveButton
-# ⚠️ You must add a Button node named "CancelMoveButton" inside VBoxContainer
-#     in your BattleUI.tscn scene tree for this line to work.
 
-# ── UNIT INFO BOX (built entirely in code — no scene changes required) ───────
-# A small panel anchored near the top-left of the screen. Rebuilt from scratch
-# every time show_unit_info() is called, since its contents (status icons,
-# HP/mana values) change per-unit and per-tick.
+# ── SCENE NODE REFERENCES ─────────────────────────────────────────────────────
+# These are populated in _ready() by searching the scene tree for each name.
+# If a node is missing, the variable stays null and that piece is skipped
+# gracefully — a warning is printed so you know what to add.
 
-var _info_box: PanelContainer = null
-var _info_box_vbox: VBoxContainer = null
-var _info_hp_bar_bg: ColorRect = null
-var _info_hp_bar_fill: ColorRect = null
-var _info_hp_label: Label = null
-var _info_mana_bar_holder: Control = null
-var _info_mana_bar_bg: ColorRect = null
-var _info_mana_bar_fill: ColorRect = null
-var _info_mana_label: Label = null
-var _info_name_label: Label = null
-var _info_stats_grid: GridContainer = null
-var _info_stat_labels: Dictionary = {}
-# Keys: "atk", "matk", "def", "mdef", "crit_chance", "crit_damage", "mov"
-var _info_status_count_label: Label = null
-var _info_status_icon_row: HFlowContainer = null
+var bottom_bar:          Control         = null
+var portrait_rect:       TextureRect     = null
+var name_label:          Label           = null
+var hp_bar_bg:           Control         = null
+var hp_bar_fill:         ColorRect       = null
+var hp_label:            Label           = null
+var mana_bar_holder:     Control         = null
+var mana_bar_fill:       ColorRect       = null
+var mana_label:          Label           = null
+var stats_grid:          GridContainer   = null
+var status_count_label:  Label           = null
+var status_icon_row:     Control         = null  # HFlowContainer
+var more_info_button:    Button          = null
+var ability_bar:         Control         = null  # HBoxContainer
+var cancel_move_button:  Button          = null
+var end_turn_button:     Button          = null
+var grid_toggle_button:  Button          = null
 
-# Description button
-var _info_description_button: Button = null
+# Stat value Label nodes; created by _build_stat_rows() once StatsGrid is found.
+var _stat_labels: Dictionary = {}
 
-var _info_box_unit = null
-# The unit the info box currently displays. Used so we can refresh it on a
-# timer/poll if you want live updates — see show_unit_info() for details.
+# The unit currently shown in the bar. null = bar is idle / hidden.
+var _bar_unit = null
 
-# ── STATUS TOOLTIP POPUP ──────────────────────────────────────────────────────
-# A small floating panel that appears when a status icon is clicked, showing
-# that status's display_name + description. Dismissed by clicking anywhere
-# else (see _unhandled_input below).
+# ── STATUS TOOLTIP ────────────────────────────────────────────────────────────
+var _status_tooltip:          PanelContainer = null
+var _last_status_fingerprint: String         = ""
 
-var _status_tooltip: PanelContainer = null
-
-const STATUS_ICON_SIZE: float = 32.0
+const STATUS_ICON_SIZE:  float = 32.0
 const MISSING_ICON_COLOR: Color = Color(0, 0, 0, 1)
-# Used as the fallback "icon" for any StatusEffectData with no icon assigned —
-# a plain black box, per spec.
 
-const HP_BAR_BG_TEXTURE_PATH: String = "res://sprites/UI/Health & Mana Bars/hpbar_background.png"
-const MANA_BAR_BG_TEXTURE_PATH: String = "res://sprites/UI/Health & Mana Bars/manabar_background.png"
-# Your background/frame art for the info box's bars. Drawn as a Sprite2D
-# layered on top of the dark ColorRect base, scaled to exactly fit the bar's
-# pixel dimensions regardless of the source PNG's native size.
+# Fill widths in pixels, read from scene layout after the first layout pass.
+# Defaults here are safe fallbacks if HPBarBG/ManaBarBG can't be measured.
+var _hp_bar_width:   float = 192.0
+var _mana_bar_width: float = 192.0
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SETUP
+# ══════════════════════════════════════════════════════════════════════════════
 
 func _ready() -> void:
-	end_turn_button.pressed.connect(_on_end_turn_pressed)
+	# ── Find every named node by searching the whole scene recursively ─────────
+	# The second argument (true) means "search child nodes". The third (false)
+	# means "don't require the node to be owned by this scene root" — set it
+	# false so nodes you've added as raw children still get found.
+	bottom_bar         = find_child("BottomBar",        true, false) as Control
+	portrait_rect      = find_child("PortraitRect",     true, false) as TextureRect
+	name_label         = find_child("NameLabel",        true, false) as Label
+	hp_bar_bg          = find_child("HPBarBG",          true, false) as Control
+	hp_bar_fill        = find_child("HPBarFill",        true, false) as ColorRect
+	hp_label           = find_child("HPLabel",          true, false) as Label
+	mana_bar_holder    = find_child("ManaBarHolder",    true, false) as Control
+	mana_bar_fill      = find_child("ManaBarFill",      true, false) as ColorRect
+	mana_label         = find_child("ManaLabel",        true, false) as Label
+	stats_grid         = find_child("StatsGrid",        true, false) as GridContainer
+	status_count_label = find_child("StatusCountLabel", true, false) as Label
+	status_icon_row    = find_child("StatusIconRow",    true, false)
+	more_info_button   = find_child("MoreInfoButton",   true, false) as Button
+	ability_bar        = find_child("AbilityBar",       true, false)
+	cancel_move_button = find_child("CancelMoveButton", true, false) as Button
+	end_turn_button    = find_child("EndTurnButton",    true, false) as Button
+	grid_toggle_button = find_child("GridToggleButton", true, false) as Button
 
-	cancel_move_button.text = "↩️ Cancel Move"
-	cancel_move_button.pressed.connect(_on_cancel_move_pressed)
-	cancel_move_button.visible = false  # Hidden by default — only shown when valid.
+	# Warn about any critical missing nodes so you know what to add to the scene.
+	var required: Array = [
+		["BottomBar",        bottom_bar],
+		["NameLabel",        name_label],
+		["HPBarFill",        hp_bar_fill],
+		["AbilityBar",       ability_bar],
+		["CancelMoveButton", cancel_move_button],
+		["EndTurnButton",    end_turn_button],
+	]
+	for pair in required:
+		if pair[1] == null:
+			push_warning(
+				"UIManager: could not find required node '%s' in BattleUI.tscn. " % pair[0] +
+				"Add it and make sure the Name field matches exactly (it's case-sensitive)."
+			)
 
-	_build_info_box()
-	_build_grid_toggle_button()
+	# ── Connect button signals ─────────────────────────────────────────────────
+	if end_turn_button:
+		end_turn_button.pressed.connect(_on_end_turn_pressed)
 
+	if cancel_move_button:
+		cancel_move_button.text    = "↩ Cancel"
+		cancel_move_button.visible = false
+		cancel_move_button.pressed.connect(_on_cancel_move_pressed)
 
-func _process(_delta: float) -> void:
-	# Keeps the info box numbers live without needing every single HP/mana/
-	# status change source in the codebase (abilities, auras, hazards, DoT,
-	# AI attacks, etc.) to individually remember to call a refresh function.
-	# This is cheap — it only does work while the box is actually visible,
-	# and only refreshes numeric labels/icon list, not the whole box layout.
-	if _info_box != null and _info_box.visible and is_instance_valid(_info_box_unit):
-		_refresh_info_box_live_values()
-	elif _info_box != null and _info_box.visible and not is_instance_valid(_info_box_unit):
-		# The unit info box was showing a unit that has since been freed
-		# (e.g. they died). Close the box rather than show stale data.
-		hide_unit_info()
+	if more_info_button:
+		more_info_button.pressed.connect(_on_more_info_pressed)
 
+	if grid_toggle_button:
+		grid_toggle_button.toggle_mode = true
+		grid_toggle_button.text        = "Grid: Off"
+		grid_toggle_button.pressed.connect(_on_grid_toggle_pressed)
 
-func show_unit_abilities(unit) -> void:
-	# Rebuilds the ability button row for the selected unit.
-	print("🔍 show_unit_abilities called for: ", unit)
+	# ── Read HP/mana bar widths from the actual laid-out scene ────────────────
+	# Control nodes report size = (0, 0) until Godot finishes a layout pass.
+	# Waiting one frame guarantees we get the real dimensions.
+	await get_tree().process_frame
+	if hp_bar_bg != null and hp_bar_bg.size.x > 0:
+		_hp_bar_width = hp_bar_bg.size.x - 4.0   # 2-px padding each side
+	if mana_bar_holder != null:
+		var mana_bg: Control = find_child("ManaBarBG", true, false) as Control
+		if mana_bg and mana_bg.size.x > 0:
+			_mana_bar_width = mana_bg.size.x - 4.0
+		else:
+			_mana_bar_width = _hp_bar_width
 
-	$VBoxContainer.mouse_filter = Control.MOUSE_FILTER_PASS
-	$VBoxContainer/AbilityBar.mouse_filter = Control.MOUSE_FILTER_PASS
+	# ── Populate the stats rows inside StatsGrid ──────────────────────────────
+	if stats_grid != null:
+		_build_stat_rows()
 
-	clear_abilities()
-
-	if unit == null:
-		print("❌ Unit is null — returning early.")
-		return
-	if not "unit_data" in unit or unit.unit_data == null:
-		print("❌ unit_data missing or null.")
-		return
-	if not "starting_abilities" in unit.unit_data:
-		print("❌ starting_abilities not found on unit_data.")
-		return
-
-	print("📋 Unit has ", unit.unit_data.starting_abilities.size(), " abilities.")
-
-	if unit.has_acted:
-		print("📋 Unit already acted — hiding hotbar.")
-		return
-
-	for ability in unit.unit_data.starting_abilities:
-		if ability == null:
-			print("⚠️ Null ability entry found.")
-			continue
-
-		var btn = Button.new()
-		btn.text = ability.display_name
-		btn.custom_minimum_size = Vector2(120, 40)
-		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn.mouse_filter = Control.MOUSE_FILTER_STOP
-
-		var current_cooldown = unit.ability_cooldowns.get(ability.id, 0)
-		if current_cooldown > 0:
-			btn.disabled = true
-			btn.text += " (%d)" % current_cooldown
-
-		btn.pressed.connect(func():
-			if battle_manager != null and battle_manager.has_method("on_ability_selected"):
-				print("🎯 Ability selected: ", ability.display_name)
-				battle_manager.on_ability_selected(ability)
-		)
-
-		$VBoxContainer/AbilityBar.add_child(btn)
-		print("📦 Button added: ", btn.text)
-
-
-func set_cancel_move_visible(visible_state: bool) -> void:
-	if cancel_move_button != null:
-		cancel_move_button.visible = visible_state
+	# Start hidden — becomes visible when a unit is tapped or selected.
+	if bottom_bar:
+		bottom_bar.visible = false
 
 
-func _on_end_turn_pressed() -> void:
-	if battle_manager != null and battle_manager.has_method("end_player_turn"):
-		battle_manager.end_player_turn()
+func _build_stat_rows() -> void:
+	# Creates 7 icon+value rows inside the StatsGrid container.
+	# The GridContainer only needs to exist in the scene; the rows are all
+	# built here so you don't have to manually add 14 sub-nodes in the editor.
+	stats_grid.columns = 7
+	stats_grid.add_theme_constant_override("h_separation", 12)
+	stats_grid.add_theme_constant_override("v_separation", 3)
 
-
-func _on_cancel_move_pressed() -> void:
-	if battle_manager != null and battle_manager.has_method("cancel_unit_move"):
-		battle_manager.cancel_unit_move()
-
-
-func clear_abilities() -> void:
-	if ability_bar != null:
-		for child in ability_bar.get_children():
-			child.queue_free()
-
-# ══════════════════════════════════════════════════════════════════════════════
-# UNIT INFO BOX
-# ══════════════════════════════════════════════════════════════════════════════
-
-func _build_info_box() -> void:
-	# Constructs the info box once at startup, hidden by default.
-	# Anchored near the top-left of the screen via a Control's anchor/offset.
-	_info_box = PanelContainer.new()
-	_info_box.custom_minimum_size = Vector2(260, 0) # Slightly wider to prevent clipping from larger fonts
-	_info_box.position = Vector2(16, 16)   # Top-left corner with a small margin.
-	_info_box.visible = false
-	_info_box.z_index = 50
-	_info_box.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(_info_box)
-
-	_info_box_vbox = VBoxContainer.new()
-	_info_box_vbox.add_theme_constant_override("separation", 6)
-	_info_box.add_child(_info_box_vbox)
-
-	# Unit name header.
-	_info_name_label = Label.new()
-	_info_name_label.add_theme_font_size_override("font_size", 18)
-	_info_box_vbox.add_child(_info_name_label)
-
-	# HP bar (background + fill), with an exact-numbers label beside/below it.
-	var hp_bar_holder = Control.new()
-	hp_bar_holder.custom_minimum_size = Vector2(0, 18)
-	_info_box_vbox.add_child(hp_bar_holder)
-
-	_info_hp_bar_bg = ColorRect.new()
-	_info_hp_bar_bg.color = Color(0.1, 0.1, 0.1, 0.9)
-	_info_hp_bar_bg.size = Vector2(196, 16)
-	_info_hp_bar_bg.position = Vector2(0, 1)
-	hp_bar_holder.add_child(_info_hp_bar_bg)
-
-	# Background art drawn on top of the dark ColorRect base
-	var hp_bg_texture: Texture2D = load(HP_BAR_BG_TEXTURE_PATH)
-	if hp_bg_texture != null:
-		var hp_bg_sprite := Sprite2D.new()
-		hp_bg_sprite.texture = hp_bg_texture
-		hp_bg_sprite.centered = false
-		var hp_tex_size: Vector2 = hp_bg_texture.get_size()
-		if hp_tex_size.x > 0 and hp_tex_size.y > 0:
-			hp_bg_sprite.scale = Vector2(196.0 / hp_tex_size.x, 16.0 / hp_tex_size.y)
-		_info_hp_bar_bg.add_child(hp_bg_sprite)
-	else:
-		printerr("⚠️ Could not load HP bar background at: ", HP_BAR_BG_TEXTURE_PATH)
-
-	_info_hp_bar_fill = ColorRect.new()
-	_info_hp_bar_fill.color = Color(0.2, 0.9, 0.2, 1.0)
-	_info_hp_bar_fill.size = Vector2(192, 12)
-	_info_hp_bar_fill.position = Vector2(2, 3)
-	_info_hp_bar_bg.add_child(_info_hp_bar_fill)
-
-	_info_hp_label = Label.new()
-	_info_hp_label.add_theme_font_size_override("font_size", 12)
-	_info_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_info_hp_label.size = Vector2(196, 16)
-	_info_hp_bar_bg.add_child(_info_hp_label)
-
-	# ── MANA BAR ────────────────────────────────────────────────────────────────
-	_info_mana_bar_holder = Control.new()
-	_info_mana_bar_holder.custom_minimum_size = Vector2(0, 18)
-	_info_box_vbox.add_child(_info_mana_bar_holder)
-
-	_info_mana_bar_bg = ColorRect.new()
-	_info_mana_bar_bg.color = Color(0.1, 0.1, 0.1, 0.9)
-	_info_mana_bar_bg.size = Vector2(196, 16)
-	_info_mana_bar_bg.position = Vector2(0, 1)
-	_info_mana_bar_holder.add_child(_info_mana_bar_bg)
-
-	var mana_bg_texture: Texture2D = load(MANA_BAR_BG_TEXTURE_PATH)
-	if mana_bg_texture != null:
-		var mana_bg_sprite := Sprite2D.new()
-		mana_bg_sprite.texture = mana_bg_texture
-		mana_bg_sprite.centered = false
-		var tex_size: Vector2 = mana_bg_texture.get_size()
-		if tex_size.x > 0 and tex_size.y > 0:
-			mana_bg_sprite.scale = Vector2(196.0 / tex_size.x, 16.0 / tex_size.y)
-		_info_mana_bar_bg.add_child(mana_bg_sprite)
-	else:
-		printerr("⚠️ Could not load mana bar background at: ", MANA_BAR_BG_TEXTURE_PATH)
-
-	_info_mana_bar_fill = ColorRect.new()
-	_info_mana_bar_fill.color = Color(0.25, 0.45, 0.95, 1.0)
-	_info_mana_bar_fill.size = Vector2(192, 12)
-	_info_mana_bar_fill.position = Vector2(2, 3)
-	_info_mana_bar_bg.add_child(_info_mana_bar_fill)
-
-	_info_mana_label = Label.new()
-	_info_mana_label.add_theme_font_size_override("font_size", 12)
-	_info_mana_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_info_mana_label.size = Vector2(196, 16)
-	_info_mana_bar_bg.add_child(_info_mana_label)
-
-	# ── EFFECTIVE STATS GRID ──────────────────────────────────────────────────────
-	var stats_separator := HSeparator.new()
-	_info_box_vbox.add_child(stats_separator)
-
-	_info_stats_grid = GridContainer.new()
-	_info_stats_grid.columns = 2
-	_info_stats_grid.add_theme_constant_override("h_separation", 16)
-	_info_stats_grid.add_theme_constant_override("v_separation", 6)
-	_info_box_vbox.add_child(_info_stats_grid)
-
-	var panel_icons := {
-		"atk": preload("res://sprites/UI/Icons/atk_icon.png"),
-		"matk": preload("res://sprites/UI/Icons/matk_icon.png"),
-		"def": preload("res://sprites/UI/Icons/def_icon.png"),
-		"mdef": preload("res://sprites/UI/Icons/mdef_icon.png"),
-		"crit_chance": preload("res://sprites/UI/Icons/crit%_icon.png"),
-		"crit_damage": preload("res://sprites/UI/Icons/critdmg_icon.png"),
-		"mov": preload("res://sprites/UI/Icons/mov_icon.png")
+	var icon_paths: Dictionary = {
+		"atk":         "res://sprites/UI/Icons/atk_icon.png",
+		"matk":        "res://sprites/UI/Icons/matk_icon.png",
+		"def":         "res://sprites/UI/Icons/def_icon.png",
+		"mdef":        "res://sprites/UI/Icons/mdef_icon.png",
+		"crit_chance": "res://sprites/UI/Icons/crit%_icon.png",
+		"crit_damage": "res://sprites/UI/Icons/critdmg_icon.png",
+		"mov":         "res://sprites/UI/Icons/mov_icon.png",
 	}
 
-	_info_stat_labels = {}
-	for stat_key in ["atk", "matk", "def", "mdef", "crit_chance", "crit_damage", "mov"]:
+	_stat_labels = {}
+	for key in ["atk", "matk", "def", "mdef", "crit_chance", "crit_damage", "mov"]:
 		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 6)
-		
+		row.add_theme_constant_override("separation", 4)
+
 		var icon := TextureRect.new()
-		icon.custom_minimum_size = Vector2(18, 18)
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.custom_minimum_size = Vector2(24, 24)
+		icon.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.texture = panel_icons[stat_key]
+		if ResourceLoader.exists(icon_paths[key]):
+			icon.texture = load(icon_paths[key]) as Texture2D
 		row.add_child(icon)
-		
+
 		var lbl := Label.new()
-		lbl.add_theme_font_size_override("font_size", 14)
-		lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
-		lbl.add_theme_constant_override("outline_size", 4)
+		lbl.add_theme_font_size_override("font_size", 20)
 		row.add_child(lbl)
-		
-		_info_stats_grid.add_child(row)
-		_info_stat_labels[stat_key] = lbl
 
-	# Status effect count label.
-	_info_status_count_label = Label.new()
-	_info_status_count_label.add_theme_font_size_override("font_size", 14)
-	_info_box_vbox.add_child(_info_status_count_label)
+		stats_grid.add_child(row)
+		_stat_labels[key] = lbl
 
-	# Status icon row — wraps horizontally automatically via HFlowContainer.
-	_info_status_icon_row = HFlowContainer.new()
-	_info_status_icon_row.add_theme_constant_override("h_separation", 4)
-	_info_status_icon_row.add_theme_constant_override("v_separation", 4)
-	_info_box_vbox.add_child(_info_status_icon_row)
-	
-	var btn_separator := HSeparator.new()
-	_info_box_vbox.add_child(btn_separator)
-	
-	_info_description_button = Button.new()
-	_info_description_button.text = "More Information"
-	_info_description_button.custom_minimum_size = Vector2(0, 30)
-	_info_description_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	_info_description_button.pressed.connect(_on_description_button_pressed)
-	_info_box_vbox.add_child(_info_description_button)
 
+# ══════════════════════════════════════════════════════════════════════════════
+# LIVE REFRESH  (runs every frame while the bar is visible)
+# ══════════════════════════════════════════════════════════════════════════════
+
+func _process(_delta: float) -> void:
+	if bottom_bar == null or not bottom_bar.visible:
+		return
+	if not is_instance_valid(_bar_unit):
+		hide_unit_info()
+		return
+	_refresh_live_values()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PUBLIC API  (called by BattleManager — do NOT rename these functions)
+# ══════════════════════════════════════════════════════════════════════════════
 
 func show_unit_info(unit) -> void:
+	# Shows the unit info section. Called when any unit (ally or enemy) is tapped.
 	if not is_instance_valid(unit):
 		hide_unit_info()
 		return
 
-	_info_box_unit = unit
-	_info_box.visible = true
+	_bar_unit                 = unit
+	_last_status_fingerprint  = ""
 	_hide_status_tooltip()
-	_last_status_fingerprint = ""
 
-	# ── NAME ────────────────────────────────────────────────────────────────────
-	var team_tag := "🛡️" if unit.is_player_unit else "⚔️"
-	_info_name_label.text = "%s %s" % [team_tag, unit.unit_data.display_name]
+	if bottom_bar:
+		bottom_bar.visible = true
 
-	# ── HP ──────────────────────────────────────────────────────────────────────
-	var max_hp: int = max(1, unit.get_stats().hp)
-	var pct: float = clamp(float(unit.current_hp) / float(max_hp), 0.0, 1.0)
-	_info_hp_bar_fill.size.x = 192.0 * pct
-	if pct > 0.5:
-		_info_hp_bar_fill.color = Color(0.2, 0.9, 0.2, 1.0)
-	elif pct > 0.25:
-		_info_hp_bar_fill.color = Color(0.95, 0.85, 0.1, 1.0)
-	else:
-		_info_hp_bar_fill.color = Color(0.9, 0.15, 0.15, 1.0)
-	_info_hp_label.text = "%d / %d" % [unit.current_hp, max_hp]
+	# Portrait
+	if portrait_rect:
+		if unit.unit_data != null and unit.unit_data.portrait != null:
+			portrait_rect.texture = unit.unit_data.portrait
+			portrait_rect.visible = true
+		else:
+			portrait_rect.texture = null
 
-	# ── MANA ────────────────────────────────────────────────────────────────────
-	var max_mana: int = unit.get_stats().mana
-	if max_mana > 0:
-		_info_mana_bar_holder.visible = true
-		var mana_pct: float = clamp(float(unit.current_mana) / float(max_mana), 0.0, 1.0)
-		_info_mana_bar_fill.size.x = 192.0 * mana_pct
-		_info_mana_label.text = "%d / %d" % [unit.current_mana, max_mana]
-	else:
-		_info_mana_bar_holder.visible = false
+	# Name
+	if name_label:
+		var tag := "🛡 " if unit.is_player_unit else "⚔ "
+		name_label.text = tag + unit.unit_data.display_name
 
-	_update_stat_labels(unit)
-
-	# ── STATUS EFFECTS ──────────────────────────────────────────────────────────
-	_info_status_count_label.text = "Status Effects: %d" % unit.active_statuses.size()
-
-	for child in _info_status_icon_row.get_children():
-		child.queue_free()
-
-	for status_entry in unit.active_statuses:
-		var status_data: StatusEffectData = status_entry["data"]
-		_add_status_icon(status_data, status_entry["stacks"])
+	# HP, mana, stats, status icons
+	_refresh_live_values()
 
 
 func hide_unit_info() -> void:
-	_info_box.visible = false
-	_info_box_unit = null
+	# Hides the unit info data, and hides the whole bar if no ability buttons
+	# are currently showing (i.e. no unit is mid-turn).
+	_bar_unit = null
 	_hide_status_tooltip()
 
+	var abilities_showing: bool = (
+		ability_bar != null and ability_bar.get_child_count() > 0
+	)
+	if not abilities_showing and bottom_bar:
+		bottom_bar.visible = false
 
-func _on_description_button_pressed() -> void:
-	if not is_instance_valid(_info_box_unit):
+
+func show_unit_abilities(unit) -> void:
+	# Rebuilds the ability button row for the currently selected player unit.
+	clear_abilities()
+
+	if unit == null:
 		return
-		
-	print("📋 Instantiating script-only UnitInfoPopup for: ", _info_box_unit.unit_data.display_name)
-	
-	var popup_instance = UnitInfoPopup.new()
-	add_child(popup_instance)
-	
-	var unit = _info_box_unit
-	var max_hp: int = max(1, unit.get_stats().hp)
-	var max_mana: int = unit.get_stats().mana
-	
-	var live_stat_lines: Array[String] = [
-		"HP: %d / %d" % [unit.current_hp, max_hp],
-		"Mana: %d / %d" % [unit.current_mana, max_mana],
-		"ATK: %d" % unit.get_effective_atk(),
-		"MATK: %d" % unit.get_effective_matk(),
-		"DEF: %d" % unit.get_effective_def(),
-		"MDEF: %d" % unit.get_effective_mdef(),
-		"Crit %%: %.0f%%" % unit.get_effective_crit_chance(),
-		"Crit DMG: %.0f%%" % unit.get_effective_crit_damage(),
-		"MOV: %d" % unit.get_effective_mov()
-	]
-	
-	var items: Array = []
-	if "equipped_items" in unit and unit.equipped_items != null:
-		items = unit.equipped_items
-	
-	popup_instance.setup(unit.unit_data, live_stat_lines, items)
+	if not ("unit_data" in unit) or unit.unit_data == null:
+		return
+	if not ("starting_abilities" in unit.unit_data):
+		return
+	if unit.has_acted:
+		return
+	if ability_bar == null:
+		push_warning("UIManager: AbilityBar node not found — ability buttons cannot appear.")
+		return
+
+	if bottom_bar:
+		bottom_bar.visible = true
+
+	for ability in unit.unit_data.starting_abilities:
+		if ability == null:
+			continue
+		var btn := Button.new()
+		btn.text                    = ability.display_name
+		btn.custom_minimum_size     = Vector2(110, 40)
+		btn.size_flags_horizontal   = Control.SIZE_EXPAND_FILL
+		btn.mouse_filter            = Control.MOUSE_FILTER_STOP
+
+		var cooldown: int = unit.ability_cooldowns.get(ability.id, 0)
+		if cooldown > 0:
+			btn.disabled = true
+			btn.text    += " (%d)" % cooldown
+
+		btn.pressed.connect(func():
+			if battle_manager and battle_manager.has_method("on_ability_selected"):
+				battle_manager.on_ability_selected(ability)
+		)
+		ability_bar.add_child(btn)
 
 
-func _update_stat_labels(unit) -> void:
-	_info_stat_labels["atk"].text         = "ATK: %d" % unit.get_effective_atk()
-	_info_stat_labels["matk"].text        = "MATK: %d" % unit.get_effective_matk()
-	_info_stat_labels["def"].text         = "DEF: %d" % unit.get_effective_def()
-	_info_stat_labels["mdef"].text        = "MDEF: %d" % unit.get_effective_mdef()
-	_info_stat_labels["crit_chance"].text = "Crit %%: %.0f%%" % unit.get_effective_crit_chance()
-	_info_stat_labels["crit_damage"].text = "Crit DMG: %.0f%%" % unit.get_effective_crit_damage()
-	_info_stat_labels["mov"].text         = "MOV: %d" % unit.get_effective_mov()
+func set_cancel_move_visible(visible_state: bool) -> void:
+	if cancel_move_button:
+		cancel_move_button.visible = visible_state
+
+
+func clear_abilities() -> void:
+	if ability_bar:
+		for child in ability_bar.get_children():
+			child.queue_free()
 
 
 func refresh_unit_info_if_showing(unit) -> void:
-	if _info_box_unit == unit and _info_box.visible:
+	if _bar_unit == unit and bottom_bar and bottom_bar.visible:
 		show_unit_info(unit)
 
-var _is_refreshing: bool = false
-func _refresh_info_box_live_values() -> void:
-	var unit = _info_box_unit
 
-	var max_hp: int = max(1, unit.get_stats().hp)
-	var pct: float = clamp(float(unit.current_hp) / float(max_hp), 0.0, 1.0)
-	_info_hp_bar_fill.size.x = 192.0 * pct
-	if pct > 0.5:
-		_info_hp_bar_fill.color = Color(0.2, 0.9, 0.2, 1.0)
-	elif pct > 0.25:
-		_info_hp_bar_fill.color = Color(0.95, 0.85, 0.1, 1.0)
-	else:
-		_info_hp_bar_fill.color = Color(0.9, 0.15, 0.15, 1.0)
-	_info_hp_label.text = "%d / %d" % [unit.current_hp, max_hp]
+func show_unleash_not_ready_popup() -> void:
+	# TODO: replace with your own popup or toast notification if needed.
+	pass
 
-	var max_mana: int = unit.get_stats().mana
-	if max_mana > 0:
-		_info_mana_bar_holder.visible = true
-		var mana_pct: float = clamp(float(unit.current_mana) / float(max_mana), 0.0, 1.0)
-		_info_mana_bar_fill.size.x = 192.0 * mana_pct
-		_info_mana_label.text = "%d / %d" % [unit.current_mana, max_mana]
-	else:
-		_info_mana_bar_holder.visible = false
 
-	_update_stat_labels(unit)
+func show_insufficient_mana_popup() -> void:
+	# TODO: replace with your own popup or toast notification if needed.
+	pass
 
-	var fingerprint := ""
+
+# ══════════════════════════════════════════════════════════════════════════════
+# INTERNAL — LIVE VALUE REFRESH
+# ══════════════════════════════════════════════════════════════════════════════
+
+func _refresh_live_values() -> void:
+	var unit = _bar_unit
+
+	# ── HP ────────────────────────────────────────────────────────────────────
+	if hp_bar_fill and unit.has_method("get_stats"):
+		var max_hp: int   = max(1, unit.get_stats().hp)
+		var pct:    float = clamp(float(unit.current_hp) / float(max_hp), 0.0, 1.0)
+		hp_bar_fill.size.x = _hp_bar_width * pct
+		hp_bar_fill.color  = (
+			Color(0.2,  0.9,  0.2)  if pct > 0.5  else
+			Color(0.95, 0.85, 0.1)  if pct > 0.25 else
+			Color(0.9,  0.15, 0.15)
+		)
+		if hp_label:
+			hp_label.text = "%d / %d" % [unit.current_hp, max_hp]
+
+	# ── Mana ──────────────────────────────────────────────────────────────────
+	if mana_bar_holder and unit.has_method("get_stats"):
+		var max_mana: int = unit.get_stats().mana
+		mana_bar_holder.visible = max_mana > 0
+		if max_mana > 0:
+			var mana_pct: float = clamp(float(unit.current_mana) / float(max_mana), 0.0, 1.0)
+			if mana_bar_fill:
+				mana_bar_fill.size.x = _mana_bar_width * mana_pct
+			if mana_label:
+				mana_label.text = "%d / %d" % [unit.current_mana, max_mana]
+
+	# ── Stats ──────────────────────────────────────────────────────────────────
+	if not _stat_labels.is_empty():
+		_stat_labels["atk"].text          = "ATK %d"      % unit.get_effective_atk()
+		_stat_labels["matk"].text         = "MATK %d"     % unit.get_effective_matk()
+		_stat_labels["def"].text          = "DEF %d"      % unit.get_effective_def()
+		_stat_labels["mdef"].text         = "MDEF %d"     % unit.get_effective_mdef()
+		_stat_labels["crit_chance"].text  = "Crit %.0f%%" % unit.get_effective_crit_chance()
+		_stat_labels["crit_damage"].text  = "CDmg %.0f%%" % unit.get_effective_crit_damage()
+		_stat_labels["mov"].text          = "MOV %d"      % unit.get_effective_mov()
+
+	# ── Status effects (only rebuild when they actually changed) ──────────────
+	var fingerprint: String = ""
 	for s in unit.active_statuses:
 		fingerprint += "%s:%d|" % [s["data"].id, s["stacks"]]
 
 	if fingerprint != _last_status_fingerprint:
 		_last_status_fingerprint = fingerprint
-		_info_status_count_label.text = "Status Effects: %d" % unit.active_statuses.size()
-		for child in _info_status_icon_row.get_children():
-			child.queue_free()
-		for status_entry in unit.active_statuses:
-			var status_data: StatusEffectData = status_entry["data"]
-			_add_status_icon(status_data, status_entry["stacks"])
-	_is_refreshing = false
-			
+		if status_count_label:
+			status_count_label.text = "Status Effects: %d" % unit.active_statuses.size()
+		if status_icon_row:
+			for child in status_icon_row.get_children():
+				child.queue_free()
+			for entry in unit.active_statuses:
+				_add_status_icon(entry["data"], entry["stacks"])
 
 
-var _last_status_fingerprint: String = ""
+# ══════════════════════════════════════════════════════════════════════════════
+# INTERNAL — STATUS ICONS
+# ══════════════════════════════════════════════════════════════════════════════
 
+func _add_status_icon(status_data, stacks: int) -> void:
+	if status_icon_row == null:
+		return
 
-func _add_status_icon(status_data: StatusEffectData, stacks: int) -> void:
-	var icon_button := TextureButton.new()
-	icon_button.custom_minimum_size = Vector2(STATUS_ICON_SIZE, STATUS_ICON_SIZE)
-	icon_button.ignore_texture_size = true
-	icon_button.stretch_mode = TextureButton.STRETCH_SCALE
-	icon_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	var btn := TextureButton.new()
+	btn.custom_minimum_size = Vector2(STATUS_ICON_SIZE, STATUS_ICON_SIZE)
+	btn.ignore_texture_size = true
+	btn.stretch_mode        = TextureButton.STRETCH_SCALE
+	btn.mouse_filter        = Control.MOUSE_FILTER_STOP
 
 	if status_data.icon != null:
-		icon_button.texture_normal = status_data.icon
+		btn.texture_normal = status_data.icon
 	else:
 		var img := Image.create(int(STATUS_ICON_SIZE), int(STATUS_ICON_SIZE), false, Image.FORMAT_RGBA8)
 		img.fill(MISSING_ICON_COLOR)
-		icon_button.texture_normal = ImageTexture.create_from_image(img)
+		btn.texture_normal = ImageTexture.create_from_image(img)
 
-	icon_button.pressed.connect(func():
-		_show_status_tooltip(status_data, icon_button)
-	)
-
-	_info_status_icon_row.add_child(icon_button)
+	btn.pressed.connect(func(): _show_status_tooltip(status_data, btn))
+	status_icon_row.add_child(btn)
 
 	if stacks > 1:
-		var stack_label := Label.new()
-		stack_label.text = "x%d" % stacks
-		stack_label.add_theme_font_size_override("font_size", 10)
-		stack_label.position = Vector2(STATUS_ICON_SIZE - 16, STATUS_ICON_SIZE - 14)
-		stack_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		icon_button.add_child(stack_label)
+		var lbl := Label.new()
+		lbl.text = "x%d" % stacks
+		lbl.add_theme_font_size_override("font_size", 10)
+		lbl.position     = Vector2(STATUS_ICON_SIZE - 32, STATUS_ICON_SIZE - 32)
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		btn.add_child(lbl)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# STATUS TOOLTIP
+# INTERNAL — STATUS TOOLTIP
 # ══════════════════════════════════════════════════════════════════════════════
 
-func _show_status_tooltip(status_data: StatusEffectData, anchor_node: Control) -> void:
+func _show_status_tooltip(status_data, anchor_node: Control) -> void:
 	_hide_status_tooltip()
 
-	_status_tooltip = PanelContainer.new()
-	_status_tooltip.z_index = 100
+	_status_tooltip             = PanelContainer.new()
+	_status_tooltip.z_index     = 100
 	_status_tooltip.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(_status_tooltip)
 
@@ -518,26 +444,26 @@ func _show_status_tooltip(status_data: StatusEffectData, anchor_node: Control) -
 
 	var title := Label.new()
 	title.text = status_data.display_name
-	title.add_theme_font_size_override("font_size", 16)
+	title.add_theme_font_size_override("font_size", 30)
 	vbox.add_child(title)
 
 	var desc := Label.new()
 	desc.text = status_data.description if status_data.description != "" else "(No description)"
 	desc.custom_minimum_size = Vector2(200, 0)
-	desc.autowrap_mode = TextServer.AUTOWRAP_WORD
+	desc.autowrap_mode       = TextServer.AUTOWRAP_WORD
 	desc.add_theme_font_size_override("font_size", 13)
 	vbox.add_child(desc)
 
-	var anchor_global_pos: Vector2 = anchor_node.global_position
-	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
-	var tooltip_pos: Vector2 = anchor_global_pos + Vector2(0, STATUS_ICON_SIZE + 4)
-	tooltip_pos.x = min(tooltip_pos.x, viewport_size.x - 220)
-	tooltip_pos.y = min(tooltip_pos.y, viewport_size.y - 100)
-	_status_tooltip.position = tooltip_pos
+	# Position above the status icon, nudged inside the viewport.
+	var vp:  Vector2 = get_viewport().get_visible_rect().size
+	var pos: Vector2 = anchor_node.global_position + Vector2(0, -(120.0 + STATUS_ICON_SIZE))
+	pos.x = clamp(pos.x, 4.0, vp.x - 224.0)
+	pos.y = clamp(pos.y, 4.0, vp.y - 140.0)
+	_status_tooltip.position = pos
 
 
 func _hide_status_tooltip() -> void:
-	if _status_tooltip != null and is_instance_valid(_status_tooltip):
+	if is_instance_valid(_status_tooltip):
 		_status_tooltip.queue_free()
 	_status_tooltip = null
 
@@ -546,50 +472,74 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _status_tooltip == null:
 		return
 
-	var is_click: bool = false
+	var pressed:   bool    = false
 	var click_pos: Vector2 = Vector2.ZERO
 
 	if event is InputEventMouseButton:
-		var mouse_event := event as InputEventMouseButton
-		if mouse_event.pressed:
-			is_click = true
-			click_pos = mouse_event.position
+		var me := event as InputEventMouseButton
+		if me.pressed:
+			pressed   = true
+			click_pos = me.position
 	elif event is InputEventScreenTouch:
-		var touch_event := event as InputEventScreenTouch
-		if touch_event.pressed:
-			is_click = true
-			click_pos = touch_event.position
+		var te := event as InputEventScreenTouch
+		if te.pressed:
+			pressed   = true
+			click_pos = te.position
 
-	if not is_click:
+	if not pressed:
 		return
-
-	var tooltip_rect := Rect2(_status_tooltip.global_position, _status_tooltip.size)
-	if tooltip_rect.has_point(click_pos):
+	if Rect2(_status_tooltip.global_position, _status_tooltip.size).has_point(click_pos):
 		return
-
 	_hide_status_tooltip()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# GRID LINES TOGGLE
+# INTERNAL — BUTTON HANDLERS
 # ══════════════════════════════════════════════════════════════════════════════
 
-var _grid_toggle_button: Button = null
+func _on_end_turn_pressed() -> void:
+	if battle_manager and battle_manager.has_method("end_player_turn"):
+		battle_manager.end_player_turn()
 
-func _build_grid_toggle_button() -> void:
-	_grid_toggle_button = Button.new()
-	_grid_toggle_button.text = "🔳 Grid: Off"
-	_grid_toggle_button.toggle_mode = true
-	_grid_toggle_button.custom_minimum_size = Vector2(120, 40)
-	_grid_toggle_button.pressed.connect(_on_grid_toggle_pressed)
-	$VBoxContainer.add_child(_grid_toggle_button)
+
+func _on_cancel_move_pressed() -> void:
+	if battle_manager and battle_manager.has_method("cancel_unit_move"):
+		battle_manager.cancel_unit_move()
+
+
+func _on_more_info_pressed() -> void:
+	if not is_instance_valid(_bar_unit):
+		return
+
+	var unit     = _bar_unit
+	var max_hp:   int = max(1, unit.get_stats().hp)
+	var max_mana: int = unit.get_stats().mana
+
+	var live_stat_lines: Array[String] = [
+		"HP: %d / %d"      % [unit.current_hp,   max_hp],
+		"Mana: %d / %d"    % [unit.current_mana, max_mana],
+		"ATK: %d"          % unit.get_effective_atk(),
+		"MATK: %d"         % unit.get_effective_matk(),
+		"DEF: %d"          % unit.get_effective_def(),
+		"MDEF: %d"         % unit.get_effective_mdef(),
+		"Crit %%: %.0f%%"  % unit.get_effective_crit_chance(),
+		"Crit DMG: %.0f%%" % unit.get_effective_crit_damage(),
+		"MOV: %d"          % unit.get_effective_mov(),
+	]
+
+	var items: Array = []
+	if "equipped_items" in unit and unit.equipped_items != null:
+		items = unit.equipped_items
+
+	var popup_instance := UnitInfoPopup.new()
+	add_child(popup_instance)
+	popup_instance.setup(unit.unit_data, live_stat_lines, items)
 
 
 func _on_grid_toggle_pressed() -> void:
 	if grid == null or not grid.has_method("set_grid_lines_visible"):
-		printerr("⚠️ UIManager: grid reference missing or set_grid_lines_visible() not found on BattleGrid.")
+		push_warning("UIManager: grid export is not set or BattleGrid missing set_grid_lines_visible().")
 		return
-
-	var now_visible: bool = _grid_toggle_button.button_pressed
-	grid.set_grid_lines_visible(now_visible)
-	_grid_toggle_button.text = "🔳 Grid: On" if now_visible else "🔳 Grid: Off"
+	var now_on: bool = grid_toggle_button.button_pressed
+	grid.set_grid_lines_visible(now_on)
+	grid_toggle_button.text = "Grid: On" if now_on else "Grid: Off"
