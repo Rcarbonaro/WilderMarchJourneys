@@ -59,6 +59,8 @@ var name_label:          Label           = null
 var hp_bar_bg:           Control         = null
 var hp_bar_fill:         ColorRect       = null
 var hp_label:            Label           = null
+var _hp_fill_texture:  TextureRect = null  
+var _mana_fill_texture: TextureRect = null  
 var mana_bar_holder:     Control         = null
 var mana_bar_fill:       ColorRect       = null
 var mana_label:          Label           = null
@@ -156,13 +158,28 @@ func _ready() -> void:
 	# Waiting one frame guarantees we get the real dimensions.
 	await get_tree().process_frame
 	if hp_bar_bg != null and hp_bar_bg.size.x > 0:
-		_hp_bar_width = hp_bar_bg.size.x - 4.0   # 2-px padding each side
+		_hp_bar_width = hp_bar_bg.size.x
+
 	if mana_bar_holder != null:
 		var mana_bg: Control = find_child("ManaBarBG", true, false) as Control
 		if mana_bg and mana_bg.size.x > 0:
-			_mana_bar_width = mana_bg.size.x - 4.0
+			_mana_bar_width = mana_bg.size.x
 		else:
 			_mana_bar_width = _hp_bar_width
+
+# Find the inner fill textures and lock them to full bar width.
+# This is what makes clipping work — the texture is always full size,
+# only the parent Control (HPBarFill) gets narrower to hide the right side.
+	_hp_fill_texture   = find_child("HPBarFillTexture",   true, false) as TextureRect
+	_mana_fill_texture = find_child("ManaBarFillTexture", true, false) as TextureRect
+
+	if _hp_fill_texture:
+		_hp_fill_texture.custom_minimum_size.x = _hp_bar_width
+		_hp_fill_texture.size.x                = _hp_bar_width
+
+	if _mana_fill_texture:
+		_mana_fill_texture.custom_minimum_size.x = _mana_bar_width
+		_mana_fill_texture.size.x                = _mana_bar_width
 
 	# ── Populate the stats rows inside StatsGrid ──────────────────────────────
 	if stats_grid != null:
@@ -178,26 +195,26 @@ func _build_stat_rows() -> void:
 	# The GridContainer only needs to exist in the scene; the rows are all
 	# built here so you don't have to manually add 14 sub-nodes in the editor.
 	stats_grid.columns = 2
-	stats_grid.add_theme_constant_override("h_separation", 12)
-	stats_grid.add_theme_constant_override("v_separation", 3)
+	stats_grid.add_theme_constant_override("h_separation", 13)
+	stats_grid.add_theme_constant_override("v_separation", 6)
 
 	var icon_paths: Dictionary = {
 		"atk":         "res://sprites/UI/Icons/atk_icon.png",
 		"matk":        "res://sprites/UI/Icons/matk_icon.png",
-		"def":         "res://sprites/UI/Icons/def_icon.png",
-		"mdef":        "res://sprites/UI/Icons/mdef_icon.png",
 		"crit_chance": "res://sprites/UI/Icons/crit%_icon.png",
 		"crit_damage": "res://sprites/UI/Icons/critdmg_icon.png",
+		"def":         "res://sprites/UI/Icons/def_icon.png",
+		"mdef":        "res://sprites/UI/Icons/mdef_icon.png",
 		"mov":         "res://sprites/UI/Icons/mov_icon.png",
 	}
 
 	_stat_labels = {}
-	for key in ["atk", "matk", "def", "mdef", "crit_chance", "crit_damage", "mov"]:
+	for key in ["atk", "matk", "crit_chance", "crit_damage", "def", "mdef", "mov"]:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 4)
 
 		var icon := TextureRect.new()
-		icon.custom_minimum_size = Vector2(24, 24)
+		icon.custom_minimum_size = Vector2(45, 45)
 		icon.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		if ResourceLoader.exists(icon_paths[key]):
@@ -205,7 +222,7 @@ func _build_stat_rows() -> void:
 		row.add_child(icon)
 
 		var lbl := Label.new()
-		lbl.add_theme_font_size_override("font_size", 20)
+		lbl.add_theme_font_size_override("font_size", 16)
 		row.add_child(lbl)
 
 		stats_grid.add_child(row)
@@ -292,6 +309,9 @@ func show_unit_abilities(unit) -> void:
 			continue
 		var btn := Button.new()
 		btn.text                    = ability.display_name
+		btn.icon = ability.icon
+		btn.expand_icon = true             # Allows the icon to scale to fit
+		btn.add_theme_constant_override("icon_max_width", 64) # Sets the size (in pixels)
 		btn.custom_minimum_size     = Vector2(110, 40)
 		btn.size_flags_horizontal   = Control.SIZE_EXPAND_FILL
 		btn.mouse_filter            = Control.MOUSE_FILTER_STOP
@@ -347,18 +367,18 @@ func _refresh_live_values() -> void:
 	var unit = _bar_unit
 
 	# ── HP ────────────────────────────────────────────────────────────────────
-	if hp_bar_fill and unit.has_method("get_stats"):
+	if unit.has_method("get_stats"):
 		var max_hp: int   = max(1, unit.get_stats().hp)
 		var pct:    float = clamp(float(unit.current_hp) / float(max_hp), 0.0, 1.0)
-		hp_bar_fill.size.x = _hp_bar_width * pct
-		hp_bar_fill.color  = (
-			Color(0.2,  0.9,  0.2)  if pct > 0.5  else
-			Color(0.95, 0.85, 0.1)  if pct > 0.25 else
-			Color(0.9,  0.15, 0.15)
-		)
+	
+		# Only update the visual bar if it actually exists
+		if hp_bar_fill:
+			hp_bar_fill.size.x = _hp_bar_width * pct
+		
+		# Only update the text label if it actually exists
 		if hp_label:
 			hp_label.text = "%d / %d" % [unit.current_hp, max_hp]
-
+		
 	# ── Mana ──────────────────────────────────────────────────────────────────
 	if mana_bar_holder and unit.has_method("get_stats"):
 		var max_mana: int = unit.get_stats().mana
