@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://do3k06g4jg2u"
-path="res://.godot/imported/manabar_background.png-bb524d85a44db9273032a5075cbd72b1.ctex"
+uid="uid://cr8pylcnadxxm"
+path="res://.godot/imported/ManaBar_Background.png-89028db70f113d6920ca4036accb5a8e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/UI/Health & Mana Bars/manabar_background.png"
-dest_files=["res://.godot/imported/manabar_background.png-bb524d85a44db9273032a5075cbd72b1.ctex"]
+source_file="res://sprites/UI/Health & Mana Bars/ManaBar_Background.png"
+dest_files=["res://.godot/imported/ManaBar_Background.png-89028db70f113d6920ca4036accb5a8e.ctex"]
 
 [params]
 
