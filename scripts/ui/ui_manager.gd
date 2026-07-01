@@ -46,7 +46,8 @@ extends CanvasLayer
 
 @export var grid: Node
 # Drag BattleGrid here in the Inspector (needed for the grid toggle button).
-
+@export var hp_bar_pixel_width:   float = 150.0
+@export var mana_bar_pixel_width: float = 150.0
 
 # ── SCENE NODE REFERENCES ─────────────────────────────────────────────────────
 # These are populated in _ready() by searching the scene tree for each name.
@@ -57,12 +58,12 @@ var bottom_bar:          Control         = null
 var portrait_rect:       TextureRect     = null
 var name_label:          Label           = null
 var hp_bar_bg:           Control         = null
-var hp_bar_fill:         ColorRect       = null
+var hp_bar_fill:         Control       = null
 var hp_label:            Label           = null
 var _hp_fill_texture:  TextureRect = null  
 var _mana_fill_texture: TextureRect = null  
 var mana_bar_holder:     Control         = null
-var mana_bar_fill:       ColorRect       = null
+var mana_bar_fill:       Control       = null
 var mana_label:          Label           = null
 var stats_grid:          GridContainer   = null
 var status_count_label:  Label           = null
@@ -72,6 +73,13 @@ var ability_bar:         Control         = null  # HBoxContainer
 var cancel_move_button:  Button          = null
 var end_turn_button:     Button          = null
 var grid_toggle_button:  Button          = null
+
+### Pause Menu Variables
+var pause_menu:           Control = null
+var menu_grid_toggle:     Button  = null
+var menu_quit_button:     Button  = null
+var menu_resume_button:   Button  = null
+
 
 # Stat value Label nodes; created by _build_stat_rows() once StatsGrid is found.
 var _stat_labels: Dictionary = {}
@@ -106,10 +114,10 @@ func _ready() -> void:
 	portrait_rect      = find_child("PortraitRect",     true, false) as TextureRect
 	name_label         = find_child("NameLabel",        true, false) as Label
 	hp_bar_bg          = find_child("HPBarBG",          true, false) as Control
-	hp_bar_fill        = find_child("HPBarFill",        true, false) as ColorRect
+	hp_bar_fill        = find_child("HPBarFill",        true, false) as Control
 	hp_label           = find_child("HPLabel",          true, false) as Label
 	mana_bar_holder    = find_child("ManaBarHolder",    true, false) as Control
-	mana_bar_fill      = find_child("ManaBarFill",      true, false) as ColorRect
+	mana_bar_fill      = find_child("ManaBarFill",      true, false) as Control
 	mana_label         = find_child("ManaLabel",        true, false) as Label
 	stats_grid         = find_child("StatsGrid",        true, false) as GridContainer
 	status_count_label = find_child("StatusCountLabel", true, false) as Label
@@ -119,6 +127,16 @@ func _ready() -> void:
 	cancel_move_button = find_child("CancelMoveButton", true, false) as Button
 	end_turn_button    = find_child("EndTurnButton",    true, false) as Button
 	grid_toggle_button = find_child("GridToggleButton", true, false) as Button
+
+
+#Find Pause Menu items
+	pause_menu         = find_child("PauseMenu",          true, false) as Control
+	if pause_menu:
+		pause_menu.visible = false
+	menu_grid_toggle   = find_child("MenuGridToggleButton", true, false) as Button
+	menu_quit_button   = find_child("MenuQuitButton",     true, false) as Button
+	menu_resume_button = find_child("MenuResumeButton",   true, false) as Button
+
 
 	# Warn about any critical missing nodes so you know what to add to the scene.
 	var required: Array = [
@@ -156,30 +174,13 @@ func _ready() -> void:
 	# ── Read HP/mana bar widths from the actual laid-out scene ────────────────
 	# Control nodes report size = (0, 0) until Godot finishes a layout pass.
 	# Waiting one frame guarantees we get the real dimensions.
-	await get_tree().process_frame
-	if hp_bar_bg != null and hp_bar_bg.size.x > 0:
-		_hp_bar_width = hp_bar_bg.size.x
-
-	if mana_bar_holder != null:
-		var mana_bg: Control = find_child("ManaBarBG", true, false) as Control
-		if mana_bg and mana_bg.size.x > 0:
-			_mana_bar_width = mana_bg.size.x
-		else:
-			_mana_bar_width = _hp_bar_width
-
-# Find the inner fill textures and lock them to full bar width.
-# This is what makes clipping work — the texture is always full size,
-# only the parent Control (HPBarFill) gets narrower to hide the right side.
 	_hp_fill_texture   = find_child("HPBarFillTexture",   true, false) as TextureRect
 	_mana_fill_texture = find_child("ManaBarFillTexture", true, false) as TextureRect
 
 	if _hp_fill_texture:
-		_hp_fill_texture.custom_minimum_size.x = _hp_bar_width
-		_hp_fill_texture.size.x                = _hp_bar_width
-
+		_hp_fill_texture.custom_minimum_size.x = hp_bar_pixel_width
 	if _mana_fill_texture:
-		_mana_fill_texture.custom_minimum_size.x = _mana_bar_width
-		_mana_fill_texture.size.x                = _mana_bar_width
+		_mana_fill_texture.custom_minimum_size.x = mana_bar_pixel_width
 
 	# ── Populate the stats rows inside StatsGrid ──────────────────────────────
 	if stats_grid != null:
@@ -194,7 +195,7 @@ func _build_stat_rows() -> void:
 	# Creates 7 icon+value rows inside the StatsGrid container.
 	# The GridContainer only needs to exist in the scene; the rows are all
 	# built here so you don't have to manually add 14 sub-nodes in the editor.
-	stats_grid.columns = 2
+	stats_grid.columns = 3
 	stats_grid.add_theme_constant_override("h_separation", 13)
 	stats_grid.add_theme_constant_override("v_separation", 6)
 
@@ -227,6 +228,18 @@ func _build_stat_rows() -> void:
 
 		stats_grid.add_child(row)
 		_stat_labels[key] = lbl
+		
+		
+		if menu_resume_button:
+			menu_resume_button.pressed.connect(_close_pause_menu)
+
+		if menu_quit_button:
+			menu_quit_button.pressed.connect(_on_menu_quit_pressed)
+
+		if menu_grid_toggle:
+			menu_grid_toggle.toggle_mode = true
+			menu_grid_toggle.text        = "Grid: Off"
+			menu_grid_toggle.pressed.connect(_on_menu_grid_toggle_pressed)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -373,7 +386,7 @@ func _refresh_live_values() -> void:
 	
 		# Only update the visual bar if it actually exists
 		if hp_bar_fill:
-			hp_bar_fill.size.x = _hp_bar_width * pct
+			hp_bar_fill.size.x = hp_bar_pixel_width * pct
 		
 		# Only update the text label if it actually exists
 		if hp_label:
@@ -382,14 +395,14 @@ func _refresh_live_values() -> void:
 	# ── Mana ──────────────────────────────────────────────────────────────────
 	if mana_bar_holder and unit.has_method("get_stats"):
 		var max_mana: int = unit.get_stats().mana
-		mana_bar_holder.visible = max_mana > 0
+		mana_bar_holder.modulate.a = 1.0 if max_mana > 0 else 0.0
 		if max_mana > 0:
 			var mana_pct: float = clamp(float(unit.current_mana) / float(max_mana), 0.0, 1.0)
 			if mana_bar_fill:
-				mana_bar_fill.size.x = _mana_bar_width * mana_pct
+				mana_bar_fill.size.x = mana_bar_pixel_width * mana_pct
 			if mana_label:
 				mana_label.text = "%d / %d" % [unit.current_mana, max_mana]
-
+			
 	# ── Stats ──────────────────────────────────────────────────────────────────
 	if not _stat_labels.is_empty():
 		_stat_labels["atk"].text          = "ATK %d"      % unit.get_effective_atk()
@@ -491,6 +504,18 @@ func _hide_status_tooltip() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	# ── ESC toggles the pause menu ────────────────────────────────────────────
+	if event is InputEventKey:
+		var ke := event as InputEventKey
+		if ke.pressed and not ke.echo and ke.keycode == KEY_ESCAPE:
+			if pause_menu and pause_menu.visible:
+				_close_pause_menu()
+			else:
+				_open_pause_menu()
+			get_viewport().set_input_as_handled()
+			return
+
+	# ── Clicking outside the status tooltip closes it ─────────────────────────
 	if _status_tooltip == null:
 		return
 
@@ -638,3 +663,34 @@ func _hide_ability_tooltip() -> void:
 	if is_instance_valid(_ability_tooltip):
 		_ability_tooltip.queue_free()
 	_ability_tooltip = null
+
+
+func _open_pause_menu() -> void:
+	if pause_menu:
+		pause_menu.visible = true
+
+
+func _close_pause_menu() -> void:
+	if pause_menu:
+		pause_menu.visible = false
+
+
+func _on_menu_quit_pressed() -> void:
+	_close_pause_menu()
+	# Change this path to wherever your main menu scene lives.
+	get_tree().change_scene_to_file("res://scenes/mainmenu/main_menu.tscn")
+
+
+func _on_menu_grid_toggle_pressed() -> void:
+	if grid == null or not grid.has_method("set_grid_lines_visible"):
+		return
+	var now_on: bool = menu_grid_toggle.button_pressed
+	grid.set_grid_lines_visible(now_on)
+	menu_grid_toggle.text = "Grid: On" if now_on else "Grid: Off"
+	# Keep the bottom bar toggle in sync if you still have one there.
+	if grid_toggle_button:
+		grid_toggle_button.button_pressed = now_on
+		grid_toggle_button.text = menu_grid_toggle.text
+		
+		
+		

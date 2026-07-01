@@ -1,22 +1,24 @@
 [gd_scene format=3 uid="uid://cex0ecyqllq4k"]
 
 [ext_resource type="Script" uid="uid://bbil00pq8wpri" path="res://scripts/ui/ui_manager.gd" id="1_o3edr"]
-[ext_resource type="Texture2D" uid="uid://coh76byxy7u0x" path="res://sprites/UI/Health & Mana Bars/hpbar_background.png" id="2_ps24t"]
+[ext_resource type="Texture2D" uid="uid://ciq0wc8arhnye" path="res://sprites/UI/Health & Mana Bars/HPBar_Background.png" id="2_v1sni"]
 [ext_resource type="Texture2D" uid="uid://b681ekra18dmx" path="res://sprites/UI/Health & Mana Bars/hpbar_inside.png" id="3_h6rtp"]
-[ext_resource type="Texture2D" uid="uid://do3k06g4jg2u" path="res://sprites/UI/Health & Mana Bars/manabar_background.png" id="4_v1sni"]
+[ext_resource type="Texture2D" uid="uid://cr8pylcnadxxm" path="res://sprites/UI/Health & Mana Bars/ManaBar_Background.png" id="4_trk6y"]
 [ext_resource type="Texture2D" uid="uid://dsxpkt4c2lkkd" path="res://sprites/UI/Health & Mana Bars/manabar_inside.png" id="5_trk6y"]
 
 [node name="UIManager" type="CanvasLayer" unique_id=493660787]
 script = ExtResource("1_o3edr")
+hp_bar_pixel_width = 369.0
+mana_bar_pixel_width = 219.0
 
 [node name="BottomBar" type="PanelContainer" parent="." unique_id=1813424329]
-custom_minimum_size = Vector2(0, 193)
-anchors_preset = 12
+clip_contents = true
+custom_minimum_size = Vector2(0, 170)
+anchors_preset = -1
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -220.0
-offset_bottom = -23.0
+offset_top = -160.0
 grow_horizontal = 2
 grow_vertical = 0
 rotation = -0.0014331412
@@ -34,49 +36,50 @@ stretch_mode = 5
 layout_mode = 2
 
 [node name="UnitInfoColumn" type="VBoxContainer" parent="BottomBar/HBoxContainer" unique_id=1492408727]
-custom_minimum_size = Vector2(450, 0)
+custom_minimum_size = Vector2(400, 0)
 layout_mode = 2
 
 [node name="NameLabel" type="Label" parent="BottomBar/HBoxContainer/UnitInfoColumn" unique_id=2031297830]
-custom_minimum_size = Vector2(450, 20)
+custom_minimum_size = Vector2(400, 20)
 layout_direction = 2
 layout_mode = 2
 size_flags_horizontal = 0
 theme_override_font_sizes/font_size = 32
 
 [node name="HPBarBG" type="TextureRect" parent="BottomBar/HBoxContainer/UnitInfoColumn" unique_id=1558301112]
-custom_minimum_size = Vector2(400, 50)
+custom_minimum_size = Vector2(400, 55)
 layout_mode = 2
 size_flags_horizontal = 0
-texture = ExtResource("2_ps24t")
+texture = ExtResource("2_v1sni")
 expand_mode = 1
 
 [node name="HPBarFill" type="Control" parent="BottomBar/HBoxContainer/UnitInfoColumn/HPBarBG" unique_id=1551990271]
 clip_contents = true
-custom_minimum_size = Vector2(400, 40)
+custom_minimum_size = Vector2(300, 30)
+layout_direction = 2
+layout_mode = 1
 anchors_preset = 0
-offset_top = 2.0
-offset_right = 400.0
-offset_bottom = 42.0
+offset_right = 460.7834
+offset_bottom = 50.249023
 mouse_filter = 2
 
 [node name="HPBarFillTexture" type="TextureRect" parent="BottomBar/HBoxContainer/UnitInfoColumn/HPBarBG/HPBarFill" unique_id=1833875141]
-custom_minimum_size = Vector2(200, 20)
-layout_mode = 0
-offset_left = 41.913956
-offset_top = 8.214908
-offset_right = 381.41357
-offset_bottom = 35.759525
+custom_minimum_size = Vector2(200, 10)
+layout_mode = 1
+offset_left = 75.90234
+offset_top = 19.263641
+offset_right = 368.1123
+offset_bottom = 37.43454
 texture = ExtResource("3_h6rtp")
 expand_mode = 1
 
 [node name="HPLabel" type="Label" parent="BottomBar/HBoxContainer/UnitInfoColumn/HPBarBG" unique_id=1168712820]
 layout_mode = 0
-offset_left = 178.91945
-offset_top = 7.4112706
-offset_right = 265.91943
-offset_bottom = 35.41127
-theme_override_font_sizes/font_size = 20
+offset_left = 166.90945
+offset_top = 14.394066
+offset_right = 253.90945
+offset_bottom = 42.394066
+theme_override_font_sizes/font_size = 18
 text = "min/max"
 horizontal_alignment = 1
 
@@ -84,42 +87,44 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(300, 40)
 layout_mode = 2
 size_flags_horizontal = 0
+size_flags_vertical = 0
 
 [node name="ManaBarBG" type="TextureRect" parent="BottomBar/HBoxContainer/UnitInfoColumn/ManaBarHolder" unique_id=1722353227]
-custom_minimum_size = Vector2(300, 40)
+custom_minimum_size = Vector2(290, 47)
 layout_mode = 0
 offset_right = 300.0
 offset_bottom = 40.0
-texture = ExtResource("4_v1sni")
+texture = ExtResource("4_trk6y")
 expand_mode = 1
 
 [node name="ManaBarFill" type="TextureRect" parent="BottomBar/HBoxContainer/UnitInfoColumn/ManaBarHolder" unique_id=2069702818]
-custom_minimum_size = Vector2(200, 20)
+custom_minimum_size = Vector2(200, 10)
 layout_mode = 0
-offset_left = 32.843643
-offset_top = 6.2019844
-offset_right = 284.27075
-offset_bottom = 28.495747
+offset_left = 56.832153
+offset_top = 14.236341
+offset_right = 276.581
+offset_bottom = 30.990797
 texture = ExtResource("5_trk6y")
 expand_mode = 1
 
 [node name="ManaLabel" type="Label" parent="BottomBar/HBoxContainer/UnitInfoColumn/ManaBarHolder" unique_id=1438872432]
 custom_minimum_size = Vector2(50, 20)
 layout_mode = 0
-offset_left = 143.84209
-offset_top = 7.361061
-offset_right = 220.84209
-offset_bottom = 35.36106
-theme_override_font_sizes/font_size = 15
-text = "100/100"
+offset_left = 132.812
+offset_top = 13.345259
+offset_right = 183.04608
+offset_bottom = 41.345257
+theme_override_font_sizes/font_size = 13
+text = "min/max"
 
 [node name="StatusCountLabel" type="Label" parent="BottomBar/HBoxContainer/UnitInfoColumn" unique_id=158613167]
 layout_mode = 2
 size_flags_vertical = 1
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 14
 text = "Status Effects: 0"
 
 [node name="StatusIconRow" type="HFlowContainer" parent="BottomBar/HBoxContainer/UnitInfoColumn" unique_id=894336184]
+custom_minimum_size = Vector2(0, 35)
 layout_mode = 2
 
 [node name="VSeparator2" type="VSeparator" parent="BottomBar/HBoxContainer" unique_id=289556420]
@@ -142,8 +147,8 @@ text = "More Information"
 layout_mode = 2
 
 [node name="ActionColumn" type="VBoxContainer" parent="BottomBar/HBoxContainer" unique_id=278618453]
+custom_minimum_size = Vector2(840, 0)
 layout_mode = 2
-size_flags_horizontal = 3
 
 [node name="AbilityBar" type="HBoxContainer" parent="BottomBar/HBoxContainer/ActionColumn" unique_id=2027518301]
 layout_mode = 2
@@ -173,3 +178,38 @@ theme_override_colors/icon_focus_color = Color(1, 1, 1, 1)
 theme_override_colors/icon_hover_color = Color(0.5176471, 0, 0.05490196, 1)
 theme_override_font_sizes/font_size = 16
 text = "End Round"
+
+[node name="PauseMenu" type="PanelContainer" parent="." unique_id=1521428586]
+custom_minimum_size = Vector2(250, 200)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -48.0
+offset_top = -64.0
+offset_right = 48.0
+offset_bottom = 64.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PauseMenu" unique_id=143307582]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="PauseMenu/VBoxContainer" unique_id=1602809974]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Menu"
+
+[node name="MenuResumeButton" type="Button" parent="PauseMenu/VBoxContainer" unique_id=1948929404]
+layout_mode = 2
+text = "Resume"
+
+[node name="MenuGridToggleButton" type="Button" parent="PauseMenu/VBoxContainer" unique_id=924359829]
+layout_mode = 2
+toggle_mode = true
+text = "Toggle Grid"
+
+[node name="MenuQuitButton" type="Button" parent="PauseMenu/VBoxContainer" unique_id=1072940260]
+layout_mode = 2
+text = "Quit"
