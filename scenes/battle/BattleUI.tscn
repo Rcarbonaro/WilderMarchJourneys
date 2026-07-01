@@ -11,8 +11,8 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -200.0
-offset_bottom = -3.0
+offset_top = -220.0
+offset_bottom = -23.0
 grow_horizontal = 2
 grow_vertical = 0
 rotation = -0.0014331412
@@ -77,12 +77,23 @@ offset_right = 40.0
 offset_bottom = 23.0
 theme_override_font_sizes/font_size = 20
 
-[node name="StatsGrid" type="GridContainer" parent="BottomBar/HBoxContainer/UnitInfoColumn" unique_id=1354224084]
-custom_minimum_size = Vector2(60, 60)
-layout_mode = 2
-columns = 7
-
 [node name="VSeparator2" type="VSeparator" parent="BottomBar/HBoxContainer" unique_id=289556420]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="BottomBar/HBoxContainer" unique_id=1478572616]
+layout_mode = 2
+
+[node name="StatsGrid" type="GridContainer" parent="BottomBar/HBoxContainer/VBoxContainer" unique_id=1354224084]
+custom_minimum_size = Vector2(60, 30)
+layout_mode = 2
+columns = 2
+
+[node name="MoreInfoButton" type="Button" parent="BottomBar/HBoxContainer/VBoxContainer" unique_id=1068180445]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "More Information"
+
+[node name="VSeparator3" type="VSeparator" parent="BottomBar/HBoxContainer" unique_id=1860422220]
 layout_mode = 2
 
 [node name="ActionColumn" type="VBoxContainer" parent="BottomBar/HBoxContainer" unique_id=278618453]
@@ -93,30 +104,29 @@ size_flags_horizontal = 3
 layout_mode = 2
 size_flags_vertical = 3
 
+[node name="StatusCountLabel" type="Label" parent="BottomBar/HBoxContainer/ActionColumn" unique_id=158613167]
+layout_mode = 2
+size_flags_vertical = 1
+theme_override_font_sizes/font_size = 16
+text = "Status Effects: 0"
+
+[node name="StatusIconRow" type="HFlowContainer" parent="BottomBar/HBoxContainer/ActionColumn" unique_id=894336184]
+layout_mode = 2
+
 [node name="HBoxContainer" type="HBoxContainer" parent="BottomBar/HBoxContainer/ActionColumn" unique_id=909855157]
 layout_mode = 2
 
 [node name="CancelMoveButton" type="Button" parent="BottomBar/HBoxContainer/ActionColumn/HBoxContainer" unique_id=16233648]
 layout_mode = 2
+theme_override_font_sizes/font_size = 16
 text = "Cancel Movement"
 
 [node name="EndTurnButton" type="Button" parent="BottomBar/HBoxContainer/ActionColumn/HBoxContainer" unique_id=1015176717]
 layout_mode = 2
+theme_override_font_sizes/font_size = 16
 text = "End Round"
 
 [node name="GridToggleButton" type="Button" parent="BottomBar/HBoxContainer/ActionColumn/HBoxContainer" unique_id=1345672608]
 layout_mode = 2
+theme_override_font_sizes/font_size = 16
 text = "Toggle Grid"
-
-[node name="StatusCountLabel" type="Label" parent="BottomBar/HBoxContainer/ActionColumn" unique_id=158613167]
-layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = "Status Effects: 0"
-horizontal_alignment = 2
-
-[node name="StatusIconRow" type="HFlowContainer" parent="BottomBar/HBoxContainer/ActionColumn" unique_id=894336184]
-layout_mode = 2
-
-[node name="MoreInfoButton" type="Button" parent="BottomBar/HBoxContainer/ActionColumn" unique_id=1068180445]
-layout_mode = 2
-text = "More Information"
