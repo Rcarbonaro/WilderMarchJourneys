@@ -79,9 +79,10 @@ var _bar_unit = null
 
 # ── STATUS TOOLTIP ────────────────────────────────────────────────────────────
 var _status_tooltip:          PanelContainer = null
+var _ability_tooltip:   PanelContainer = null
 var _last_status_fingerprint: String         = ""
 
-const STATUS_ICON_SIZE:  float = 32.0
+const STATUS_ICON_SIZE:  float = 50.0
 const MISSING_ICON_COLOR: Color = Color(0, 0, 0, 1)
 
 # Fill widths in pixels, read from scene layout after the first layout pass.
@@ -138,7 +139,7 @@ func _ready() -> void:
 		end_turn_button.pressed.connect(_on_end_turn_pressed)
 
 	if cancel_move_button:
-		cancel_move_button.text    = "↩ Cancel"
+		cancel_move_button.text    = "↩ Cancel Movement"
 		cancel_move_button.visible = false
 		cancel_move_button.pressed.connect(_on_cancel_move_pressed)
 
@@ -176,7 +177,7 @@ func _build_stat_rows() -> void:
 	# Creates 7 icon+value rows inside the StatsGrid container.
 	# The GridContainer only needs to exist in the scene; the rows are all
 	# built here so you don't have to manually add 14 sub-nodes in the editor.
-	stats_grid.columns = 7
+	stats_grid.columns = 2
 	stats_grid.add_theme_constant_override("h_separation", 12)
 	stats_grid.add_theme_constant_override("v_separation", 3)
 
@@ -235,8 +236,9 @@ func show_unit_info(unit) -> void:
 		return
 
 	_bar_unit                 = unit
-	_last_status_fingerprint  = ""
+	_last_status_fingerprint  = "__RESET__"
 	_hide_status_tooltip()
+	_set_unit_content_visible(true)
 
 	if bottom_bar:
 		bottom_bar.visible = true
@@ -259,16 +261,11 @@ func show_unit_info(unit) -> void:
 
 
 func hide_unit_info() -> void:
-	# Hides the unit info data, and hides the whole bar if no ability buttons
-	# are currently showing (i.e. no unit is mid-turn).
 	_bar_unit = null
 	_hide_status_tooltip()
-
-	var abilities_showing: bool = (
-		ability_bar != null and ability_bar.get_child_count() > 0
-	)
-	if not abilities_showing and bottom_bar:
-		bottom_bar.visible = false
+	_set_unit_content_visible(false)
+	# EndTurnButton, GridToggleButton, and CancelMoveButton are NOT in the
+	# list above, so they stay fully visible and functional at all times.
 
 
 func show_unit_abilities(unit) -> void:
@@ -308,7 +305,11 @@ func show_unit_abilities(unit) -> void:
 			if battle_manager and battle_manager.has_method("on_ability_selected"):
 				battle_manager.on_ability_selected(ability)
 		)
+		
+		btn.mouse_entered.connect(func(): _show_ability_tooltip(ability, btn))
+		btn.mouse_exited.connect(_hide_ability_tooltip)
 		ability_bar.add_child(btn)
+		
 
 
 func set_cancel_move_visible(visible_state: bool) -> void:
@@ -317,6 +318,7 @@ func set_cancel_move_visible(visible_state: bool) -> void:
 
 
 func clear_abilities() -> void:
+	_hide_ability_tooltip()
 	if ability_bar:
 		for child in ability_bar.get_children():
 			child.queue_free()
@@ -421,7 +423,7 @@ func _add_status_icon(status_data, stacks: int) -> void:
 	if stacks > 1:
 		var lbl := Label.new()
 		lbl.text = "x%d" % stacks
-		lbl.add_theme_font_size_override("font_size", 10)
+		lbl.add_theme_font_size_override("font_size", 14)
 		lbl.position     = Vector2(STATUS_ICON_SIZE - 32, STATUS_ICON_SIZE - 32)
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		btn.add_child(lbl)
@@ -543,3 +545,76 @@ func _on_grid_toggle_pressed() -> void:
 	var now_on: bool = grid_toggle_button.button_pressed
 	grid.set_grid_lines_visible(now_on)
 	grid_toggle_button.text = "Grid: On" if now_on else "Grid: Off"
+
+
+func _set_unit_content_visible(show: bool) -> void:
+	var alpha: float = 1.0 if show else 0.0
+	for node in [
+		portrait_rect, name_label, hp_bar_bg, mana_bar_holder,
+		stats_grid, status_count_label, status_icon_row,
+		more_info_button, ability_bar
+	]:
+		if node != null:
+			node.modulate.a = alpha
+
+func _show_ability_tooltip(ability, anchor_btn: Control) -> void:
+	_hide_ability_tooltip()
+
+	_ability_tooltip              = PanelContainer.new()
+	_ability_tooltip.z_index      = 101   # above the status tooltip (z 100)
+	_ability_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_ability_tooltip)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 6)
+	_ability_tooltip.add_child(vbox)
+
+	# Icon + name side by side on the top row
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 8)
+	vbox.add_child(header)
+
+	if ability.icon != null:
+		var icon := TextureRect.new()
+		icon.texture             = ability.icon
+		icon.custom_minimum_size = Vector2(32, 32)
+		icon.expand_mode         = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode        = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		header.add_child(icon)
+
+	var title := Label.new()
+	title.text = ability.display_name
+	title.add_theme_font_size_override("font_size", 16)
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	header.add_child(title)
+
+	# Description below
+	var desc_text: String = ""
+	if "description" in ability and ability.description != "":
+		desc_text = ability.description
+	else:
+		desc_text = "(No description)"
+
+	var desc := Label.new()
+	desc.text                = desc_text
+	desc.custom_minimum_size = Vector2(220, 0)
+	desc.autowrap_mode       = TextServer.AUTOWRAP_WORD
+	desc.add_theme_font_size_override("font_size", 13)
+	vbox.add_child(desc)
+
+	# Position above the button, clamped inside the viewport
+	await get_tree().process_frame   # wait one frame so the tooltip measures itself
+	if not is_instance_valid(_ability_tooltip):
+		return
+	var vp:  Vector2 = get_viewport().get_visible_rect().size
+	var pos: Vector2 = anchor_btn.global_position
+	pos.y -= _ability_tooltip.size.y + 8.0   # 8px gap above the button
+	pos.x  = clamp(pos.x, 4.0, vp.x - _ability_tooltip.size.x - 4.0)
+	pos.y  = clamp(pos.y, 4.0, vp.y - _ability_tooltip.size.y - 4.0)
+	_ability_tooltip.position = pos
+
+
+func _hide_ability_tooltip() -> void:
+	if is_instance_valid(_ability_tooltip):
+		_ability_tooltip.queue_free()
+	_ability_tooltip = null
