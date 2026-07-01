@@ -1,12 +1,14 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://dxft4tccskmnc"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_ayoup"]
+[ext_resource type="Texture2D" uid="uid://dge2o34isxty" path="res://sprites/UI/skill icons/skill_icons_poisongas.png" id="1_j7oqb"]
 
 [resource]
 script = ExtResource("1_ayoup")
 id = "poisoncloud"
 display_name = "Poison Cloud"
 description = "Inside Plaguebringer's poison cloud"
+icon = ExtResource("1_j7oqb")
 duration_rounds = 3
 atk_modifier = -1
 mov_modifier = -1

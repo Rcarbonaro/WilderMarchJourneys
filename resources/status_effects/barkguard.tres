@@ -1,5 +1,6 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://h1bwtk25nbyd"]
 
+[ext_resource type="Texture2D" uid="uid://c2rp4gsg1cuv3" path="res://sprites/UI/skill icons/skill_icon_barkguard.png" id="1_ds3te"]
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_j2wvg"]
 [ext_resource type="PackedScene" uid="uid://bwqp6l2nveivg" path="res://scenes/animations/dryad/dryad.tscn" id="1_r54nc"]
 
@@ -7,6 +8,7 @@
 script = ExtResource("1_j2wvg")
 id = "barkguard"
 display_name = "Barkguard"
+icon = ExtResource("1_ds3te")
 duration_rounds = 2
 cleansable = false
 def_modifier = 3

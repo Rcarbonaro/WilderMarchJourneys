@@ -1,5 +1,6 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://jewbtl31wwea"]
 
+[ext_resource type="Texture2D" uid="uid://be04oosfu2mik" path="res://sprites/UI/skill icons/skill_icons_overcharge.png" id="1_4sn3v"]
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_l3ste"]
 
 [resource]
@@ -7,6 +8,7 @@ script = ExtResource("1_l3ste")
 id = "overcharged"
 display_name = "Overcharged"
 description = "This unit deals increased damage, but takes damage every turn"
+icon = ExtResource("1_4sn3v")
 duration_rounds = 6
 cleansable = false
 matk_modifier = 6

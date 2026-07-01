@@ -1,11 +1,13 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://dl16q1q73q38l"]
 
+[ext_resource type="Texture2D" uid="uid://byn1318wm1aac" path="res://sprites/UI/skill icons/skill_icons_wither.png" id="1_7we5u"]
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_qm2a2"]
 
 [resource]
 script = ExtResource("1_qm2a2")
 id = "withered"
 display_name = "Withered"
+icon = ExtResource("1_7we5u")
 duration_rounds = 5
 can_stack = true
 atk_modifier = -2

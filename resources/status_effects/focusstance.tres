@@ -1,5 +1,6 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://dn2itso8l451b"]
 
+[ext_resource type="Texture2D" uid="uid://c7s45128w1pc4" path="res://sprites/UI/skill icons/skill_icons_focusstance.png" id="1_7vfyl"]
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_102ve"]
 
 [resource]
@@ -7,6 +8,7 @@ script = ExtResource("1_102ve")
 id = "focusstance"
 display_name = "Focus stance"
 description = "Unable to move, but grants bonus critical chance and critical damage"
+icon = ExtResource("1_7vfyl")
 duration_rounds = 3
 max_stacks = 3
 atk_modifier = 4

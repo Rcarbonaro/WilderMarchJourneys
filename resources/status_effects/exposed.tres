@@ -1,11 +1,13 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://6oeegldom1yq"]
 
+[ext_resource type="Texture2D" uid="uid://txsgiv2pwwh" path="res://sprites/UI/skill icons/skill_icons_tether.png" id="1_82gfq"]
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_hkkbg"]
 
 [resource]
 script = ExtResource("1_hkkbg")
 id = "exposed"
 display_name = "Exposed"
+icon = ExtResource("1_82gfq")
 duration_rounds = 3
 can_stack = true
 def_modifier = -2

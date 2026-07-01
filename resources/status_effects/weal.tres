@@ -1,12 +1,14 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://drv0ggphou2p8"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_0sv2r"]
+[ext_resource type="Texture2D" uid="uid://vdkymeds3oum" path="res://sprites/UI/skill icons/skill_icons_weal.png" id="1_xpxal"]
 
 [resource]
 script = ExtResource("1_0sv2r")
 id = "weal"
 display_name = "Weal"
 description = "Increases all stats for 3 rounds"
+icon = ExtResource("1_xpxal")
 duration_rounds = 3
 atk_modifier = 3
 matk_modifier = 3

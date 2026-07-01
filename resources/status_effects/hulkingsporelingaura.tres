@@ -1,12 +1,14 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://cb6mxpdiy8s3j"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_hsta4"]
+[ext_resource type="Texture2D" uid="uid://ds4fdcaqupgsp" path="res://sprites/UI/skill icons/skill_icons_necroticaura.png" id="1_r5tdv"]
 
 [resource]
 script = ExtResource("1_hsta4")
 id = "hulkingsporelingaura"
 display_name = "Hulking Sporeling Aura"
 description = "Reduces unit attack and magic attack. Lasts 3 rounds. Stacks up to 3 times."
+icon = ExtResource("1_r5tdv")
 duration_rounds = 3
 can_stack = true
 max_stacks = 3
