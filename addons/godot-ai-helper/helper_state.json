@@ -3,6 +3,62 @@
 	"head_text": "Here is some vital information about my project:\n1. It s a tactical turn-based roguelike\n2. Some planned features are:\nTurn‑based combat — grid movement, action economy, positioning rules, threat zones\n\nRoguelike progression — runs, meta‑progression, unlocks, difficulty scaling\n\nSynergy tags — class tags, ability tags, cross‑class interactions\n\nAI behavior — enemy archetypes, threat evaluation, focus rules, special behaviors\n\nProcedural generation — maps, encounters, enemy squads, loot tables",
 	"items": [
 		{
+			"path": "res://scenes/animations/dragoon/dragoon.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/ui/UnitStatusBox.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/skirmisher/skirmisher.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/windmage/windmage.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/hexweaver/hexweaver.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/sylvaris/sylvaris.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/battle/UnitNode.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/dreadknight/dreadknight.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://test.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/stonewarden/stonewarden.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/meta/ShopScene.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/executioner/executioner.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/mainmenu/main_menu.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/rogue/rogue.tscn",
+			"type": "scene_tree"
+		},
+		{
 			"path": "res://scenes/animations/wolf/wolf.tscn",
 			"type": "scene_tree"
 		},
@@ -63,60 +119,72 @@
 			"type": "scene_tree"
 		},
 		{
-			"path": "res://scenes/animations/rogue/rogue.tscn",
-			"type": "scene_tree"
+			"path": "res://scripts/ui/ui_unit_status_box.gd",
+			"type": "script"
 		},
 		{
-			"path": "res://scenes/mainmenu/main_menu.tscn",
-			"type": "scene_tree"
+			"path": "res://scripts/battle/battle_scene.gd",
+			"type": "script"
 		},
 		{
-			"path": "res://scenes/animations/executioner/executioner.tscn",
-			"type": "scene_tree"
+			"path": "res://scripts/data/encounter_data.gd",
+			"type": "script"
 		},
 		{
-			"path": "res://scenes/meta/ShopScene.tscn",
-			"type": "scene_tree"
+			"path": "res://scripts/encounter/encounter_scene.gd",
+			"type": "script"
 		},
 		{
-			"path": "res://scenes/animations/stonewarden/stonewarden.tscn",
-			"type": "scene_tree"
+			"path": "res://scripts/data/hazard_data.gd",
+			"type": "script"
 		},
 		{
-			"path": "res://test.tscn",
-			"type": "scene_tree"
+			"path": "res://scripts/battle/highlight_manager.gd",
+			"type": "script"
 		},
 		{
-			"path": "res://scenes/animations/dreadknight/dreadknight.tscn",
-			"type": "scene_tree"
+			"path": "res://scripts/battle/input_handler.gd",
+			"type": "script"
 		},
 		{
-			"path": "res://scenes/battle/UnitNode.tscn",
-			"type": "scene_tree"
+			"path": "res://scripts/mainmenu/main_menu.gd",
+			"type": "script"
 		},
 		{
-			"path": "res://scenes/animations/sylvaris/sylvaris.tscn",
-			"type": "scene_tree"
+			"path": "res://scripts/managers/run_manager.gd",
+			"type": "script"
 		},
 		{
-			"path": "res://scenes/animations/hexweaver/hexweaver.tscn",
-			"type": "scene_tree"
+			"path": "res://scripts/data/stats_data.gd",
+			"type": "script"
 		},
 		{
-			"path": "res://scenes/animations/windmage/windmage.tscn",
-			"type": "scene_tree"
+			"path": "res://scripts/data/tile_type_data.gd",
+			"type": "script"
 		},
 		{
-			"path": "res://scenes/animations/skirmisher/skirmisher.tscn",
-			"type": "scene_tree"
+			"path": "res://scripts/data/synergy_system.gd",
+			"type": "script"
 		},
 		{
-			"path": "res://scenes/ui/UnitStatusBox.tscn",
-			"type": "scene_tree"
+			"path": "res://scripts/autoloads/popup_manager.gd",
+			"type": "script"
 		},
 		{
-			"path": "res://scenes/animations/dragoon/dragoon.tscn",
-			"type": "scene_tree"
+			"path": "res://scripts/data/conditional_stat_bonus.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/unit_node.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/ui/ui_manager.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/status_effect_data.gd",
+			"type": "script"
 		},
 		{
 			"path": "res://scripts/managers/shop_manager.gd",
@@ -188,74 +256,6 @@
 		},
 		{
 			"path": "res://scripts/data/on_kill_trigger.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/ui/ui_unit_status_box.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/battle_scene.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/encounter_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/encounter/encounter_scene.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/hazard_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/highlight_manager.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/input_handler.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/mainmenu/main_menu.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/managers/run_manager.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/stats_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/tile_type_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/synergy_system.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/autoloads/popup_manager.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/conditional_stat_bonus.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/unit_node.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/ui/ui_manager.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/status_effect_data.gd",
 			"type": "script"
 		}
 	],

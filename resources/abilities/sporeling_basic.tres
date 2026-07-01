@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="2_d2q47"]
 [ext_resource type="Texture2D" uid="uid://c178r0452wrrf" path="res://sprites/UI/skill icons/skill_icons_spores.png" id="2_hbmw4"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_qs2yi"]
+[ext_resource type="Resource" uid="uid://ru4n7oosj1qw" path="res://resources/hazards/poisoncloud.tres" id="5_d2q47"]
 
 [resource]
 script = ExtResource("2_qs2yi")
@@ -16,4 +17,5 @@ aoe_shape = "square"
 aoe_size = 3
 damage_type = "magical"
 scaling_stat = "matk"
+spawns_hazard = ExtResource("5_d2q47")
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"
