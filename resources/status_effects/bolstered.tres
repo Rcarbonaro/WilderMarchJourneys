@@ -1,12 +1,14 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://c20siv2jtmrv5"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_0hj3u"]
+[ext_resource type="Texture2D" uid="uid://ymmaxeqkjs2s" path="res://sprites/UI/skill icons/skill_icons_stonespikearmor.png" id="1_xk0sm"]
 
 [resource]
 script = ExtResource("1_0hj3u")
 id = "bolstered"
 display_name = "Bolstered"
 description = "Increases defense"
+icon = ExtResource("1_xk0sm")
 duration_rounds = 2
 def_modifier = 5
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

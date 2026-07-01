@@ -1,11 +1,13 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://d0kwo2chvyc5b"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_gi6th"]
+[ext_resource type="Texture2D" uid="uid://bja5jxxh2xmb5" path="res://sprites/UI/skill icons/skill_icons_dreadaura.png" id="1_rf21t"]
 
 [resource]
 script = ExtResource("1_gi6th")
 id = "dreadauradebuff"
 display_name = "Dread Aura"
+icon = ExtResource("1_rf21t")
 atk_modifier = -2
 mov_modifier = -2
 crit_chance_modifier = -20.0

@@ -1,11 +1,13 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://dcddpxfvt7s8e"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_dapnt"]
+[ext_resource type="Texture2D" uid="uid://52hn184qn2xv" path="res://sprites/UI/skill icons/skill_icons_miasmaburst.png" id="1_w0gxq"]
 
 [resource]
 script = ExtResource("1_dapnt")
 id = "miasma"
 display_name = "Miasma"
+icon = ExtResource("1_w0gxq")
 duration_rounds = 2
 atk_modifier = -2
 matk_modifier = -2

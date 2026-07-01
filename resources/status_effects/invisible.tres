@@ -1,5 +1,6 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://dqbwq32fco5nj"]
 
+[ext_resource type="Texture2D" uid="uid://tmfncqyhehif" path="res://sprites/UI/skill icons/skill_icons_stealth.png" id="1_irdh8"]
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_rlw8p"]
 
 [resource]
@@ -7,6 +8,7 @@ script = ExtResource("1_rlw8p")
 id = "invisible"
 display_name = "Invisible"
 description = "Enemies cannot see this unit"
+icon = ExtResource("1_irdh8")
 duration_rounds = 2
 expires_at = "end_of_player_round"
 cleansable = false

@@ -1,11 +1,13 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://ds2a6026yun8u"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_wbw5u"]
+[ext_resource type="Texture2D" uid="uid://cj3he80p7vm3l" path="res://sprites/UI/skill icons/skill_icon_darkgreatsword.png" id="1_ya4gm"]
 
 [resource]
 script = ExtResource("1_wbw5u")
 id = "dreadknightcurse"
 display_name = "Dreadknight's Curse"
+icon = ExtResource("1_ya4gm")
 duration_rounds = 5
 can_stack = true
 max_stacks = 5
