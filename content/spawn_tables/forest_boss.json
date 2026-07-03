@@ -1,0 +1,12 @@
+{
+  "id": "forest_boss",
+  "biome": "forest",
+  "stage_type": "boss",
+  "stage_min": 1,
+  "stage_max": 30,
+  "enemy_pool": [],
+  "guaranteed_enemy_ids": ["barkhideelk"],
+  "total_enemies_min": 1,
+  "total_enemies_max": 1,
+  "elite_chance": 0.0
+}

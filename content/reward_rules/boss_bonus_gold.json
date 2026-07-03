@@ -1,0 +1,11 @@
+{
+  "id": "boss_bonus_gold",
+  "conditions": [
+    { "type": "stage_type_is", "value": "boss" }
+  ],
+  "effects": [
+    { "type": "add_gold", "amount": 15 },
+    { "type": "add_random_equipment", "equipment_type": "advanced" }
+  ],
+  "notes": "Second example showing multiple rules can stack on the same stage -- post_combat_gold's +5 ALSO fires on a boss stage, so a boss clear nets +20 gold total plus a random advanced item."
+}

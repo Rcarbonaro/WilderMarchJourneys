@@ -337,3 +337,11 @@ extends Resource
 # This defines the aura's radius, who it affects, what damage it deals,
 # what status effects it applies, how long it lasts, and how it looks.
 # Only read when is_aura is true — ignored on all other abilities.
+
+
+#Spellsword's arcana charge consumption:
+@export var consumes_arcana_charge: bool = false
+# Uncheck this on any ability that should IGNORE an arcana charge and
+# behave as if one wasn't available — basic attacks, passive triggers,
+# anything that shouldn't benefit from or deplete the charge.
+# Defaults to true so all existing abilities are unchanged.

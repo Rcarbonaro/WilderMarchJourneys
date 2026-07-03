@@ -1,0 +1,16 @@
+{
+  "id": "forest_subboss",
+  "biome": "forest",
+  "stage_type": "subboss",
+  "stage_min": 1,
+  "stage_max": 30,
+  "enemy_pool": [
+    { "enemy_id": "ent", "weight": 1 },
+    { "enemy_id": "hulkingsporeling", "weight": 1 }
+  ],
+  "guaranteed_enemy_ids": [],
+  "total_enemies_min": 3,
+  "total_enemies_max": 3,
+  "elite_chance": 0.0,
+  "notes": "3 random picks from the elite pool -- could land as e.g. 2 ent + 1 hulkingsporeling, or any other mix, fresh each time. Switch to guaranteed_enemy_ids instead of enemy_pool if you want an EXACT, non-random elite lineup every time."
+}

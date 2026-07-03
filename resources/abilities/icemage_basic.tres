@@ -14,5 +14,7 @@ description = "A basic ranged attack that reduces target's speed by 1 for 1 roun
 icon = ExtResource("4_mcssj")
 effect_scene = ExtResource("3_mcssj")
 max_range = 2
+damage_type = "magical"
+scaling_stat = "matk"
 applies_statuses = Array[ExtResource("1_nu44h")]([ExtResource("2_bbweq")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

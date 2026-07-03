@@ -111,7 +111,7 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 		return
 
 	# 2. Filter out any players that died since the turn started.
-	var valid_players = players.filter(func(p): return is_instance_valid(p))
+	var valid_players = players.filter(func(p): return is_instance_valid(p) and p.current_hp > 0)
 	if valid_players.is_empty():
 		enemy.has_acted = true
 		return
@@ -250,6 +250,12 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 		return
 
 	# 6. Combat phase — attack if we're now in range with line of sight.
+	# target_player could have died during this enemy's movement phase.
+	if not is_instance_valid(target_player) or target_player.current_hp <= 0:
+		if is_instance_valid(enemy):
+			enemy.has_acted = true
+		return
+
 	var final_dist = (abs(enemy.grid_position.x - target_player.grid_position.x)
 					+ abs(enemy.grid_position.y - target_player.grid_position.y))
 	var los_ok = true

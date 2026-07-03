@@ -13,16 +13,6 @@
 #   - momentum_bonuses dictionary for Momentum aura stat tracking
 #   - get_effective_crit_damage() so Momentum crit bonuses apply
 #   - die() notifies AuraManager to strip bonuses and remove caster's auras
-#   - move_along_path(): walks the unit through a whole list of tiles, one at
-#     a time, with a smooth animation for each step — instead of move_to()'s
-#     single straight-line slide from A to B. This is what's used for normal
-#     turn movement now (tapping a destination, AI movement), so units
-#     actually walk AROUND obstacles tile-by-tile, and hazards (including
-#     "damaging wall" hazards that don't block movement) correctly hurt them
-#     as they cross each tile, not only if they land on the very last one.
-#     move_to() itself is unchanged and still used for instant forced
-#     shoves (knockback, pull, scatter), which should still feel like one
-#     continuous push rather than a tile-by-tile walk.
 
 extends Node2D
 
@@ -33,18 +23,7 @@ extends Node2D
 # abilities. Drag it in from the Inspector when placing the unit in the scene.
 
 @export var move_speed: float = 1.5
-# How many seconds move_to()'s sliding animation takes for the ENTIRE move,
-# no matter how many tiles away the destination is. Used ONLY by move_to() —
-# i.e. instant forced shoves like knockback, pull, and scatter, which are
-# meant to feel like one continuous push, not a tile-by-tile walk.
-
-@export var move_speed_per_tile: float = 0.28
-# How many seconds move_along_path() spends animating EACH individual tile
-# step during normal turn movement (tap-to-move, post-attack moves, and AI
-# movement). A 4-tile walk takes roughly 4x as long as a 1-tile walk, instead
-# of always taking the same fixed amount of time no matter the distance.
-# Tune this to taste — lower = snappier/faster walking, higher = slower and
-# more deliberate.
+# How many seconds the sliding movement animation takes per move.
 
 @export var faces_right_by_default: bool = true
 # CHECK for player/ally units (they face right toward the enemy side).
@@ -96,10 +75,6 @@ var ability_cooldowns: Dictionary = {}
 
 var equipped_items: Array = []
 
-
-# Help break recursion loop
-var _apply_status_depth: int = 0
-
 # ── MOMENTUM BONUSES ──────────────────────────────────────────────────────────
 
 var momentum_bonuses: Dictionary = {}
@@ -127,15 +102,6 @@ var pre_move_position: Vector2i = Vector2i(-1, -1)
 var can_cancel_move: bool = false
 # True only between "unit finished moving" and "unit used an ability".
 
-var _is_moving: bool = false
-# True from the moment move_to()/move_along_path() starts until the instant
-# movement_finished actually fires. Lets callers that kick off SEVERAL units'
-# movement back-to-back (see ability_executor.gd's _resolve_pending_displacements)
-# check "is this unit's tween still running RIGHT NOW" before deciding whether
-# to await movement_finished — awaiting a signal that already fired hangs
-# forever in GDScript, which is what caused the long delay on multi-target
-# Windmage pushes. See move_to()/move_along_path() for where this flips.
-
 var pending_post_attack_moves: int = 0
 # If an ability has post_attack_move_squares > 0, this is set after the attack
 # so BattleManager can grant the unit extra movement.
@@ -159,13 +125,7 @@ signal unit_died(unit)
 # Emitted when HP reaches 0. BattleManager listens to update team lists.
 
 signal movement_finished
-# Emitted once when movement fully completes — either move_to()'s single
-# slide, or move_along_path()'s full walk through every tile in its path.
-# BattleManager/AISystem await this exactly the same way either way.
-
-#Var for when a character is dying:
-var _death_started: bool = false
-
+# Emitted when the slide tween completes. BattleManager awaits this.
 
 # ── LIFECYCLE ─────────────────────────────────────────────────────────────────
 
@@ -190,6 +150,15 @@ func setup(data: UnitData, unit_level: int, is_player: bool) -> void:
 
 	# Compute occupied cells from the starting position and footprint.
 	_update_occupied_cells()
+
+	# Apply any statuses this unit should begin the battle with already
+	# active -- e.g. an elite enemy with a permanent war-aura, via
+	# unit_data.starting_statuses (see UnitData for the new field). Using
+	# 'self' as source_caster: the unit is the source of its own innate
+	# trait, not an external attacker.
+	for status in data.starting_statuses:
+		if status != null:
+			apply_status(status, 1, self)
 
 # ── MULTI-TILE HELPERS ────────────────────────────────────────────────────────
 
@@ -241,12 +210,9 @@ var _override_scene_instance: Node = null
 # ── ANIMATION HELPERS ─────────────────────────────────────────────────────────
 
 func _apply_default_facing() -> void:
-	if not has_node("AnimatedSprite2D"):
-		return
-	# Player units default to facing RIGHT (toward enemies).
-	# Enemy units default to facing LEFT (toward the player).
-	var should_face_right: bool = is_player_unit
-	$AnimatedSprite2D.flip_h = (should_face_right != faces_right_by_default)
+	if has_node("AnimatedSprite2D"):
+		$AnimatedSprite2D.flip_h = not faces_right_by_default
+
 
 func play_animation(anim_name: String) -> void:
 	# Safely plays a named animation, falling back gracefully if it's missing.
@@ -326,18 +292,6 @@ func _set_facing_for_direction(target_pos: Vector2i) -> void:
 	if not has_node("AnimatedSprite2D"):
 		return
 	var sprite := $AnimatedSprite2D as AnimatedSprite2D
-
-	# Self-targeted abilities (target_pos == grid_position): there's no real
-	# direction to face, since target_pos.x > grid_position.x is FALSE when
-	# they're equal. That used to fall through to "face left" whenever
-	# faces_right_by_default was true. Instead, snap back to this unit's
-	# default facing (the same flip _apply_default_facing() uses) so a unit
-	# buffing/healing itself faces right by default instead of always
-	# flipping left.
-	if target_pos == grid_position:
-		sprite.flip_h = not faces_right_by_default
-		return
-
 	var target_is_right: bool = target_pos.x > grid_position.x
 	sprite.flip_h = (target_is_right != faces_right_by_default)
 
@@ -442,6 +396,7 @@ func can_afford_ability(ability: AbilityData) -> bool:
 func spend_mana(amount: int) -> void:
 	# Deducts mana, clamped so it never goes below 0.
 	current_mana = max(0, current_mana - amount)
+	CombatHooks.notify_mana_spent(self, amount)
 
 
 func restore_mana(amount: int) -> void:
@@ -480,9 +435,6 @@ func heal(amount: int) -> void:
 
 
 func die() -> void:
-	if _death_started:
-		return
-	_death_started = true
 	if not is_inside_tree():
 		queue_free()
 		return
@@ -555,22 +507,11 @@ func _finish_death() -> void:
 # ── MOVEMENT ──────────────────────────────────────────────────────────────────
 
 func move_to(new_cell: Vector2i) -> void:
-	# Moves the unit DIRECTLY to a new anchor cell in one continuous slide,
-	# updating the grid registry and animating the visual position smoothly
-	# with a single Tween over move_speed seconds, no matter how far away
-	# new_cell is. This is the right tool for instant forced shoves — knockback,
-	# pull, and scatter (see ability_executor.gd) — which should feel like one
-	# continuous push, not a tile-by-tile walk.
-	#
-	# For NORMAL turn movement (tapping a destination tile, or AI movement),
-	# use move_along_path() below instead — it walks the unit through every
-	# tile of the actual route one at a time, which looks right when routing
-	# around obstacles and correctly triggers hazards on every tile crossed,
-	# not just the final one.
+	# Moves the unit to a new anchor cell, updating the grid registry and sliding
+	# the visual position smoothly with a Tween.
 	if grid_ref == null:
 		return
 
-	_is_moving = true
 	_set_facing_for_direction(new_cell)
 
 	var dy = new_cell.y - grid_position.y
@@ -595,11 +536,10 @@ func move_to(new_cell: Vector2i) -> void:
 	var target_world_pos: Vector2 = grid_ref.grid_to_world(new_cell)
 
 	# ── NOTIFY AURA MANAGER — start visual tween NOW, before our own tween ────
-	# begin_caster_move() starts the aura overlay tween with the SAME duration
-	# and easing as our tween below (we pass move_speed explicitly), so both
-	# slide in perfect lockstep.
+	# begin_caster_move() starts the aura overlay tween with the same duration
+	# and easing as our tween below, so both slide in perfect lockstep.
 	if grid_ref.has_node("AuraManager"):
-		grid_ref.get_node("AuraManager").begin_caster_move(self, new_cell, move_speed)
+		grid_ref.get_node("AuraManager").begin_caster_move(self, new_cell)
 
 	var tween = create_tween()
 	tween.set_trans(Tween.TRANS_CUBIC)
@@ -607,100 +547,8 @@ func move_to(new_cell: Vector2i) -> void:
 	tween.tween_property(self, "position", target_world_pos, move_speed)
 	tween.tween_callback(func():
 		play_animation("idle")
-		_is_moving = false
 		movement_finished.emit()
 	)
-
-
-func move_along_path(path: Array) -> void:
-	# NEW: walks the unit smoothly through EVERY tile in 'path', one at a time,
-	# instead of move_to()'s single straight-line slide from start to finish.
-	# This is the normal-movement counterpart to move_to() — use this for
-	# tap-to-move, post-attack movement, and AI movement. 'path' should come
-	# from pathfinding_system.gd's reconstruct_path_to(), which already walks
-	# AROUND obstacles (other units, terrain walls, movement-blocking wall
-	# hazards) rather than cutting straight through them.
-	#
-	# 'path' is an Array of Vector2i, in walking order, NOT including the
-	# unit's current tile — e.g. if standing at (2,2) and walking to (2,5),
-	# path = [(2,3), (2,4), (2,5)].
-	#
-	# Why this matters for hazards: we register the unit onto EACH tile and
-	# fire its "enter" hazard trigger as we genuinely arrive there — so a
-	# "damaging wall" hazard (HazardData.is_wall_hazard = true with
-	# blocks_movement = false) correctly hurts the unit while CROSSING it,
-	# not just if they happen to end their move standing on it. The old
-	# move_to()-based movement only ever checked the single final tile,
-	# which is fine for a forced shove but was never correct for a hazard a
-	# unit is meant to be able to walk straight through.
-	if grid_ref == null or path.is_empty():
-		return
-
-	_is_moving = true
-	for step_cell in path:
-		# Bail out cleanly if we were freed mid-walk for some unrelated reason.
-		if not is_instance_valid(self):
-			return
-
-		# ── FACE + ANIMATE TOWARD THIS STEP ────────────────────────────────────
-		_set_facing_for_direction(step_cell)
-		var dy = step_cell.y - grid_position.y
-		if dy < 0:
-			play_animation("walk_up")
-		else:
-			play_animation("walk")
-
-		# ── UPDATE GRID REGISTRATION FOR THIS STEP ─────────────────────────────
-		# Done BEFORE the visual tween (same order as move_to()) so anything
-		# that looks up unit_positions mid-step sees the unit at its new tile.
-		if tile_footprint.size() > 1:
-			grid_ref.unregister_large_unit(self)
-			grid_position = step_cell
-			_update_occupied_cells()
-			grid_ref.register_large_unit(self, occupied_cells)
-		else:
-			grid_ref.unregister_unit(grid_position)
-			grid_position = step_cell
-			_update_occupied_cells()
-			grid_ref.register_unit(self, step_cell)
-
-		var step_world_pos: Vector2 = grid_ref.grid_to_world(step_cell)
-
-		# Keep any aura this unit owns sliding in lockstep, one tile at a time,
-		# using the SAME per-tile duration as the body sprite below.
-		if grid_ref.has_node("AuraManager"):
-			grid_ref.get_node("AuraManager").begin_caster_move(self, step_cell, move_speed_per_tile)
-
-		# ── SLIDE TO THIS TILE ──────────────────────────────────────────────────
-		# Linear trans/ease keeps consecutive tile-steps flowing into each
-		# other smoothly (no decelerate-then-reaccelerate stutter between
-		# tiles like a cubic ease-out would cause if repeated every step).
-		var tween = create_tween()
-		tween.set_trans(Tween.TRANS_LINEAR)
-		tween.set_ease(Tween.EASE_IN_OUT)
-		tween.tween_property(self, "position", step_world_pos, move_speed_per_tile)
-		await tween.finished
-
-		if not is_instance_valid(self):
-			return
-
-		# ── HAZARD CHECK FOR THIS TILE ───────────────────────────────────────────
-		# Fires the instant we actually arrive on this tile — works for both a
-		# normal hazard tile AND a non-blocking "damaging wall" hazard, since
-		# the unit genuinely stands here now, whether it's an intermediate
-		# step or the final destination.
-		grid_ref.apply_hazard_to_unit(self, step_cell, "enter")
-
-		# If that hazard was lethal, stop walking any further tiles — but we
-		# still fall through to emit movement_finished below so anything
-		# awaiting it (BattleManager, AI, post-move aura sync) doesn't hang.
-		if current_hp <= 0:
-			break
-
-	if is_instance_valid(self) and current_hp > 0:
-		play_animation("idle")
-	_is_moving = false
-	movement_finished.emit()
 
 
 func snap_to(new_cell: Vector2i) -> void:
@@ -745,15 +593,6 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster 
 	# It's recorded so Taunt knows who to redirect attacks toward, and so
 	# DoT damage can scale off the correct unit's ATK/MATK.
 
-	#This helps prevent recursion loops
-	_apply_status_depth += 1
-	if _apply_status_depth > 8:
-		push_warning("apply_status: recursion depth exceeded for '" +
-			status_data.display_name + "' on " + unit_data.display_name +
-			" — something is triggering a status chain. Skipping to prevent crash.")
-		_apply_status_depth -= 1
-		return
-	
 	# If the unit has an immunity status, block all incoming status applications.
 	for s in active_statuses:
 		if s["data"].grants_immunity:
@@ -787,7 +626,17 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster 
 						status_data.mov_modifier > 0 or status_data.crit_chance_modifier > 0 or
 						status_data.damage_dealt_modifier > 0 or status_data.damage_taken_modifier < 0 or
 						status_data.grants_immunity)
-	EventBus.publish.call_deferred(EventBus.ON_BUFF_APPLIED, {"unit": self, "status_id": status_data.id, "is_buff": is_buff})
+	EventBus.publish(EventBus.ON_BUFF_APPLIED, {"unit": self, "status_id": status_data.id, "is_buff": is_buff})
+
+	# ── LINKED AURA ACTIVATION ───────────────────────────────────────────────
+	# Some statuses exist purely to carry a permanent aura around (e.g. a
+	# unit that starts battle radiating a war-aura, removable only by a
+	# cleanse). Only fires on a BRAND NEW status -- a refresh doesn't
+	# re-activate an aura that's already running, same as visual overrides
+	# above don't replay on refresh either.
+	if status_data.has_linked_aura and status_data.linked_aura_data != null:
+		if grid_ref != null and grid_ref.has_node("AuraManager"):
+			grid_ref.get_node("AuraManager").activate_aura(self, status_data.linked_aura_data)
 
 	# ── VISUAL OVERRIDE ENTRY ───────────────────────────────────────────────
 	if status_data.has_visual_override:
@@ -795,8 +644,7 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster 
 
 
 func remove_status(status_id: String) -> void:
-	# Removes a status by its id string. Used for cleanse/dispel effects, and
-	# for one-off reveals like "attacking breaks invisibility".
+	# Removes a status by its id string. Used for cleanse/dispel effects.
 	var removed_entry = null
 	for s in active_statuses:
 		if s["data"].id == status_id:
@@ -811,38 +659,27 @@ func remove_status(status_id: String) -> void:
 	if removed_entry["data"].has_visual_override and _active_visual_override == removed_entry["data"]:
 		_end_visual_override(removed_entry["data"])
 
-	# Always refresh sprite transparency here — NOT just at the call sites
-	# that happen to remember to do it. This is what was missing for natural
-	# invisibility expiry: tick_statuses_end_of_round() below removes expired
-	# statuses through its own array logic rather than calling remove_status()
-	# (for performance, since it's iterating already), so it ALSO calls
-	# update_visuals() directly in its own cleanup loop — see below.
-	update_visuals()
+	# If the removed status was carrying a linked aura, take the aura down
+	# with it -- this is what makes a "permanent" starting aura actually
+	# stoppable: cleanse the status, and the aura goes too.
+	if removed_entry["data"].has_linked_aura and removed_entry["data"].linked_aura_data != null:
+		if grid_ref != null and grid_ref.has_node("AuraManager"):
+			grid_ref.get_node("AuraManager").deactivate_aura(self, removed_entry["data"].linked_aura_data.id)
 
 
-func cleanse_statuses() -> int:
-	# Called by ability_executor.gd when an ability with is_cleanse = true
-	# hits this unit. Removes every CURRENTLY ACTIVE status whose cleansable
-	# flag is checked (see status_effect_data.gd) — buffs and debuffs alike,
-	# since cleansable is a flag the designer sets per-status, not a hardcoded
-	# "debuffs only" rule. A status with cleansable = false survives no matter
-	# what (e.g. a stun specifically meant to be un-cleansable).
-	#
-	# Routes through remove_status() for each one, so visual override exit
-	# animations and sprite transparency (e.g. invisibility) are all handled
-	# automatically and consistently with every other removal path.
-	#
-	# Returns how many statuses were actually removed, in case a UI or combat
-	# log wants to report it (e.g. "Cleansed 2 effects from Sylvaris!").
-	var ids_to_cleanse: Array = []
-	for s in active_statuses:
+func cleanse_statuses(count: int = 1) -> void:
+	# Removes up to 'count' cleansable statuses, oldest-applied first. This
+	# is the function a "cleanse"/"dispel"/"purify" ability should call
+	# (see ability_executor.gd's CLEANSE step). Routes through
+	# remove_status() so a cleansed, aura-linked status correctly takes its
+	# aura down too -- no separate aura-handling logic needed here.
+	var removed := 0
+	for s in active_statuses.duplicate():
+		if removed >= count:
+			break
 		if s["data"].cleansable:
-			ids_to_cleanse.append(s["data"].id)
-
-	for status_id in ids_to_cleanse:
-		remove_status(status_id)
-
-	return ids_to_cleanse.size()
+			remove_status(s["data"].id)
+			removed += 1
 
 
 func tick_statuses_end_of_round(team_that_just_ended: String) -> void:
@@ -890,14 +727,16 @@ func tick_statuses_end_of_round(team_that_just_ended: String) -> void:
 		# animation and restore the unit's normal look.
 		if s["data"].has_visual_override and _active_visual_override == s["data"]:
 			_end_visual_override(s["data"])
-
-	# Refresh sprite transparency if anything actually expired this round —
-	# this is what makes invisibility correctly fade back to normal when the
-	# TURN LIMIT runs out, not just when attacking breaks it early. Done once
-	# after the loop (rather than once per removed status) since it's a single
-	# full recheck of has_status("invisible") either way.
-	if not to_remove.is_empty():
-		update_visuals()
+		# If the expiring status was carrying a linked aura, take the aura
+		# down too. In practice this path is rarely hit -- a "permanent"
+		# starting aura status never reaches here at all (the is_permanent
+		# check above skips it entirely, it only ever leaves via
+		# remove_status()/cleanse) -- but a future NON-permanent
+		# aura-linked status would expire through here, so it's handled for
+		# completeness rather than left as a silent gap.
+		if s["data"].has_linked_aura and s["data"].linked_aura_data != null:
+			if grid_ref != null and grid_ref.has_node("AuraManager"):
+				grid_ref.get_node("AuraManager").deactivate_aura(self, s["data"].linked_aura_data.id)
 
 
 func _apply_dot_tick(status_entry: Dictionary) -> void:
@@ -1261,41 +1100,20 @@ func _update_hp_label() -> void:
 	else:
 		_hp_bar_fill.color = Color(0.9, 0.15, 0.15, 1.0)
 
-var _is_updating_visuals: bool = false
+
 func update_visuals() -> void:
-	if _is_updating_visuals: 
-		print("Recursion blocked!")
-		return 
-	
-	_is_updating_visuals = true
-	
+	# Refreshes the unit's sprite transparency based on invisible status.
 	var sprite = $AnimatedSprite2D
-	# Wrap this in a try-catch equivalent or debug print to see if it's the trigger
-	print("Checking status...")
-	var is_invisible = has_status("invisible") 
-	
-	sprite.modulate.a = 0.5 if is_invisible else 1.0
-	
-	_is_updating_visuals = false
+	if has_status("invisible"):
+		sprite.modulate.a = 0.5   # 50% transparent when invisible.
+	else:
+		sprite.modulate.a = 1.0   # Fully opaque otherwise.
 
 
 func _debug_print_status_applied(status_data: StatusEffectData, stacks: int) -> void:
 	print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	print("📊 STATUS APPLIED: '", status_data.display_name, "' × ", stacks,
 		  " → ", unit_data.display_name)
-	#print("   ATK:  base=", get_stats().atk,  "  effective=", get_effective_atk())
-	#print("   DEF:  base=", get_stats().def,  "  effective=", get_effective_def())
-	#print("   MOV:  base=", get_stats().mov,  "  effective=", get_effective_mov())
-
-# Replace 'reset_unit_state' and 'is_attacking' with the actual names in your script
-func _on_attack_animation_finished():
-	# Look for a function in your script that handles resetting the unit
-	# Example: end_turn(), set_state(IDLE), or deselect()
-	call_deferred("your_actual_reset_function_name") 
-
-func force_idle_state() -> void:
-	if has_node("AnimatedSprite2D"):
-		play_animation("idle")
-	# If your grid manager or battle manager needs to know the attack is done:
-	# (Look in your BattleManager for a function like "deselect_unit" or "clear_selection")
-	# If you aren't sure, calling play_animation("idle") is the safest first step.
+	print("   ATK:  base=", get_stats().atk,  "  effective=", get_effective_atk())
+	print("   DEF:  base=", get_stats().def,  "  effective=", get_effective_def())
+	print("   MOV:  base=", get_stats().mov,  "  effective=", get_effective_mov())

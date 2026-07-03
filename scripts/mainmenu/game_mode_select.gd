@@ -12,16 +12,18 @@ extends Control
 const TAROT_PICK_SCENE_PATH := "res://scenes/meta/TarotPickScene.tscn"
 const DRAFT_SCENE_PATH := "res://scenes/meta/DraftScene.tscn"
 const MAIN_MENU_SCENE_PATH := "res://scenes/mainmenu/main_menu.tscn"
+const TEST_ENCOUNTER_SCENE_PATH := "res://scenes/meta/TestEncounterPickScene.tscn"
 
 @onready var random_button: Button = $CenterContainer/VBoxContainer/RandomModeButton
 @onready var draft_button: Button = $CenterContainer/VBoxContainer/DraftModeButton
 @onready var back_button: Button = $CenterContainer/VBoxContainer/BackButton
-
+@onready var test_button: Button = $CenterContainer/VBoxContainer/TestModeButton
 
 func _ready() -> void:
 	random_button.pressed.connect(_on_random_pressed)
 	draft_button.pressed.connect(_on_draft_pressed)
 	back_button.pressed.connect(_on_back_pressed)
+	test_button.pressed.connect(_on_test_pressed)
 
 
 func _on_random_pressed() -> void:
@@ -64,3 +66,9 @@ func _on_draft_pressed() -> void:
 
 func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file(MAIN_MENU_SCENE_PATH)
+
+
+func _on_test_pressed() -> void:
+	print("Opening Test Mode encounter picker...")
+	RunManager.is_test_mode = true
+	get_tree().change_scene_to_file(TEST_ENCOUNTER_SCENE_PATH)

@@ -1,0 +1,48 @@
+[gd_scene format=3 uid="uid://bly1dff18r8lv"]
+
+[ext_resource type="Script" uid="uid://dl2685i2u30g8" path="res://scripts/mainmenu/test_encounter_pick.gd" id="1_05b7i"]
+
+[node name="TestEncounterPickScene" type="Control" unique_id=1971654708]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_05b7i")
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1692641327]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer" unique_id=730566280]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/VBoxContainer" unique_id=2131674387]
+layout_mode = 2
+text = "-- Test Mode--"
+
+[node name="SubLabel" type="Label" parent="CenterContainer/VBoxContainer" unique_id=90665185]
+layout_mode = 2
+text = "Select an Encounter:"
+
+[node name="Encounter0Button" type="Button" parent="CenterContainer/VBoxContainer" unique_id=676792696]
+layout_mode = 2
+text = "Encounter 0"
+
+[node name="Encounter1Button" type="Button" parent="CenterContainer/VBoxContainer" unique_id=837692653]
+layout_mode = 2
+text = "Encounter 1"
+
+[node name="Encounter2Button" type="Button" parent="CenterContainer/VBoxContainer" unique_id=809574610]
+layout_mode = 2
+text = "Encounter 2"
+
+[node name="Encounter3Button" type="Button" parent="CenterContainer/VBoxContainer" unique_id=1552889980]
+layout_mode = 2
+text = "Encounter 3"
+
+[node name="Encounter4Button" type="Button" parent="CenterContainer/VBoxContainer" unique_id=605636107]
+layout_mode = 2
+text = "Encounter 4"
+
+[node name="BackButton" type="Button" parent="CenterContainer/VBoxContainer" unique_id=964515782]
+layout_mode = 2
+text = "Back"

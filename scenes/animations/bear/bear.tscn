@@ -419,9 +419,8 @@ unit_data = ExtResource("2_17s0t")
 position = Vector2(5.4653816, 0.5611124)
 scale = Vector2(0.44948924, 0.42625868)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"walk_up"
+animation = &"walk"
 autoplay = "idle"
-frame_progress = 0.9555565
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0

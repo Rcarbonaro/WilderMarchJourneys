@@ -49,6 +49,13 @@ extends CanvasLayer
 @export var hp_bar_pixel_width:   float = 150.0
 @export var mana_bar_pixel_width: float = 150.0
 
+@export var turn_announcement_duration: float = 2.0
+@export var player_turn_texture:        Texture2D   = null
+@export var enemy_turn_texture:         Texture2D   = null
+@export var player_turn_scene:          PackedScene = null
+@export var enemy_turn_scene:           PackedScene = null
+
+
 # ── SCENE NODE REFERENCES ─────────────────────────────────────────────────────
 # These are populated in _ready() by searching the scene tree for each name.
 # If a node is missing, the variable stays null and that piece is skipped
@@ -80,6 +87,9 @@ var menu_grid_toggle:     Button  = null
 var menu_quit_button:     Button  = null
 var menu_resume_button:   Button  = null
 
+
+#anouncement instance for the turn announcer
+var _announcement_instance: Node = null
 
 # Stat value Label nodes; created by _build_stat_rows() once StatsGrid is found.
 var _stat_labels: Dictionary = {}
@@ -156,20 +166,24 @@ func _ready() -> void:
 
 	# ── Connect button signals ─────────────────────────────────────────────────
 	if end_turn_button:
-		end_turn_button.pressed.connect(_on_end_turn_pressed)
-
+		if not end_turn_button.pressed.is_connected(_on_end_turn_pressed):
+			end_turn_button.pressed.connect(_on_end_turn_pressed)
+	
 	if cancel_move_button:
 		cancel_move_button.text    = "↩ Cancel Movement"
 		cancel_move_button.visible = false
-		cancel_move_button.pressed.connect(_on_cancel_move_pressed)
+		if not cancel_move_button.pressed.is_connected(_on_cancel_move_pressed):
+			cancel_move_button.pressed.connect(_on_cancel_move_pressed)
 
 	if more_info_button:
-		more_info_button.pressed.connect(_on_more_info_pressed)
+		if not more_info_button.pressed.is_connected(_on_more_info_pressed):
+			more_info_button.pressed.connect(_on_more_info_pressed)
 
 	if grid_toggle_button:
 		grid_toggle_button.toggle_mode = true
 		grid_toggle_button.text        = "Grid: Off"
-		grid_toggle_button.pressed.connect(_on_grid_toggle_pressed)
+		if not grid_toggle_button.pressed.is_connected(_on_grid_toggle_pressed):
+			grid_toggle_button.pressed.connect(_on_grid_toggle_pressed)
 
 	# ── Read HP/mana bar widths from the actual laid-out scene ────────────────
 	# Control nodes report size = (0, 0) until Godot finishes a layout pass.
@@ -231,16 +245,18 @@ func _build_stat_rows() -> void:
 		
 		
 		if menu_resume_button:
-			menu_resume_button.pressed.connect(_close_pause_menu)
+			if not menu_resume_button.pressed.is_connected(_close_pause_menu):
+				menu_resume_button.pressed.connect(_close_pause_menu)
 
 		if menu_quit_button:
-			menu_quit_button.pressed.connect(_on_menu_quit_pressed)
+			if not menu_quit_button.pressed.is_connected(_on_menu_quit_pressed):
+				menu_quit_button.pressed.connect(_on_menu_quit_pressed)
 
 		if menu_grid_toggle:
 			menu_grid_toggle.toggle_mode = true
 			menu_grid_toggle.text        = "Grid: Off"
-			menu_grid_toggle.pressed.connect(_on_menu_grid_toggle_pressed)
-
+			if not menu_grid_toggle.pressed.is_connected(_on_menu_grid_toggle_pressed):
+				menu_grid_toggle.pressed.connect(_on_menu_grid_toggle_pressed)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # LIVE REFRESH  (runs every frame while the bar is visible)
@@ -692,5 +708,59 @@ func _on_menu_grid_toggle_pressed() -> void:
 		grid_toggle_button.button_pressed = now_on
 		grid_toggle_button.text = menu_grid_toggle.text
 		
-		
+
+
+#Turn Announcer
+func show_turn_announcement(is_player_turn: bool) -> void:
+	_hide_turn_announcement()
+
+	var custom_scene:   PackedScene = player_turn_scene   if is_player_turn else enemy_turn_scene
+	var custom_texture: Texture2D   = player_turn_texture if is_player_turn else enemy_turn_texture
+	var label_text:     String      = "Player's Turn"     if is_player_turn else "Enemy's Turn"
+
+	var content: Control
+
+	if custom_scene != null:
+		# Scene overrides everything — instantiate and use as-is.
+		content = custom_scene.instantiate() as Control
+
+	elif custom_texture != null:
+		# Texture overrides the default box.
+		var img := TextureRect.new()
+		img.texture             = custom_texture
+		img.expand_mode         = TextureRect.EXPAND_IGNORE_SIZE
+		img.stretch_mode        = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		img.custom_minimum_size = custom_texture.get_size()
+		content = img
+
+	else:
+		# Default: plain gray panel with text.
+		var panel := PanelContainer.new()
+		panel.custom_minimum_size = Vector2(300, 80)
+		var lbl := Label.new()
+		lbl.text                     = label_text
+		lbl.horizontal_alignment     = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.vertical_alignment       = VERTICAL_ALIGNMENT_CENTER
+		lbl.add_theme_font_size_override("font_size", 32)
+		panel.add_child(lbl)
+		content = panel
+
+	# Wrap in a full-screen centering container so content is always centred
+	# regardless of which variant is used.
+	var wrapper := CenterContainer.new()
+	wrapper.set_anchors_preset(Control.PRESET_FULL_RECT)
+	wrapper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	wrapper.z_index      = 200
+	add_child(wrapper)
+	wrapper.add_child(content)
+	_announcement_instance = wrapper
+
+	await get_tree().create_timer(turn_announcement_duration).timeout
+	_hide_turn_announcement()
+
+
+func _hide_turn_announcement() -> void:
+	if is_instance_valid(_announcement_instance):
+		_announcement_instance.queue_free()
+	_announcement_instance = null
 		
