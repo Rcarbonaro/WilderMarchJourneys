@@ -46,6 +46,18 @@ enum TurnPhase {
 
 var current_phase: TurnPhase = TurnPhase.PLAYER_TURN
 var round_number: int = 1
+
+var _pending_reinforcements: Array = []
+# Loaded from the resolved spawn table's "reinforcements" field by
+# start_battle(). Checked every round in _check_reinforcements().
+
+var _triggered_reinforcement_rounds: Array = []
+# Tracks which reinforcement rounds have already fired so a wave never
+# spawns twice, even if the check is called multiple times.
+
+var _reinforcement_fallback_pool: Array = []
+# Distinct enemy ids from the main roster -- used as the default draw pool
+# for a reinforcement wave that doesn't specify its own enemy_pool_override.
 var is_battle_over: bool = false
 var aoe_preview_cell: Vector2i = Vector2i(-1, -1)
 # Tracks which cell was last previewed for AOE so we can confirm on the second tap.
@@ -146,19 +158,47 @@ func _ready() -> void:
 		printerr("⚠️ BattleManager: 'AuraManager' node not found on BattleGrid! ",
 				 "Add a Node (aura_manager.gd script) named 'AuraManager' as a child of BattleGrid.")
 
-	_spawn_stage_enemies()
-	_spawn_player_party_from_run()
-
 	# Reset the HP-cost-consumed counter for this fresh battle (safety measure
 	# in case the scene/executor is reused without a full reload).
 	executor.total_hp_consumed = 0
 	unleash_available = false
 
+
+func start_battle(player_spawn_cells: Array, enemy_spawn_cells: Array,
+				   enemy_roster: Array, reinforcements: Array = []) -> void:
+	# Called explicitly by battle_scene.gd, AFTER it has generated the map
+	# via MapGenerator. This can't just happen automatically inside
+	# _ready() above: Godot calls a CHILD node's _ready() before its
+	# PARENT's _ready(), and BattleManager is a child of BattleScene -- so
+	# by the time BattleScene._ready() would generate the map and know
+	# where anyone should spawn, BattleManager._ready() would have already
+	# finished running. Spawning is deferred to this explicit call instead,
+	# so the order is controlled directly rather than relying on node
+	# hierarchy timing.
+	#
+	# enemy_roster is passed IN rather than resolved again here on purpose:
+	# ScalingEngine.resolve_spawn_table() rolls randomly, so calling it a
+	# second time here could return a DIFFERENT roster than the one
+	# battle_scene.gd already used to decide how many enemy spawn cells to
+	# generate -- resolve it ONCE, upstream, and hand the result down.
+	_pending_reinforcements = reinforcements
+	_triggered_reinforcement_rounds = []
+	_reinforcement_fallback_pool = []
+	for entry in enemy_roster:
+		var eid: String = entry.get("enemy_id", "")
+		if eid != "" and not _reinforcement_fallback_pool.has(eid):
+			_reinforcement_fallback_pool.append(eid)
+
+	_spawn_stage_enemies(enemy_roster, enemy_spawn_cells)
+	_spawn_player_party_from_run(player_spawn_cells)
+
 	# Apply synergy bonuses that are active from the very start of battle.
+	# (Moved here from _ready() -- this reads player_units, which doesn't
+	# exist until the spawn calls just above have run.)
 	_refresh_synergies()
 
 
-func _spawn_player_party_from_run() -> void:
+func _spawn_player_party_from_run(player_spawn_cells: Array) -> void:
 	print("🧙 Spawning Player Party Units from RunManager...")
 
 	if RunManager.current_run == null:
@@ -171,16 +211,10 @@ func _spawn_player_party_from_run() -> void:
 		printerr("❌ BattleManager: RunManager.current_run.party is empty — nothing to spawn.")
 		return
 
-	# Lay the party out along the player's edge of the map, one tile apart.
-	# Add more entries here if you ever allow a starting party larger than 4.
-	var spawn_positions: Array[Vector2i] = [
-		Vector2i(2, 5), Vector2i(2, 6), Vector2i(3, 5), Vector2i(3, 6),
-	]
-
 	for i in range(party.size()):
-		if i >= spawn_positions.size():
-			printerr("⚠️ More than ", spawn_positions.size(),
-					 " party members saved — ran out of spawn positions, skipping the rest.")
+		if i >= player_spawn_cells.size():
+			printerr("⚠️ More than ", player_spawn_cells.size(),
+					 " party members saved — ran out of generated spawn positions, skipping the rest.")
 			break
 
 		var unit_entry: Dictionary = party[i]
@@ -192,7 +226,7 @@ func _spawn_player_party_from_run() -> void:
 
 		var level: int = unit_entry.get("level", 1)
 		spawn_unit(
-			unit_data, spawn_positions[i], true, level,
+			unit_data, player_spawn_cells[i], true, level,
 			unit_entry.get("equipped_item_ids", []),
 			unit_entry.get("permanent_modifiers", [])
 		)
@@ -207,168 +241,179 @@ func _load_unit_data(unit_id: String) -> UnitData:
 	return load(path) as UnitData
 
 
-func _spawn_stage_enemies() -> void:
-	# Route to test enemies or real enemies depending on mode.
-	if RunManager.is_test_mode:
-		_spawn_test_enemies(RunManager.test_encounter_index)
+func _load_enemy_data(enemy_id: String) -> UnitData:
+	# Same path convention as _load_unit_data() but for the enemy folder:
+	# res://resources/enemies/<enemy_id>_data.tres
+	var path := "res://resources/enemies/" + enemy_id + "_data.tres"
+	if not ResourceLoader.exists(path):
+		return null
+	return load(path) as UnitData
+
+
+# ── REINFORCEMENTS ─────────────────────────────────────────────────────────────
+
+func _check_reinforcements() -> void:
+	# Called every round from _on_enemy_turn_complete(), right as the new
+	# player round begins. Checks whether any pending reinforcement wave
+	# should fire on this round number and spawns them if so.
+	for entry in _pending_reinforcements:
+		var trigger_round: int = entry.get("round", -1)
+		if trigger_round != round_number:
+			continue
+		if _triggered_reinforcement_rounds.has(trigger_round):
+			continue   # Already fired -- never spawn the same wave twice.
+		_triggered_reinforcement_rounds.append(trigger_round)
+		_spawn_reinforcements(entry)
+
+
+func _spawn_reinforcements(entry: Dictionary) -> void:
+	var count: int = entry.get("count", 1)
+	var override_pool: Array = entry.get("enemy_pool_override", [])
+
+	var candidate_ids: Array = []
+	if not override_pool.is_empty():
+		for p in override_pool:
+			var eid: String = p.get("enemy_id", "")
+			if eid != "":
+				candidate_ids.append(eid)
 	else:
-		_spawn_stage_enemies()
-	print("🐺 Spawning Monster Waves...")
-	print("🐺 Spawning Monster Waves...")
-	var wolf_data     = load("res://resources/enemies/wolf_data.tres")
-	var sylvaris_data = load("res://resources/enemies/sylvaris_data.tres")
-	var ent_data      = load("res://resources/enemies/ent_data.tres")
-	var sporeling_data      = load("res://resources/enemies/sporeling_data.tres")
-	var thornling_data = load("res://resources/enemies/thornling_data.tres")
-	var bear_data      = load("res://resources/enemies/bear_data.tres")
-	var hulkingsporeling_data      = load("res://resources/enemies/hulkingsporeling_data.tres")
-	var leshy_data      = load("res://resources/enemies/leshy_data.tres")
+		# No override -- reinforcements default to drawing from whatever
+		# enemy ids were already fighting this battle.
+		candidate_ids = _reinforcement_fallback_pool
 
-
-	if wolf_data == null:
-		printerr("❌ Could not load wolf_data.tres!")
+	if candidate_ids.is_empty():
+		printerr("❌ BattleManager: reinforcement wave has no enemy ids to draw from -- skipped.")
 		return
 
+	var free_cells := _find_empty_cells_for_reinforcements(count)
+	if free_cells.is_empty():
+		printerr("⚠️ BattleManager: no empty cells available for reinforcements -- skipped.")
+		return
 
-#Encounter 0
-	#spawn_unit(wolf_data,     Vector2i(10, 1), false, 1)
-	#spawn_unit(wolf_data,     Vector2i(10, 2), false, 1)
-	#spawn_unit(wolf_data,     Vector2i(12, 2), false, 1)
-	#spawn_unit(wolf_data,     Vector2i(10, 3), false, 1)
-	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(15, 2), false, 1)
-	#print("🐺 Monster waves deployed!")
-	
-	
-#Encounter 1
-	#spawn_unit(wolf_data,     Vector2i(10, 1), false, 1)
-	#spawn_unit(wolf_data,     Vector2i(10, 2), false, 1)
-	#spawn_unit(wolf_data,     Vector2i(12, 2), false, 1)
-	#spawn_unit(wolf_data,     Vector2i(10, 3), false, 1)
-	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(13, 3), false, 1)
-	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(15, 2), false, 1)
-	#if ent_data      != null: spawn_unit(ent_data,      Vector2i(18, 8), false, 1)
-	#print("🐺 Monster waves deployed!")
-
-#Encounter 2
-	#if bear_data != null: spawn_unit(bear_data, Vector2i(13, 2), false, 1)
-	#if sporeling_data != null: spawn_unit(sporeling_data, Vector2i(13, 1), false, 1)
-	#if sporeling_data != null: spawn_unit(sporeling_data, Vector2i(14, 3), false, 1)
-	#if thornling_data != null: spawn_unit(thornling_data, Vector2i(14, 2), false, 1)
-	#if thornling_data != null: spawn_unit(thornling_data, Vector2i(15, 4), false, 1)
-	#if sporeling_data != null: spawn_unit(sporeling_data, Vector2i(12, 2), false, 1)
-	#if hulkingsporeling_data      != null: spawn_unit(ent_data,      Vector2i(18, 8), false, 1)
-	#print("🐺 Monster waves deployed!")
+	print("⚔️ Reinforcements arriving on round ", round_number, ": ", free_cells.size(), " enemies.")
+	for i in range(free_cells.size()):
+		var enemy_id: String = candidate_ids[randi() % candidate_ids.size()]
+		var enemy_data: UnitData = _load_enemy_data(enemy_id)
+		if enemy_data == null:
+			printerr("❌ Could not load reinforcement enemy_id '", enemy_id, "' — skipped.")
+			continue
+		spawn_unit(enemy_data, free_cells[i], false, 1)
 
 
-#Encounter 3
-	#if bear_data != null: spawn_unit(bear_data, Vector2i(14, 3), false, 1)
-	#if bear_data != null: spawn_unit(bear_data, Vector2i(14, 2), false, 1)
-	#if wolf_data != null: spawn_unit(wolf_data, Vector2i(13, 3), false, 1)
-	#if wolf_data != null: spawn_unit(wolf_data, Vector2i(13, 3), false, 1)
-	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(15, 2), false, 1)
-	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(13, 1), false, 1)
-	#if hulkingsporeling_data      != null: spawn_unit(hulkingsporeling_data,      Vector2i(17, 6), false, 1)
-	#if sporeling_data      != null: spawn_unit(sporeling_data,      Vector2i(16, 4), false, 1)
-	#if leshy_data      != null: spawn_unit(leshy_data,      Vector2i(18, 8), false, 1)
-	#print("🐺 Monster waves deployed!")
+func _find_empty_cells_for_reinforcements(count: int) -> Array:
+	# Looks for empty, passable cells biased toward the right side of the
+	# map (the same general area enemy spawns were placed). Reads from
+	# grid.tile_map directly so it adapts to whatever size was generated.
+	var candidates: Array = []
+	for cell in grid.tile_map:
+		if grid.is_passable(cell):
+			candidates.append(cell)
+	if candidates.is_empty():
+		return []
+	# Sort rightmost-first (enemy side), then take from the top.
+	candidates.sort_custom(func(a, b): return a.x > b.x)
+	var pool_size: int = max(count, int(candidates.size() * 0.4))
+	var preferred: Array = candidates.slice(0, min(pool_size, candidates.size()))
+	preferred.shuffle()
+	return preferred.slice(0, min(count, preferred.size()))
+	print("🐺 Spawning Monster Waves...")
 
-#Encounter 4 (hard)
-	#if bear_data != null: spawn_unit(bear_data, Vector2i(9, 3), false, 1)
-	#if bear_data != null: spawn_unit(bear_data, Vector2i(10, 2), false, 1)
-	#if wolf_data != null: spawn_unit(wolf_data, Vector2i(13, 3), false, 1)
-	#if wolf_data != null: spawn_unit(wolf_data, Vector2i(14, 3), false, 1)
-	#if wolf_data != null: spawn_unit(wolf_data, Vector2i(13, 2), false, 1)
-	#if thornling_data != null: spawn_unit(thornling_data, Vector2i(15, 2), false, 1)
-	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(14, 2), false, 1)
-	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(13, 1), false, 1)
-	#if hulkingsporeling_data      != null: spawn_unit(hulkingsporeling_data,      Vector2i(17, 6), false, 1)
-	#if ent_data      != null: spawn_unit(ent_data,      Vector2i(18, 8), false, 1)
-	#if sporeling_data      != null: spawn_unit(sporeling_data,      Vector2i(16, 4), false, 1)
-	#if sporeling_data      != null: spawn_unit(sporeling_data,      Vector2i(18, 3), false, 1)
-	#if leshy_data      != null: spawn_unit(leshy_data,      Vector2i(18, 8), false, 1)
-	#if leshy_data      != null: spawn_unit(leshy_data,      Vector2i(19, 9), false, 1)
-	#print("🐺 Monster waves deployed!")
+	if roster.is_empty():
+		printerr("❌ BattleManager: enemy roster is empty for this stage.")
+		return
 
-func _spawn_test_enemies(encounter_index: int) -> void:
-	# ════════════════════════════════════════════════════════════════════════
-	# ⚠  TEST / DEVELOPMENT USE ONLY — REMOVE BEFORE SHIPPING ⚠
-	#
-	# This function is intentionally separate from _spawn_stage_enemies().
-	# _spawn_stage_enemies() will eventually be replaced by procedural
-	# generation (random enemy pools, scaling difficulty, run modifiers, etc).
-	# _spawn_test_enemies() stays as a hardcoded sandbox so specific enemy
-	# compositions can be tested at any time without touching the real pipeline.
-	# ════════════════════════════════════════════════════════════════════════
-	print("🧪 Loading test encounter ", encounter_index, "...")
+	var spawn_index := 0
+	for entry in roster:
+		var enemy_id: String = entry.get("enemy_id", "")
+		var count: int = entry.get("count", 1)
+		var enemy_data: UnitData = _load_enemy_data(enemy_id)
+		if enemy_data == null:
+			printerr("❌ Could not load enemy data for enemy_id '", enemy_id, "' — skipped.")
+			continue
+		for _i in range(count):
+			if spawn_index >= enemy_spawn_cells.size():
+				printerr("⚠️ More enemies in roster than generated spawn cells — skipping the rest.")
+				print("🐺 Monster waves deployed (partial)!")
+				return
+			spawn_unit(enemy_data, enemy_spawn_cells[spawn_index], false, 1)
+			spawn_index += 1
 
-	var wolf_data              = load("res://resources/enemies/wolf_data.tres")
-	var sylvaris_data          = load("res://resources/enemies/sylvaris_data.tres")
-	var ent_data               = load("res://resources/enemies/ent_data.tres")
-	var sporeling_data         = load("res://resources/enemies/sporeling_data.tres")
-	var thornling_data         = load("res://resources/enemies/thornling_data.tres")
-	var bear_data              = load("res://resources/enemies/bear_data.tres")
-	var hulkingsporeling_data  = load("res://resources/enemies/hulkingsporeling_data.tres")
-	var leshy_data             = load("res://resources/enemies/leshy_data.tres")
+	print("🐺 Monster waves deployed!")
 
-	match encounter_index:
-		0:
-			spawn_unit(wolf_data,     Vector2i(10, 1), false, 1)
-			spawn_unit(wolf_data,     Vector2i(10, 2), false, 1)
-			spawn_unit(wolf_data,     Vector2i(12, 2), false, 1)
-			spawn_unit(wolf_data,     Vector2i(10, 3), false, 1)
-			if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(15, 2), false, 1)
+# ── TEST ENCOUNTERS (commented out, kept for reference) ───────────────────────
+# These hand-placed spawns were used during testing. They are no longer called
+# anywhere -- enemies now come from ScalingEngine.resolve_spawn_table() via
+# the roster passed into start_battle(). Un-comment individual blocks and call
+# them manually from start_battle() only if you need isolated test scenarios.
 
-		1:
-			spawn_unit(wolf_data,     Vector2i(10, 1), false, 1)
-			spawn_unit(wolf_data,     Vector2i(10, 2), false, 1)
-			spawn_unit(wolf_data,     Vector2i(12, 2), false, 1)
-			spawn_unit(wolf_data,     Vector2i(10, 3), false, 1)
-			if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(13, 3), false, 1)
-			if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(15, 2), false, 1)
-			if ent_data      != null: spawn_unit(ent_data,      Vector2i(18, 8), false, 1)
+# func _spawn_encounter_1() -> void:
+# 	var wolf_data     = load("res://resources/enemies/wolf_data.tres")
+# 	var sylvaris_data = load("res://resources/enemies/sylvaris_data.tres")
+# 	var ent_data      = load("res://resources/enemies/ent_data.tres")
+# 	if wolf_data != null: spawn_unit(wolf_data,     Vector2i(10, 1), false, 1)
+# 	if wolf_data != null: spawn_unit(wolf_data,     Vector2i(10, 2), false, 1)
+# 	if wolf_data != null: spawn_unit(wolf_data,     Vector2i(12, 2), false, 1)
+# 	if wolf_data != null: spawn_unit(wolf_data,     Vector2i(10, 3), false, 1)
+# 	if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(13, 3), false, 1)
+# 	if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(15, 2), false, 1)
+# 	if ent_data      != null: spawn_unit(ent_data,      Vector2i(18, 8), false, 1)
 
-		2:
-			if bear_data          != null: spawn_unit(bear_data,          Vector2i(13, 2), false, 1)
-			if sporeling_data     != null: spawn_unit(sporeling_data,     Vector2i(13, 1), false, 1)
-			if sporeling_data     != null: spawn_unit(sporeling_data,     Vector2i(14, 3), false, 1)
-			if thornling_data     != null: spawn_unit(thornling_data,     Vector2i(14, 2), false, 1)
-			if thornling_data     != null: spawn_unit(thornling_data,     Vector2i(15, 4), false, 1)
-			if sporeling_data     != null: spawn_unit(sporeling_data,     Vector2i(12, 2), false, 1)
-			if hulkingsporeling_data != null: spawn_unit(hulkingsporeling_data, Vector2i(18, 8), false, 1)
+# func _spawn_encounter_2() -> void:
+# 	var bear_data          = load("res://resources/enemies/bear_data.tres")
+# 	var sporeling_data     = load("res://resources/enemies/sporeling_data.tres")
+# 	var thornling_data     = load("res://resources/enemies/thornling_data.tres")
+# 	var hulkingsporeling_data = load("res://resources/enemies/hulkingsporeling_data.tres")
+# 	var ent_data           = load("res://resources/enemies/ent_data.tres")
+# 	if bear_data              != null: spawn_unit(bear_data,             Vector2i(13, 2), false, 1)
+# 	if sporeling_data         != null: spawn_unit(sporeling_data,        Vector2i(13, 1), false, 1)
+# 	if sporeling_data         != null: spawn_unit(sporeling_data,        Vector2i(14, 3), false, 1)
+# 	if thornling_data         != null: spawn_unit(thornling_data,        Vector2i(14, 2), false, 1)
+# 	if thornling_data         != null: spawn_unit(thornling_data,        Vector2i(15, 4), false, 1)
+# 	if sporeling_data         != null: spawn_unit(sporeling_data,        Vector2i(12, 2), false, 1)
+# 	if hulkingsporeling_data  != null: spawn_unit(ent_data,              Vector2i(18, 8), false, 1)
 
-		3:
-			if bear_data             != null: spawn_unit(bear_data,             Vector2i(14, 3), false, 1)
-			if bear_data             != null: spawn_unit(bear_data,             Vector2i(14, 2), false, 1)
-			if wolf_data             != null: spawn_unit(wolf_data,             Vector2i(13, 3), false, 1)
-			if wolf_data             != null: spawn_unit(wolf_data,             Vector2i(13, 3), false, 1)
-			if sylvaris_data         != null: spawn_unit(sylvaris_data,         Vector2i(15, 2), false, 1)
-			if sylvaris_data         != null: spawn_unit(sylvaris_data,         Vector2i(13, 1), false, 1)
-			if hulkingsporeling_data != null: spawn_unit(hulkingsporeling_data, Vector2i(17, 6), false, 1)
-			if sporeling_data        != null: spawn_unit(sporeling_data,        Vector2i(16, 4), false, 1)
-			if leshy_data            != null: spawn_unit(leshy_data,            Vector2i(18, 8), false, 1)
+# func _spawn_encounter_3() -> void:
+# 	var bear_data     = load("res://resources/enemies/bear_data.tres")
+# 	var wolf_data     = load("res://resources/enemies/wolf_data.tres")
+# 	var sylvaris_data = load("res://resources/enemies/sylvaris_data.tres")
+# 	var hulkingsporeling_data = load("res://resources/enemies/hulkingsporeling_data.tres")
+# 	var sporeling_data        = load("res://resources/enemies/sporeling_data.tres")
+# 	var leshy_data            = load("res://resources/enemies/leshy_data.tres")
+# 	if bear_data              != null: spawn_unit(bear_data,              Vector2i(14, 3), false, 1)
+# 	if bear_data              != null: spawn_unit(bear_data,              Vector2i(14, 2), false, 1)
+# 	if wolf_data              != null: spawn_unit(wolf_data,              Vector2i(13, 3), false, 1)
+# 	if wolf_data              != null: spawn_unit(wolf_data,              Vector2i(13, 3), false, 1)
+# 	if sylvaris_data          != null: spawn_unit(sylvaris_data,          Vector2i(15, 2), false, 1)
+# 	if sylvaris_data          != null: spawn_unit(sylvaris_data,          Vector2i(13, 1), false, 1)
+# 	if hulkingsporeling_data  != null: spawn_unit(hulkingsporeling_data,  Vector2i(17, 6), false, 1)
+# 	if sporeling_data         != null: spawn_unit(sporeling_data,         Vector2i(16, 4), false, 1)
+# 	if leshy_data             != null: spawn_unit(leshy_data,             Vector2i(18, 8), false, 1)
 
-		4:
-			if bear_data             != null: spawn_unit(bear_data,             Vector2i(9,  3), false, 1)
-			if bear_data             != null: spawn_unit(bear_data,             Vector2i(10, 2), false, 1)
-			if wolf_data             != null: spawn_unit(wolf_data,             Vector2i(13, 3), false, 1)
-			if wolf_data             != null: spawn_unit(wolf_data,             Vector2i(14, 3), false, 1)
-			if wolf_data             != null: spawn_unit(wolf_data,             Vector2i(13, 2), false, 1)
-			if thornling_data        != null: spawn_unit(thornling_data,        Vector2i(15, 2), false, 1)
-			if sylvaris_data         != null: spawn_unit(sylvaris_data,         Vector2i(14, 2), false, 1)
-			if sylvaris_data         != null: spawn_unit(sylvaris_data,         Vector2i(13, 1), false, 1)
-			if hulkingsporeling_data != null: spawn_unit(hulkingsporeling_data, Vector2i(17, 6), false, 1)
-			if ent_data              != null: spawn_unit(ent_data,              Vector2i(18, 8), false, 1)
-			if sporeling_data        != null: spawn_unit(sporeling_data,        Vector2i(16, 4), false, 1)
-			if sporeling_data        != null: spawn_unit(sporeling_data,        Vector2i(18, 3), false, 1)
-			if leshy_data            != null: spawn_unit(leshy_data,            Vector2i(18, 8), false, 1)
-			if leshy_data            != null: spawn_unit(leshy_data,            Vector2i(19, 9), false, 1)
+# func _spawn_encounter_4_hard() -> void:
+# 	var bear_data             = load("res://resources/enemies/bear_data.tres")
+# 	var wolf_data             = load("res://resources/enemies/wolf_data.tres")
+# 	var thornling_data        = load("res://resources/enemies/thornling_data.tres")
+# 	var sylvaris_data         = load("res://resources/enemies/sylvaris_data.tres")
+# 	var hulkingsporeling_data = load("res://resources/enemies/hulkingsporeling_data.tres")
+# 	var ent_data              = load("res://resources/enemies/ent_data.tres")
+# 	var sporeling_data        = load("res://resources/enemies/sporeling_data.tres")
+# 	var leshy_data            = load("res://resources/enemies/leshy_data.tres")
+# 	if bear_data              != null: spawn_unit(bear_data,              Vector2i(9, 3),  false, 1)
+# 	if bear_data              != null: spawn_unit(bear_data,              Vector2i(10, 2), false, 1)
+# 	if wolf_data              != null: spawn_unit(wolf_data,              Vector2i(13, 3), false, 1)
+# 	if wolf_data              != null: spawn_unit(wolf_data,              Vector2i(14, 3), false, 1)
+# 	if wolf_data              != null: spawn_unit(wolf_data,              Vector2i(13, 2), false, 1)
+# 	if thornling_data         != null: spawn_unit(thornling_data,         Vector2i(15, 2), false, 1)
+# 	if sylvaris_data          != null: spawn_unit(sylvaris_data,          Vector2i(14, 2), false, 1)
+# 	if sylvaris_data          != null: spawn_unit(sylvaris_data,          Vector2i(13, 1), false, 1)
+# 	if hulkingsporeling_data  != null: spawn_unit(hulkingsporeling_data,  Vector2i(17, 6), false, 1)
+# 	if ent_data               != null: spawn_unit(ent_data,               Vector2i(18, 8), false, 1)
+# 	if sporeling_data         != null: spawn_unit(sporeling_data,         Vector2i(16, 4), false, 1)
+# 	if sporeling_data         != null: spawn_unit(sporeling_data,         Vector2i(18, 3), false, 1)
+# 	if leshy_data             != null: spawn_unit(leshy_data,             Vector2i(18, 8), false, 1)
+# 	if leshy_data             != null: spawn_unit(leshy_data,             Vector2i(19, 9), false, 1)
 
-		_:
-			push_warning("_spawn_test_enemies: unknown encounter index %d — defaulting to Encounter 0." % encounter_index)
-			spawn_unit(wolf_data, Vector2i(10, 1), false, 1)
-			spawn_unit(wolf_data, Vector2i(10, 2), false, 1)
 
-	print("🧪 Test encounter ", encounter_index, " deployed!")
 
 func spawn_unit(unit_data: UnitData, cell: Vector2i, is_player: bool, level: int = 1,
 				equipped_item_ids: Array = [], permanent_modifiers: Array = []) -> void:
@@ -550,23 +595,7 @@ func on_tile_tapped(cell: Vector2i) -> void:
 
 		# Tapping the unit's own tile: skip movement, show ability choices.
 		if cell == selected_unit.grid_position:
-			selected_unit.pre_move_position = selected_unit.grid_position
-			selected_unit.has_moved         = true
-			selected_unit.can_cancel_move   = true
-			highlight.clear_highlights()
-			reachable_cells = {}
-			_show_abilities_for(selected_unit)
-
-		# Tapping an enemy while a unit is selected (but hasn't moved/acted
-		# yet): skip straight to ability selection on that unit, exactly like
-		# tapping their own tile above — this lets the player immediately
-		# target the enemy they just tapped instead of having to tap their
-		# own tile or an ability button first. Still fully cancelable back to
-		# movement (can_cancel_move = true, same as the own-tile branch).
-		elif is_instance_valid(grid.get_unit_at(cell)) and not grid.get_unit_at(cell).is_player_unit:
-			selected_unit.pre_move_position = selected_unit.grid_position
-			selected_unit.has_moved         = true
-			selected_unit.can_cancel_move   = true
+			selected_unit.has_moved = true
 			highlight.clear_highlights()
 			reachable_cells = {}
 			_show_abilities_for(selected_unit)
@@ -714,18 +743,6 @@ func _show_abilities_for(unit) -> void:
 func cancel_unit_move() -> void:
 	# Called when the player presses "Cancel Move".
 	# Teleports the selected unit back to their pre-move position.
-	#
-	# BUGFIX: can_cancel_move/pre_move_position used to only get set after an
-	# ACTUAL move finished (see the reachable_cells branch below), so a unit
-	# that skipped straight to ability selection without moving — by tapping
-	# their own tile, or now also by tapping an enemy (see on_tile_tapped's
-	# STATE C branches above) — could never cancel back out of ability
-	# selection into movement choice. Both of those branches now set
-	# pre_move_position to the unit's CURRENT cell and can_cancel_move = true
-	# even when nothing actually moved, so snap_to(origin) below is a no-op
-	# teleport-to-self in that case, and the important part — has_moved being
-	# reset to false and select_unit() recomputing reachable_cells — runs
-	# exactly the same either way.
 	if selected_unit == null or not is_instance_valid(selected_unit):
 		return
 	if not selected_unit.can_cancel_move:
@@ -1010,34 +1027,23 @@ func _try_post_attack_move(cell: Vector2i) -> void:
 		deselect_unit()
 		return
 
-	# Tapping the unit's own tile means "stay here, I'm done."
-	# We handle it explicitly BEFORE checking reachable_cells because the unit's
-	# own cell IS included in the reachable set (cost 0), which means the old code
-	# set current_phase = ANIMATION, then called move_along_path([]) — an empty
-	# path — which exits without emitting movement_finished, leaving the await
-	# below hanging forever and locking the game in ANIMATION phase until End Turn.
-	if cell == selected_unit.grid_position:
-		_finish_ability(selected_unit)
-		return
-
 	if reachable_cells.has(cell):
 		current_phase = TurnPhase.ANIMATION
+		# Walk tile-by-tile (same as the main move flow) so hazards trigger
+		# correctly on every tile crossed, and movement looks right when
+		# routing around obstacles.
 		var walk_path: Array = pathfinder.reconstruct_path_to(cell)
+		selected_unit.move_along_path(walk_path)
+		await selected_unit.movement_finished
 
-		# Second safety net: if reconstruct_path_to ever returns an empty path
-		# for a cell that wasn't the starting tile (shouldn't happen, but
-		# belt-and-suspenders), skip the await entirely rather than hanging.
-		if not walk_path.is_empty():
-			selected_unit.move_along_path(walk_path)
-			await selected_unit.movement_finished
-
+		# Shift the aura with the unit after their post-attack step too.
 		if is_instance_valid(selected_unit) and aura_manager != null:
 			if _unit_has_active_aura(selected_unit):
 				aura_manager.on_caster_moved(selected_unit)
 			else:
 				aura_manager.on_unit_moved(selected_unit)
 
-	# Whether they moved, stayed, or tapped out-of-range — finish the turn.
+	# Whether they moved or stayed put, finish the turn sequence.
 	_finish_ability(selected_unit)
 
 # ── TEAM FILTERING ────────────────────────────────────────────────────────────
@@ -1141,11 +1147,11 @@ func end_player_turn() -> void:
 			for key in unit.ability_cooldowns:
 				unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
 
-# ── SHOW "ENEMY'S TURN" ANNOUNCEMENT ──────────────────────────────────────
-	if ui_manager and ui_manager.has_method("show_turn_announcement"):
-		await ui_manager.show_turn_announcement(false)
-
-	_announce_then_start_enemy_turn()
+	# Hand control to the AI system. It will call _on_enemy_turn_complete when done.
+	ai_system.run_enemy_turn(
+		enemy_units, player_units, grid, pathfinder, executor,
+		_on_enemy_turn_complete
+	)
 
 
 func _on_enemy_turn_complete() -> void:
@@ -1198,11 +1204,13 @@ func _on_enemy_turn_complete() -> void:
 			for key in unit.ability_cooldowns:
 				unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
 
-	# ── SHOW "PLAYER'S TURN" ANNOUNCEMENT ─────────────────────────────────────
-	if ui_manager and ui_manager.has_method("show_turn_announcement"):
-		await ui_manager.show_turn_announcement(true)
+	round_number  += 1
+	current_phase  = TurnPhase.PLAYER_TURN
 
-	_announce_then_start_player_turn()
+	# Check whether any special_combat reinforcement wave should fire on
+	# this round. Runs right as the new player round begins so the player
+	# sees the new enemies arrive immediately at the start of their turn.
+	_check_reinforcements()
 
 	# Re-apply synergy bonuses at the start of each new player round.
 	_refresh_synergies()
@@ -1536,26 +1544,3 @@ func _grant_arcana_charge_to_spellsword() -> void:
 			print("DEBUG: Arcana Charge granted to: ", unit.unit_data.display_name)
 			if unit.has_method("play_animation"):
 				unit.play_animation("arcana_charge")
-func _announce_then_start_enemy_turn() -> void:
-	# Shows "Enemy's Turn" announcement, then hands control to the AI.
-	# Runs as an independent coroutine so end_player_turn() stays synchronous
-	# and the Callable-callback pattern in ai_system stays reliable.
-	if ui_manager and ui_manager.has_method("show_turn_announcement"):
-		await ui_manager.show_turn_announcement(false)
-	print("--- ENEMY TURN (Round ", round_number, ") ---")
-	ai_system.run_enemy_turn(
-		enemy_units, player_units, grid, pathfinder, executor,
-		_on_enemy_turn_complete
-	)
-
-
-func _announce_then_start_player_turn() -> void:
-	# Shows "Player's Turn" announcement, then opens the player turn.
-	# Same pattern as above — keeps _on_enemy_turn_complete synchronous.
-	if ui_manager and ui_manager.has_method("show_turn_announcement"):
-		await ui_manager.show_turn_announcement(true)
-	round_number  += 1
-	current_phase  = TurnPhase.PLAYER_TURN
-	_refresh_synergies()
-	if selected_unit != null and is_instance_valid(selected_unit):
-		_show_abilities_for(selected_unit)

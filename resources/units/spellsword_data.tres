@@ -15,7 +15,7 @@
 script = ExtResource("1_hbk8x")
 id = "spellsword"
 display_name = "Spellsword"
-description = "A swordswoman who uses magic to enhance her sword. Can absorb mana used by allies to power her own enhanced attacks."
+description = "A swordswoman who uses magic to enhance her sword. Can absorb mana used by allies to power her own enhanced attacks. Spells deal magic damage, but scale with ATK."
 portrait = ExtResource("3_1n7wx")
 battle_sprite = ExtResource("2_utbtp")
 stats_by_level = Array[ExtResource("3_eqeet")]([ExtResource("1_nnys7")])

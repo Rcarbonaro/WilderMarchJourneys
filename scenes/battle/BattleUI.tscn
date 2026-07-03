@@ -10,6 +10,7 @@
 script = ExtResource("1_o3edr")
 hp_bar_pixel_width = 369.0
 mana_bar_pixel_width = 219.0
+turn_announcement_duration = 1.0
 
 [node name="BottomBar" type="PanelContainer" parent="." unique_id=1813424329]
 clip_contents = true
@@ -59,12 +60,12 @@ custom_minimum_size = Vector2(300, 30)
 layout_direction = 2
 layout_mode = 1
 anchors_preset = 0
-offset_right = 460.7834
+offset_right = 370.02136
 offset_bottom = 50.249023
 mouse_filter = 2
 
 [node name="HPBarFillTexture" type="TextureRect" parent="BottomBar/HBoxContainer/UnitInfoColumn/HPBarBG/HPBarFill" unique_id=1833875141]
-custom_minimum_size = Vector2(200, 10)
+custom_minimum_size = Vector2(0, 10)
 layout_mode = 1
 offset_left = 75.90234
 offset_top = 19.263641

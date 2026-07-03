@@ -19,4 +19,5 @@ aoe_shape = "cone"
 aoe_size = 4
 base_damage_multiplier = 1.5
 damage_type = "magical"
+consumes_arcana_charge = true
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

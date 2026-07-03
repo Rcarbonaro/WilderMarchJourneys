@@ -1,0 +1,10 @@
+{
+  "id": "stage_3_item",
+  "conditions": [
+    { "type": "stage_exact", "value": 3 }
+  ],
+  "effects": [
+    { "type": "add_random_equipment", "equipment_type": "basic" }
+  ],
+  "notes": "Example from the brief: 'stage 3 always gives an item.' stage_exact uses the ABSOLUTE stage_index (1-30) -- if you want this to fire once per BIOME instead (e.g. stage 3 of EVERY biome, not just the run's very first stage 3), use 'any_of' with stage_exact entries for 3, 13, and 23 instead."
+}

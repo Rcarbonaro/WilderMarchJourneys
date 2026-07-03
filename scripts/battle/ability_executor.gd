@@ -111,7 +111,7 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 	# ── STEP 1: APPLY COSTS ───────────────────────────────────────────────────
 	# Deduct mana and HP cost immediately (before damage resolves).
 	# If they have an Arcana Charge, consume it instead of mana.
-	if caster.has_arcana_charge:
+	if caster.has_arcana_charge and ability.consumes_arcana_charge:
 		caster.has_arcana_charge = false
 		print("✨ Arcana Charge consumed by ", caster.unit_data.display_name)
 		caster.play_animation("idle")
@@ -298,15 +298,19 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 					  cleanse_target.unit_data.display_name)
 
 	# ── STEP 3.3: RESOLVE DISPLACEMENT (PUSH/PULL/SCATTER) ────────────────────
-	# Now that every target this cast hit is known, actually move them — in
-	# an order that won't leave anyone stuck behind a teammate who's also
-	# about to move. See _resolve_pending_displacements for the full story.
-	# AWAITED so this ability's execution doesn't fully complete (and let
-	# whoever called us move on to ending the turn, ticking hazards, etc.)
-	# until every pushed/pulled/scattered unit has visually finished sliding
-	# to their new tile — this is the fix for sprites ending up out of sync
-	# with their actual grid position when a displacement happens to be the
-	# last thing that occurs in a round.
+	# For displacement abilities: start the VFX at the same moment we begin
+# moving the pushed/pulled units so the tornado plays OVER the movement
+# instead of appearing after everyone has already slid to their new tiles.
+# The VFX is fired without await so it runs concurrently as a coroutine.
+	var _concurrent_vfx_started := false
+	if not pending_displacements.is_empty() and not ability.is_aura and not ability.is_dash \
+			and target_cells.size() > 0:
+		_concurrent_vfx_started = true
+		if ability.aoe_shape == "single":
+			_launch_projectile(caster, ability, target_cells[0])   # fire-and-forget
+		else:
+			_play_aoe_vfx(caster, ability, target_cells, origin_cell)  # fire-and-forget
+
 	await _resolve_pending_displacements(caster, ability, pending_displacements, target_cells)
 
 	# ── STEP 3.4: SELF-STATUS APPLICATION ─────────────────────────────────────
@@ -350,7 +354,7 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 		pass   # AuraManager handles aura visuals; no projectile needed.
 	elif ability.is_dash and ability.dash_effect_scene != null:
 		pass   # Future: trigger a dash trail particle system here.
-	elif not ability.is_dash and target_cells.size() > 0:
+	elif not ability.is_dash and target_cells.size() > 0 and not _concurrent_vfx_started:
 		if ability.aoe_shape == "single":
 			await _launch_projectile(caster, ability, target_cells[0])
 		else:

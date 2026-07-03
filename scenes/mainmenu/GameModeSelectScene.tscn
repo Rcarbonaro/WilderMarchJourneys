@@ -32,6 +32,10 @@ text = "Random Mode"
 layout_mode = 2
 text = "Draft Mode"
 
+[node name="TestModeButton" type="Button" parent="CenterContainer/VBoxContainer" unique_id=200319857]
+layout_mode = 2
+text = "Test Mode"
+
 [node name="BackButton" type="Button" parent="CenterContainer/VBoxContainer" unique_id=2002248690]
 layout_mode = 2
 text = "Back"

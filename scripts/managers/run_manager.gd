@@ -44,6 +44,10 @@ extends Node
 var current_run: RunState = null
 var meta: MetaState = null
 
+#To set up test environment
+var is_test_mode: bool = false
+var test_encounter_index: int = 0
+
 const SAVE_DIR := "user://saves/"
 const META_SAVE_PATH := "user://meta_state.json"
 

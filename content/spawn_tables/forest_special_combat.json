@@ -1,0 +1,21 @@
+{
+  "id": "forest_special_combat",
+  "biome": "forest",
+  "stage_type": "special_combat",
+  "stage_min": 1,
+  "stage_max": 30,
+  "enemy_pool": [
+    { "enemy_id": "sporeling", "weight": 3 },
+    { "enemy_id": "thornling", "weight": 3 },
+    { "enemy_id": "sylvaris",  "weight": 2 },
+    { "enemy_id": "wolf",      "weight": 2 }
+  ],
+  "guaranteed_enemy_ids": [],
+  "total_enemies_min": 2,
+  "total_enemies_max": 3,
+  "elite_chance": 0.0,
+  "reinforcements": [
+    { "round": 3, "count": 2 }
+  ],
+  "notes": "Starts smaller than a normal combat stage (2-3 vs 2-4) since 2 more arrive as reinforcements on round 3 -- drawn from this SAME enemy_pool (all 'normal' rank) unless a reinforcement entry sets its own 'enemy_pool_override' array of {enemy_id, weight} objects. Add more entries to 'reinforcements' for additional waves on different rounds."
+}
