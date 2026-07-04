@@ -274,9 +274,17 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 		# displaced. We resolve ALL of this cast's displacements together,
 		# right after this loop, in an order that won't get units stuck
 		# behind each other (see _resolve_pending_displacements for why).
-		if ability.displacement_squares != 0 and target != null:
+# Don't queue a unit for displacement if the hit that was just applied
+		# above already killed them. die() defers actual cleanup a few frames
+		# (so the death animation can play), so 'target' can still be a valid,
+		# non-null reference here even though it's now mid-death — sliding a
+		# dying unit's corpse toward a push tile is both visually wrong AND
+		# the root cause of a hang (see _resolve_pending_displacements' final
+		# wait loop below) if its death cleanup frees the node before the
+		# push's own movement tween finishes.
+		if ability.displacement_squares != 0 and target != null and not target._death_started:
 			pending_displacements.append({"target": target})
-
+			
 		# ── HEALING ───────────────────────────────────────────────────────────
 		# Restores a percentage of the target's max HP (or the caster's if no target).
 		if ability.heal_percent > 0.0:
@@ -402,17 +410,25 @@ func _apply_damage_with_effects(caster, target, ability: AbilityData, damage: in
 	# -- 2. SHIELD CHECK ───────────────────────────────────────────────────────
 	# The target's barrier absorbs incoming damage before it touches HP.
 	if grid_ref.has_method("absorb_shield_damage"):
+		var damage_before_shield: int = damage
 		damage = grid_ref.absorb_shield_damage(target, damage)
+
+		var blocked_amount: int = damage_before_shield - damage
+		if blocked_amount > 0:
+			# White number = "this damage never touched your HP", distinct
+			# from the red/orange/yellow numbers for real HP loss.
+			_spawn_damage_number(blocked_amount, target.position, Color.WHITE)
+
 		if damage <= 0:
 			print("🛡️ Shield absorbed all damage for ", target.unit_data.display_name)
 			_last_hit_was_crit = false   # Reset the flag even if we abort early.
 			return
 
+
 	# -- 3. APPLY DAMAGE TO TARGET ─────────────────────────────────────────────
 	var hp_before_damage: int = target.current_hp
-	var actual_damage = target.take_damage(damage, ability.damage_type)
+	var actual_damage = target.take_damage(damage, ability.damage_type, _last_hit_was_crit)
 	CombatHooks.run_damage_applied_reactions(caster, target, actual_damage, _last_hit_was_crit)
-	_spawn_damage_number(actual_damage, target.position)
 
 	# -- 3.5 CRIT OVERLOAD ─────────────────────────────────────────────────────
 	# If this hit was a critical strike AND the caster has an active aura with
@@ -1138,7 +1154,25 @@ func _resolve_pending_displacements(caster, ability: AbilityData, pending: Array
 	# and the await in the same iteration, so there's no new race introduced.
 	for target in moved_targets:
 		if is_instance_valid(target) and target._is_moving:
-			await target.movement_finished
+			await _await_movement_finished_safe(target)
+
+
+func _await_movement_finished_safe(target, timeout_sec: float = 1.5) -> void:
+	# Normally resolves within a frame or two of movement_finished firing.
+	# Safety net: if the target is freed mid-tween (its death sequence's
+	# queue_free() racing this same displacement — e.g. a push that lands a
+	# unit on a hazard that kills them), the engine silently invalidates the
+	# tween and movement_finished never fires. Without a timeout that hangs
+	# this whole coroutine, and with it the player's entire turn, forever.
+	# Polling _is_moving with a timeout instead of awaiting the signal
+	# directly guarantees this always resolves one way or the other.
+	var elapsed := 0.0
+	while is_instance_valid(target) and target._is_moving and elapsed < timeout_sec:
+		await get_tree().process_frame
+		elapsed += get_process_delta_time()
+
+	if is_instance_valid(target) and target._is_moving:
+		printerr("Timed out waiting on a displaced unit's movement_finished — continuing the turn instead of hanging forever.")
 
 func _launch_projectile(caster, ability: AbilityData, target_cell: Vector2i) -> void:
 	# Spawns a projectile that travels from the caster to the target cell.
@@ -1296,8 +1330,12 @@ func _get_spawn_root() -> Node:
 	return tree.current_scene
 
 
-func _spawn_damage_number(amount: int, pos: Vector2) -> void:
+func _spawn_damage_number(amount: int, pos: Vector2, color_override = null) -> void:
 	# Floats an animated damage number above the target's head.
+	# 'color_override', when given, always wins over the normal red/gold
+	# damage colouring — used for things like the WHITE "blocked by shield"
+	# number, which should read as clearly different from real HP damage
+	# no matter how big the blocked amount is.
 	var tree = get_tree()
 	if tree == null:
 		return
@@ -1323,8 +1361,12 @@ func _spawn_damage_number(amount: int, pos: Vector2) -> void:
 		settings.font_size  = 30
 		settings.font_color = Color(1.0, 0.8, 0.0)
 
+	if color_override != null:
+		settings.font_color = color_override
+
 	damage_label.label_settings = settings
 	spawn_root.add_child(damage_label)
+
 
 	var tween = tree.create_tween().set_parallel(true)
 	tween.tween_property(damage_label, "position:y", damage_label.position.y - 40, 0.75)\

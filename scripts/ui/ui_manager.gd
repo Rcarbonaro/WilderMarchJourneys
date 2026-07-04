@@ -80,6 +80,7 @@ var ability_bar:         Control         = null  # HBoxContainer
 var cancel_move_button:  Button          = null
 var end_turn_button:     Button          = null
 var grid_toggle_button:  Button          = null
+var _prev_bar_hp: int = -1
 
 ### Pause Menu Variables
 var pause_menu:           Control = null
@@ -378,14 +379,95 @@ func refresh_unit_info_if_showing(unit) -> void:
 		show_unit_info(unit)
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# GENERIC POPUP / TOAST SYSTEM
+# ══════════════════════════════════════════════════════════════════════════════
+# Lightweight, code-only popups — no extra BattleUI.tscn nodes required.
+# Two flavours:
+#   _show_toast()           — fades out on its own. Use for "you can't do
+#                              that" one-liners (not enough mana, occupied
+#                              tile, unleash not ready, ...).
+#   show_targeting_prompt()  — stays up until explicitly hidden. Use for
+#   / hide_targeting_prompt()  multi-step flows the player needs to keep
+#                              reading throughout, like wall placement.
+
+var _toast_label:  Label = null
+var _toast_tween:  Tween = null
+
+func _show_toast(text: String, duration: float = 1.4) -> void:
+	if _toast_label == null or not is_instance_valid(_toast_label):
+		_toast_label = Label.new()
+		_toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_toast_label.add_theme_font_size_override("font_size", 22)
+		_toast_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2))
+		_toast_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+		_toast_label.add_theme_constant_override("outline_size", 5)
+		_toast_label.z_index      = 200
+		_toast_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_toast_label)
+
+	_toast_label.text      = text
+	_toast_label.modulate  = Color(1, 1, 1, 1)
+	_toast_label.visible   = true
+
+	await get_tree().process_frame   # let it measure itself before centering
+	if not is_instance_valid(_toast_label):
+		return
+	var vp: Vector2 = get_viewport().get_visible_rect().size
+	_toast_label.position = Vector2((vp.x - _toast_label.size.x) / 2.0, 90.0)
+
+	if _toast_tween != null and _toast_tween.is_valid():
+		_toast_tween.kill()
+
+	_toast_tween = create_tween()
+	_toast_tween.tween_interval(duration)
+	_toast_tween.tween_property(_toast_label, "modulate:a", 0.0, 0.35)
+
+
+func show_popup_message(text: String) -> void:
+	# Generic entry point for any one-off toast — e.g. wall placement errors.
+	_show_toast(text)
+
+
 func show_unleash_not_ready_popup() -> void:
-	# TODO: replace with your own popup or toast notification if needed.
-	pass
+	_show_toast("Unleash Not Ready")
 
 
 func show_insufficient_mana_popup() -> void:
-	# TODO: replace with your own popup or toast notification if needed.
-	pass
+	_show_toast("Not Enough Mana")
+
+
+# ── TARGETING PROMPT (wall placement, or anything multi-step) ──────────────
+
+var _targeting_prompt_label: Label = null
+
+func show_targeting_prompt(text: String) -> void:
+	if _targeting_prompt_label == null or not is_instance_valid(_targeting_prompt_label):
+		_targeting_prompt_label = Label.new()
+		_targeting_prompt_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_targeting_prompt_label.add_theme_font_size_override("font_size", 20)
+		_targeting_prompt_label.add_theme_color_override("font_color", Color(1, 1, 1))
+		_targeting_prompt_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+		_targeting_prompt_label.add_theme_constant_override("outline_size", 4)
+		_targeting_prompt_label.z_index      = 200
+		_targeting_prompt_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_targeting_prompt_label)
+
+	_targeting_prompt_label.text     = text
+	_targeting_prompt_label.visible  = true
+	_targeting_prompt_label.modulate = Color(1, 1, 1, 1)
+
+	await get_tree().process_frame
+	if not is_instance_valid(_targeting_prompt_label):
+		return
+	var vp: Vector2 = get_viewport().get_visible_rect().size
+	_targeting_prompt_label.position = Vector2((vp.x - _targeting_prompt_label.size.x) / 2.0, 40.0)
+
+
+func hide_targeting_prompt() -> void:
+	if is_instance_valid(_targeting_prompt_label):
+		_targeting_prompt_label.visible = false
+
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -401,6 +483,7 @@ func _refresh_live_values() -> void:
 		var pct:    float = clamp(float(unit.current_hp) / float(max_hp), 0.0, 1.0)
 	
 		# Only update the visual bar if it actually exists
+		_prev_bar_hp = -1
 		if hp_bar_fill:
 			hp_bar_fill.size.x = hp_bar_pixel_width * pct
 		
@@ -408,6 +491,11 @@ func _refresh_live_values() -> void:
 		if hp_label:
 			hp_label.text = "%d / %d" % [unit.current_hp, max_hp]
 		
+	# ── HP bar flash on damage ─────────────────────────────────────────────
+	if _prev_bar_hp >= 0 and unit.current_hp < _prev_bar_hp:
+		CombatFeedback.flash_bar(hp_bar_fill)
+	_prev_bar_hp = unit.current_hp
+	
 	# ── Mana ──────────────────────────────────────────────────────────────────
 	if mana_bar_holder and unit.has_method("get_stats"):
 		var max_mana: int = unit.get_stats().mana

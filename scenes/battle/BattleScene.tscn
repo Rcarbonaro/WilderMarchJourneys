@@ -61,3 +61,6 @@ mouse_filter = 2
 expand_mode = 1
 
 [node name="Tethervisualizer" parent="." unique_id=216494790 instance=ExtResource("10_rpe18")]
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1914155619]
+position = Vector2(961, 540)

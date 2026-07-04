@@ -761,6 +761,65 @@ func cancel_unit_move() -> void:
 		ui_manager.set_cancel_move_visible(false)
 
 	select_unit(unit)
+	
+func cancel_ability_selection() -> void:
+	# Cancels whatever ability/attack/wall targeting is currently in progress
+	# WITHOUT touching movement — can_cancel_move and pre_move_position are
+	# left exactly as they were, so the unit stays put and "Cancel Move" (if
+	# the player wants THAT instead) still works afterward.
+	var mid_wall_placement: bool = (
+		current_phase == TurnPhase.WALL_SELECT_START or
+		current_phase == TurnPhase.WALL_SELECT_END
+	)
+
+	if selected_ability == null and not mid_wall_placement:
+		return   # Nothing to cancel.
+
+	if mid_wall_placement:
+		wall_start_cell = Vector2i(-1, -1)
+		if ui_manager and ui_manager.has_method("hide_targeting_prompt"):
+			ui_manager.hide_targeting_prompt()
+
+	selected_ability  = null
+	aoe_preview_cell  = Vector2i(-1, -1)
+	current_phase     = TurnPhase.PLAYER_TURN
+	highlight.clear_highlights()
+
+	if is_instance_valid(selected_unit):
+		if selected_unit.has_moved:
+			# Already moved (or skipped movement) this turn — just go back
+			# to the ability list, exactly like re-tapping their own tile.
+			_show_abilities_for(selected_unit)
+		else:
+			# Hasn't moved yet — restore their movement highlight so they
+			# can still choose where to walk.
+			var movement_range: int = 3
+			if selected_unit.has_method("get_effective_mov"):
+				movement_range = selected_unit.get_effective_mov()
+			reachable_cells = pathfinder.get_reachable_cells(
+				selected_unit.grid_position, movement_range, selected_unit
+			)
+			highlight.show_movement(reachable_cells.keys())
+			_show_abilities_for(selected_unit)
+	else:
+		deselect_unit()
+
+
+func on_right_click(_cell: Vector2i) -> void:
+	# Universal "cancel" input for desktop/mouse testing:
+	#   - Mid wall placement      -> cancel the wall, keep movement.
+	#   - Ability/attack selected -> cancel JUST the targeting, keep movement.
+	#   - Just a unit selected    -> nothing in-progress to lose, full deselect.
+	match current_phase:
+		TurnPhase.WALL_SELECT_START, TurnPhase.WALL_SELECT_END:
+			cancel_ability_selection()
+		TurnPhase.PLAYER_TURN:
+			if selected_ability != null:
+				cancel_ability_selection()
+			elif selected_unit != null:
+				deselect_unit()
+		_:
+			pass   # Mid-animation / enemy turn / game over — ignore.
 
 # ── UNIT SELECTION ────────────────────────────────────────────────────────────
 
@@ -882,8 +941,10 @@ func _try_use_ability(cell: Vector2i) -> void:
 	)
 	if not cell in valid_target_cells:
 		aoe_preview_cell = Vector2i(-1, -1)
-		_refresh_ability_highlights(valid_target_cells)
+		print("🚫 Tapped outside attack range — cancelling ability targeting.")
+		cancel_ability_selection()
 		return
+
 
 	# 2. Line of sight check.
 	if selected_ability.requires_line_of_sight:
@@ -1300,7 +1361,23 @@ func _try_select_wall_end(cell: Vector2i) -> void:
 		_cancel_wall_placement()
 		return
 
+	# ── OCCUPIED-TILE CHECK ────────────────────────────────────────────────
+	# A wall that actually blocks movement can't be dropped on top of a unit
+	# — they'd have nowhere valid to stand. Reject the WHOLE placement (not
+	# just the one blocked tile) and tell the player why, before anything is
+	# spent. Stays in WALL_SELECT_END so they can just tap a different end
+	# tile instead of losing their turn's action entirely.
+	var hazard: HazardData = selected_ability.spawns_hazard
+	if hazard != null and hazard.blocks_movement:
+		for wc in wall_cells:
+			if grid.unit_positions.has(wc):
+				print("❌ Wall placement blocked — tile ", wc, " is occupied.")
+				if ui_manager and ui_manager.has_method("show_popup_message"):
+					ui_manager.show_popup_message("Cannot be placed on occupied tile")
+				return
+
 	current_phase = TurnPhase.ANIMATION
+
 	if ui_manager and ui_manager.has_method("hide_targeting_prompt"):
 		ui_manager.hide_targeting_prompt()
 	highlight.clear_highlights()

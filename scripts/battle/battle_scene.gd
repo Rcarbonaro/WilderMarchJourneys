@@ -23,6 +23,10 @@ func _ready() -> void:
 
 	# 4. Setup the test map
 	_setup_test_map()
+	
+	# 5. Setup camera for screen shake
+	CombatFeedback.register_camera($Camera2D)
+	
 
 func _setup_test_map() -> void:
 	# Creates a flat grid of dirt tiles.

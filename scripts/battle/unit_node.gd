@@ -321,6 +321,31 @@ func play_named_animation(anim_name: String) -> void:
 	else:
 		play_animation("attack")
 
+func _flash_on_hit(damage_type: String, is_crit: bool) -> void:
+	if not has_node("AnimatedSprite2D"):
+		return
+	var sprite := $AnimatedSprite2D as AnimatedSprite2D
+
+	# self_modulate tints the sprite without affecting other modulate effects
+	# (e.g. the invisible-status transparency). Physical hits go red;
+	# elemental hits pick up the element's colour.
+	var flash: Color
+	match damage_type:
+		"fire":              flash = Color(1.0, 0.35, 0.10)
+		"ice", "frost":      flash = Color(0.30, 0.80, 1.00)
+		"lightning":         flash = Color(1.0, 1.00, 0.20)
+		"poison", "nature":  flash = Color(0.25, 0.90, 0.20)
+		"magic", "arcane":   flash = Color(0.70, 0.30, 1.00)
+		"holy", "light":     flash = Color(1.0, 0.95, 0.50)
+		_:                   flash = Color(1.0, 0.85, 0.85)  # physical: warm white
+
+	if is_crit:
+		flash = Color(1.0, 0.10, 0.10)   # override everything with red on crit
+
+	var tween := create_tween()
+	tween.tween_property(sprite, "self_modulate", flash,        0.0 )
+	tween.tween_property(sprite, "self_modulate", Color.WHITE,  0.18) \
+		 .set_ease(Tween.EASE_OUT)
 
 func _set_facing_for_direction(target_pos: Vector2i) -> void:
 	if not has_node("AnimatedSprite2D"):
@@ -329,13 +354,22 @@ func _set_facing_for_direction(target_pos: Vector2i) -> void:
 
 	# Self-targeted abilities (target_pos == grid_position): there's no real
 	# direction to face, since target_pos.x > grid_position.x is FALSE when
-	# they're equal. That used to fall through to "face left" whenever
-	# faces_right_by_default was true. Instead, snap back to this unit's
-	# default facing (the same flip _apply_default_facing() uses) so a unit
-	# buffing/healing itself faces right by default instead of always
-	# flipping left.
+	# they're equal. Snap back to this unit's default facing (the same flip
+	# _apply_default_facing() uses) so a unit buffing/healing itself faces
+	# right by default instead of always flipping left.
 	if target_pos == grid_position:
 		sprite.flip_h = not faces_right_by_default
+		return
+
+	# BUGFIX ("backward animations"): a PURELY VERTICAL move or attack (same
+	# column — target_pos.x == grid_position.x) used to fall into the "face
+	# left" branch below, because target_pos.x > grid_position.x is false
+	# when the two x's are equal. That silently flipped the unit to face
+	# left every time it walked or attacked straight up/down, regardless of
+	# which way it was actually already facing — reading as the sprite
+	# playing backward. Vertical-only movement/targeting shouldn't touch
+	# left/right facing at all, so just leave flip_h exactly as it was.
+	if target_pos.x == grid_position.x:
 		return
 
 	var target_is_right: bool = target_pos.x > grid_position.x
@@ -451,21 +485,18 @@ func restore_mana(amount: int) -> void:
 
 # ── COMBAT ────────────────────────────────────────────────────────────────────
 
-func take_damage(amount: int, damage_type: String) -> int:
-	# Applies damage to this unit. Always deals at least 1. Returns the actual amount.
-	#
-	# For multi-tile units: ability_executor deduplicates by unit reference so
-	# this function is only called ONCE per damage event even if an AOE hits
-	# all 4 tiles of a 2×2 unit.
+func take_damage(amount: int, damage_type: String, is_crit: bool = false) -> int:
 	var actual = max(1, amount)
 	current_hp -= actual
 	_update_hp_label()
+
+	_flash_on_hit(damage_type, is_crit)
+	CombatFeedback.show_hit(self, actual, is_crit, damage_type)
 
 	if current_hp <= 0:
 		die()
 	else:
 		play_animation("hurt")
-		# Return to idle after a brief hurt flash.
 		get_tree().create_timer(0.25).timeout.connect(func():
 			if is_instance_valid(self) and current_hp > 0:
 				play_animation("idle")
@@ -606,10 +637,19 @@ func move_to(new_cell: Vector2i) -> void:
 	tween.set_ease(Tween.EASE_OUT)
 	tween.tween_property(self, "position", target_world_pos, move_speed)
 	tween.tween_callback(func():
-		play_animation("idle")
+		# BUGFIX: forced displacement (knockback/pull/scatter) used to never
+		# trigger hazard "enter" damage, since only move_along_path() checked
+		# it before. A shove into fire/poison/etc. should hurt on landing,
+		# exactly like walking there normally would.
+		if is_instance_valid(self) and grid_ref != null:
+			grid_ref.apply_hazard_to_unit(self, new_cell, "enter")
+
+		if is_instance_valid(self) and current_hp > 0:
+			play_animation("idle")
 		_is_moving = false
 		movement_finished.emit()
 	)
+
 
 
 func move_along_path(path: Array) -> void:
@@ -787,7 +827,10 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster 
 						status_data.mov_modifier > 0 or status_data.crit_chance_modifier > 0 or
 						status_data.damage_dealt_modifier > 0 or status_data.damage_taken_modifier < 0 or
 						status_data.grants_immunity)
-	EventBus.publish.call_deferred(EventBus.ON_BUFF_APPLIED, {"unit": self, "status_id": status_data.id, "is_buff": is_buff})
+	EventBus.publish.call_deferred(EventBus.ON_BUFF_APPLIED, {
+		"unit": self, "status_id": status_data.id, "is_buff": is_buff,
+		"status_data": status_data,
+	})
 
 	# ── VISUAL OVERRIDE ENTRY ───────────────────────────────────────────────
 	if status_data.has_visual_override:

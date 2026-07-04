@@ -51,9 +51,9 @@ texture = ExtResource("2_snbla")
 z_index = -3
 layout_mode = 0
 offset_left = 881.0
-offset_top = 665.0
+offset_top = 647.0
 offset_right = 1041.0
-offset_bottom = 805.0
+offset_bottom = 814.0
 mouse_filter = 2
 color = Color(0, 0, 0, 0.3529412)
 

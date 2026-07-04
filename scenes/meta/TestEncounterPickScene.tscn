@@ -5,6 +5,10 @@
 [node name="TestEncounterPickScene" type="Control" unique_id=1971654708]
 layout_mode = 3
 anchors_preset = 0
+offset_left = 876.0
+offset_top = 344.0
+offset_right = 876.0
+offset_bottom = 344.0
 script = ExtResource("1_05b7i")
 
 [node name="CenterContainer" type="CenterContainer" parent="." unique_id=1692641327]
