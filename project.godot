@@ -30,6 +30,7 @@ ShopEngine="*uid://cm1l25qux5p36"
 DialogueEngine="*uid://c26bd2fopgnjh"
 EncounterEngine="*uid://byswddcebqjfn"
 PopupManager="*uid://cj8b1ppnreund"
+CombatFeedback="*uid://cyvdxyoor4vw3"
 
 [display]
 

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://dypt6wtrloga7"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_fjlnh"]
+
+[resource]
+script = ExtResource("1_fjlnh")
+id = "momentumsharpshooter"
+display_name = "Momentum"
+description = "Increases Sharpshooter's ATK by 1 per stack."
+duration_rounds = 30
+can_stack = true
+max_stacks = 30
+atk_modifier = 1
+metadata/_custom_type_script = "uid://gsbk18mmfnol"

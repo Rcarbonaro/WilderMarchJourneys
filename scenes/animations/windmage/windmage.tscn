@@ -258,7 +258,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_3sr8h")
 }],
-"loop": true,
+"loop": false,
 "name": &"attack_down",
 "speed": 5.0
 }, {
@@ -320,7 +320,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_3sr8h")
 }],
-"loop": true,
+"loop": false,
 "name": &"attack_up",
 "speed": 5.0
 }, {
@@ -423,7 +423,7 @@ unit_data = ExtResource("2_61xk7")
 position = Vector2(-5.000004, -4.000008)
 scale = Vector2(0.3, 0.3)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"die"
+animation = &"idle"
 autoplay = "idle"
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]

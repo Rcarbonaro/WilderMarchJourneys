@@ -27,6 +27,17 @@ extends Resource
 
 @export var icon: Texture2D  # drag a small icon here in the Inspector
 
+@export var apply_vfx_scene: PackedScene
+# Optional one-shot visual effect (e.g. a small particle burst or scene
+# animation) played on the target the instant this status is newly applied.
+# Leave empty to fall back to CombatFeedback's default debuff burst — only
+# shown automatically for DEBUFFS (see apply_status() in unit_node.gd).
+
+@export var apply_sfx: AudioStream
+# Optional sound effect played once when this status is newly applied.
+# Leave empty for silence.
+
+
 # Duration
 
 @export var duration_rounds: int = 1   # how many rounds it lasts
