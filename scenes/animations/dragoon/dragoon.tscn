@@ -44,6 +44,14 @@ region = Rect2(1032, 0, 344, 192)
 atlas = ExtResource("3_av3sa")
 region = Rect2(0, 192, 344, 192)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_a1x0e"]
+atlas = ExtResource("3_av3sa")
+region = Rect2(688, 192, 344, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_seoki"]
+atlas = ExtResource("3_av3sa")
+region = Rect2(0, 384, 344, 192)
+
 [sub_resource type="AtlasTexture" id="AtlasTexture_kcdqy"]
 atlas = ExtResource("4_y7v1o")
 region = Rect2(20, 0, 226, 308)
@@ -259,6 +267,95 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1x0e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seoki")
+}],
+"loop": false,
+"name": &"dash",
+"speed": 14.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_kcdqy")
 }, {
 "duration": 1.0,
@@ -434,9 +531,10 @@ unit_data = ExtResource("2_8tl0x")
 position = Vector2(-5.598718, 4.2235293)
 scale = Vector2(0.4976669, 0.42941174)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"idle"
+animation = &"dash"
 autoplay = "idle"
-frame_progress = 0.81198
+frame = 27
+frame_progress = 1.0
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0
