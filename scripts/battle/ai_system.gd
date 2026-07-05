@@ -238,9 +238,25 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 		# applied AUTOMATICALLY inside move_along_path() as the enemy crosses
 		# each one — no separate call needed here like there used to be.
 		# Aura: fire entry damage/status for any player aura they walked into.
+		# Aura: fire entry damage/status for any player aura they walked into.
 		if grid.has_node("AuraManager"):
 			grid.get_node("AuraManager").on_enemy_unit_moved(enemy)
 		# The entry effects may have just killed them — check again.
+		if not is_instance_valid(enemy) or enemy.current_hp <= 0:
+			return
+
+		# THE FIX: battle_manager.gd already calls on_caster_moved() after a
+		# PLAYER unit moves, so any aura THAT unit owns gets its cell
+		# coverage and visuals refreshed. Nothing was ever calling the
+		# enemy equivalent — so an aura owned by an enemy never had its
+		# coverage/visuals updated after the enemy moved. Most of the time
+		# this was invisible (begin_caster_move's per-tile tween handles
+		# the common case), but right at the map edge — where the aura's
+		# cell count changes because it's no longer being clipped — the
+		# visual was left stranded at its old position forever, since
+		# on_caster_moved() is specifically what rebuilds it in that case.
+		if grid.has_node("AuraManager"):
+			grid.get_node("AuraManager").on_caster_moved(enemy)
 		if not is_instance_valid(enemy) or enemy.current_hp <= 0:
 			return
 

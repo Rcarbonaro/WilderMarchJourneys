@@ -128,7 +128,6 @@ func _ready() -> void:
 	hp_bar_fill        = find_child("HPBarFill",        true, false) as Control
 	hp_label           = find_child("HPLabel",          true, false) as Label
 	mana_bar_holder    = find_child("ManaBarHolder",    true, false) as Control
-	mana_bar_fill      = find_child("ManaBarFill",      true, false) as Control
 	mana_label         = find_child("ManaLabel",        true, false) as Label
 	stats_grid         = find_child("StatsGrid",        true, false) as GridContainer
 	status_count_label = find_child("StatusCountLabel", true, false) as Label
@@ -138,7 +137,13 @@ func _ready() -> void:
 	cancel_move_button = find_child("CancelMoveButton", true, false) as Button
 	end_turn_button    = find_child("EndTurnButton",    true, false) as Button
 	grid_toggle_button = find_child("GridToggleButton", true, false) as Button
+	mana_bar_fill      = find_child("ManaBarFill",      true, false) as Control
 
+
+	if mana_bar_fill is TextureRect:
+		(mana_bar_fill as TextureRect).expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
+		(mana_bar_fill as TextureRect).stretch_mode = TextureRect.STRETCH_SCALE
+		mana_bar_fill.custom_minimum_size = Vector2.ZERO
 
 #Find Pause Menu items
 	pause_menu         = find_child("PauseMenu",          true, false) as Control
@@ -513,6 +518,9 @@ func _refresh_live_values() -> void:
 			if _mana_fill_texture:
 				_mana_fill_texture.custom_minimum_size.x = mana_bar_pixel_width * mana_pct
 				_mana_fill_texture.size.x = mana_bar_pixel_width * mana_pct
+			if _mana_fill_texture:
+				_mana_fill_texture.custom_minimum_size.x = mana_bar_pixel_width * mana_pct
+				_mana_fill_texture.size.x = mana_bar_pixel_width * mana_pct
 			if mana_label:
 				mana_label.text = "%d / %d" % [unit.current_mana, max_mana]
 			
@@ -673,7 +681,7 @@ func _on_more_info_pressed() -> void:
 
 	var unit     = _bar_unit
 	var max_hp:   int = max(1, unit.get_stats().hp)
-	var max_mana: int = unit.get_stats().mana
+	var max_mana: int = unit.get_effective_max_mana()
 
 	var live_stat_lines: Array[String] = [
 		"HP: %d / %d"      % [unit.current_hp,   max_hp],
