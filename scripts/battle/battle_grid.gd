@@ -744,8 +744,8 @@ func apply_hazard_to_unit(unit, cell: Vector2i, trigger: String) -> void:
 			var caster_atk = entry["caster"].get_effective_atk()
 			raw_damage = max(1, int(caster_atk * hdata.damage_multiplier))
 
-		unit.take_damage(raw_damage, hdata.damage_type)
-
+		unit.take_damage(raw_damage, hdata.damage_type, false, false)
+		
 		# Apply optional status.
 		if hdata.applies_status != null:
 			unit.apply_status(hdata.applies_status)
