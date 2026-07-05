@@ -12,5 +12,4 @@ display_name = "Rend"
 description = "Tears at the enemy with wicked claws. Especially effective against lightly armored targets."
 icon = ExtResource("2_clg0u")
 effect_scene = ExtResource("2_fe4ix")
-base_damage_multiplier = 2.0
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

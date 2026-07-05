@@ -232,7 +232,7 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 		# The enemy may have died during the walk (e.g. from a Thorns reflect,
 		# an aura tick, or a "damaging wall" hazard crossed partway through).
 		# Guard every access from here on.
-		if not is_instance_valid(enemy):
+		if not is_instance_valid(enemy) or enemy.current_hp <= 0:
 			return
 		# NOTE: hazard "enter" triggers for every tile along the path are now
 		# applied AUTOMATICALLY inside move_along_path() as the enemy crosses
@@ -241,13 +241,24 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 		if grid.has_node("AuraManager"):
 			grid.get_node("AuraManager").on_enemy_unit_moved(enemy)
 		# The entry effects may have just killed them — check again.
-		if not is_instance_valid(enemy):
+		if not is_instance_valid(enemy) or enemy.current_hp <= 0:
 			return
 
 	# Re-check validity before the combat phase — the enemy could have died
 	# from entry effects above, or never moved but died some other way.
-	if not is_instance_valid(enemy):
+	# THE FIX: is_instance_valid() alone isn't enough here — die() defers
+	# actual cleanup (queue_free) until its death animation finishes, so an
+	# enemy that just died from hazard/aura damage while walking into
+	# position is still "valid" for a moment afterward. Without the
+	# current_hp check, a dying enemy would still play its attack animation
+	# and execute the ability instead of just dying.
+	if not is_instance_valid(enemy) or enemy.current_hp <= 0:
 		return
+
+	# Re-check validity before the combat phase — the enemy could have died
+	# from entry effects above, or never moved but died some other way.
+	if not is_instance_valid(enemy) or enemy.current_hp <= 0:
+			return
 
 	# 6. Combat phase — attack if we're now in range with line of sight.
 	# target_player could have died during this enemy's movement phase.

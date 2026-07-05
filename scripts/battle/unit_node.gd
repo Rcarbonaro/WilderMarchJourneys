@@ -485,14 +485,14 @@ func restore_mana(amount: int) -> void:
 
 # ── COMBAT ────────────────────────────────────────────────────────────────────
 
-func take_damage(amount: int, damage_type: String, is_crit: bool = false) -> int:
+func take_damage(amount: int, damage_type: String, is_crit: bool = false, apply_shake: bool = true) -> int:
 	var actual = max(1, amount)
 	current_hp -= actual
 	_update_hp_label()
 
 	_flash_on_hit(damage_type, is_crit)
-	CombatFeedback.show_hit(self, actual, is_crit, damage_type)
-
+	CombatFeedback.show_hit(self, actual, is_crit, damage_type, apply_shake)
+	
 	if current_hp <= 0:
 		die()
 	else:

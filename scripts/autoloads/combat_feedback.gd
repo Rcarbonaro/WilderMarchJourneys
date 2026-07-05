@@ -60,9 +60,13 @@ func register_camera(cam: Camera2D) -> void:
 	_camera = cam
 
 
-func show_hit(unit, amount: int, is_crit: bool, damage_type: String) -> void:
-	## Master entry point. Call from unit_node.gd's take_damage() once the
+func show_hit(unit, amount: int, is_crit: bool, damage_type: String, apply_shake: bool = true) -> void:
+		## Master entry point. Call from unit_node.gd's take_damage() once the
 	## final damage value is known. Fires all effects in one call.
+	## 'apply_shake' defaults to true so every existing caller (normal
+	## attacks) behaves exactly as before — hazard damage is the one case
+	## that passes false, since a hazard ticking every "enter"/turn is much
+	## more frequent than a real hit and the constant rumble gets annoying.
 	if not is_instance_valid(unit):
 		return
 
@@ -77,14 +81,15 @@ func show_hit(unit, amount: int, is_crit: bool, damage_type: String) -> void:
 	spawn_impact_particles(unit.global_position, damage_type, is_crit)
 
 	# ── Screen shake — scales with how significant the hit is ─────────────────
-	var pct: float = float(amount) / float(max_hp)
-	var shake_amp: float = 0.0
-	if    is_crit:          shake_amp = 7.0
-	elif  pct >= dmg_pct_red:    shake_amp = 5.0
-	elif  pct >= dmg_pct_orange: shake_amp = 3.0
-	elif  pct >= dmg_pct_yellow: shake_amp = 1.5
-	if shake_amp > 0.0:
-		screen_shake(shake_amp, 0.5)
+	if apply_shake:
+		var pct: float = float(amount) / float(max_hp)
+		var shake_amp: float = 0.0
+		if    is_crit:          shake_amp = 7.0
+		elif  pct >= dmg_pct_red:    shake_amp = 5.0
+		elif  pct >= dmg_pct_orange: shake_amp = 3.0
+		elif  pct >= dmg_pct_yellow: shake_amp = 1.5
+		if shake_amp > 0.0:
+			screen_shake(shake_amp, 0.5)
 
 	# ── Hit stop — crits only ─────────────────────────────────────────────────
 	if is_crit:
