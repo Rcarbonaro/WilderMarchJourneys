@@ -844,6 +844,70 @@ func move_along_path(path: Array) -> void:
 	movement_finished.emit()
 
 
+# ── BUFF / DEBUFF STATUS GLOW ─────────────────────────────────────────────────
+# A small persistent sparkle sitting just above the HP bar — gold whenever
+# the unit has at least one active buff, purple whenever it has at least one
+# active debuff. Both can show at once (a unit can be buffed AND debuffed
+# simultaneously) — they're two independent particle emitters, not one that
+# swaps color.
+
+var _buff_glow: CPUParticles2D = null
+var _debuff_glow: CPUParticles2D = null
+
+const STATUS_GLOW_Y_OFFSET: float = HP_BAR_Y_OFFSET - 10.0
+# Sits just above the HP bar. HP_BAR_Y_OFFSET is already tuned to sit at the
+# bottom edge of the unit's own tile, so anchoring off it keeps this in the
+# right place regardless of sprite size.
+
+func _ensure_status_glow(which: String) -> CPUParticles2D:
+	var existing: CPUParticles2D = _buff_glow if which == "buff" else _debuff_glow
+	if existing != null and is_instance_valid(existing):
+		return existing
+
+	var glow := CPUParticles2D.new()
+	add_child(glow)
+	glow.texture               = _get_dust_circle_texture()   # reuse the same soft round texture as the walk dust
+	glow.position              = Vector2(0, STATUS_GLOW_Y_OFFSET)
+	glow.emitting              = false
+	glow.one_shot              = false
+	glow.amount                = 6
+	glow.lifetime              = 1.1
+	glow.randomness            = 0.7
+	glow.direction             = Vector2(0, -1)
+	glow.spread                = 180.0
+	glow.gravity               = Vector2(0, -6.0)   # drifts gently upward, unlike the walk dust
+	glow.initial_velocity_min  = 2.0
+	glow.initial_velocity_max  = 8.0
+	glow.scale_amount_min      = 0.8
+	glow.scale_amount_max      = 1.6
+	glow.spread                = 60.0
+
+	if which == "buff":
+		glow.color = Color(1.0, 0.85, 0.25, 0.75)   # gold
+		_buff_glow = glow
+	else:
+		glow.color = Color(0.55, 0.15, 0.75, 0.75)   # purple
+		_debuff_glow = glow
+
+	return glow
+
+
+func _refresh_status_glow() -> void:
+	# Called any time active_statuses changes — apply, remove, or a natural
+	# expiry — so this never drifts out of sync with what's actually active.
+	var has_buff: bool   = get_buff_count()   > 0
+	var has_debuff: bool = get_debuff_count() > 0
+
+	if has_buff:
+		_ensure_status_glow("buff").emitting = true
+	elif _buff_glow != null and is_instance_valid(_buff_glow):
+		_buff_glow.emitting = false
+
+	if has_debuff:
+		_ensure_status_glow("debuff").emitting = true
+	elif _debuff_glow != null and is_instance_valid(_debuff_glow):
+		_debuff_glow.emitting = false
+
 func snap_to(new_cell: Vector2i) -> void:
 	# Instantly teleports the unit with no animation. Used by dash and cancel-move.
 	if grid_ref == null:
@@ -937,6 +1001,8 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster 
 	if status_data.has_visual_override:
 		_begin_visual_override(status_data)
 
+	_refresh_status_glow()
+
 
 func remove_status(status_id: String) -> void:
 	# Removes a status by its id string. Used for cleanse/dispel effects, and
@@ -962,6 +1028,7 @@ func remove_status(status_id: String) -> void:
 	# (for performance, since it's iterating already), so it ALSO calls
 	# update_visuals() directly in its own cleanup loop — see below.
 	update_visuals()
+	_refresh_status_glow()
 
 
 func cleanse_statuses() -> int:
@@ -987,6 +1054,8 @@ func cleanse_statuses() -> int:
 		remove_status(status_id)
 
 	return ids_to_cleanse.size()
+	update_visuals()
+	_refresh_status_glow()
 
 
 func tick_statuses_end_of_round(team_that_just_ended: String) -> void:
@@ -1042,6 +1111,7 @@ func tick_statuses_end_of_round(team_that_just_ended: String) -> void:
 	# full recheck of has_status("invisible") either way.
 	if not to_remove.is_empty():
 		update_visuals()
+		_refresh_status_glow()
 
 
 func _apply_dot_tick(status_entry: Dictionary) -> void:
