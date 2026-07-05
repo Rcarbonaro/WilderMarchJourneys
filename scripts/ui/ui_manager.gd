@@ -479,14 +479,20 @@ func _refresh_live_values() -> void:
 
 	# ── HP ────────────────────────────────────────────────────────────────────
 	if unit.has_method("get_stats"):
-		var max_hp: int   = max(1, unit.get_stats().hp)
+		var max_hp: int   = unit.get_effective_max_hp()
 		var pct:    float = clamp(float(unit.current_hp) / float(max_hp), 0.0, 1.0)
 	
 		# Only update the visual bar if it actually exists
-		_prev_bar_hp = -1
+		# Only update the visual bar if it actually exists
 		if hp_bar_fill:
 			hp_bar_fill.size.x = hp_bar_pixel_width * pct
-		
+		# THE FIX: this texture-based fill was only ever sized ONCE, in
+		# _ready(), to the full configured width — it never tracked actual
+		# HP percentage at all, which is why the bar looked stuck at
+		# "mostly full" no matter how much damage was taken.
+		if _hp_fill_texture:
+			_hp_fill_texture.custom_minimum_size.x = hp_bar_pixel_width * pct
+			_hp_fill_texture.size.x = hp_bar_pixel_width * pct
 		# Only update the text label if it actually exists
 		if hp_label:
 			hp_label.text = "%d / %d" % [unit.current_hp, max_hp]
@@ -498,12 +504,15 @@ func _refresh_live_values() -> void:
 	
 	# ── Mana ──────────────────────────────────────────────────────────────────
 	if mana_bar_holder and unit.has_method("get_stats"):
-		var max_mana: int = unit.get_stats().mana
+		var max_mana: int = unit.get_effective_max_mana()
 		mana_bar_holder.modulate.a = 1.0 if max_mana > 0 else 0.0
 		if max_mana > 0:
 			var mana_pct: float = clamp(float(unit.current_mana) / float(max_mana), 0.0, 1.0)
 			if mana_bar_fill:
 				mana_bar_fill.size.x = mana_bar_pixel_width * mana_pct
+			if _mana_fill_texture:
+				_mana_fill_texture.custom_minimum_size.x = mana_bar_pixel_width * mana_pct
+				_mana_fill_texture.size.x = mana_bar_pixel_width * mana_pct
 			if mana_label:
 				mana_label.text = "%d / %d" % [unit.current_mana, max_mana]
 			

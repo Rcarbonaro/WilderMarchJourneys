@@ -209,6 +209,11 @@ extends Resource
 @export var dash_effect_scene: PackedScene
 # Optional scene to instantiate on the caster during the dash.
 
+@export var dash_animation_name: String = "dash"
+# The named animation played on the caster's AnimatedSprite2D for the
+# duration of the dash slide itself. Override per-ability if a specific
+# dash needs a different animation name.
+
 # ── TAGS & TYPE ───────────────────────────────────────────────────────────────
 
 @export var tags: Array[String] = []

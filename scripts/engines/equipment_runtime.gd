@@ -35,7 +35,11 @@ func apply_equipment_to_unit(unit, equipped_item_ids: Array) -> void:
 			continue
 
 		var bonus_key: String = "equip_" + item_id
-		var flat_bonus := {"atk": 0, "matk": 0, "def": 0, "mdef": 0, "mov": 0, "crit_chance": 0.0, "crit_damage": 0.0}
+		# "hp"/"mana" added here too now — flat (non-percent) HP/mana
+		# bonuses used to be silently dropped, since this dict had no key
+		# for them to land in at all.
+		var flat_bonus := {"atk": 0, "matk": 0, "def": 0, "mdef": 0, "mov": 0,
+			"crit_chance": 0.0, "crit_damage": 0.0, "hp": 0, "mana": 0}
 		var any_flat_bonus := false
 
 		for effect in item_data.get("effects", []):
@@ -44,9 +48,20 @@ func apply_equipment_to_unit(unit, equipped_item_ids: Array) -> void:
 			var stat: String = effect.get("stat", "")
 			var amount = effect.get("amount", 0)
 			var value_mode: String = effect.get("value_mode", "flat")
-			if value_mode == "percent":
-				# Percent stat bonuses (e.g. "+10% mana") apply directly
-				# against the unit's current pool rather than the flat dict.
+			if value_mode == "percent" and (stat == "hp" or stat == "mana"):
+				# THE FIX: percent HP/mana bonuses used to just bump
+				# current_hp/current_mana directly, one time, with nothing
+				# tracking a permanently higher MAX anywhere — so current
+				# could end up reading as "more than 100%" on every bar.
+				# Converting the percentage to a flat number and folding it
+				# into this same per-item flat_bonus dict means
+				# get_effective_max_hp()/get_effective_max_mana() (see
+				# unit_node.gd) now count it as part of the real max, the
+				# same way atk/def/etc. bonuses already work.
+				var base_value: int = unit.get_stats().hp if stat == "hp" else unit.get_stats().mana
+				flat_bonus[stat] += int(base_value * (amount / 100.0))
+				any_flat_bonus = true
+			elif value_mode == "percent":
 				_apply_percent_bonus(unit, stat, amount)
 			elif flat_bonus.has(stat):
 				flat_bonus[stat] += amount
@@ -54,6 +69,15 @@ func apply_equipment_to_unit(unit, equipped_item_ids: Array) -> void:
 
 		if any_flat_bonus:
 			unit.momentum_bonuses[bonus_key] = flat_bonus
+
+		# Top current HP/mana up to match the unit's new (possibly higher)
+		# max, so equipping the item reads as "bigger pool, starting full"
+		# instead of leaving current_hp sitting at whatever fraction of the
+		# OLD max it happened to be.
+		if flat_bonus.get("hp", 0) != 0:
+			unit.current_hp = unit.get_effective_max_hp()
+		if flat_bonus.get("mana", 0) != 0:
+			unit.current_mana = unit.get_effective_max_mana()
 
 		for effect in item_data.get("effects", []):
 			if effect.get("type", "") == "custom":
@@ -78,6 +102,11 @@ func remove_equipment_from_unit(unit, equipped_item_ids: Array) -> void:
 				if CustomEquipmentHandlers.has_handler(custom_id):
 					CustomEquipmentHandlers.on_unequip(custom_id, unit)
 
+	# Unequipping could just have LOWERED this unit's actual max HP/mana —
+	# clamp current down so it can't keep sitting above the new max.
+	unit.current_hp   = min(unit.current_hp,   unit.get_effective_max_hp())
+	unit.current_mana = min(unit.current_mana, unit.get_effective_max_mana())
+
 
 func apply_permanent_modifiers_to_unit(unit, permanent_modifiers: Array) -> void:
 	# Applies a unit's permanent_modifiers (built up over the run by tarot
@@ -86,34 +115,39 @@ func apply_permanent_modifiers_to_unit(unit, permanent_modifiers: Array) -> void
 	# spawned live UnitNode. Uses the exact same momentum_bonuses reuse
 	# trick as equipment (see the big comment at the top of this file) --
 	# call this alongside apply_equipment_to_unit(), right after unit.setup().
-	var flat_bonus := {"atk": 0, "matk": 0, "def": 0, "mdef": 0, "mov": 0, "crit_chance": 0.0, "crit_damage": 0.0}
+	var flat_bonus := {"atk": 0, "matk": 0, "def": 0, "mdef": 0, "mov": 0,
+		"crit_chance": 0.0, "crit_damage": 0.0, "hp": 0, "mana": 0}
 	var any_flat := false
 	for mod in permanent_modifiers:
 		var stat: String = mod.get("stat", "")
 		var amount = mod.get("amount", 0)
 		var value_mode: String = mod.get("value_mode", "flat")
-		if value_mode == "percent":
-			match stat:
-				"hp":   unit.current_hp += int(unit.get_stats().hp * (amount / 100.0))
-				"mana": unit.current_mana += int(unit.get_stats().mana * (amount / 100.0))
-				_: push_warning("EquipmentRuntime: percent permanent_modifier not supported for stat '" + stat + "'")
+		if value_mode == "percent" and (stat == "hp" or stat == "mana"):
+			# Same fix as equipment above: fold this into flat_bonus so it
+			# raises the unit's real max instead of just bumping current.
+			var base_value: int = unit.get_stats().hp if stat == "hp" else unit.get_stats().mana
+			flat_bonus[stat] += int(base_value * (amount / 100.0))
+			any_flat = true
+		elif value_mode == "percent":
+			push_warning("EquipmentRuntime: percent permanent_modifier not supported for stat '" + stat + "'")
 		elif flat_bonus.has(stat):
 			flat_bonus[stat] += amount
 			any_flat = true
 	if any_flat:
 		unit.momentum_bonuses["run_permanent_modifiers"] = flat_bonus
 
+	if flat_bonus.get("hp", 0) != 0:
+		unit.current_hp = unit.get_effective_max_hp()
+	if flat_bonus.get("mana", 0) != 0:
+		unit.current_mana = unit.get_effective_max_mana()
+
 
 func _apply_percent_bonus(unit, stat: String, percent_amount: float) -> void:
-	# Percent bonuses to mana/HP are applied as a one-time bump to the
-	# unit's CURRENT pool at the moment they're spawned in. (If you want
-	# this to scale dynamically as the unit levels up mid-run instead, move
-	# this logic into get_stats() -- left simple here on purpose.)
+	# NOTE: percent hp/mana bonuses are now handled directly inside
+	# apply_equipment_to_unit() itself (folded into the per-item flat_bonus
+	# dict so they raise the unit's actual MAX, not just current) — this
+	# function only handles the remaining stat types now.
 	match stat:
-		"mana":
-			unit.current_mana += int(unit.get_stats().mana * (percent_amount / 100.0))
-		"hp":
-			unit.current_hp += int(unit.get_stats().hp * (percent_amount / 100.0))
 		"crit_chance", "crit_damage":
 			unit.momentum_bonuses["equip_percent_" + stat] = {stat: percent_amount}
 		_:

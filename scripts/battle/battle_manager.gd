@@ -731,6 +731,18 @@ func cancel_unit_move() -> void:
 	if not selected_unit.can_cancel_move:
 		return
 
+	# If a wall (or similar two-tap) targeting flow is in progress, back out
+	# of it first. Without this, its "Select wall starting/ending location"
+	# prompt was left on screen indefinitely — current_phase stayed stuck on
+	# WALL_SELECT_START/END with no path left to ever hide that label, until
+	# selecting another wall ability happened to overwrite the stale text.
+	if current_phase == TurnPhase.WALL_SELECT_START or current_phase == TurnPhase.WALL_SELECT_END:
+		wall_start_cell  = Vector2i(-1, -1)
+		selected_ability = null
+		current_phase    = TurnPhase.PLAYER_TURN
+		if ui_manager and ui_manager.has_method("hide_targeting_prompt"):
+			ui_manager.hide_targeting_prompt()
+
 	var unit   = selected_unit
 	var origin = unit.pre_move_position
 	if origin == Vector2i(-1, -1):
@@ -891,6 +903,19 @@ func on_ability_selected(ability: AbilityData) -> void:
 
 	selected_ability = ability
 
+	# If a wall (two-tap) targeting flow was already in progress from a
+	# PREVIOUSLY selected ability, clear it out before applying whatever
+	# this newly selected ability needs. Without this, switching away from
+	# a wall ability left current_phase stuck on WALL_SELECT_START/END —
+	# so taps kept being routed to the wall-placement handler instead of
+	# this ability's own targeting — and left the old "Select wall
+	# starting/ending location" prompt on screen indefinitely.
+	if current_phase == TurnPhase.WALL_SELECT_START or current_phase == TurnPhase.WALL_SELECT_END:
+		wall_start_cell = Vector2i(-1, -1)
+		if ui_manager and ui_manager.has_method("hide_targeting_prompt"):
+			ui_manager.hide_targeting_prompt()
+	current_phase = TurnPhase.PLAYER_TURN
+
 	if ui_manager and ui_manager.has_method("set_cancel_move_visible"):
 		ui_manager.set_cancel_move_visible(
 			is_instance_valid(selected_unit) and selected_unit.can_cancel_move
@@ -1045,6 +1070,17 @@ func _finish_ability(unit) -> void:
 	aoe_preview_cell = Vector2i(-1, -1)
 	highlight.clear_highlights()
 	deselect_unit()
+
+	if is_battle_over:
+		# The battle already ended — e.g. this very hit killed the last
+		# enemy, and its death animation's unit_died signal fired
+		# _battle_victory() (setting current_phase = GAME_OVER) before this
+		# coroutine got a chance to resume here. Don't touch current_phase
+		# or advance the turn — overwriting GAME_OVER back to PLAYER_TURN
+		# is exactly what was silently breaking the victory/defeat
+		# transition and leaving the battle looking stuck.
+		return
+
 	current_phase = TurnPhase.PLAYER_TURN
 	_check_end_player_turn()
 

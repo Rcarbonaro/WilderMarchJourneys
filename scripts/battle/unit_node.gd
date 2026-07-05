@@ -457,6 +457,23 @@ func get_effective_crit_damage() -> float:
 	for aura_id in momentum_bonuses:
 		base += momentum_bonuses[aura_id].get("crit_damage", 0.0)
 	return base
+	
+func get_effective_max_hp() -> int:
+	# Same pattern as get_effective_atk()/get_effective_def()/etc. above —
+	# adds up every "hp" bonus tucked inside momentum_bonuses (equipment,
+	# permanent tarot modifiers, auras — anything that writes an "hp" key
+	# into its own sub-dictionary there) on top of this unit's base max HP.
+	var base = get_stats().hp
+	for aura_id in momentum_bonuses:
+		base += momentum_bonuses[aura_id].get("hp", 0)
+	return max(1, base)
+
+
+func get_effective_max_mana() -> int:
+	var base = get_stats().mana
+	for aura_id in momentum_bonuses:
+		base += momentum_bonuses[aura_id].get("mana", 0)
+	return max(0, base)
 
 # ── MANA ──────────────────────────────────────────────────────────────────────
 
@@ -480,9 +497,9 @@ func spend_mana(amount: int) -> void:
 
 func restore_mana(amount: int) -> void:
 	# Restores mana up to the stat maximum.
-	var max_mana = get_stats().mana
+	var max_mana = get_effective_max_mana()
 	current_mana = min(current_mana + amount, max_mana)
-
+	
 # ── COMBAT ────────────────────────────────────────────────────────────────────
 
 func take_damage(amount: int, damage_type: String, is_crit: bool = false, apply_shake: bool = true) -> int:
@@ -505,7 +522,7 @@ func take_damage(amount: int, damage_type: String, is_crit: bool = false, apply_
 
 
 func heal(amount: int) -> void:
-	var max_hp = get_stats().hp
+	var max_hp = get_effective_max_hp()
 	current_hp = min(current_hp + amount, max_hp)
 	_update_hp_label()
 
@@ -602,6 +619,7 @@ func move_to(new_cell: Vector2i) -> void:
 		return
 
 	_is_moving = true
+	_start_walk_particles()
 	_set_facing_for_direction(new_cell)
 
 	var dy = new_cell.y - grid_position.y
@@ -644,12 +662,93 @@ func move_to(new_cell: Vector2i) -> void:
 		if is_instance_valid(self) and grid_ref != null:
 			grid_ref.apply_hazard_to_unit(self, new_cell, "enter")
 
+		# THE FIX: _is_moving, _stop_walk_particles(), and movement_finished
+		# used to be nested INSIDE the "still alive" check below, right next
+		# to play_animation("idle") — meaning if the hazard damage above
+		# killed the unit, _is_moving was never cleared and
+		# movement_finished never fired. Anything awaiting that signal
+		# (BattleManager, AI, _resolve_pending_displacements) would then hang
+		# forever, exactly like the earlier Wind Mage push-death freeze —
+		# just triggered here by a plain knockback/dash landing on a hazard
+		# instead of a multi-target push. play_animation("idle") is the only
+		# part that should stay conditional on being alive; everything else
+		# needs to run unconditionally so the move always properly finishes.
 		if is_instance_valid(self) and current_hp > 0:
 			play_animation("idle")
 		_is_moving = false
+		_stop_walk_particles()
 		movement_finished.emit()
 	)
 
+# ── WALK PARTICLES (dust) ────────────────────────────────────────────────────
+var _walk_particles: CPUParticles2D = null
+
+@export var walk_particle_offset: Vector2 = Vector2(0, 40)
+# How far below the unit's anchor point the dust puffs spawn — tweak per
+# sprite if your art's "feet" sit somewhere other than the sprite origin.
+# NOTE: the unit's anchor is usually roughly its CENTER (see HP_BAR_Y_OFFSET
+# above, which uses 48px as "half a 96px tile" for the same unit) — so this
+# needs to be a good chunk further down than you'd first guess, or it spawns
+# on top of/behind the torso instead of at the feet.
+
+static var _dust_circle_texture: ImageTexture = null
+# Generated once and shared by every unit's dust particles — CPUParticles2D
+# draws plain squares by default, so this gives it an actual round shape.
+
+static func _get_dust_circle_texture() -> ImageTexture:
+	if _dust_circle_texture != null:
+		return _dust_circle_texture
+
+	var diameter := 16
+	var image := Image.create(diameter, diameter, false, Image.FORMAT_RGBA8)
+	var center := Vector2(diameter / 2.0, diameter / 2.0)
+	var radius := diameter / 2.0
+	for x in diameter:
+		for y in diameter:
+			var dist: float = Vector2(x + 0.5, y + 0.5).distance_to(center)
+			if dist <= radius:
+				# Soft falloff toward the edge so it reads as a soft puff
+				# instead of a hard-edged dot.
+				var alpha: float = clamp(1.0 - (dist / radius), 0.0, 1.0)
+				image.set_pixel(x, y, Color(1, 1, 1, alpha))
+			else:
+				image.set_pixel(x, y, Color(1, 1, 1, 0.0))
+
+	_dust_circle_texture = ImageTexture.create_from_image(image)
+	return _dust_circle_texture
+
+
+func _ensure_walk_particles() -> void:
+	if _walk_particles != null and is_instance_valid(_walk_particles):
+		return
+	_walk_particles = CPUParticles2D.new()
+	add_child(_walk_particles)
+	_walk_particles.texture              = _get_dust_circle_texture()
+	_walk_particles.position             = walk_particle_offset
+	_walk_particles.emitting             = false
+	_walk_particles.one_shot             = false
+	_walk_particles.amount               = 4
+	_walk_particles.lifetime             = 0.45
+	_walk_particles.randomness           = 0.6
+	_walk_particles.direction            = Vector2(0, -1)
+	_walk_particles.spread               = 50.0
+	_walk_particles.gravity              = Vector2(0, 60.0)
+	_walk_particles.initial_velocity_min = 8.0
+	_walk_particles.initial_velocity_max = 24.0
+	_walk_particles.scale_amount_min     = 1.5
+	_walk_particles.scale_amount_max     = 3.5
+	_walk_particles.color                = Color(0.72, 0.65, 0.52, 0.55)   # dusty tan
+	# z_index left at default (0) — see prior fix: -1 hid these behind the
+	# unit's own AnimatedSprite2D.
+	
+func _start_walk_particles() -> void:
+	_ensure_walk_particles()
+	_walk_particles.emitting = true
+
+
+func _stop_walk_particles() -> void:
+	if is_instance_valid(_walk_particles):
+		_walk_particles.emitting = false
 
 
 func move_along_path(path: Array) -> void:
@@ -677,6 +776,7 @@ func move_along_path(path: Array) -> void:
 		return
 
 	_is_moving = true
+	_start_walk_particles()
 	for step_cell in path:
 		# Bail out cleanly if we were freed mid-walk for some unrelated reason.
 		if not is_instance_valid(self):
@@ -740,6 +840,7 @@ func move_along_path(path: Array) -> void:
 	if is_instance_valid(self) and current_hp > 0:
 		play_animation("idle")
 	_is_moving = false
+	_stop_walk_particles()
 	movement_finished.emit()
 
 
@@ -1290,7 +1391,7 @@ func _update_hp_label() -> void:
 
 	var max_hp: int = 1
 	if unit_data != null:
-		max_hp = max(1, get_stats().hp)
+		max_hp = get_effective_max_hp()
 
 	var pct: float = clamp(float(current_hp) / float(max_hp), 0.0, 1.0)
 	var full_width: float = HP_BAR_WIDTH - 4.0

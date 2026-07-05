@@ -7,7 +7,7 @@
 script = ExtResource("1_102ve")
 id = "focusstance"
 display_name = "Focus stance"
-description = "Unable to move, but grants bonus critical chance and critical damage"
+description = "Unable to move, but grants bonus critical chance and ATK"
 icon = ExtResource("1_7vfyl")
 duration_rounds = 3
 max_stacks = 3

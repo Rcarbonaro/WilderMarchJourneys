@@ -399,9 +399,12 @@ func _apply_damage_with_effects(caster, target, ability: AbilityData, damage: in
 
 		# Guardian's own Thorns/Shield do NOT apply to the redirected portion.
 		guardian.take_damage(guard_dmg, ability.damage_type)
-		_spawn_damage_number(guard_dmg, guardian.position)
+		# THE FIX: take_damage() already spawns its own floating damage
+		# number via CombatFeedback.show_hit() — this extra call was
+		# spawning a SECOND number for the same hit. Same bug as Thorns and
+		# Tether below.
 		print("🛡️ Guardian intercepted ", guard_dmg, " damage for ", target.unit_data.display_name)
-
+		
 		damage = remaining_dmg
 		if damage <= 0:
 			_last_hit_was_crit = false   # Reset the flag even if we abort early.
@@ -455,9 +458,11 @@ func _apply_damage_with_effects(caster, target, ability: AbilityData, damage: in
 		var reflect_dmg = max(1, int(int(float(stat_value)) * thorns_entry["reflect_percent"]
 									 * (1.0 + float(stat_value) / 100.0)))
 		caster.take_damage(reflect_dmg, "true")   # Thorns use true damage.
-		_spawn_damage_number(reflect_dmg, caster.position)
+		# THE FIX: take_damage() already spawns its own floating damage
+		# number via CombatFeedback.show_hit() — this extra call was
+		# spawning a duplicate second number for the same reflected hit.
 		print("🌵 Thorns reflected ", reflect_dmg, " to ", caster.unit_data.display_name)
-
+		
 	# -- 5. TETHER PROPAGATION ─────────────────────────────────────────────────
 	# Only for SINGLE-TARGET abilities. If the target is tethered, pass a portion
 	# of the damage to every other unit in the same tether group.
@@ -476,9 +481,8 @@ func _apply_damage_with_effects(caster, target, ability: AbilityData, damage: in
 				var ally_actual = grid_ref.absorb_shield_damage(ally, pass_damage) \
 								  if grid_ref.has_method("absorb_shield_damage") else pass_damage
 				ally.take_damage(ally_actual, "true")   # Tether uses true damage.
-				_spawn_damage_number(ally_actual, ally.position)
-				print("🔗 Tether propagated ", ally_actual, " to ", ally.unit_data.display_name)
-
+				# THE FIX: same duplicate-number bug as Guardian/Thorns above —
+				# take_damage() already spawns its own number.
 	# -- 6. ON-KILL CHECK ──────────────────────────────────────────────────────
 	# If the target just died from this hit (HP was above 0 before, now at/below 0),
 	# trigger on-kill effects. This also notifies Momentum via _trigger_on_kill.
@@ -739,6 +743,15 @@ func _execute_dash(caster, ability: AbilityData, line_cells: Array) -> Dictionar
 		_spawn_dash_trail(start_world, end_world, ability.dash_trail_texture)
 
 	# Animate the caster sprite racing to the destination.
+	# Animate the caster sprite racing to the destination.
+	# THE FIX: play the dash animation itself for the duration of the
+	# slide — this used to only ever get set to "idle" AFTER the tween
+	# finished, so whatever animation was already playing before the dash
+	# (attack, idle, etc.) just kept running while the sprite visually
+	# slid across the map instead of actually playing a dash animation.
+	if ability.dash_animation_name != "":
+		caster.play_animation(ability.dash_animation_name)
+
 	var distance: float = start_world.distance_to(end_world)
 	var duration: float = distance / ability.dash_speed
 
