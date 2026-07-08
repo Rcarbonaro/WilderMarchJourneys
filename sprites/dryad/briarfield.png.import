@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://rfgs0tl16yhl"
-path="res://.godot/imported/spellblade attack2.png-d788c5629221117758550e7b0e6bff37.ctex"
+uid="uid://bej3finla1syr"
+path="res://.godot/imported/briarfield.png-964c7bc7010194826fec1db5f5516002.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/spellsword/spellblade attack2.png"
-dest_files=["res://.godot/imported/spellblade attack2.png-d788c5629221117758550e7b0e6bff37.ctex"]
+source_file="res://sprites/dryad/briarfield.png"
+dest_files=["res://.godot/imported/briarfield.png-964c7bc7010194826fec1db5f5516002.ctex"]
 
 [params]
 

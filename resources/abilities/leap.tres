@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://dfy4g0j5jc4fh"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_gqyvc"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_x4sth"]
+
+[resource]
+script = ExtResource("2_x4sth")
+id = "leap"
+display_name = "Leap"
+description = "Leap to a target and deal a devastating blow. Deals extra damage to isolated targets."
+cooldown_rounds = 4
+max_range = 4
+base_damage_multiplier = 1.1
+is_leap = true
+bonus_damage_isolated = 0.75
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

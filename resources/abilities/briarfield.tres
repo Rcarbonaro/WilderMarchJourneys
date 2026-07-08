@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://db46p6l7ny3jw"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_shxti"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_7okhs"]
+[ext_resource type="Texture2D" uid="uid://d2jvjo36lxeq8" path="res://sprites/UI/skill icons/skill_icons_wallofthorns.png" id="2_rbvqc"]
+[ext_resource type="Resource" uid="uid://caxltsrx5xk0a" path="res://resources/hazards/briarfield.tres" id="4_j2qma"]
+
+[resource]
+script = ExtResource("2_7okhs")
+id = "briarfield"
+display_name = "Briar Field"
+description = "Create a briar field for 3 turns. Field deals damage, slows enemies, and decreases damage dealt."
+icon = ExtResource("2_rbvqc")
+cooldown_rounds = 3
+max_range = 3
+aoe_shape = "cone"
+aoe_size = 3
+scaling_stat = "matk"
+spawns_hazard = ExtResource("4_j2qma")
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

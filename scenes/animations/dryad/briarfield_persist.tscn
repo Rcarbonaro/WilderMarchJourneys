@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://dqx5p0txehre5"]
+
+[ext_resource type="Texture2D" uid="uid://bej3finla1syr" path="res://sprites/dryad/briarfield.png" id="1_u71ro"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_siy4s"]
+atlas = ExtResource("1_u71ro")
+region = Rect2(0, 256, 256, 256)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_d2hmk"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_siy4s")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[node name="BriarfieldPersist" type="Node2D" unique_id=824942572]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=2064112075]
+scale = Vector2(0.5, 0.5)
+sprite_frames = SubResource("SpriteFrames_d2hmk")

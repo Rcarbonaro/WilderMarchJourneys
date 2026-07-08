@@ -319,12 +319,13 @@ func register_unit(unit, cell: Vector2i) -> void:
 	if displaced != null and displaced != unit:
 		_rescue_displaced_unit(displaced, cell)
 	unit_positions[cell] = unit
+	_refresh_tether_lines()
 
 
 func unregister_unit(cell: Vector2i) -> void:
 	# Frees a single cell. For multi-tile units, call for each occupied cell.
 	unit_positions.erase(cell)
-
+	_refresh_tether_lines()
 
 func get_unit_at(cell: Vector2i):
 	# Returns the unit at this cell, or null if empty.
@@ -340,6 +341,7 @@ func register_large_unit(unit, cells: Array) -> void:
 		if displaced != null and displaced != unit:
 			_rescue_displaced_unit(displaced, cell)
 		unit_positions[cell] = unit
+	_refresh_tether_lines()
 
 
 func unregister_large_unit(unit) -> void:
@@ -348,6 +350,7 @@ func unregister_large_unit(unit) -> void:
 	if "occupied_cells" in unit:
 		for cell in unit.occupied_cells:
 			unit_positions.erase(cell)
+	_refresh_tether_lines()
 
 
 var _units_currently_being_rescued: Array = []
@@ -796,6 +799,7 @@ func register_tether(unit, tether_id: String) -> void:
 		tether_map[tether_id] = []
 	if not unit in tether_map[tether_id]:
 		tether_map[tether_id].append(unit)
+	_refresh_tether_lines()
 
 
 func unregister_tether(unit, tether_id: String) -> void:
@@ -804,6 +808,7 @@ func unregister_tether(unit, tether_id: String) -> void:
 		tether_map[tether_id].erase(unit)
 		if tether_map[tether_id].is_empty():
 			tether_map.erase(tether_id)
+	_refresh_tether_lines()
 
 
 func get_tethered_units(tether_id: String, exclude_unit) -> Array:
@@ -814,6 +819,273 @@ func get_tethered_units(tether_id: String, exclude_unit) -> Array:
 		if is_instance_valid(u) and u != exclude_unit:
 			result.append(u)
 	return result
+
+# ── TETHER LINE VISUALS ───────────────────────────────────────────────────────
+# Draws a glowing, gently-waving purple line (with drifting particles) for
+# EVERY connection in a tether group's minimum spanning tree — i.e. each
+# tethered unit links to whichever of its allies is actually closest, rather
+# than being drawn in arbitrary registration order. For a 2-unit tether
+# that's just the one obvious connection; for 3+ units it means each unit
+# reaches its nearest tethered neighbor(s) instead of a fixed A→B→C chain
+# that might connect two units that happen to be far apart while ignoring a
+# much closer third unit.
+#
+# Connections are recomputed from tether_map + live unit positions every
+# time _refresh_tether_lines() runs (register_unit/unregister_unit/
+# register_large_unit/unregister_large_unit/register_tether/
+# unregister_tether — i.e. every movement path AND every death already goes
+# through this), so a unit dying, or units simply walking around and
+# changing who's nearest to whom, both correctly redraw the connections.
+# Nothing here is tracked independently of that live data.
+
+var _tether_line_layer: Node2D = null
+var _tether_lines: Dictionary       = {}   # line_key (String) -> Line2D
+var _tether_glow_lines: Dictionary  = {}   # line_key -> Line2D
+var _tether_particles: Dictionary   = {}   # line_key -> CPUParticles2D (purple drift)
+var _tether_sparkles: Dictionary    = {}   # line_key -> CPUParticles2D (white sparkle)
+var _tether_base_points: Dictionary = {}   # line_key -> PackedVector2Array([unit_a.position, unit_b.position])
+var _tether_time: float = 0.0
+
+@export var tether_line_color: Color = Color(0.65, 0.2, 0.85, 0.85)   # purple
+@export var tether_line_width: float = 4.0
+
+@export var tether_glow_color: Color = Color(0.65, 0.2, 0.85, 0.35)
+@export var tether_glow_width_multiplier: float = 3.0
+
+@export var tether_wave_amplitude: float = 6.0
+@export var tether_wave_speed: float = 3.0
+@export var tether_wave_count: float = 1.5
+
+@export var tether_particle_color: Color = Color(0.75, 0.35, 0.95, 0.8)
+@export var tether_sparkle_color: Color = Color(1.0, 1.0, 1.0, 0.9)
+@export var tether_sparkle_amount: int = 14
+
+
+func _ensure_tether_line_layer() -> void:
+	if _tether_line_layer != null and is_instance_valid(_tether_line_layer):
+		return
+	_tether_line_layer = Node2D.new()
+	_tether_line_layer.name = "TetherLineLayer"
+	_tether_line_layer.z_index = 4
+	add_child(_tether_line_layer)
+
+
+func _process(delta: float) -> void:
+	if _tether_base_points.is_empty():
+		return
+	_tether_time += delta
+	for line_key in _tether_base_points.keys():
+		_update_tether_visual_frame(line_key)
+
+
+func _compute_mst_edges(units: Array) -> Array:
+	# Returns an Array of [unit_a, unit_b] pairs forming a MINIMUM SPANNING
+	# TREE over 'units' — the shortest possible total set of connections
+	# that still links every unit into one group. This is what makes each
+	# unit connect to its nearest tethered neighbor(s) rather than whatever
+	# order they happened to be registered in. Simple O(n²) Prim's — fine
+	# for the small unit counts a tether group will ever realistically have.
+	var edges: Array = []
+	if units.size() < 2:
+		return edges
+
+	var in_tree: Array = [units[0]]
+	var remaining: Array = units.slice(1)
+
+	while remaining.size() > 0:
+		var best_dist: float = INF
+		var best_tree_unit = null
+		var best_remaining_unit = null
+		for t in in_tree:
+			for r in remaining:
+				var d: float = t.position.distance_squared_to(r.position)
+				if d < best_dist:
+					best_dist = d
+					best_tree_unit = t
+					best_remaining_unit = r
+		edges.append([best_tree_unit, best_remaining_unit])
+		in_tree.append(best_remaining_unit)
+		remaining.erase(best_remaining_unit)
+
+	return edges
+
+
+func _refresh_tether_lines() -> void:
+	_ensure_tether_line_layer()
+
+	# Build the full set of line_keys that SHOULD exist this refresh, one
+	# per MST edge across every active tether group.
+	var desired_keys: Dictionary = {}   # line_key -> [unit_a, unit_b]
+
+	for tether_id in tether_map:
+		var live_units: Array = []
+		for u in tether_map[tether_id]:
+			if is_instance_valid(u):
+				live_units.append(u)
+		if live_units.size() < 2:
+			continue
+
+		var edges: Array = _compute_mst_edges(live_units)
+		for i in range(edges.size()):
+			var line_key: String = "%s#%d" % [tether_id, i]
+			desired_keys[line_key] = edges[i]
+
+	# Tear down any line_key that no longer applies — group broke up, a unit
+	# died, or the MST simply reshuffled its connections as units moved.
+	for existing_key in _tether_base_points.keys():
+		if not desired_keys.has(existing_key):
+			_teardown_tether_visual(existing_key)
+
+	# Create/refresh anchor points for every currently-desired connection.
+	for line_key in desired_keys:
+		var pair: Array = desired_keys[line_key]
+		var anchor_points: PackedVector2Array = PackedVector2Array([pair[0].position, pair[1].position])
+		_tether_base_points[line_key] = anchor_points
+		_ensure_tether_visual_nodes(line_key)
+
+	for line_key in _tether_base_points.keys():
+		_update_tether_visual_frame(line_key)
+
+
+func _ensure_tether_visual_nodes(line_key: String) -> void:
+	if _tether_lines.has(line_key):
+		return   # Already built — every connection here is a single segment.
+
+	var glow := Line2D.new()
+	glow.width           = tether_line_width * tether_glow_width_multiplier
+	glow.default_color   = tether_glow_color
+	glow.z_index         = 3
+	glow.joint_mode      = Line2D.LINE_JOINT_ROUND
+	glow.begin_cap_mode  = Line2D.LINE_CAP_ROUND
+	glow.end_cap_mode    = Line2D.LINE_CAP_ROUND
+	_tether_line_layer.add_child(glow)
+	_tether_glow_lines[line_key] = glow
+
+	var line := Line2D.new()
+	line.width           = tether_line_width
+	line.default_color   = tether_line_color
+	line.z_index         = 4
+	line.joint_mode      = Line2D.LINE_JOINT_ROUND
+	line.begin_cap_mode  = Line2D.LINE_CAP_ROUND
+	line.end_cap_mode    = Line2D.LINE_CAP_ROUND
+	_tether_line_layer.add_child(line)
+	_tether_lines[line_key] = line
+
+	var p := CPUParticles2D.new()
+	p.emitting              = true
+	p.amount                = 6
+	p.lifetime              = 1.0
+	p.preprocess            = 1.0
+	p.emission_shape        = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	p.direction             = Vector2(0, -1)
+	p.spread                = 180.0
+	p.gravity               = Vector2.ZERO
+	p.initial_velocity_min  = 4.0
+	p.initial_velocity_max  = 14.0
+	p.scale_amount_min      = 1.0
+	p.scale_amount_max      = 2.2
+	p.color                 = tether_particle_color
+	p.z_index               = 5
+	_tether_line_layer.add_child(p)
+	_tether_particles[line_key] = p
+
+	var sp := CPUParticles2D.new()
+	sp.emitting              = true
+	sp.amount                = tether_sparkle_amount
+	sp.lifetime              = 1.6
+	sp.preprocess            = 1.6
+	sp.emission_shape        = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	sp.direction             = Vector2.ZERO
+	sp.spread                = 180.0
+	sp.gravity               = Vector2.ZERO
+	sp.initial_velocity_min  = 1.0
+	sp.initial_velocity_max  = 6.0
+	sp.scale_amount_min      = 0.3
+	sp.scale_amount_max      = 0.7
+	sp.color                 = tether_sparkle_color
+	sp.z_index               = 6
+	_tether_line_layer.add_child(sp)
+	_tether_sparkles[line_key] = sp
+
+
+func _teardown_tether_visual(line_key: String) -> void:
+	if _tether_lines.has(line_key):
+		var l: Line2D = _tether_lines[line_key]
+		if is_instance_valid(l): l.queue_free()
+		_tether_lines.erase(line_key)
+	if _tether_glow_lines.has(line_key):
+		var g: Line2D = _tether_glow_lines[line_key]
+		if is_instance_valid(g): g.queue_free()
+		_tether_glow_lines.erase(line_key)
+	if _tether_particles.has(line_key):
+		var p = _tether_particles[line_key]
+		if is_instance_valid(p): p.queue_free()
+		_tether_particles.erase(line_key)
+	if _tether_sparkles.has(line_key):
+		var sp = _tether_sparkles[line_key]
+		if is_instance_valid(sp): sp.queue_free()
+		_tether_sparkles.erase(line_key)
+	_tether_base_points.erase(line_key)
+
+
+func _update_tether_visual_frame(line_key: String) -> void:
+	var anchor_points: PackedVector2Array = _tether_base_points.get(line_key, PackedVector2Array())
+	if anchor_points.size() < 2:
+		return
+	var line: Line2D = _tether_lines.get(line_key)
+	var glow: Line2D = _tether_glow_lines.get(line_key)
+	if line == null or not is_instance_valid(line):
+		return
+
+	var phase_offset: float = float(line_key.hash() % 1000) / 1000.0 * TAU
+	var wavy_points: PackedVector2Array = _build_wavy_points(anchor_points, phase_offset)
+	line.points = wavy_points
+	if glow != null and is_instance_valid(glow):
+		glow.points = wavy_points
+		var pulse: float = 0.75 + 0.25 * sin(_tether_time * tether_wave_speed * 0.5 + phase_offset)
+		glow.default_color.a = tether_glow_color.a * pulse
+
+	var seg_start: Vector2 = anchor_points[0]
+	var seg_end: Vector2   = anchor_points[1]
+	var seg_length: float  = seg_start.distance_to(seg_end)
+	var seg_mid: Vector2   = (seg_start + seg_end) / 2.0
+	var seg_rotation: float = seg_start.angle_to_point(seg_end)
+
+	var p = _tether_particles.get(line_key)
+	if p != null and is_instance_valid(p):
+		p.position              = seg_mid
+		p.rotation              = seg_rotation
+		p.emission_rect_extents = Vector2(max(4.0, seg_length / 2.0), 6.0)
+
+	var sp = _tether_sparkles.get(line_key)
+	if sp != null and is_instance_valid(sp):
+		sp.position              = seg_mid
+		sp.rotation              = seg_rotation
+		sp.emission_rect_extents = Vector2(max(4.0, seg_length / 2.0), 14.0)
+
+
+func _build_wavy_points(anchor_points: PackedVector2Array, phase_offset: float) -> PackedVector2Array:
+	const SUBDIVISIONS_PER_SEGMENT: int = 10
+
+	var total_length: float = anchor_points[0].distance_to(anchor_points[1])
+	if total_length <= 0.0:
+		return anchor_points
+
+	var seg_start: Vector2 = anchor_points[0]
+	var seg_end: Vector2   = anchor_points[1]
+	var seg_dir: Vector2   = (seg_end - seg_start).normalized()
+	var perpendicular: Vector2 = Vector2(-seg_dir.y, seg_dir.x)
+
+	var result: PackedVector2Array = PackedVector2Array()
+	for s in range(SUBDIVISIONS_PER_SEGMENT + 1):
+		var t: float = float(s) / float(SUBDIVISIONS_PER_SEGMENT)
+		var wave: float = sin(t * TAU * tether_wave_count + _tether_time * tether_wave_speed + phase_offset)
+		var taper: float = sin(t * PI)
+		var offset: float = tether_wave_amplitude * wave * taper
+		result.append(seg_start.lerp(seg_end, t) + perpendicular * offset)
+
+	return result
+
 
 # ── SHIELD SYSTEM ─────────────────────────────────────────────────────────────
 

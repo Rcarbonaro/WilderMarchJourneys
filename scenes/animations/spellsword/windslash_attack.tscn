@@ -1,0 +1,75 @@
+[gd_scene format=3 uid="uid://btafvs1e7qagv"]
+
+[ext_resource type="Texture2D" uid="uid://c8jpvxm22r834" path="res://sprites/spellsword/spellsword2_windslash.png" id="1_l73nr"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_l1y27"]
+atlas = ExtResource("1_l73nr")
+region = Rect2(768, 256, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4unr6"]
+atlas = ExtResource("1_l73nr")
+region = Rect2(768, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vaa2j"]
+atlas = ExtResource("1_l73nr")
+region = Rect2(768, 512, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lmcha"]
+atlas = ExtResource("1_l73nr")
+region = Rect2(0, 512, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_iljwo"]
+atlas = ExtResource("1_l73nr")
+region = Rect2(512, 512, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_j0oco"]
+atlas = ExtResource("1_l73nr")
+region = Rect2(0, 768, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pdek0"]
+atlas = ExtResource("1_l73nr")
+region = Rect2(256, 768, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ou73c"]
+atlas = ExtResource("1_l73nr")
+region = Rect2(512, 768, 256, 256)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_k4538"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_l1y27")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4unr6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vaa2j")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lmcha")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_iljwo")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_j0oco")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pdek0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ou73c")
+}],
+"loop": false,
+"name": &"default",
+"speed": 13.0
+}]
+
+[node name="WindslashDash" type="Node2D" unique_id=1120171306]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1654672044]
+scale = Vector2(0.512, 0.512)
+sprite_frames = SubResource("SpriteFrames_k4538")
+frame = 7
+frame_progress = 1.0

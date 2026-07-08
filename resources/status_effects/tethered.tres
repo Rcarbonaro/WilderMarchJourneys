@@ -9,4 +9,5 @@ id = "tethered"
 display_name = "Tethered"
 description = "When one \"tethered\" target takes damage, other \"tethered\" targets also take 50% of the original damage."
 icon = ExtResource("1_remcw")
+def_modifier = -1
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

@@ -10,6 +10,6 @@ display_name = "Ice Shell"
 description = "Increase an ally's DEF and MDEF for 3 rounds."
 icon = ExtResource("1_8b81t")
 duration_rounds = 2
-def_modifier = 2
+def_modifier = 3
 mdef_modifier = 4
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

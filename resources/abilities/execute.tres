@@ -20,6 +20,6 @@ on_kill_reset_has_acted = true
 on_kill_reset_has_moved = true
 on_kill_reset_cooldowns = true
 bonus_per_target_debuff = 0.25
-bonus_per_target_debuff_max = 1.5
+bonus_per_target_debuff_max = 2.0
 bonus_atk_per_caster_buff = 5
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

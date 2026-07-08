@@ -7,6 +7,7 @@
 script = ExtResource("1_hkkbg")
 id = "exposed"
 display_name = "Exposed"
+description = "Decreased defense"
 icon = ExtResource("1_82gfq")
 duration_rounds = 3
 can_stack = true

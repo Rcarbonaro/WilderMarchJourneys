@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://bvoityv6i1p76"]
+
+[ext_resource type="Texture2D" uid="uid://d2jvjo36lxeq8" path="res://sprites/UI/skill icons/skill_icons_wallofthorns.png" id="1_0yeyc"]
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_si72c"]
+
+[resource]
+script = ExtResource("1_si72c")
+id = "briarfield"
+display_name = "Briar Field"
+description = "Reduced movement and damage dealt"
+icon = ExtResource("1_0yeyc")
+duration_rounds = 2
+can_stack = true
+mov_modifier = -1
+damage_dealt_modifier = 0.9
+metadata/_custom_type_script = "uid://gsbk18mmfnol"
