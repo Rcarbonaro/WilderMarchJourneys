@@ -10,7 +10,7 @@
 script = ExtResource("2_ac8s0")
 id = "woe"
 display_name = "Woe"
-description = "Forcibly shape fate to reduce all enemy stats for 3 rounds. Cost: 20 mana"
+description = "Forcibly shape fate to decrease target's critical chance and increases damage taken for 3 rounds. Cost: 20 mana"
 icon = ExtResource("3_qy2st")
 effect_scene = ExtResource("3_73es1")
 mana_cost = 20

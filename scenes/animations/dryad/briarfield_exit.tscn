@@ -1,0 +1,54 @@
+[gd_scene format=3 uid="uid://xo2rok887www"]
+
+[ext_resource type="Texture2D" uid="uid://bej3finla1syr" path="res://sprites/dryad/briarfield.png" id="1_ieesv"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lerr0"]
+atlas = ExtResource("1_ieesv")
+region = Rect2(0, 256, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f5oto"]
+atlas = ExtResource("1_ieesv")
+region = Rect2(768, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_x2wpu"]
+atlas = ExtResource("1_ieesv")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ud5g6"]
+atlas = ExtResource("1_ieesv")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_of8tp"]
+atlas = ExtResource("1_ieesv")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_80o58"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lerr0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_f5oto")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_x2wpu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ud5g6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_of8tp")
+}],
+"loop": false,
+"name": &"default",
+"speed": 8.0
+}]
+
+[node name="BriarfieldExit" type="Node2D" unique_id=729428697]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1709799837]
+scale = Vector2(0.5, 0.5)
+sprite_frames = SubResource("SpriteFrames_80o58")
+frame = 4
+frame_progress = 1.0

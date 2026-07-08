@@ -1,21 +1,28 @@
 [gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://dkj00w82k7am5"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_pxjrn"]
+[ext_resource type="PackedScene" uid="uid://bfnh5i05aabj1" path="res://scenes/animations/spellsword/windslash_dash.tscn" id="2_6j38w"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_mx4nk"]
+[ext_resource type="Texture2D" uid="uid://cyt2vb0g4cfmk" path="res://sprites/UI/skill icons/skill_icons_windblades.png" id="2_xmw2x"]
 
 [resource]
 script = ExtResource("2_mx4nk")
 id = "zephyr_strike"
 display_name = "Zephy Strike"
-mana_cost = 5
+icon = ExtResource("2_xmw2x")
+effect_scene = ExtResource("2_6j38w")
+attack_animation_name = "windcharge"
+mana_cost = 25
 min_range = 1
-max_range = 5
-aoe_shape = "line"
-aoe_size = 5
-damage_type = "magical"
-scaling_stat = "matk"
+max_range = 3
+aoe_shape = "multi_target"
+aoe_size = 3
+base_damage_multiplier = 0.8
 is_dash = true
+travel_animation_name = "zephyr_travel"
+impact_animation_name = "zephyr_attack"
 ability_type = "spell"
 on_kill_reset_has_acted = true
 on_kill_reset_has_moved = true
+consumes_arcana_charge = true
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="HazardData" format=3 uid="uid://caxltsrx5xk0a"]
+
+[ext_resource type="PackedScene" uid="uid://y7ef11itvugi" path="res://scenes/animations/dryad/briarfield_enter.tscn" id="1_eqt3n"]
+[ext_resource type="Script" uid="uid://bv2ltgyye0n4f" path="res://scripts/data/hazard_data.gd" id="1_kns6i"]
+[ext_resource type="PackedScene" uid="uid://xo2rok887www" path="res://scenes/animations/dryad/briarfield_exit.tscn" id="2_fofmt"]
+[ext_resource type="Texture2D" uid="uid://d2jvjo36lxeq8" path="res://sprites/UI/skill icons/skill_icons_wallofthorns.png" id="3_4qm68"]
+[ext_resource type="PackedScene" uid="uid://dqx5p0txehre5" path="res://scenes/animations/dryad/briarfield_persist.tscn" id="4_4itse"]
+
+[resource]
+script = ExtResource("1_kns6i")
+id = "briarfield"
+display_name = "Briar Field"
+icon = ExtResource("3_4qm68")
+duration_rounds = 3
+entrance_scene = ExtResource("1_eqt3n")
+idle_scene = ExtResource("4_4itse")
+exit_scene = ExtResource("2_fofmt")
+damage_multiplier = 1.0
+trigger_on_start_of_turn = false
+blocks_movement = false
+metadata/_custom_type_script = "uid://bv2ltgyye0n4f"

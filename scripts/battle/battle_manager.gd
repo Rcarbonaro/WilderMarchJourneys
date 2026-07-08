@@ -33,13 +33,16 @@ signal battle_ended(result: String)
 # we use readable names that the compiler can check for typos.
 
 enum TurnPhase {
-	PLAYER_TURN,       # Player is choosing actions.
-	ENEMY_TURN,        # AI is running.
-	ANIMATION,         # An animation is playing — block all input until it finishes.
-	POST_ATTACK,       # Waiting for the player to pick a tile for post-attack movement.
-	WALL_SELECT_START, # Waiting for the player to tap the wall's START tile.
-	WALL_SELECT_END,   # Waiting for the player to tap the wall's END tile.
-	GAME_OVER          # Combat is finished — no more input accepted.
+	PLAYER_TURN,          # Player is choosing actions.
+	ENEMY_TURN,           # AI is running.
+	ANIMATION,            # An animation is playing — block all input until it finishes.
+	POST_ATTACK,          # Waiting for the player to pick a tile for post-attack movement.
+	WALL_SELECT_START,    # Waiting for the player to tap the wall's START tile.
+	WALL_SELECT_END,      # Waiting for the player to tap the wall's END tile.
+	LEAP_SELECT_TARGET,      # Leap: waiting for the player to tap the enemy target.
+	LEAP_SELECT_DESTINATION, # Leap: waiting for the player to tap the destination tile.
+	MULTI_TARGET_SELECT,  # Zephyr Strike / manual Chain Lightning: tapping N targets one at a time.
+	GAME_OVER             # Combat is finished — no more input accepted.
 }
 
 # ── STATE VARIABLES ───────────────────────────────────────────────────────────
@@ -61,6 +64,13 @@ var reachable_cells: Dictionary = {}       # Tiles the selected unit can walk to
 var wall_start_cell: Vector2i = Vector2i(-1, -1)
 # The first tile the player tapped during wall placement. Vector2i(-1,-1) means
 # "no start point chosen yet". Cleared when wall placement finishes or cancels.
+
+var leap_target_cell: Vector2i = Vector2i(-1, -1)
+# The enemy tile chosen during Leap's first tap. Cleared when Leap finishes/cancels.
+
+var multi_target_selected: Array = []
+# Ordered list of tapped target cells for Zephyr Strike / manual Chain Lightning.
+# Cleared when that selection finishes or cancels.
 
 # Spellsword arcana charge accumulator.
 var total_mana_spent: int = 0
@@ -116,8 +126,9 @@ func _ready() -> void:
 
 	# Give the pathfinder and executor a reference to the grid so they can look
 	# up unit positions, check tile passability, and access effect maps.
-	pathfinder.grid_ref = grid
-	executor.grid_ref   = grid
+	pathfinder.grid_ref     = grid
+	executor.grid_ref       = grid
+	executor.pathfinder_ref = pathfinder
 
 	# ── WIRE THE AURA MANAGER ─────────────────────────────────────────────────
 	# AuraManager must be a child Node of BattleGrid in the scene tree, with
@@ -256,7 +267,7 @@ func _spawn_stage_enemies() -> void:
 	#if thornling_data != null: spawn_unit(thornling_data, Vector2i(14, 2), false, 1)
 	#if thornling_data != null: spawn_unit(thornling_data, Vector2i(15, 4), false, 1)
 	#if sporeling_data != null: spawn_unit(sporeling_data, Vector2i(12, 2), false, 1)
-	#if hulkingsporeling_data      != null: spawn_unit(ent_data,      Vector2i(18, 8), false, 1)
+	#if hulkingsporeling_data      != null: spawn_unit(ent_data,      Vector2i(15, 6), false, 1)
 	#print("🐺 Monster waves deployed!")
 
 
@@ -503,6 +514,16 @@ func on_tile_tapped(cell: Vector2i) -> void:
 		return
 	if current_phase == TurnPhase.WALL_SELECT_END:
 		_try_select_wall_end(cell)
+		return
+
+	if current_phase == TurnPhase.LEAP_SELECT_TARGET:
+		_try_select_leap_target(cell)
+		return
+	if current_phase == TurnPhase.LEAP_SELECT_DESTINATION:
+		_try_select_leap_destination(cell)
+		return
+	if current_phase == TurnPhase.MULTI_TARGET_SELECT:
+		_try_multi_target_tap(cell)
 		return
 
 	# ── POST-ATTACK MOVEMENT MODE ─────────────────────────────────────────────
@@ -779,18 +800,25 @@ func cancel_ability_selection() -> void:
 	# WITHOUT touching movement — can_cancel_move and pre_move_position are
 	# left exactly as they were, so the unit stays put and "Cancel Move" (if
 	# the player wants THAT instead) still works afterward.
-	var mid_wall_placement: bool = (
+	var mid_multistep_targeting: bool = (
 		current_phase == TurnPhase.WALL_SELECT_START or
-		current_phase == TurnPhase.WALL_SELECT_END
+		current_phase == TurnPhase.WALL_SELECT_END or
+		current_phase == TurnPhase.LEAP_SELECT_TARGET or
+		current_phase == TurnPhase.LEAP_SELECT_DESTINATION or
+		current_phase == TurnPhase.MULTI_TARGET_SELECT
 	)
 
-	if selected_ability == null and not mid_wall_placement:
+	if selected_ability == null and not mid_multistep_targeting:
 		return   # Nothing to cancel.
 
-	if mid_wall_placement:
-		wall_start_cell = Vector2i(-1, -1)
+	if mid_multistep_targeting:
+		wall_start_cell        = Vector2i(-1, -1)
+		leap_target_cell       = Vector2i(-1, -1)
+		multi_target_selected.clear()
 		if ui_manager and ui_manager.has_method("hide_targeting_prompt"):
 			ui_manager.hide_targeting_prompt()
+		if ui_manager and ui_manager.has_method("hide_confirm_targets_button"):
+			ui_manager.hide_confirm_targets_button()
 
 	selected_ability  = null
 	aoe_preview_cell  = Vector2i(-1, -1)
@@ -823,7 +851,9 @@ func on_right_click(_cell: Vector2i) -> void:
 	#   - Ability/attack selected -> cancel JUST the targeting, keep movement.
 	#   - Just a unit selected    -> nothing in-progress to lose, full deselect.
 	match current_phase:
-		TurnPhase.WALL_SELECT_START, TurnPhase.WALL_SELECT_END:
+		TurnPhase.WALL_SELECT_START, TurnPhase.WALL_SELECT_END, \
+		TurnPhase.LEAP_SELECT_TARGET, TurnPhase.LEAP_SELECT_DESTINATION, \
+		TurnPhase.MULTI_TARGET_SELECT:
 			cancel_ability_selection()
 		TurnPhase.PLAYER_TURN:
 			if selected_ability != null:
@@ -938,6 +968,39 @@ func on_ability_selected(ability: AbilityData) -> void:
 			ui_manager.show_targeting_prompt(ability.wall_select_start_prompt)
 		return
 
+	# ── LEAP — DIFFERENT TARGETING FLOW ───────────────────────────────────────
+	if ability.is_leap:
+		leap_target_cell = Vector2i(-1, -1)
+		current_phase    = TurnPhase.LEAP_SELECT_TARGET
+
+		var in_range_leap = pathfinder.get_cells_in_range(
+			selected_unit.grid_position, ability.min_range, ability.max_range
+		)
+		highlight.show_attack_range(in_range_leap)
+
+		if ui_manager and ui_manager.has_method("show_targeting_prompt"):
+			ui_manager.show_targeting_prompt(ability.leap_select_target_prompt)
+		return
+
+	# ── ZEPHYR STRIKE / MANUAL CHAIN LIGHTNING — MULTI-TAP TARGETING ─────────
+	if ability.aoe_shape == "multi_target" or (ability.aoe_shape == "chain" and ability.chain_manual_targets):
+		multi_target_selected.clear()
+		current_phase = TurnPhase.MULTI_TARGET_SELECT
+
+		var in_range_multi = pathfinder.get_cells_in_range(
+			selected_unit.grid_position, ability.min_range, ability.max_range
+		)
+		highlight.show_attack_range(in_range_multi)
+
+		var target_count: int = ability.aoe_size + (1 if ability.aoe_shape == "chain" else 0)
+		if ui_manager and ui_manager.has_method("show_targeting_prompt"):
+			ui_manager.show_targeting_prompt("Select targets (0/%d)" % target_count)
+		if ui_manager and ui_manager.has_method("show_confirm_targets_button"):
+			ui_manager.show_confirm_targets_button(confirm_multi_target_selection)
+		return
+
+	# Calculate and highlight the valid target tiles for this ability.
+
 	# Calculate and highlight the valid target tiles for this ability.
 	var in_range = pathfinder.get_cells_in_range(
 		selected_unit.grid_position, ability.min_range, ability.max_range
@@ -981,7 +1044,10 @@ func _try_use_ability(cell: Vector2i) -> void:
 	# First tap on an AOE ability shows the blast zone overlay and returns.
 	# Second tap on the same cell confirms and executes.
 	var simulated_cells = _get_aoe_cells(cell, selected_ability)
-	if selected_ability.aoe_shape != "single":
+	# "chain" (automatic-bounce mode) picks its one initial target the same
+	# way "single" does — a double-tap-to-confirm doesn't make sense here
+	# since there's no multi-tile blast zone to preview, just one tapped tile.
+	if selected_ability.aoe_shape != "single" and selected_ability.aoe_shape != "chain":
 		if aoe_preview_cell != cell:
 			aoe_preview_cell = cell
 			if selected_unit.has_method("play_animation"):
@@ -1224,6 +1290,9 @@ func end_player_turn() -> void:
 	# ── TICK PLAYER STATUSES AND RESET TURN FLAGS ─────────────────────────────
 	# Count down player status durations and reset movement/action flags so
 	# every player unit can act again on the next player turn.
+	# ── TICK PLAYER STATUSES AND RESET TURN FLAGS ─────────────────────────────
+	# Count down player status durations and reset movement/action flags so
+	# every player unit can act again on the next player turn.
 	for unit in player_units:
 		if is_instance_valid(unit):
 			unit.tick_statuses_end_of_round("player")
@@ -1232,12 +1301,21 @@ func end_player_turn() -> void:
 			unit.can_cancel_move = false
 			CombatHooks.run_round_tick(unit)
 
+	# Also notify enemy units that the "player" boundary just passed, so any
+	# of THEIR statuses configured with expires_at = "end_of_player_round"
+	# actually get checked here (see tick_statuses_end_of_round's rewritten
+	# doc comment). This does NOT touch has_moved/has_acted/cooldowns —
+	# those still only reset at each side's OWN turn-end, unchanged.
+	for unit in enemy_units:
+		if is_instance_valid(unit):
+			unit.tick_statuses_end_of_round("player")
+
 	# Count down enemy ability cooldowns so they become available again over time.
 	for unit in enemy_units:
 		if is_instance_valid(unit):
 			for key in unit.ability_cooldowns:
 				unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
-
+				
 # ── SHOW "ENEMY'S TURN" ANNOUNCEMENT ──────────────────────────────────────
 	if ui_manager and ui_manager.has_method("show_turn_announcement"):
 		await ui_manager.show_turn_announcement(false)
@@ -1279,6 +1357,7 @@ func _on_enemy_turn_complete() -> void:
 			grid.apply_hazard_to_unit(unit, unit.grid_position, "start_of_turn")
 
 	# Reset enemy turn flags and count down their cooldowns.
+	# Reset enemy turn flags and count down their cooldowns.
 	for unit in enemy_units:
 		if is_instance_valid(unit):
 			unit.tick_statuses_end_of_round("enemy")
@@ -1289,12 +1368,22 @@ func _on_enemy_turn_complete() -> void:
 			for key in unit.ability_cooldowns:
 				unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
 
+	# Also notify player units that the "enemy" boundary just passed, so any
+	# of THEIR statuses configured with expires_at = "end_of_enemy_round" —
+	# like your Ice Shell / StoneSpike Armor case — actually survive through
+	# the enemy's whole turn and only expire right here, instead of at the
+	# end of the player's own turn. Doesn't touch has_moved/has_acted —
+	# those already reset correctly in end_player_turn() above.
+	for unit in player_units:
+		if is_instance_valid(unit):
+			unit.tick_statuses_end_of_round("enemy")
+
 	# Count down player cooldowns too.
 	for unit in player_units:
 		if is_instance_valid(unit):
 			for key in unit.ability_cooldowns:
 				unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
-
+			
 	# ── SHOW "PLAYER'S TURN" ANNOUNCEMENT ─────────────────────────────────────
 	if ui_manager and ui_manager.has_method("show_turn_announcement"):
 		await ui_manager.show_turn_announcement(true)
@@ -1525,6 +1614,192 @@ func _calculate_wall_cells(start: Vector2i, end: Vector2i, ability: AbilityData)
 	cells = cells.filter(func(c): return grid.is_valid_cell(c))
 	return cells
 
+# ── LEAP ───────────────────────────────────────────────────────────────────────
+
+func _try_select_leap_target(cell: Vector2i) -> void:
+	if selected_unit == null or selected_ability == null:
+		current_phase = TurnPhase.PLAYER_TURN
+		return
+
+	var in_range = pathfinder.get_cells_in_range(
+		selected_unit.grid_position, selected_ability.min_range, selected_ability.max_range
+	)
+	if not cell in in_range:
+		print("🚫 Tapped outside range — cancelling Leap.")
+		cancel_ability_selection()
+		return
+
+	var unit_there = grid.get_unit_at(cell)
+	if unit_there == null or unit_there.is_player_unit == selected_unit.is_player_unit:
+		print("❌ Leap target must be an enemy.")
+		return
+
+	var valid_dest_cells: Array = _get_leap_destination_cells(cell)
+	if valid_dest_cells.is_empty():
+		if ui_manager and ui_manager.has_method("show_popup_message"):
+			ui_manager.show_popup_message("No available adjacent spaces")
+		return   # Stay in LEAP_SELECT_TARGET so they can try a different target.
+
+	leap_target_cell = cell
+	current_phase    = TurnPhase.LEAP_SELECT_DESTINATION
+
+	if ui_manager and ui_manager.has_method("show_targeting_prompt"):
+		ui_manager.show_targeting_prompt(selected_ability.leap_select_destination_prompt)
+
+	highlight.clear_highlights()
+	highlight.show_attack_range(valid_dest_cells)
+
+
+func _try_select_leap_destination(cell: Vector2i) -> void:
+	if selected_unit == null or selected_ability == null:
+		current_phase = TurnPhase.PLAYER_TURN
+		return
+
+	var valid_dest_cells: Array = _get_leap_destination_cells(leap_target_cell)
+	var is_adjacent: bool = cell in [
+		leap_target_cell + Vector2i(0, -1), leap_target_cell + Vector2i(0, 1),
+		leap_target_cell + Vector2i(-1, 0), leap_target_cell + Vector2i(1, 0),
+	]
+
+	if not cell in valid_dest_cells:
+		if is_adjacent:
+			# A legal spot in principle — just occupied/blocked right now.
+			if ui_manager and ui_manager.has_method("show_popup_message"):
+				ui_manager.show_popup_message("Tile must be unoccupied")
+		return   # Stay in LEAP_SELECT_DESTINATION either way.
+
+	current_phase = TurnPhase.ANIMATION
+	if ui_manager and ui_manager.has_method("hide_targeting_prompt"):
+		ui_manager.hide_targeting_prompt()
+	highlight.clear_highlights()
+
+	var target_cell_for_execute: Vector2i = leap_target_cell
+	leap_target_cell = Vector2i(-1, -1)
+
+	await executor.execute_ability(selected_unit, selected_ability, [target_cell_for_execute], cell)
+
+	if is_instance_valid(selected_unit):
+		total_mana_spent += selected_ability.mana_cost
+		if total_mana_spent >= ARCANA_THRESHOLD:
+			total_mana_spent -= ARCANA_THRESHOLD
+			_grant_arcana_charge_to_spellsword()
+		selected_unit.has_acted       = true
+		selected_unit.can_cancel_move = false
+		if selected_unit.has_method("play_animation"):
+			selected_unit.play_animation("idle")
+
+	_check_unleash_threshold()
+	if selected_ability.is_unleash_ability:
+		consume_unleash()
+
+	_finish_ability(selected_unit if is_instance_valid(selected_unit) else null)
+
+
+func _get_leap_destination_cells(target_cell: Vector2i) -> Array:
+	var candidates: Array = [
+		target_cell + Vector2i(0, -1), target_cell + Vector2i(0, 1),
+		target_cell + Vector2i(-1, 0), target_cell + Vector2i(1, 0),
+	]
+	var result: Array = []
+	for c in candidates:
+		if not grid.is_valid_cell(c):
+			continue
+		if not grid.is_terrain_walkable(c):
+			continue
+		if grid.unit_positions.has(c):
+			continue
+		result.append(c)
+	return result
+
+# ── MULTI-TARGET (Zephyr Strike / manual Chain Lightning) ─────────────────────
+
+func _try_multi_target_tap(cell: Vector2i) -> void:
+	if selected_unit == null or selected_ability == null:
+		return
+
+	var is_chain: bool = selected_ability.aoe_shape == "chain"
+	var max_count: int = selected_ability.aoe_size + (1 if is_chain else 0)
+
+	# For a chain's LATER taps, valid range is measured from the PREVIOUSLY
+	# selected target (chain_range), not from the caster.
+	var valid_cells: Array
+	if is_chain and not multi_target_selected.is_empty():
+		var prev_unit = grid.get_unit_at(multi_target_selected.back())
+		var from_cell: Vector2i = prev_unit.grid_position if is_instance_valid(prev_unit) else selected_unit.grid_position
+		valid_cells = pathfinder.get_cells_in_range(from_cell, 0, selected_ability.chain_range)
+	else:
+		valid_cells = pathfinder.get_cells_in_range(
+			selected_unit.grid_position, selected_ability.min_range, selected_ability.max_range
+		)
+
+	if not cell in valid_cells:
+		print("🚫 Tapped outside range for this target — cancelling selection.")
+		cancel_ability_selection()
+		return
+
+	var unit_there = grid.get_unit_at(cell)
+	if unit_there == null or unit_there.is_player_unit == selected_unit.is_player_unit:
+		print("❌ Must select an enemy tile.")
+		return
+
+	multi_target_selected.append(cell)
+
+	if ui_manager and ui_manager.has_method("show_targeting_prompt"):
+		ui_manager.show_targeting_prompt("Select targets (%d/%d)" % [multi_target_selected.size(), max_count])
+
+	if multi_target_selected.size() >= max_count:
+		if ui_manager and ui_manager.has_method("hide_confirm_targets_button"):
+			ui_manager.hide_confirm_targets_button()
+		_execute_multi_target_selection()
+	else:
+		var next_valid: Array
+		if is_chain:
+			next_valid = pathfinder.get_cells_in_range(unit_there.grid_position, 0, selected_ability.chain_range)
+		else:
+			next_valid = valid_cells
+		highlight.clear_highlights()
+		highlight.show_attack_range(next_valid)
+
+func confirm_multi_target_selection() -> void:
+	# Called by the Confirm button while in MULTI_TARGET_SELECT — lets the
+	# player commit with FEWER than the ability's max target count instead
+	# of being forced to fill every slot.
+	if current_phase != TurnPhase.MULTI_TARGET_SELECT:
+		return
+	if multi_target_selected.is_empty():
+		return   # Nothing picked yet — nothing to confirm.
+	if ui_manager and ui_manager.has_method("hide_confirm_targets_button"):
+		ui_manager.hide_confirm_targets_button()
+	_execute_multi_target_selection()
+
+func _execute_multi_target_selection() -> void:
+	current_phase = TurnPhase.ANIMATION
+	if ui_manager and ui_manager.has_method("hide_targeting_prompt"):
+		ui_manager.hide_targeting_prompt()
+	highlight.clear_highlights()
+
+	var cells: Array = multi_target_selected.duplicate()
+	multi_target_selected.clear()
+
+	var filtered_cells = _filter_cells_by_team(cells, selected_ability, selected_unit)
+	await executor.execute_ability(selected_unit, selected_ability, filtered_cells)
+
+	if is_instance_valid(selected_unit):
+		total_mana_spent += selected_ability.mana_cost
+		if total_mana_spent >= ARCANA_THRESHOLD:
+			total_mana_spent -= ARCANA_THRESHOLD
+			_grant_arcana_charge_to_spellsword()
+		selected_unit.has_acted       = true
+		selected_unit.can_cancel_move = false
+		if selected_unit.has_method("play_animation"):
+			selected_unit.play_animation("idle")
+
+	_check_unleash_threshold()
+	if selected_ability.is_unleash_ability:
+		consume_unleash()
+
+	_finish_ability(selected_unit if is_instance_valid(selected_unit) else null)
+
 # ── AOE HELPERS ───────────────────────────────────────────────────────────────
 
 func _draw_aoe_preview(cast_range_cells: Array, aoe_impact_cells: Array) -> void:
@@ -1547,6 +1822,14 @@ func _get_aoe_cells(center: Vector2i, ability: AbilityData) -> Array:
 
 	match ability.aoe_shape:
 		"single":
+			cells = [center]
+
+		"chain":
+			# Only the FIRST target is picked by tapping — every bounce after
+			# that is found automatically (or, for chain_manual_targets,
+			# picked through the separate multi-tap flow, which never calls
+			# this function at all). So the "AOE" for a single chain tap is
+			# just the one tile that was tapped.
 			cells = [center]
 
 		"square":

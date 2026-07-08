@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://buy5nf322k2vx"
-path="res://.godot/imported/spellsword charging.png-d911bda36e90e02bbb85d438a8afd86b.ctex"
+uid="uid://c8jpvxm22r834"
+path="res://.godot/imported/spellsword2_windslash.png-eb3a43bde1023d381b7cdd441457a3e5.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/spellsword/spellsword charging.png"
-dest_files=["res://.godot/imported/spellsword charging.png-d911bda36e90e02bbb85d438a8afd86b.ctex"]
+source_file="res://sprites/spellsword/spellsword2_windslash.png"
+dest_files=["res://.godot/imported/spellsword2_windslash.png-eb3a43bde1023d381b7cdd441457a3e5.ctex"]
 
 [params]
 

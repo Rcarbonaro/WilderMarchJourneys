@@ -10,7 +10,7 @@
 script = ExtResource("2_4qs6l")
 id = "weal"
 display_name = "Weal"
-description = "Forcibly shape fate to increase all of an ally's stats for 3 rounds. Cost: 20 mana"
+description = "Forcibly shape fate to increase an ally'scritical chance and damage dealt for 3 rounds. Cost: 20 mana"
 icon = ExtResource("3_oeq2y")
 effect_scene = ExtResource("3_quu4m")
 mana_cost = 20

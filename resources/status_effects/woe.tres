@@ -7,11 +7,9 @@
 script = ExtResource("1_6jh3y")
 id = "woe"
 display_name = "Woe"
-description = "Decreases all stats for 3 rounds"
+description = "Decreases target's critical chance and increases damage taken for 3 rounds"
 icon = ExtResource("1_bok6l")
 duration_rounds = 3
-atk_modifier = -4
-def_modifier = -4
-matk_modifier = -4
-mdef_modifier = -4
+crit_chance_modifier = -50.0
+damage_taken_modifier = 0.35
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

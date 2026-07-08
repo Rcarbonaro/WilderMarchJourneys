@@ -10,6 +10,7 @@
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_1n7wx"]
 [ext_resource type="Resource" uid="uid://bn1rigttdhb6b" path="res://resources/abilities/scorchwind_slash.tres" id="5_q0pr1"]
 [ext_resource type="Resource" uid="uid://cvo30h186mrer" path="res://resources/abilities/arcthrust.tres" id="6_e33ic"]
+[ext_resource type="Resource" uid="uid://dkj00w82k7am5" path="res://resources/abilities/zephyrstrike.tres" id="10_uwq85"]
 
 [resource]
 script = ExtResource("1_hbk8x")
@@ -20,6 +21,6 @@ portrait = ExtResource("3_1n7wx")
 battle_sprite = ExtResource("2_utbtp")
 stats_by_level = Array[ExtResource("3_eqeet")]([ExtResource("1_nnys7")])
 base_stats = ExtResource("1_nnys7")
-starting_abilities = Array[ExtResource("2_8rtn7")]([ExtResource("4_2hmbf"), ExtResource("5_q0pr1"), ExtResource("6_e33ic")])
+starting_abilities = Array[ExtResource("2_8rtn7")]([ExtResource("4_2hmbf"), ExtResource("5_q0pr1"), ExtResource("6_e33ic"), ExtResource("10_uwq85")])
 is_spellsword = true
 metadata/_custom_type_script = "uid://utmj7y8m802a"

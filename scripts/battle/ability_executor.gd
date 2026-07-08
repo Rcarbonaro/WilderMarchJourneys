@@ -47,6 +47,13 @@ var aura_manager: Node = null
 # Used to activate auras when an aura ability is used, and to fire
 # Crit Overload and Momentum events when crits and kills happen.
 
+var pathfinder_ref: Node = null
+# Set by BattleManager on startup, alongside grid_ref. Used by automatic
+# Chain Lightning bounces to respect walls/line-of-sight the exact same way
+# every other targeting in the game does, instead of reimplementing its own
+# distance math with no obstacle awareness.
+
+
 # ── GLOBAL HP-COST TRACKING ───────────────────────────────────────────────────
 
 var total_hp_consumed: int = 0
@@ -188,9 +195,36 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 				  caster.unit_data.display_name)
 
 		# Cooldown still applies even though we skip the rest of the pipeline.
+		# Cooldown still applies even though we skip the rest of the pipeline.
 		if ability.cooldown_rounds > 0:
 			caster.ability_cooldowns[ability.id] = ability.cooldown_rounds
 		return
+
+	# ── STEP 2.6: CHAIN LIGHTNING ──────────────────────────────────────────────
+	if ability.aoe_shape == "chain":
+		await _execute_chain_lightning(caster, ability, target_cells)
+		if ability.cooldown_rounds > 0 and is_instance_valid(caster):
+			caster.ability_cooldowns[ability.id] = ability.cooldown_rounds
+		return
+
+	# ── STEP 2.7: MULTI-TARGET (Zephyr Strike-style) ───────────────────────────
+	if ability.aoe_shape == "multi_target":
+		await _execute_multi_target_strike(caster, ability, target_cells)
+		if ability.cooldown_rounds > 0 and is_instance_valid(caster):
+			caster.ability_cooldowns[ability.id] = ability.cooldown_rounds
+		return
+
+	# ── STEP 2.8: LEAP ──────────────────────────────────────────────────────────
+	# NOTE: 'origin_cell' is repurposed here to carry the DESTINATION tile
+	# chosen in battle_manager's two-tap Leap flow, since target_cells only
+	# ever holds the single enemy target cell for this ability type.
+	if ability.is_leap:
+		await _execute_leap(caster, ability, target_cells, origin_cell)
+		if ability.cooldown_rounds > 0 and is_instance_valid(caster):
+			caster.ability_cooldowns[ability.id] = ability.cooldown_rounds
+		return
+
+	# ── STEP 3: COLLECT UNIQUE UNIT TARGETS AND APPLY EFFECTS ─────────────────
 
 	# ── STEP 3: COLLECT UNIQUE UNIT TARGETS AND APPLY EFFECTS ─────────────────
 	# Large units occupy multiple cells. We track which UnitNode references we
@@ -583,6 +617,17 @@ func calculate_damage(caster, target, ability: AbilityData) -> int:
 		"hazard":    defensive_stat = target.get_effective_mdef()
 		"true":      defensive_stat = 0   # True damage ignores all defense.
 
+	# TEMPORARY DEBUG — remove once the Stonewarden damage mystery is solved.
+	print("🔎 DMG DEBUG | ability='", ability.display_name,
+		  "' damage_type=", ability.damage_type,
+		  " | caster=", caster.unit_data.display_name, " offensive_stat=", offensive_stat,
+		  " | target=", target.unit_data.display_name,
+		  " base_def=", target.get_stats().def, " get_effective_def=", target.get_effective_def(),
+		  " base_mdef=", target.get_stats().mdef, " get_effective_mdef=", target.get_effective_mdef(),
+		  " defensive_stat_used=", defensive_stat,
+		  " | target statuses: ", target.active_statuses.map(func(s): return "%s(def%+d,mdef%+d)x%d" % [s["data"].display_name, s["data"].def_modifier, s["data"].mdef_modifier, s["stacks"]]),
+		  " | target momentum_bonuses: ", target.momentum_bonuses)
+		
 	# -- 2. Per-buff stat bonuses (only for this attack) ──────────────────────
 	# These are bonuses the ability adds to the caster's EFFECTIVE stats for
 	# this single hit, based on how many buffs the caster has active.
@@ -791,6 +836,507 @@ func _spawn_dash_trail(from_world: Vector2, to_world: Vector2,
 	var tween = get_tree().create_tween()
 	tween.tween_property(trail, "modulate:a", 0.0, 0.5)
 	tween.tween_callback(trail.queue_free)
+
+# ── CHAIN LIGHTNING ────────────────────────────────────────────────────────────
+
+func _execute_chain_lightning(caster, ability: AbilityData, target_cells: Array) -> void:
+	if target_cells.is_empty():
+		return
+	var first_target = grid_ref.get_unit_at(target_cells[0])
+	if first_target == null or not is_instance_valid(first_target):
+		return
+
+	# Build the full ordered hit list: the first target, then either the
+	# player's own manually-tapped secondary targets (already in
+	# target_cells, in tap order) or automatically-found nearest unhit
+	# enemies within chain_range of the previous hit, one at a time.
+	var chain_targets: Array = [first_target]
+
+	if ability.chain_manual_targets:
+		for i in range(1, target_cells.size()):
+			var t = grid_ref.get_unit_at(target_cells[i])
+			if t != null and is_instance_valid(t) and not t in chain_targets:
+				chain_targets.append(t)
+	else:
+		var previous = first_target
+		for _i in range(ability.aoe_size):
+			var next_target = _find_nearest_chain_target(
+				previous, caster, chain_targets, ability.chain_range, ability.requires_line_of_sight
+			)
+			if next_target == null:
+				break
+			chain_targets.append(next_target)
+			previous = next_target
+
+	# ── FIRST BOUNCE: caster → first target ───────────────────────────────
+	var first_scene: PackedScene = ability.chain_bounce_scene_first if ability.chain_bounce_scene_first != null else ability.effect_scene
+	await _play_bounce_scene(caster.position, first_target, first_scene)
+	if is_instance_valid(first_target):
+		var dmg = calculate_damage(caster, first_target, ability)
+		_apply_damage_with_effects(caster, first_target, ability, dmg)
+
+	if chain_targets.size() < 2:
+		return
+
+	# ── SECONDARY BOUNCES: first target → each other target ───────────────
+	var secondary_targets: Array = chain_targets.slice(1)
+	var secondary_scene: PackedScene = ability.chain_bounce_scene_secondary
+	if secondary_scene == null:
+		secondary_scene = first_scene
+
+	if ability.chain_simultaneous:
+		# Fire-and-forget, same pattern already used for displacement VFX
+		# elsewhere in this file — each bounce independently times its own
+		# damage against the end of ITS OWN animation.
+		var started: int = 0
+		for t in secondary_targets:
+			_play_bounce_and_damage(caster, first_target.position, t, ability, secondary_scene)
+			started += 1
+		if started > 0:
+			await get_tree().create_timer(0.6).timeout
+	else:
+		for t in secondary_targets:
+			await _play_bounce_and_damage(caster, first_target.position, t, ability, secondary_scene)
+
+
+func _find_nearest_chain_target(previous, caster, already_hit: Array, chain_range: int, requires_los: bool = true):
+	# Nearest enemy to 'previous' within chain_range, excluding anyone
+	# already hit this cast.
+	#
+	# THE FIX: this used to scan every unit on the grid with its own
+	# hand-rolled Manhattan distance check and NO wall/line-of-sight
+	# awareness at all — a bounce could jump straight through a wall to hit
+	# something "close" on the other side, which reads as the chain hitting
+	# further/through more than it should. Routing through
+	# pathfinder_ref.get_cells_in_range() + has_line_of_sight() makes an
+	# automatic bounce respect obstacles exactly the same way every other
+	# targeting in the game already does (regular ability ranges, and the
+	# manual chain-tap highlighting).
+	if pathfinder_ref == null:
+		printerr("⚠️ ability_executor: pathfinder_ref is null — chain lightning ",
+				 "auto-targeting can't check line of sight. Did BattleManager ",
+				 "set executor.pathfinder_ref in _ready()?")
+
+	var candidate_cells: Array = []
+	if pathfinder_ref != null:
+		candidate_cells = pathfinder_ref.get_cells_in_range(previous.grid_position, 1, chain_range)
+	else:
+		# No pathfinder available — fall back to the old raw-distance scan
+		# rather than finding nothing at all.
+		for dx in range(-chain_range, chain_range + 1):
+			for dy in range(-chain_range, chain_range + 1):
+				if abs(dx) + abs(dy) <= chain_range and abs(dx) + abs(dy) > 0:
+					candidate_cells.append(previous.grid_position + Vector2i(dx, dy))
+
+	var best = null
+	var best_dist: int = 999999
+	for cell in candidate_cells:
+		var candidate = grid_ref.get_unit_at(cell)
+		if candidate == null or not is_instance_valid(candidate):
+			continue
+		if candidate in already_hit:
+			continue
+		if candidate.is_player_unit == caster.is_player_unit:
+			continue
+		if requires_los and pathfinder_ref != null:
+			if not pathfinder_ref.has_line_of_sight(previous.grid_position, candidate.grid_position):
+				continue
+
+		var dist: int = abs(candidate.grid_position.x - previous.grid_position.x) \
+					  + abs(candidate.grid_position.y - previous.grid_position.y)
+		if dist < best_dist:
+			best_dist = dist
+			best = candidate
+	return best
+
+
+func _play_bounce_and_damage(caster, from_world: Vector2, target, ability: AbilityData, scene: PackedScene) -> void:
+	if not is_instance_valid(target):
+		return
+	await _play_bounce_scene(from_world, target, scene)
+	if is_instance_valid(target):
+		var dmg = calculate_damage(caster, target, ability)
+		_apply_damage_with_effects(caster, target, ability, dmg)
+
+
+func _play_bounce_scene(from_world: Vector2, target, scene: PackedScene) -> void:
+	# Stretches a "bounce" scene between from_world and the target's current
+	# position — same stretching idea as _spawn_dash_trail, but plays an
+	# actual scene with its own animation rather than a static faded sprite.
+	var spawn_root = _get_spawn_root()
+	if spawn_root == null or not is_instance_valid(target):
+		return
+
+	var to_world: Vector2 = target.position
+	var node: Node2D
+	if scene != null:
+		node = scene.instantiate()
+	else:
+		var sprite := Sprite2D.new()
+		var img := Image.create(24, 24, false, Image.FORMAT_RGBA8)
+		img.fill(Color(0.6, 0.8, 1.0))
+		sprite.texture = ImageTexture.create_from_image(img)
+		node = sprite
+
+	spawn_root.add_child(node)
+	_stretch_effect_between(node, from_world, to_world)
+
+	# THE FIX: this got dropped when _stretch_effect_between was added —
+	# the node was being positioned/scaled correctly but never actually
+	# told to PLAY, and never awaited/cleaned up, which is why bounce
+	# scenes appeared to do nothing at all.
+	if node is AnimatedSprite2D:
+		node.play("default")
+		await node.animation_finished
+	elif node.has_node("AnimatedSprite2D"):
+		var s = node.get_node("AnimatedSprite2D") as AnimatedSprite2D
+		s.play("default")
+		await s.animation_finished
+	else:
+		await get_tree().create_timer(0.35).timeout
+
+	if is_instance_valid(node):
+		node.queue_free()
+
+
+func _stretch_effect_between(node: Node2D, from_world: Vector2, to_world: Vector2) -> void:
+	# Positions, rotates, and SCALES 'node' so it visually spans exactly from
+	# from_world to to_world, regardless of how far apart they are or how the
+	# node's own art was originally sized. This replaces the old fixed
+	# "divide by 96" guess, which only happened to look right at exactly one
+	# specific distance.
+	#
+	# TWO WAYS a scene can be stretched, tried in this order:
+	#
+	# 1. CUSTOM: if the instantiated scene defines its own
+	#    stretch_between(from_global: Vector2, to_global: Vector2) method,
+	#    we call that and do NOTHING else — full control for scenes that
+	#    need custom logic (e.g. a segmented Line2D lightning arc, or
+	#    several independently-positioned child sprites). The scene is
+	#    responsible for its own position/rotation/scale entirely in this case.
+	#
+	# 2. AUTOMATIC (default, no method needed): we measure the scene's own
+	#    visual content once (see _measure_node_horizontal_extent below) to
+	#    find out how wide it naturally is at scale (1,1), then rotate it to
+	#    point from -> to, position it at the midpoint, and set scale.x so
+	#    that natural width now exactly equals the real distance. scale.y is
+	#    left untouched, so the effect only stretches/condenses along its
+	#    length, never gets thinner or fatter vertically.
+	#
+	# IMPORTANT for path (2): author bounce-effect scenes with their origin
+	# at their own centre and their visual content spanning horizontally
+	# along the local +x/-x axis — same convention _spawn_dash_trail already
+	# assumes elsewhere in this file. If your scene is anchored differently
+	# (e.g. origin at the START of the effect rather than the middle),
+	# implement stretch_between() on it instead and this function will use
+	# that automatically.
+	if node.has_method("stretch_between"):
+		node.stretch_between(from_world, to_world)
+		return
+
+	var distance: float = from_world.distance_to(to_world)
+	var natural_width: float = _measure_node_horizontal_extent(node)
+	if natural_width <= 0.0:
+		natural_width = 96.0   # Same fallback tile-size assumption used elsewhere in this file.
+
+	node.position = (from_world + to_world) / 2.0
+	node.rotation = from_world.angle_to_point(to_world)
+	node.scale.x  = distance / natural_width
+
+
+func _measure_node_horizontal_extent(node: Node) -> float:
+	# Figures out how "wide" a node's own visual content naturally is (at its
+	# CURRENT scale, before we touch it), by checking the most common node
+	# types used for VFX and recursing into children. Returns the widest
+	# single element found — a bounce scene is usually one dominant sprite,
+	# animation, or line, so the widest part is the right thing to treat as
+	# "this scene's natural travel length."
+	var best: float = 0.0
+
+	if node is Sprite2D and node.texture != null:
+		best = max(best, node.texture.get_size().x * node.scale.x)
+
+	elif node is AnimatedSprite2D and node.sprite_frames != null:
+		var anim_names: PackedStringArray = node.sprite_frames.get_animation_names()
+		if anim_names.size() > 0:
+			var anim_name: String = "default" if node.sprite_frames.has_animation("default") else anim_names[0]
+			if node.sprite_frames.get_frame_count(anim_name) > 0:
+				var tex: Texture2D = node.sprite_frames.get_frame_texture(anim_name, 0)
+				if tex != null:
+					best = max(best, tex.get_size().x * node.scale.x)
+
+	elif node is Line2D:
+		var min_x: float = INF
+		var max_x: float = -INF
+		for point in node.points:
+			min_x = min(min_x, point.x)
+			max_x = max(max_x, point.x)
+		if max_x > min_x:
+			best = max(best, (max_x - min_x) * node.scale.x)
+
+	for child in node.get_children():
+		best = max(best, _measure_node_horizontal_extent(child))
+
+	return best
+
+# ── SHARED: TRAVEL + IMPACT ANIMATION HELPERS (Zephyr Strike, Leap) ───────────
+
+func _travel_caster_to(caster, ability: AbilityData, dest_cell: Vector2i) -> void:
+	# Slides the caster to dest_cell, playing travel_animation_name (falling
+	# back to "walk") for the duration. Same snap_to-then-restore-then-tween
+	# pattern _execute_dash uses, so grid registration updates immediately
+	# but the visual still slides smoothly.
+	if not is_instance_valid(caster):
+		return
+	var start_world: Vector2 = caster.position
+	var end_world: Vector2 = grid_ref.grid_to_world(dest_cell)
+
+	caster.snap_to(dest_cell)
+	caster.position = start_world
+
+	var travel_anim: String = ability.travel_animation_name if ability.travel_animation_name != "" else "walk"
+	caster.play_animation(travel_anim)
+
+	var distance: float = start_world.distance_to(end_world)
+	var speed: float = ability.dash_speed if ability.dash_speed > 0 else 800.0
+	var duration: float = distance / speed
+
+	var tween = get_tree().create_tween()
+	tween.tween_property(caster, "position", end_world, duration)\
+		.set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN_OUT)
+	await tween.finished
+
+
+func _play_caster_animation_and_wait(caster, anim_name: String, fallback_seconds: float = 0.35) -> void:
+	# Plays a named animation on the caster and waits for it to ACTUALLY
+	# finish (rather than guessing a fixed delay) — this is what makes
+	# damage land "when the animation ends" for Zephyr Strike/Leap impacts.
+	if not is_instance_valid(caster) or anim_name == "":
+		await get_tree().create_timer(fallback_seconds).timeout
+		return
+	caster.play_named_animation(anim_name)
+	if caster.has_node("AnimatedSprite2D"):
+		var sprite = caster.get_node("AnimatedSprite2D") as AnimatedSprite2D
+		if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(anim_name):
+			await sprite.animation_finished
+			return
+	await get_tree().create_timer(fallback_seconds).timeout
+
+
+func _find_adjacent_empty_cell(target_cell: Vector2i, prefer_near: Vector2i) -> Vector2i:
+	# The empty, passable, orthogonally-adjacent (no diagonals) tile next to
+	# target_cell closest to prefer_near — or (-1,-1) if none are free.
+	var candidates: Array = [
+		target_cell + Vector2i(0, -1), target_cell + Vector2i(0, 1),
+		target_cell + Vector2i(-1, 0), target_cell + Vector2i(1, 0),
+	]
+	var best: Vector2i = Vector2i(-1, -1)
+	var best_dist: int = 999999
+	for c in candidates:
+		if not grid_ref.is_valid_cell(c):
+			continue
+		if not grid_ref.is_terrain_walkable(c):
+			continue
+		if grid_ref.unit_positions.has(c):
+			continue
+		var dist: int = abs(c.x - prefer_near.x) + abs(c.y - prefer_near.y)
+		if dist < best_dist:
+			best_dist = dist
+			best = c
+	return best
+	
+	
+func _find_opposite_adjacent_cell(target_cell: Vector2i, from_cell: Vector2i) -> Vector2i:
+	# The orthogonally-adjacent tile on the FAR side of target_cell from
+	# from_cell — straight through and out the other side. Used when the
+	# same target is selected twice in a row in sequential multi-target
+	# mode (see _multi_target_sequential above), so the caster visibly
+	# passes THROUGH the target instead of recomputing the exact tile it's
+	# already standing on.
+	var direction: Vector2i = target_cell - from_cell
+	var snapped: Vector2i
+	if abs(direction.x) >= abs(direction.y):
+		snapped = Vector2i(sign(direction.x) if direction.x != 0 else 1, 0)
+	else:
+		snapped = Vector2i(0, sign(direction.y) if direction.y != 0 else 1)
+
+	var opposite: Vector2i = target_cell + snapped
+	if grid_ref.is_valid_cell(opposite) and grid_ref.is_terrain_walkable(opposite) \
+			and not grid_ref.unit_positions.has(opposite):
+		return opposite
+	return Vector2i(-1, -1)
+
+# ── ZEPHYR STRIKE (multi_target) ───────────────────────────────────────────────
+
+func _execute_multi_target_strike(caster, ability: AbilityData, target_cells: Array) -> void:
+	var targets: Array = []
+	for cell in target_cells:
+		var t = grid_ref.get_unit_at(cell)
+		# NOTE: duplicates are intentionally kept now — selecting the same
+		# target more than once is allowed (see _multi_target_sequential's
+		# pass-through handling below), so this no longer dedupes.
+		if t != null and is_instance_valid(t):
+			targets.append(t)
+	if targets.is_empty():
+		return
+
+	var origin_cell: Vector2i = caster.grid_position
+	var origin_world: Vector2 = caster.position
+
+	if ability.multi_target_simultaneous:
+		await _multi_target_simultaneous(caster, ability, targets, origin_cell, origin_world)
+	else:
+		await _multi_target_sequential(caster, ability, targets, origin_cell, origin_world)
+
+
+func _multi_target_sequential(caster, ability: AbilityData, targets: Array,
+							   origin_cell: Vector2i, origin_world: Vector2) -> void:
+	var current_cell: Vector2i = origin_cell
+	var previous_target = null
+
+	for target in targets:
+		if not is_instance_valid(target):
+			continue
+
+		var dest: Vector2i
+		if target == previous_target:
+			# THE FIX: the same target selected twice in a row used to
+			# compute the exact same adjacent tile the caster was already
+			# standing on (via _find_adjacent_empty_cell, "closest empty
+			# tile to current_cell" — which IS current_cell when they just
+			# arrived there), so nothing visibly happened on the repeat hit.
+			# Instead, aim for the tile on the FAR side of the target — the
+			# caster visibly travels THROUGH them to the other side, then
+			# hits, then continues from there.
+			dest = _find_opposite_adjacent_cell(target.grid_position, current_cell)
+			if dest == Vector2i(-1, -1):
+				# No room on the far side — fall back to the normal nearest
+				# empty tile rather than skipping the hit entirely.
+				dest = _find_adjacent_empty_cell(target.grid_position, current_cell)
+		else:
+			dest = _find_adjacent_empty_cell(target.grid_position, current_cell)
+
+		if dest == Vector2i(-1, -1):
+			continue   # No room to reach this one — skip, keep going to the rest.
+
+		await _travel_caster_to(caster, ability, dest)
+		if not is_instance_valid(caster) or not is_instance_valid(target):
+			continue
+
+		caster.look_at_target(target.grid_position)
+		await _play_caster_animation_and_wait(caster, ability.impact_animation_name, 0.35)
+
+		if is_instance_valid(target):
+			var dmg = calculate_damage(caster, target, ability)
+			_apply_damage_with_effects(caster, target, ability, dmg)
+
+		current_cell    = dest
+		previous_target = target
+
+	if is_instance_valid(caster):
+		await _travel_caster_to(caster, ability, origin_cell)
+		if is_instance_valid(caster):
+			caster.play_animation("idle")
+
+
+func _multi_target_simultaneous(caster, ability: AbilityData, targets: Array,
+								  origin_cell: Vector2i, origin_world: Vector2) -> void:
+	if not is_instance_valid(caster):
+		return
+
+	if caster.has_node("AnimatedSprite2D"):
+		caster.get_node("AnimatedSprite2D").visible = false
+
+	var pending: int = 0
+	for target in targets:
+		if not is_instance_valid(target):
+			continue
+		var dest: Vector2i = _find_adjacent_empty_cell(target.grid_position, origin_cell)
+		if dest == Vector2i(-1, -1):
+			continue
+		_duplicate_strike(caster, ability, target, dest)
+		pending += 1
+
+	# Rough wait for every duplicate to finish — each one manages its own
+	# damage timing internally regardless.
+	if pending > 0:
+		await get_tree().create_timer(1.2).timeout
+
+	if is_instance_valid(caster):
+		caster.position = origin_world
+		if caster.has_node("AnimatedSprite2D"):
+			caster.get_node("AnimatedSprite2D").visible = true
+		caster.play_animation("idle")
+
+
+func _duplicate_strike(caster, ability: AbilityData, target, dest_cell: Vector2i) -> void:
+	# Spawns a temporary visual clone of the caster that flies out to
+	# dest_cell, plays the impact animation, deals damage at the end of it,
+	# then disappears. The REAL caster never moves during this — it's
+	# hidden by _multi_target_simultaneous for the duration.
+	var spawn_root = _get_spawn_root()
+	if spawn_root == null or not is_instance_valid(caster):
+		return
+
+	var clone := AnimatedSprite2D.new()
+	if caster.has_node("AnimatedSprite2D"):
+		clone.sprite_frames = caster.get_node("AnimatedSprite2D").sprite_frames
+	spawn_root.add_child(clone)
+	clone.position = caster.position
+
+	var travel_anim: String = ability.travel_animation_name if ability.travel_animation_name != "" else "walk"
+	if clone.sprite_frames != null and clone.sprite_frames.has_animation(travel_anim):
+		clone.play(travel_anim)
+
+	var end_world: Vector2 = grid_ref.grid_to_world(dest_cell)
+	var distance: float = clone.position.distance_to(end_world)
+	var speed: float = ability.dash_speed if ability.dash_speed > 0 else 800.0
+	var duration: float = distance / speed
+
+	var tween = get_tree().create_tween()
+	tween.tween_property(clone, "position", end_world, duration)\
+		.set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN_OUT)
+	await tween.finished
+
+	if not is_instance_valid(clone):
+		return
+
+	var impact_anim: String = ability.impact_animation_name
+	if impact_anim != "" and clone.sprite_frames != null and clone.sprite_frames.has_animation(impact_anim):
+		clone.play(impact_anim)
+		await clone.animation_finished
+	else:
+		await get_tree().create_timer(0.3).timeout
+
+	if is_instance_valid(target):
+		var dmg = calculate_damage(caster, target, ability)
+		_apply_damage_with_effects(caster, target, ability, dmg)
+
+	if is_instance_valid(clone):
+		clone.queue_free()
+
+# ── LEAP ────────────────────────────────────────────────────────────────────────
+
+func _execute_leap(caster, ability: AbilityData, target_cells: Array, destination_cell: Vector2i) -> void:
+	if target_cells.is_empty():
+		return
+	var target = grid_ref.get_unit_at(target_cells[0])
+	if target == null or not is_instance_valid(target):
+		return
+
+	caster.look_at_target(target.grid_position)
+	await _travel_caster_to(caster, ability, destination_cell)
+
+	if not is_instance_valid(caster) or not is_instance_valid(target):
+		return
+
+	caster.look_at_target(target.grid_position)
+	await _play_caster_animation_and_wait(caster, ability.impact_animation_name, 0.3)
+
+	if is_instance_valid(target):
+		var dmg = calculate_damage(caster, target, ability)
+		_apply_damage_with_effects(caster, target, ability, dmg)
+
 
 # ── DISPLACEMENT HELPERS ──────────────────────────────────────────────────────
 

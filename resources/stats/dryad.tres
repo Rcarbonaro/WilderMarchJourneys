@@ -6,7 +6,7 @@
 script = ExtResource("1_1hhiw")
 hp = 38
 atk = 6
-matk = 8
+matk = 10
 def = 10
 mdef = 13
 mov = 2

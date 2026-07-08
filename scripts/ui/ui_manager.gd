@@ -474,6 +474,47 @@ func hide_targeting_prompt() -> void:
 		_targeting_prompt_label.visible = false
 
 
+# ── CONFIRM TARGETS BUTTON (multi-target selection) ─────────────────────────
+# Shown alongside the targeting prompt while picking Zephyr-Strike-style
+# multi-target abilities, so the player can commit with FEWER than the max
+# number of targets instead of being forced to fill every slot.
+
+var _confirm_targets_button: Button = null
+var _confirm_targets_callback: Callable = Callable()
+
+func show_confirm_targets_button(callback: Callable) -> void:
+	if _confirm_targets_button == null or not is_instance_valid(_confirm_targets_button):
+		_confirm_targets_button = Button.new()
+		_confirm_targets_button.text = "Confirm"
+		_confirm_targets_button.z_index = 200
+		add_child(_confirm_targets_button)
+
+	# Swap the callback each time rather than only connecting once, since a
+	# fresh Callable is passed in every time targeting starts.
+	if _confirm_targets_button.pressed.is_connected(_on_confirm_targets_pressed):
+		_confirm_targets_button.pressed.disconnect(_on_confirm_targets_pressed)
+	_confirm_targets_callback = callback
+	_confirm_targets_button.pressed.connect(_on_confirm_targets_pressed)
+
+	_confirm_targets_button.visible = true
+
+	await get_tree().process_frame
+	if not is_instance_valid(_confirm_targets_button):
+		return
+	var vp: Vector2 = get_viewport().get_visible_rect().size
+	# Sits just below the targeting prompt label (which anchors at y=40).
+	_confirm_targets_button.position = Vector2((vp.x - _confirm_targets_button.size.x) / 2.0, 80.0)
+
+
+func hide_confirm_targets_button() -> void:
+	if is_instance_valid(_confirm_targets_button):
+		_confirm_targets_button.visible = false
+
+
+func _on_confirm_targets_pressed() -> void:
+	if _confirm_targets_callback.is_valid():
+		_confirm_targets_callback.call()
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # INTERNAL — LIVE VALUE REFRESH
@@ -515,9 +556,6 @@ func _refresh_live_values() -> void:
 			var mana_pct: float = clamp(float(unit.current_mana) / float(max_mana), 0.0, 1.0)
 			if mana_bar_fill:
 				mana_bar_fill.size.x = mana_bar_pixel_width * mana_pct
-			if _mana_fill_texture:
-				_mana_fill_texture.custom_minimum_size.x = mana_bar_pixel_width * mana_pct
-				_mana_fill_texture.size.x = mana_bar_pixel_width * mana_pct
 			if _mana_fill_texture:
 				_mana_fill_texture.custom_minimum_size.x = mana_bar_pixel_width * mana_pct
 				_mana_fill_texture.size.x = mana_bar_pixel_width * mana_pct

@@ -9,8 +9,9 @@
 [ext_resource type="Resource" uid="uid://ckxyxawivmesh" path="res://resources/abilities/stormblade_basic.tres" id="4_ln10n"]
 [ext_resource type="Resource" uid="uid://c7qq67wfberbo" path="res://resources/abilities/overcharged.tres" id="5_ln10n"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_slqco"]
-[ext_resource type="Resource" uid="uid://b3elmuc7cw55r" path="res://resources/abilities/boltstepsurge.tres" id="5_v8mw0"]
 [ext_resource type="Resource" uid="uid://bt0e0hav823uj" path="res://resources/abilities/thunderburst.tres" id="6_8cs0s"]
+[ext_resource type="Resource" uid="uid://dwemv11n4o6kt" path="res://resources/abilities/chainlightning.tres" id="10_slqco"]
+[ext_resource type="Resource" uid="uid://6u5rocm76its" path="res://resources/abilities/tempeststrike.tres" id="11_q3vbu"]
 
 [resource]
 script = ExtResource("1_ge75a")
@@ -21,5 +22,5 @@ portrait = ExtResource("3_slqco")
 battle_sprite = ExtResource("2_8cs0s")
 stats_by_level = Array[ExtResource("3_n4jxu")]([ExtResource("1_127on")])
 base_stats = ExtResource("1_127on")
-starting_abilities = Array[ExtResource("2_8l2hl")]([ExtResource("4_ln10n"), ExtResource("5_ln10n"), ExtResource("5_v8mw0"), ExtResource("6_8cs0s")])
+starting_abilities = Array[ExtResource("2_8l2hl")]([ExtResource("4_ln10n"), ExtResource("5_ln10n"), ExtResource("6_8cs0s"), ExtResource("11_q3vbu"), ExtResource("10_slqco")])
 metadata/_custom_type_script = "uid://utmj7y8m802a"

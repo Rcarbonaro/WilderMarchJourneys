@@ -108,7 +108,7 @@ extends Resource
 
 # ── AREA OF EFFECT ────────────────────────────────────────────────────────────
 
-@export_enum("single", "line", "cone", "square", "cross", "wall") var aoe_shape: String = "single"
+@export_enum("single", "line", "cone", "square", "cross", "wall", "chain", "multi_target") var aoe_shape: String = "single"
 @export var aoe_size: int = 1
 # For "line": how many tiles long. For "square": radius. For "cone": how far.
 # For "wall": ignored — wall length comes from spawns_hazard.wall_length instead.
@@ -213,6 +213,67 @@ extends Resource
 # The named animation played on the caster's AnimatedSprite2D for the
 # duration of the dash slide itself. Override per-ability if a specific
 # dash needs a different animation name.
+
+# ── CHAIN LIGHTNING ────────────────────────────────────────────────────────
+# aoe_shape == "chain": hits ONE initial target, then bounces further.
+# aoe_size (shared field above) = number of ADDITIONAL (secondary) targets,
+# not counting the first hit.
+
+@export var chain_range: int = 3
+# How far a bounce can reach from the PREVIOUS hit target to find the next
+# one. Separate from min_range/max_range, which only govern the very first
+# tap (caster → first target).
+
+@export var chain_simultaneous: bool = false
+# UNCHECK (default): each secondary bounce plays fully — including its own
+# damage — before the next one starts.
+# CHECK: every secondary bounce fires at the same time.
+
+@export var chain_manual_targets: bool = false
+# UNCHECK (default): secondary targets are auto-picked — nearest unhit
+# enemy within chain_range of the last hit target.
+# CHECK: the player taps every secondary target themselves (same
+# multi-tap targeting flow "multi_target" abilities use below).
+
+@export var chain_bounce_scene_first: PackedScene
+# Lightning-stretch scene from the CASTER to the first target. Falls back
+# to effect_scene if left empty.
+
+@export var chain_bounce_scene_secondary: PackedScene
+# Lightning-stretch scene from the first target to EACH other target.
+# Falls back to chain_bounce_scene_first (then effect_scene) if empty.
+
+# ── MULTI-TARGET / TRAVEL+IMPACT ANIMATIONS ───────────────────────────────
+# aoe_shape == "multi_target": the player taps aoe_size individual enemy
+# tiles (Zephyr Strike). travel_animation_name/impact_animation_name below
+# are also reused by Leap for its own movement + hit.
+
+@export var multi_target_simultaneous: bool = false
+# UNCHECK (default): the caster visits targets ONE AT A TIME, in tap order,
+# then returns to their starting tile.
+# CHECK: temporary visual duplicates fly out and hit every target at once
+# while the real unit is hidden; it reappears at its start tile once every
+# duplicate finishes.
+
+@export var travel_animation_name: String = ""
+# Caster's own animation while moving TOWARD a target (Zephyr Strike,
+# Leap). Blank falls back to "walk". For Leap, set this to "leap" (or
+# whatever your leap animation is named) on that ability's resource.
+
+@export var impact_animation_name: String = ""
+# Caster's own animation played ON ARRIVAL at each target — the actual hit
+# (Zephyr Strike, Leap). Blank falls back to a short fixed delay instead.
+
+# ── LEAP ──────────────────────────────────────────────────────────────────
+# Two-tap ability: "Select Target" (an enemy), then "Select Destination"
+# (an empty tile directly orthogonally adjacent to that target). The
+# caster moves there and damages only the target.
+
+@export var is_leap: bool = false
+
+@export var leap_select_target_prompt: String = "Select target"
+@export var leap_select_destination_prompt: String = "Select destination"
+
 
 # ── TAGS & TYPE ───────────────────────────────────────────────────────────────
 
