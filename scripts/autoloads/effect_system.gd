@@ -431,6 +431,12 @@ func evaluate_condition(condition: Dictionary, context: Dictionary) -> bool:
 			return run_state != null and run_state.equipment_inventory.has(condition.get("equipment_id", ""))
 		"difficulty_is":
 			return run_state != null and run_state.difficulty == condition.get("value", "")
+		"stage_type_is":
+			# ADDED -- lets a reward rule target ("combat", "encounter",
+			# "subboss", "special_combat", "boss") specifically, e.g. the
+			# default "gain gold for winning a fight" rule shouldn't also
+			# fire when an encounter stage completes.
+			return run_state != null and ContentLoader.get_stage_type(run_state.stage_index) == condition.get("value", "")
 		"event_payload_true":
 			return bool(context.get("event_payload", {}).get(condition.get("field", ""), false))
 		"event_payload_min":

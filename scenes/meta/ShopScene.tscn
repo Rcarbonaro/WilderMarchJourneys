@@ -5,11 +5,11 @@
 [node name="ShopScene" type="Node2D" unique_id=2082842883]
 script = ExtResource("1_j2r6p")
 
-[node name="Label" type="Label" parent="." unique_id=405149072]
-offset_left = 862.0
-offset_top = 24.0
-offset_right = 1049.0
-offset_bottom = 231.0
+[node name="GoldLabel" type="Label" parent="." unique_id=405149072]
+offset_left = -6.0
+offset_top = 36.0
+offset_right = 181.0
+offset_bottom = 243.0
 
 [node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1352691112]
 offset_left = 81.0
@@ -24,7 +24,7 @@ offset_right = 346.0
 offset_bottom = 1011.0
 text = "Refresh (3 Gold)"
 
-[node name="Button" type="Button" parent="." unique_id=1515844418]
+[node name="ContinueButton" type="Button" parent="." unique_id=1515844418]
 offset_left = 741.0
 offset_top = 818.0
 offset_right = 1077.0

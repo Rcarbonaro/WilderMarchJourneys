@@ -493,6 +493,7 @@ func can_afford_ability(ability: AbilityData) -> bool:
 func spend_mana(amount: int) -> void:
 	# Deducts mana, clamped so it never goes below 0.
 	current_mana = max(0, current_mana - amount)
+	CombatHooks.notify_mana_spent(self, amount)
 
 
 func restore_mana(amount: int) -> void:

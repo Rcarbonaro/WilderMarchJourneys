@@ -19,5 +19,4 @@ damage_type = "magical"
 scaling_stat = "matk"
 applies_statuses_to_self = Array[ExtResource("1_splk2")]([ExtResource("2_gsk1l")])
 ability_type = "spell"
-applies_thorns = true
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

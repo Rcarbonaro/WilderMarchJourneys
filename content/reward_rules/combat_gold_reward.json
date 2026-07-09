@@ -1,0 +1,9 @@
+{
+  "id": "combat_gold_reward",
+  "conditions": [
+    { "type": "stage_type_is", "value": "combat" }
+  ],
+  "effects": [
+    { "type": "add_gold", "amount": 5 }
+  ]
+}

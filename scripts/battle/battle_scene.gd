@@ -8,12 +8,44 @@ extends Node2D
 @onready var battle_ui = $BattleUI
 @onready var background_texture: TextureRect = $BattleBackgrounds/BackgroundTexture
 
+func _enter_tree() -> void:
+	# Runs BEFORE _ready() -- and, importantly, before BattleManager's own
+	# _ready() too, since Godot calls _enter_tree() top-down (parent first)
+	# but _ready() bottom-up (children first). BattleManager's
+	# _spawn_player_party_from_run()/_spawn_stage_enemies() both read
+	# MapGenerator.last_result, so the map has to exist before either of
+	# those run. Test mode (RunManager.is_test_mode) never calls this at
+	# all -- your _spawn_test_enemies() sandbox keeps using its own fixed
+	# Vector2i positions exactly as before.
+	if RunManager.is_test_mode:
+		return
+	if RunManager.current_run == null:
+		printerr("❌ BattleScene: RunManager.current_run is null and is_test_mode is false -- ",
+				 "nothing to generate a map for.")
+		return
+
+	var biome := _get_current_biome()
+	var party_size: int = RunManager.current_run.party.size()
+	MapGenerator.generate_map($BattleGrid.GRID_WIDTH, $BattleGrid.GRID_HEIGHT, biome, party_size, 8)
+	$BattleGrid.setup_grid(MapGenerator.last_result.get("tile_map", {}))
+	$BattleGrid.spawn_scatter_features(MapGenerator.last_result.get("feature_placements", []))
+
+
+func _get_current_biome() -> String:
+	if RunManager.current_run == null or RunManager.current_run.biome_sequence.is_empty():
+		return "grassland"
+	var slot := ContentLoader.get_biome_slot(RunManager.current_run.stage_index)
+	if slot >= RunManager.current_run.biome_sequence.size():
+		return "grassland"
+	return RunManager.current_run.biome_sequence[slot]
+
+
 func _ready() -> void:
 	# 1. Connect UI to BattleManager
 	battle_ui.battle_manager = battle_manager
 	
 	# 2: set up biome
-	setup_battle_background("grassland")
+	setup_battle_background(_get_current_biome() if not RunManager.is_test_mode else "grassland")
 
 	# 3: Connect BattleManager back to the UI Manager
 	battle_manager.ui_manager = battle_ui
@@ -21,15 +53,19 @@ func _ready() -> void:
 	# 3. Connect battle end signal
 	battle_manager.battle_ended.connect(_on_battle_ended)
 
-	# 4. Setup the test map
-	_setup_test_map()
+	# 4. Map is generated in _enter_tree() above for real runs. Test mode
+	# still needs SOME grid to exist, since it skips _enter_tree()'s
+	# generation entirely -- fall back to the old flat test map for that case.
+	if RunManager.is_test_mode:
+		_setup_test_map()
 	
 	# 5. Setup camera for screen shake
 	CombatFeedback.register_camera($Camera2D)
 	
 
 func _setup_test_map() -> void:
-	# Creates a flat grid of dirt tiles.
+	# Creates a flat grid of dirt tiles. ONLY used in test mode now -- real
+	# runs get their map from MapGenerator in _enter_tree() above.
 	#
 	# BUGFIX: this used to loop `range(10)` for y, generating a 10-row map —
 	# but battle_grid.gd's GRID_HEIGHT constant is 9, and is_valid_cell()
@@ -49,10 +85,13 @@ func _setup_test_map() -> void:
 	$BattleGrid.setup_grid(map_data)
 
 func _on_battle_ended(result: String) -> void:
+	if RunManager.is_test_mode:
+		# Test mode never had a real run in progress -- there's nothing for
+		# StageDirector to advance or reward. Just report the result.
+		print("Test battle ended: ", result)
+		return
 	if result == "victory":
-		RunManager.add_gold(5)  # reward gold for winning
-		RunManager.advance_stage()
-		get_tree().change_scene_to_file("res://scenes/meta/ShopScene.tscn")
+		StageDirector.complete_stage()
 	elif result == "defeat":
 		get_tree().change_scene_to_file("res://scenes/meta/GameOverScreen.tscn")
 
