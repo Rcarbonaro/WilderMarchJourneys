@@ -42,6 +42,14 @@ const GAME_MODES_DIR          := "res://content/game_modes/"
 # draft_budget, so every "how does Random differ from Draft" number lives
 # in content, not scattered across game_mode_select.gd / draft_scene.gd.
 
+const REWARD_RULES_DIR := "res://content/reward_rules/"
+# ADDED: one file per rule, e.g. { "id": "combat_gold_reward", "conditions":
+# [...], "effects": [{"type":"add_gold","amount":5}] }. stage_director.gd's
+# complete_stage() checks EVERY rule against the stage that just finished --
+# there's no "first match wins", so more than one rule can fire on the same
+# stage (e.g. a flat gold reward AND a tarot-driven bonus rule both firing
+# on the same combat stage).
+
 # ---- IN-MEMORY CONTENT TABLES ------------------------------------------------
 # Every one of these is Dictionary[String id] -> Dictionary (the parsed JSON).
 var tarot_cards: Dictionary = {}
@@ -54,6 +62,7 @@ var spawn_tables: Dictionary = {}
 var forging_recipes: Dictionary = {}    # keyed by "subtypeA_subtypeB" (sorted)
 var stage_type_map: Dictionary = {}     # keyed by String(stage 1-10)
 var game_modes: Dictionary = {}         # keyed by mode id ("random", "draft")
+var reward_rules: Dictionary = {}       # ADDED -- keyed by "id", read directly by stage_director.gd
 
 # Every problem found while loading ends up here, so you can see a single
 # report instead of hunting through console output line by line.
@@ -92,6 +101,7 @@ func _load_all_content() -> void:
 
 	forging_recipes = _load_forging_recipes()
 	game_modes = _load_folder(GAME_MODES_DIR, ["id", "starting_gold", "party_size"])
+	reward_rules = _load_folder(REWARD_RULES_DIR, ["id", "effects"])
 
 
 func _load_folder(path: String, required_fields: Array) -> Dictionary:

@@ -62,28 +62,45 @@ const _MAX_PATH_RETRACE_STEPS: int = 2000
 #                 own occupied tile when checking passability. Without this,
 #                 the pathfinder sees the unit's starting tile as "blocked by
 #                 a unit" and can't spread to any neighbors at all!
-func get_reachable_cells(start: Vector2i, movement: int, moving_unit = null) -> Dictionary:
-	var reachable = {}
+const HAZARD_AVOIDANCE_PENALTY: int = 2
+# Added to a tile's cost, for ROUTE-PICKING PURPOSES ONLY, when entering it
+# would trigger hazard damage. This never affects how much real movement a
+# unit spends — it only makes the pathfinder prefer a same-cost or somewhat
+# longer safe route over a shorter dangerous one. If every route to a tile
+# (including the destination itself) passes through a hazard, the pathfinder
+# still finds it — this never blocks movement, it only reorders preference.
 
-	# Reset the breadcrumb trail for THIS search. reconstruct_path_to() below
-	# reads these once the player/AI has picked an actual destination tile.
+func get_reachable_cells(start: Vector2i, movement: int, moving_unit = null) -> Dictionary:
+	var reachable = {}       # cell -> REAL movement cost spent (unaffected by hazard penalty)
+	var best_priority = {}   # cell -> danger-weighted cost, used only to compare/pick routes
+
 	_last_came_from = {}
 	_last_start      = start
 
-	# The frontier acts as our look-ahead queue. We start with the unit's current tile.
-	var frontier: Array = [{"cell": start, "cost": 0}]
-
-	# Mark the starting tile as reachable at a cost of 0.
 	reachable[start] = 0
+	best_priority[start] = 0
 
-	# Keep searching as long as there are tiles waiting to be checked.
+	# Frontier entries: {"cell":..., "real_cost":..., "priority":...}
+	var frontier: Array = [{"cell": start, "real_cost": 0, "priority": 0}]
+
 	while frontier.size() > 0:
-		# Pull the next tile from the front of the queue.
-		var current = frontier.pop_front()
-		var cell: Vector2i = current["cell"]
-		var cost: int = current["cost"]
+		# Pull the least-dangerous (lowest priority) tile out next. This is
+		# what makes it Dijkstra instead of plain BFS — necessary now that
+		# "cost" isn't just distance, it also carries a danger weight.
+		var best_index = 0
+		for i in range(1, frontier.size()):
+			if frontier[i]["priority"] < frontier[best_index]["priority"]:
+				best_index = i
+		var current = frontier.pop_at(best_index)
 
-		# Check each of the 4 cardinal neighbors (Right, Left, Down, Up).
+		var cell: Vector2i = current["cell"]
+		var real_cost: int = current["real_cost"]
+		var priority: int = current["priority"]
+
+		# Stale entry — we've since found a better route to this tile, skip.
+		if priority > best_priority.get(cell, priority):
+			continue
+
 		var neighbors = [
 			cell + Vector2i(1, 0),
 			cell + Vector2i(-1, 0),
@@ -92,44 +109,39 @@ func get_reachable_cells(start: Vector2i, movement: int, moving_unit = null) -> 
 		]
 
 		for neighbor in neighbors:
-			# Safety A: Skip tiles that fall outside the map boundaries.
 			if not grid_ref.is_valid_cell(neighbor):
 				continue
 
-			# ==============================================================================
-			# 🔧 MOVEMENT FIX: Custom passability check that ignores the moving unit's tile.
-			# ==============================================================================
-			# The old code called grid_ref.is_passable(neighbor) directly.
-			# That function returns false for any tile with a unit on it — including
-			# the starting tile! So the moving unit blocked its own pathfinding.
-			#
-			# Now we do the same check manually, but we skip the occupancy check for
-			# the tile that the moving_unit itself is standing on. We also respect
-			# wall hazards, filtered by which team they block.
 			if not _is_passable_for(neighbor, moving_unit):
 				continue
 
-			# Read how many movement points it costs to step onto this tile (usually 1).
 			var move_cost = grid_ref.get_movement_cost(neighbor)
-			var new_cost = cost + move_cost
+			var new_real_cost = real_cost + move_cost
 
-			# Only proceed if we have enough movement points to reach this tile.
-			if new_cost <= movement:
-				# If we haven't visited this tile yet, OR found a cheaper route to it:
-				if not reachable.has(neighbor) or reachable[neighbor] > new_cost:
-					# Record the cost to reach this tile.
-					reachable[neighbor] = new_cost
+			# Budget check uses REAL cost only — the danger penalty below
+			# never eats into a unit's actual movement points.
+			if new_real_cost > movement:
+				continue
 
-					# Drop a breadcrumb: remember we stepped FROM 'cell' to get
-					# to 'neighbor' this cheaply. reconstruct_path_to() follows
-					# these backwards later to rebuild the real walking route.
-					_last_came_from[neighbor] = cell
+			var danger_penalty = 0
+			if grid_ref.has_method("is_dangerous_for") and grid_ref.is_dangerous_for(neighbor, moving_unit):
+				danger_penalty = HAZARD_AVOIDANCE_PENALTY
 
-					# Push this tile into the queue so we check its neighbors next.
-					frontier.append({
-						"cell": neighbor,
-						"cost": new_cost
-					})
+			var new_priority = priority + move_cost + danger_penalty
+
+			# New tile, or a strictly SAFER/cheaper route to one we already
+			# found? Compare on priority (danger-weighted), not real cost —
+			# that's what lets a longer-but-safe route beat a shorter-but-
+			# risky one.
+			if not best_priority.has(neighbor) or new_priority < best_priority[neighbor]:
+				best_priority[neighbor] = new_priority
+				reachable[neighbor] = new_real_cost
+				_last_came_from[neighbor] = cell
+				frontier.append({
+					"cell": neighbor,
+					"real_cost": new_real_cost,
+					"priority": new_priority
+				})
 
 	print("🗺️ Pathfinder processing complete. Valid tiles found: ", reachable.size())
 

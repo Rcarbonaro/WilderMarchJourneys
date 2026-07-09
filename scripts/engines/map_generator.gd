@@ -41,6 +41,15 @@ const MAP_FEATURES_DIR := "res://resources/map_features/"
 # folder location.
 
 
+var last_result: Dictionary = {}
+# ADDED: battle_scene.gd generates the map in _enter_tree() (which runs
+# BEFORE battle_manager.gd's own _ready(), since Godot calls _enter_tree()
+# parent-first but _ready() child-first) and hands $BattleGrid the tile_map.
+# battle_manager.gd's _spawn_player_party_from_run()/_spawn_stage_enemies()
+# then read player_spawns/enemy_spawns back out of THIS cache, so both
+# scripts see the exact same generated layout without needing a direct
+# reference to each other.
+
 func generate_map(width: int, height: int, biome: String, party_size: int, enemy_count: int) -> Dictionary:
 	# Returns:
 	# {
@@ -121,12 +130,13 @@ func generate_map(width: int, height: int, biome: String, party_size: int, enemy
 
 	_ensure_full_connectivity(tile_map, player_spawns, enemy_spawns, width, height)
 
-	return {
+	last_result = {
 		"tile_map": tile_map,
 		"player_spawns": player_spawns,
 		"enemy_spawns": enemy_spawns,
 		"feature_placements": feature_placements,
 	}
+	return last_result
 
 # ── SPAWN PLACEMENT ────────────────────────────────────────────────────────────
 
@@ -223,8 +233,8 @@ func _carve_guaranteed_corridor(start: Vector2i, end: Vector2i, width: int, heig
 		for offset in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 			reserved[current + offset] = true
 
-		var dx := sign(end.x - current.x)
-		var dy := sign(end.y - current.y)
+		var dx : int = sign(end.x - current.x)
+		var dy : int = sign(end.y - current.y)
 		if randf() < 0.7:
 			# Mostly move toward the target.
 			if absi(end.x - current.x) >= absi(end.y - current.y) and dx != 0:

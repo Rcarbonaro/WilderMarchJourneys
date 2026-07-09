@@ -4,8 +4,8 @@
 
 [resource]
 script = ExtResource("1_urere")
-hp = 26
+hp = 28
 atk = 22
-def = 10
-mdef = 7
+def = 11
+mdef = 8
 metadata/_custom_type_script = "uid://c3bdx4sniu017"

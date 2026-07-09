@@ -41,6 +41,12 @@ var tile_map: Dictionary = {}
 # Key: Vector2i(col, row)  Value: TileTypeData resource
 # Every cell on the board has exactly one TileTypeData.
 
+var feature_map: Dictionary = {}
+# ADDED. Key: Vector2i  Value: MapFeatureData. Populated by
+# spawn_scatter_features() (see the bottom of this file). Cleared implicitly
+# whenever setup_grid() is called for a new battle since this dictionary
+# lives on this same BattleGrid instance, which is torn down between scenes.
+
 # ── UNIT POSITIONS ────────────────────────────────────────────────────────────
 
 var unit_positions: Dictionary = {}
@@ -216,6 +222,7 @@ func is_passable(cell: Vector2i) -> bool:
 	if tile.is_wall:            return false
 	if unit_positions.has(cell): return false
 	if _is_blocked_by_wall_hazard(cell, null): return false
+	if _is_blocked_by_feature(cell): return false   # ADDED
 	return true
 
 
@@ -230,6 +237,7 @@ func is_passable_for(unit, cell: Vector2i) -> bool:
 	if tile.is_wall:             return false
 	if unit_positions.has(cell): return false
 	if _is_blocked_by_wall_hazard(cell, unit): return false
+	if _is_blocked_by_feature(cell): return false   # ADDED
 	return true
 
 
@@ -245,16 +253,21 @@ func is_terrain_walkable(cell: Vector2i) -> bool:
 	var tile: TileTypeData = tile_map[cell]
 	if tile.is_wall:           return false
 	if _is_blocked_by_wall_hazard(cell, null): return false
+	if _is_blocked_by_feature(cell): return false   # ADDED
 
 	return true
 
 
 func get_movement_cost(cell: Vector2i) -> int:
+	if feature_map.has(cell):   # ADDED
+		return feature_map[cell].movement_cost
 	if not tile_map.has(cell): return 9999
 	return tile_map[cell].movement_cost
 
 
 func blocks_los(cell: Vector2i) -> bool:
+	if feature_map.has(cell) and feature_map[cell].blocks_line_of_sight:   # ADDED
+		return true
 	if not tile_map.has(cell): return false
 	if tile_map[cell].blocks_line_of_sight or tile_map[cell].is_wall:
 		return true
@@ -269,6 +282,15 @@ func blocks_los(cell: Vector2i) -> bool:
 			if hdata.is_wall_hazard and hdata.wall_blocks_line_of_sight:
 				return true
 	return false
+
+
+func _is_blocked_by_feature(cell: Vector2i) -> bool:
+	# ADDED. Team-agnostic on purpose -- MapFeatureData has no per-team
+	# filter (unlike wall hazards), a blocking scatter feature blocks
+	# everyone equally.
+	if not feature_map.has(cell):
+		return false
+	return feature_map[cell].blocks_movement
 
 
 func _is_blocked_by_wall_hazard(cell: Vector2i, unit) -> bool:
@@ -298,6 +320,35 @@ func _is_blocked_by_wall_hazard(cell: Vector2i, unit) -> bool:
 				if unit == null or not unit.is_player_unit:
 					return true
 	return false
+
+func is_dangerous_for(cell: Vector2i, unit) -> bool:
+	# Returns true if a unit entering this cell right now would trigger
+	# hazard damage (i.e. get hurt for stepping onto it). Used by the
+	# pathfinder to PREFER routes that avoid hazards when a safe alternative
+	# exists. This does NOT block movement — a unit can still be routed
+	# through or onto a hazardous tile if that's the only way to reach
+	# their destination, or if the destination itself is hazardous.
+	#
+	# Mirrors the skip/trigger logic in apply_hazard_to_unit(..., "enter"):
+	# a TRUE impassable wall never reaches here anyway (already filtered out
+	# earlier by _is_blocked_by_wall_hazard), but a "damaging wall"
+	# (is_wall_hazard=true, blocks_movement=false) counts as dangerous just
+	# like a normal hazard tile.
+	#
+	# 'unit' is currently unused (no per-unit hazard immunity exists yet),
+	# but is kept in the signature so that hook can be added later without
+	# changing every call site.
+	if not hazard_map.has(cell):
+		return false
+	for hazard_id in hazard_map[cell]:
+		var entry = hazard_map[cell][hazard_id]
+		var hdata: HazardData = entry["data"]
+		if hdata.is_wall_hazard and hdata.blocks_movement:
+			continue   # Impassable walls don't damage — and can't be entered anyway.
+		if hdata.trigger_on_enter:
+			return true
+	return false
+
 
 # ── UNIT REGISTRY ─────────────────────────────────────────────────────────────
 
@@ -1176,3 +1227,74 @@ func tick_all_effects() -> void:
 	tick_shields()
 	tick_thorns()
 	tick_guardians()
+
+
+# ── MAP FEATURES (ADDED -- draws MapGenerator's scattered obstacles/decor) ────
+# map_generator.gd's own comments reference this exact function name/signature
+# (spawn_scatter_features), so this is written to match what it already expects.
+
+func spawn_scatter_features(feature_placements: Array) -> void:
+	var layer := _ensure_feature_layer()
+	for placement in feature_placements:
+		var cell: Vector2i = placement.get("cell", Vector2i.ZERO)
+		var feature: MapFeatureData = placement.get("feature")
+		if feature == null:
+			continue
+
+		for offset in feature.footprint:
+			var fc: Vector2i = cell + offset
+			_apply_feature_tile_rules(fc, feature)
+
+		_spawn_feature_visual(cell, feature, layer)
+
+
+func _apply_feature_tile_rules(cell: Vector2i, feature: MapFeatureData) -> void:
+	# feature_map is a NEW dictionary (added just below tile_map's own
+	# declaration) rather than reusing unit_positions -- get_unit_at() and
+	# every AI/targeting call that assumes unit_positions only ever holds
+	# real UnitNodes would break if a non-unit value showed up there.
+	# is_passable()/is_passable_for()/get_movement_cost()/blocks_los() are
+	# all extended below (same pattern as the existing wall-hazard checks)
+	# to also consult feature_map.
+	feature_map[cell] = feature
+
+
+func _ensure_feature_layer() -> Node2D:
+	if has_node("FeatureLayer"):
+		return get_node("FeatureLayer")
+	var layer := Node2D.new()
+	layer.name = "FeatureLayer"
+	add_child(layer)
+	# Draw above ground tiles, below hazards/units.
+	move_child(layer, 1)
+	return layer
+
+
+var _feature_placeholder_cache: Dictionary = {}
+
+func _get_feature_placeholder_texture(tint: Color) -> ImageTexture:
+	if _feature_placeholder_cache.has(tint):
+		return _feature_placeholder_cache[tint]
+	var img := Image.create(TILE_SIZE, TILE_SIZE, false, Image.FORMAT_RGBA8)
+	img.fill(tint)
+	var tex := ImageTexture.create_from_image(img)
+	_feature_placeholder_cache[tint] = tex
+	return tex
+
+
+func _spawn_feature_visual(cell: Vector2i, feature: MapFeatureData, layer: Node2D) -> void:
+	var sprite := Sprite2D.new()
+	if feature.texture != null:
+		sprite.texture = feature.texture
+	else:
+		# red = blocking, yellow = slowing, gray = decoration -- see
+		# map_feature_data.gd's own header comment for this same key.
+		match feature.category:
+			"blocking":
+				sprite.texture = _get_feature_placeholder_texture(Color(0.8, 0.2, 0.2))
+			"slowing":
+				sprite.texture = _get_feature_placeholder_texture(Color(0.8, 0.7, 0.2))
+			_:
+				sprite.texture = _get_feature_placeholder_texture(Color(0.5, 0.5, 0.5))
+	sprite.position = grid_to_world(cell)
+	layer.add_child(sprite)

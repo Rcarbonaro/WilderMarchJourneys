@@ -9,5 +9,6 @@ id = "slowed"
 display_name = "Slowed"
 description = "Reduces movement by 1"
 icon = ExtResource("1_t2dfg")
+duration_rounds = 2
 mov_modifier = -1
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

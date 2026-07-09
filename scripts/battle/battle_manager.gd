@@ -182,11 +182,21 @@ func _spawn_player_party_from_run() -> void:
 		printerr("❌ BattleManager: RunManager.current_run.party is empty — nothing to spawn.")
 		return
 
-	# Lay the party out along the player's edge of the map, one tile apart.
-	# Add more entries here if you ever allow a starting party larger than 4.
-	var spawn_positions: Array[Vector2i] = [
-		Vector2i(2, 5), Vector2i(2, 6), Vector2i(3, 5), Vector2i(3, 6),
-	]
+	# Lay the party out along the player's edge of the map. If MapGenerator
+	# has already generated this stage's layout (battle_scene.gd's
+	# _enter_tree() runs before this), use ITS player_spawns so the party
+	# never lands on a feature/obstacle. Falls back to the original fixed
+	# 4-tile layout for test mode (which never calls MapGenerator) or if
+	# generation somehow produced fewer spawn cells than party members.
+	var generated_spawns: Array = MapGenerator.last_result.get("player_spawns", [])
+	var spawn_positions: Array[Vector2i] = []
+	if generated_spawns.size() >= party.size():
+		for cell in generated_spawns:
+			spawn_positions.append(cell)
+	else:
+		spawn_positions = [
+			Vector2i(2, 5), Vector2i(2, 6), Vector2i(3, 5), Vector2i(3, 6),
+		]
 
 	for i in range(party.size()):
 		if i >= spawn_positions.size():
@@ -222,83 +232,72 @@ func _spawn_stage_enemies() -> void:
 	# Route to test enemies or real enemies depending on mode.
 	if RunManager.is_test_mode:
 		_spawn_test_enemies(RunManager.test_encounter_index)
-	else:
-		_spawn_stage_enemies()
-	print("🐺 Spawning Monster Waves...")
-	print("🐺 Spawning Monster Waves...")
-	var wolf_data     = load("res://resources/enemies/wolf_data.tres")
-	var sylvaris_data = load("res://resources/enemies/sylvaris_data.tres")
-	var ent_data      = load("res://resources/enemies/ent_data.tres")
-	var sporeling_data      = load("res://resources/enemies/sporeling_data.tres")
-	var thornling_data = load("res://resources/enemies/thornling_data.tres")
-	var bear_data      = load("res://resources/enemies/bear_data.tres")
-	var hulkingsporeling_data      = load("res://resources/enemies/hulkingsporeling_data.tres")
-	var leshy_data      = load("res://resources/enemies/leshy_data.tres")
-
-
-	if wolf_data == null:
-		printerr("❌ Could not load wolf_data.tres!")
 		return
 
+	print("🐺 Spawning Monster Waves...")
 
-#Encounter 0
-	#spawn_unit(wolf_data,     Vector2i(10, 1), false, 1)
-	#spawn_unit(wolf_data,     Vector2i(10, 2), false, 1)
-	#spawn_unit(wolf_data,     Vector2i(12, 2), false, 1)
-	#spawn_unit(wolf_data,     Vector2i(10, 3), false, 1)
-	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(15, 2), false, 1)
-	#print("🐺 Monster waves deployed!")
-	
-	
-#Encounter 1
-	#spawn_unit(wolf_data,     Vector2i(10, 1), false, 1)
-	#spawn_unit(wolf_data,     Vector2i(10, 2), false, 1)
-	#spawn_unit(wolf_data,     Vector2i(12, 2), false, 1)
-	#spawn_unit(wolf_data,     Vector2i(10, 3), false, 1)
-	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(13, 3), false, 1)
-	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(15, 2), false, 1)
-	#if ent_data      != null: spawn_unit(ent_data,      Vector2i(18, 8), false, 1)
-	#print("🐺 Monster waves deployed!")
+	if RunManager.current_run == null:
+		printerr("❌ BattleManager: RunManager.current_run is null — cannot resolve a spawn table.")
+		return
 
-#Encounter 2
-	#if bear_data != null: spawn_unit(bear_data, Vector2i(13, 2), false, 1)
-	#if sporeling_data != null: spawn_unit(sporeling_data, Vector2i(13, 1), false, 1)
-	#if sporeling_data != null: spawn_unit(sporeling_data, Vector2i(14, 3), false, 1)
-	#if thornling_data != null: spawn_unit(thornling_data, Vector2i(14, 2), false, 1)
-	#if thornling_data != null: spawn_unit(thornling_data, Vector2i(15, 4), false, 1)
-	#if sporeling_data != null: spawn_unit(sporeling_data, Vector2i(12, 2), false, 1)
-	#if hulkingsporeling_data      != null: spawn_unit(ent_data,      Vector2i(15, 6), false, 1)
-	#print("🐺 Monster waves deployed!")
+	var roster: Array = ScalingEngine.resolve_spawn_table(RunManager.current_run)
+	if roster.is_empty():
+		printerr("❌ ScalingEngine.resolve_spawn_table() returned nothing — check that a spawn ",
+				 "table exists in content/spawn_tables/ for this biome/stage_type/stage_index.")
+		return
 
+	# battle_scene.gd's _enter_tree() already called MapGenerator.generate_map()
+	# for this exact stage before this function ever runs (child _ready()
+	# always runs after parent _enter_tree() in Godot), so the positions are
+	# already sitting in MapGenerator.last_result.
+	var enemy_spawns: Array = MapGenerator.last_result.get("enemy_spawns", [])
+	if enemy_spawns.is_empty():
+		printerr("⚠️ MapGenerator.last_result has no enemy_spawns — did battle_scene.gd's ",
+				 "_enter_tree() run and succeed? Falling back to a simple fixed layout so the ",
+				 "battle can still start.")
+		enemy_spawns = [Vector2i(10, 1), Vector2i(10, 2), Vector2i(12, 2), Vector2i(10, 3),
+						Vector2i(13, 3), Vector2i(15, 2), Vector2i(18, 8), Vector2i(16, 4)]
 
-#Encounter 3
-	#if bear_data != null: spawn_unit(bear_data, Vector2i(14, 3), false, 1)
-	#if bear_data != null: spawn_unit(bear_data, Vector2i(14, 2), false, 1)
-	#if wolf_data != null: spawn_unit(wolf_data, Vector2i(13, 3), false, 1)
-	#if wolf_data != null: spawn_unit(wolf_data, Vector2i(13, 3), false, 1)
-	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(15, 2), false, 1)
-	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(13, 1), false, 1)
-	#if hulkingsporeling_data      != null: spawn_unit(hulkingsporeling_data,      Vector2i(17, 6), false, 1)
-	#if sporeling_data      != null: spawn_unit(sporeling_data,      Vector2i(16, 4), false, 1)
-	#if leshy_data      != null: spawn_unit(leshy_data,      Vector2i(18, 8), false, 1)
-	#print("🐺 Monster waves deployed!")
+	var spawn_index: int = 0
+	for entry in roster:
+		var enemy_id: String = entry.get("enemy_id", "")
+		var copies: int = int(entry.get("count", 1))
+		var path := "res://resources/enemies/" + enemy_id + "_data.tres"
+		if not ResourceLoader.exists(path):
+			printerr("⚠️ Enemy resource not found for id '", enemy_id, "' at ", path, " — skipped.")
+			continue
+		var enemy_data: UnitData = load(path) as UnitData
 
-#Encounter 4 (hard)
-	#if bear_data != null: spawn_unit(bear_data, Vector2i(9, 3), false, 1)
-	#if bear_data != null: spawn_unit(bear_data, Vector2i(10, 2), false, 1)
-	#if wolf_data != null: spawn_unit(wolf_data, Vector2i(13, 3), false, 1)
-	#if wolf_data != null: spawn_unit(wolf_data, Vector2i(14, 3), false, 1)
-	#if wolf_data != null: spawn_unit(wolf_data, Vector2i(13, 2), false, 1)
-	#if thornling_data != null: spawn_unit(thornling_data, Vector2i(15, 2), false, 1)
-	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(14, 2), false, 1)
-	#if sylvaris_data != null: spawn_unit(sylvaris_data, Vector2i(13, 1), false, 1)
-	#if hulkingsporeling_data      != null: spawn_unit(hulkingsporeling_data,      Vector2i(17, 6), false, 1)
-	#if ent_data      != null: spawn_unit(ent_data,      Vector2i(18, 8), false, 1)
-	#if sporeling_data      != null: spawn_unit(sporeling_data,      Vector2i(16, 4), false, 1)
-	#if sporeling_data      != null: spawn_unit(sporeling_data,      Vector2i(18, 3), false, 1)
-	#if leshy_data      != null: spawn_unit(leshy_data,      Vector2i(18, 8), false, 1)
-	#if leshy_data      != null: spawn_unit(leshy_data,      Vector2i(19, 9), false, 1)
-	#print("🐺 Monster waves deployed!")
+		for _copy_i in range(copies):
+			if spawn_index >= enemy_spawns.size():
+				printerr("⚠️ Spawn table produced more enemies than there are generated ",
+						 "enemy_spawns cells — remaining copies of ", enemy_id, " skipped. ",
+						 "Consider raising enemy_count in the MapGenerator.generate_map() call, ",
+						 "or trimming this stage's spawn table.")
+				break
+
+			# ScalingEngine.apply_scaling() returns a NEW StatsData -- but
+			# unit_data.stats_by_level[level-1] is read live by unit_node.gd
+			# every time (not cached at setup), and enemy_data is a SHARED,
+			# cached Resource (every wolf this battle loads the exact same
+			# wolf_data.tres instance). Writing the scaled stats directly
+			# into enemy_data.stats_by_level would corrupt that shared
+			# resource for every other wolf spawned this battle (and the
+			# next one, since load() keeps reusing the same cached instance).
+			# duplicate(true) gives THIS ONE enemy its own independent copy
+			# to safely overwrite instead.
+			var working_copy: UnitData = enemy_data.duplicate(true)
+			var level: int = 1
+			if level - 1 < working_copy.stats_by_level.size():
+				working_copy.stats_by_level[level - 1] = ScalingEngine.apply_scaling(
+					enemy_data.stats_by_level[level - 1], RunManager.current_run
+				)
+
+			spawn_unit(working_copy, enemy_spawns[spawn_index], false, level)
+			spawn_index += 1
+
+	print("🐺 Monster waves deployed! (", spawn_index, " enemies)")
+
 
 func _spawn_test_enemies(encounter_index: int) -> void:
 	# ════════════════════════════════════════════════════════════════════════
@@ -1290,32 +1289,19 @@ func end_player_turn() -> void:
 	# ── TICK PLAYER STATUSES AND RESET TURN FLAGS ─────────────────────────────
 	# Count down player status durations and reset movement/action flags so
 	# every player unit can act again on the next player turn.
-	# ── TICK PLAYER STATUSES AND RESET TURN FLAGS ─────────────────────────────
-	# Count down player status durations and reset movement/action flags so
-	# every player unit can act again on the next player turn.
 	for unit in player_units:
 		if is_instance_valid(unit):
-			unit.tick_statuses_end_of_round("player")
 			unit.has_moved       = false
 			unit.has_acted       = false
 			unit.can_cancel_move = false
 			CombatHooks.run_round_tick(unit)
-
-	# Also notify enemy units that the "player" boundary just passed, so any
-	# of THEIR statuses configured with expires_at = "end_of_player_round"
-	# actually get checked here (see tick_statuses_end_of_round's rewritten
-	# doc comment). This does NOT touch has_moved/has_acted/cooldowns —
-	# those still only reset at each side's OWN turn-end, unchanged.
-	for unit in enemy_units:
-		if is_instance_valid(unit):
-			unit.tick_statuses_end_of_round("player")
-
+		
 	# Count down enemy ability cooldowns so they become available again over time.
 	for unit in enemy_units:
 		if is_instance_valid(unit):
 			for key in unit.ability_cooldowns:
 				unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
-				
+
 # ── SHOW "ENEMY'S TURN" ANNOUNCEMENT ──────────────────────────────────────
 	if ui_manager and ui_manager.has_method("show_turn_announcement"):
 		await ui_manager.show_turn_announcement(false)
@@ -1355,8 +1341,12 @@ func _on_enemy_turn_complete() -> void:
 	for unit in player_units:
 		if is_instance_valid(unit):
 			grid.apply_hazard_to_unit(unit, unit.grid_position, "start_of_turn")
+	# ── NOW THAT THE ENEMY'S TURN HAS COMPLETELY FINISHED,
+# ── PLAYER STATUSES REACH THE END OF THEIR ROUND.
+	for unit in player_units:
+		if is_instance_valid(unit):
+			unit.tick_statuses_end_of_round("player")
 
-	# Reset enemy turn flags and count down their cooldowns.
 	# Reset enemy turn flags and count down their cooldowns.
 	for unit in enemy_units:
 		if is_instance_valid(unit):
@@ -1368,22 +1358,12 @@ func _on_enemy_turn_complete() -> void:
 			for key in unit.ability_cooldowns:
 				unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
 
-	# Also notify player units that the "enemy" boundary just passed, so any
-	# of THEIR statuses configured with expires_at = "end_of_enemy_round" —
-	# like your Ice Shell / StoneSpike Armor case — actually survive through
-	# the enemy's whole turn and only expire right here, instead of at the
-	# end of the player's own turn. Doesn't touch has_moved/has_acted —
-	# those already reset correctly in end_player_turn() above.
-	for unit in player_units:
-		if is_instance_valid(unit):
-			unit.tick_statuses_end_of_round("enemy")
-
 	# Count down player cooldowns too.
 	for unit in player_units:
 		if is_instance_valid(unit):
 			for key in unit.ability_cooldowns:
 				unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
-			
+
 	# ── SHOW "PLAYER'S TURN" ANNOUNCEMENT ─────────────────────────────────────
 	if ui_manager and ui_manager.has_method("show_turn_announcement"):
 		await ui_manager.show_turn_announcement(true)
