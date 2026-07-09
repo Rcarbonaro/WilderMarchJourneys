@@ -5,10 +5,11 @@
   "stage_min": 1,
   "stage_max": 30,
   "enemy_pool": [
-    { "enemy_id": "sporeling", "weight": 3 },
-    { "enemy_id": "thornling", "weight": 3 },
-    { "enemy_id": "sylvaris",  "weight": 2 },
-    { "enemy_id": "wolf",      "weight": 2 }
+    { "enemy_id": "wolf",              "weight": 3 },
+    { "enemy_id": "sylvaris",              "weight": 2 },
+    { "enemy_id": "bear",              "weight": 1 },
+    { "enemy_id": "thornling", "weight": 2 },
+    { "enemy_id": "sporeling",           "weight": 3 }
   ],
   "guaranteed_enemy_ids": [],
   "total_enemies_min": 2,

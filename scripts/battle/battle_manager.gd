@@ -290,7 +290,7 @@ func _spawn_stage_enemies() -> void:
 			var level: int = 1
 			if level - 1 < working_copy.stats_by_level.size():
 				working_copy.stats_by_level[level - 1] = ScalingEngine.apply_scaling(
-					enemy_data.stats_by_level[level - 1], RunManager.current_run
+					enemy_data.stats_by_level[level - 1], RunManager.current_run, enemy_data.tier
 				)
 
 			spawn_unit(working_copy, enemy_spawns[spawn_index], false, level)
@@ -389,9 +389,9 @@ func spawn_unit(unit_data: UnitData, cell: Vector2i, is_player: bool, level: int
 	# they come straight from that unit's RunState.party entry (see
 	# _spawn_player_party_from_run above) and are simply ignored for enemies.
 
-	var folder_name := unit_data.display_name.to_lower().replace(" ", "")
+	var folder_name := unit_data.id.to_lower().replace(" ", "")
 	var scene_path  := "res://scenes/animations/%s/%s.tscn" % [folder_name, folder_name]
-
+	
 	if not ResourceLoader.exists(scene_path):
 		printerr("❌ Scene not found: ", scene_path)
 		return
@@ -411,6 +411,9 @@ func spawn_unit(unit_data: UnitData, cell: Vector2i, is_player: bool, level: int
 
 	unit.grid_position = cell
 	unit.position      = grid.grid_to_world(cell)
+	print("📍 ", unit_data.display_name, " placed at cell=", cell,
+		  " world_pos=", unit.position, " visible=", unit.visible,
+		  " valid_cell=", grid.is_valid_cell(cell))
 
 	# Register all occupied cells in the grid's lookup dictionary.
 	if unit.tile_footprint.size() > 1:
@@ -1291,11 +1294,12 @@ func end_player_turn() -> void:
 	# every player unit can act again on the next player turn.
 	for unit in player_units:
 		if is_instance_valid(unit):
+			unit.tick_statuses_end_of_round("player")
 			unit.has_moved       = false
 			unit.has_acted       = false
 			unit.can_cancel_move = false
 			CombatHooks.run_round_tick(unit)
-		
+
 	# Count down enemy ability cooldowns so they become available again over time.
 	for unit in enemy_units:
 		if is_instance_valid(unit):
@@ -1341,11 +1345,6 @@ func _on_enemy_turn_complete() -> void:
 	for unit in player_units:
 		if is_instance_valid(unit):
 			grid.apply_hazard_to_unit(unit, unit.grid_position, "start_of_turn")
-	# ── NOW THAT THE ENEMY'S TURN HAS COMPLETELY FINISHED,
-# ── PLAYER STATUSES REACH THE END OF THEIR ROUND.
-	for unit in player_units:
-		if is_instance_valid(unit):
-			unit.tick_statuses_end_of_round("player")
 
 	# Reset enemy turn flags and count down their cooldowns.
 	for unit in enemy_units:

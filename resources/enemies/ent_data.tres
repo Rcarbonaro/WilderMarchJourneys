@@ -17,6 +17,7 @@ description = "A slow but powerful tree creature, able to both take and deal hig
 portrait = ExtResource("3_lqift")
 battle_sprite = ExtResource("2_snmq7")
 stats_by_level = Array[ExtResource("5_lqift")]([ExtResource("1_7qgsm")])
+tier = "elite"
 base_stats = ExtResource("1_7qgsm")
 starting_abilities = Array[ExtResource("3_r02jj")]([ExtResource("5_cg23b")])
 metadata/_custom_type_script = "uid://utmj7y8m802a"

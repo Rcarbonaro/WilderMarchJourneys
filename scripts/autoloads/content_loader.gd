@@ -50,6 +50,12 @@ const REWARD_RULES_DIR := "res://content/reward_rules/"
 # stage (e.g. a flat gold reward AND a tarot-driven bonus rule both firing
 # on the same combat stage).
 
+const BIOME_POOL_PATH := "res://content/biome_pool.json"
+# ADDED: single file, not a folder -- { "biomes": ["forest", "swamp", ...] }.
+# GameState.start_new_run() shuffles a copy of this list and takes 3 for
+# RunState.biome_sequence. Add more biome names here as you build them out;
+# nothing else needs to change.
+
 # ---- IN-MEMORY CONTENT TABLES ------------------------------------------------
 # Every one of these is Dictionary[String id] -> Dictionary (the parsed JSON).
 var tarot_cards: Dictionary = {}
@@ -63,6 +69,7 @@ var forging_recipes: Dictionary = {}    # keyed by "subtypeA_subtypeB" (sorted)
 var stage_type_map: Dictionary = {}     # keyed by String(stage 1-10)
 var game_modes: Dictionary = {}         # keyed by mode id ("random", "draft")
 var reward_rules: Dictionary = {}       # ADDED -- keyed by "id", read directly by stage_director.gd
+var biome_pool: Array = []              # ADDED -- flat Array[String], loaded from BIOME_POOL_PATH
 
 # Every problem found while loading ends up here, so you can see a single
 # report instead of hunting through console output line by line.
@@ -102,6 +109,9 @@ func _load_all_content() -> void:
 	forging_recipes = _load_forging_recipes()
 	game_modes = _load_folder(GAME_MODES_DIR, ["id", "starting_gold", "party_size"])
 	reward_rules = _load_folder(REWARD_RULES_DIR, ["id", "effects"])
+
+	var biome_pool_data: Dictionary = _load_single_file(BIOME_POOL_PATH, [])   # ADDED
+	biome_pool = biome_pool_data.get("biomes", [])
 
 
 func _load_folder(path: String, required_fields: Array) -> Dictionary:

@@ -5,8 +5,9 @@
   "stage_min": 1,
   "stage_max": 30,
   "enemy_pool": [
+    { "enemy_id": "hulkingsporeling", "weight": 2 },
     { "enemy_id": "ent", "weight": 1 },
-    { "enemy_id": "hulkingsporeling", "weight": 1 }
+    { "enemy_id": "leshy", "weight": 1 }
   ],
   "guaranteed_enemy_ids": [],
   "total_enemies_min": 3,

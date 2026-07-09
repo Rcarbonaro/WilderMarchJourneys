@@ -40,6 +40,16 @@ extends Resource
 
 @export_enum("common", "uncommon", "rare") var rarity: String = "common"
 
+@export_enum("normal", "elite", "boss") var tier: String = "normal"
+# ADDED. Read by battle_manager.gd's real (non-test) enemy-spawn path and
+# passed into ScalingEngine.apply_scaling() so elites get an extra stat
+# multiplier on top of normal per-stage scaling (see
+# content/scaling/<stage>.json's "elite_stat_multiplier" -- see the README
+# entry on marking an enemy elite for the full explanation). Has no effect
+# on player units; "boss" is provided for the same reason but isn't read by
+# anything yet -- reserved for whenever your boss-stage handling needs to
+# tell a boss apart from a regular elite.
+
 # Base stats
 
 @export var base_stats: StatsData

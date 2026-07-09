@@ -19,7 +19,7 @@ config/icon="res://icon.svg"
 
 ContentLoader="*uid://4p6b1ua7gyrr"
 EventBus="*uid://b048wh6o1pnme"
-RunManager="*uid://bsac4ako53l21"
+RunManager="*uid://m44w38ecrh6q"
 EffectSystem="*uid://b0bnurvdjqpeq"
 CombatHooks="*uid://68fkgqq443y6"
 CombatFeedback="*uid://cyvdxyoor4vw3"
@@ -30,8 +30,9 @@ ShopEngine="*uid://cm1l25qux5p36"
 StageDirector="*uid://m7gl7bt6qv30"
 DialogueEngine="*uid://c26bd2fopgnjh"
 EncounterEngine="*uid://byswddcebqjfn"
-PopupManager="*uid://cj8b1ppnreund"
+PopupManager="*uid://1wba4qgy2u6j"
 CustomEquipmentHandlers="*uid://oflyhola0f81"
+CustomTarotHandlers="*uid://1tdbryg4fv1g"
 
 [display]
 
