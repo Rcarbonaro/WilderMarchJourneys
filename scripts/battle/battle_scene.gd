@@ -33,20 +33,27 @@ func _enter_tree() -> void:
 
 func _get_current_biome() -> String:
 	if RunManager.current_run == null or RunManager.current_run.biome_sequence.is_empty():
-		return "grassland"
+		return "forest"
 	var slot := ContentLoader.get_biome_slot(RunManager.current_run.stage_index)
 	if slot >= RunManager.current_run.biome_sequence.size():
-		return "grassland"
+		return "forest"
 	return RunManager.current_run.biome_sequence[slot]
 
 
 func _ready() -> void:
 	# 1. Connect UI to BattleManager
 	battle_ui.battle_manager = battle_manager
-	
-	# 2: set up biome
-	setup_battle_background(_get_current_biome() if not RunManager.is_test_mode else "grassland")
 
+	# CanvasLayers ignore normal node tree draw order and are stacked by
+	# their own "layer" property instead -- BattleBackgrounds defaulted to
+	# layer 1, same tier as BattleUI, which put it ABOVE the default canvas
+	# (layer 0) that BattleGrid/UnitLayer render on, hiding every unit
+	# sprite behind an opaque background. Force it below the default canvas.
+	$BattleBackgrounds.layer = -1
+
+	# 2: set up biome
+	setup_battle_background(_get_current_biome() if not RunManager.is_test_mode else "forest")
+	
 	# 3: Connect BattleManager back to the UI Manager
 	battle_manager.ui_manager = battle_ui
 
@@ -100,7 +107,7 @@ func _on_battle_ended(result: String) -> void:
 # 🗺️ The Biome Resource Database
 const BIOME_BACKGROUNDS = {
 #USING FOREST FLOOR AS PLACEHOLDER
-	"grassland": [
+	"forest": [
 		"res://assets/backgrounds/forestfloor1.png",
 		"res://assets/backgrounds/forestfloor1.png"
 	],
@@ -114,10 +121,10 @@ const BIOME_BACKGROUNDS = {
 }
 
 func setup_battle_background(biome_type: String) -> void:
-	# 1. Fallback safety check: If biome doesn't exist, default to grassland
+	# 1. Fallback safety check: If biome doesn't exist, default to forest
 	if not BIOME_BACKGROUNDS.has(biome_type):
-		print("⚠️ Unknown biome type requested: '", biome_type, "'. Defaulting to grassland.")
-		biome_type = "grassland"
+		print("⚠️ Unknown biome type requested: '", biome_type, "'. Defaulting to forest.")
+		biome_type = "forest"
 		
 	var available_images: Array = BIOME_BACKGROUNDS[biome_type]
 	

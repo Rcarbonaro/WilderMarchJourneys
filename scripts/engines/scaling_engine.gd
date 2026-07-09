@@ -45,20 +45,65 @@ func resolve_spawn_table(run_state: RunState) -> Array:
 	for p in pool:
 		weights.append(float(p.get("weight", 1.0)))
 
+	# ADDED -- elite-frequency roll. elite_chance comes from the SAME
+	# per-stage scaling config elite_stat_multiplier already lives in
+	# (content/scaling/<stage>.json), so "how many elites this far into the
+	# run" is entirely data-driven: author elite_chance to be 0 (or just
+	# absent) on early stages and rise on later ones, exactly like every
+	# other scaling number in this project.
+	var scaling_config := ContentLoader.get_scaling_config(run_state.stage_index)
+	var elite_chance: float = float(scaling_config.get("elite_chance", 0.0))
+	var elite_pool_indices: Array = []
+	if elite_chance > 0.0:
+		for i in range(pool.size()):
+			if _get_enemy_tier(pool[i].get("enemy_id", "")) == "elite":
+				elite_pool_indices.append(i)
+
 	var placed := roster.size()
 	var attempts := 0
 	while placed < target_total and attempts < target_total * 5:
 		attempts += 1
-		var choice = pool[_weighted_pick(weights)]
-		roster.append({"enemy_id": choice.get("enemy_id", ""), "count": 1})
+
+		var chosen_entry: Dictionary
+		# Roll for elite FIRST, so "no elite-tagged enemy in this table's
+		# pool yet" quietly falls back to a normal pick instead of silently
+		# doing nothing -- see the elite-authoring note in the README if
+		# elites never seem to appear for a table you expect them in.
+		if elite_chance > 0.0 and not elite_pool_indices.is_empty() and randf() < elite_chance:
+			var elite_weights := []
+			for i in elite_pool_indices:
+				elite_weights.append(weights[i])
+			chosen_entry = pool[elite_pool_indices[_weighted_pick(elite_weights)]]
+		else:
+			chosen_entry = pool[_weighted_pick(weights)]
+
+		roster.append({"enemy_id": chosen_entry.get("enemy_id", ""), "count": 1})
 		placed += 1
 
 	return roster
 
 
-func apply_scaling(base_stats: StatsData, run_state: RunState) -> StatsData:
+var _enemy_tier_cache: Dictionary = {}   # enemy_id -> "normal"/"elite"/"boss", avoids re-loading the same .tres every roll
+
+func _get_enemy_tier(enemy_id: String) -> String:
+	if _enemy_tier_cache.has(enemy_id):
+		return _enemy_tier_cache[enemy_id]
+	var path := "res://resources/enemies/" + enemy_id + "_data.tres"
+	var result := "normal"
+	if ResourceLoader.exists(path):
+		var data: UnitData = load(path) as UnitData
+		if data != null and "tier" in data:
+			result = data.tier
+	_enemy_tier_cache[enemy_id] = result
+	return result
+
+
+func apply_scaling(base_stats: StatsData, run_state: RunState, tier: String = "normal") -> StatsData:
 	# Returns a NEW StatsData with every applicable modifier from this
 	# stage's scaling config baked in. base_stats is never mutated directly.
+	# ADDED 'tier' param: when "elite" (or "boss"), an extra flat multiplier
+	# is applied on top of everything else -- see the elite_stat_multiplier
+	# read below.
 	var scaled := StatsData.new()
 	scaled.hp = base_stats.hp
 	scaled.atk = base_stats.atk
@@ -84,6 +129,24 @@ func apply_scaling(base_stats: StatsData, run_state: RunState) -> StatsData:
 	for conditional in config.get("conditional_modifiers", []):
 		if EffectSystem.evaluate_condition(conditional.get("condition", {}), context):
 			_apply_stat_modifiers(scaled, conditional.get("effects", []))
+
+	# ADDED -- elite/boss multiplier, applied AFTER every other modifier so it
+	# scales the fully-modified total rather than just the base stat. Reads
+	# "elite_stat_multiplier" from the SAME per-stage scaling config file
+	# (defaults to 1.5 if that key isn't set), so you can tune how much
+	# stronger elites are on a stage-by-stage (or even per-difficulty) basis
+	# right alongside every other scaling number, instead of a separate file.
+	if tier == "elite" or tier == "boss":
+		var elite_mult: float = float(config.get("elite_stat_multiplier", 1.5))
+		scaled.hp   = int(scaled.hp   * elite_mult)
+		scaled.atk  = int(scaled.atk  * elite_mult)
+		scaled.matk = int(scaled.matk * elite_mult)
+		scaled.def  = int(scaled.def  * elite_mult)
+		scaled.mdef = int(scaled.mdef * elite_mult)
+		# mov/crit_chance/crit_damage/mana deliberately NOT multiplied here --
+		# an elite with 3x movement or 3x crit chance usually isn't what
+		# "elite" is meant to convey. Add them to this block yourself if you
+		# want elites to scale on those too.
 
 	return scaled
 

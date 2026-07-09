@@ -18,6 +18,7 @@ description = "A massive sporeling corrupted by unknown magic. Is tough and redu
 portrait = ExtResource("3_pfdg2")
 battle_sprite = ExtResource("2_2hbj6")
 stats_by_level = Array[ExtResource("3_gsv6k")]([ExtResource("1_gsv6k")])
+tier = "elite"
 base_stats = ExtResource("1_gsv6k")
 starting_abilities = Array[ExtResource("2_rdlt6")]([ExtResource("4_emfon")])
 spawn_auras = Array[ExtResource("3_ninqr")]([ExtResource("4_fho8g")])

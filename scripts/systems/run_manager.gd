@@ -96,8 +96,8 @@ func get_scout_cost() -> int:
 
 # ── BIOME ───────────────────────────────────────────────────────────────────────
 
-var current_biome: String = "grassland"
-const AVAILABLE_BIOMES = ["grassland", "desert", "dungeon"]  # legacy fallback only
+var current_biome: String = "forest"
+const AVAILABLE_BIOMES = ["forest", "desert", "dungeon"]  # legacy fallback only
 
 func get_current_biome_type() -> String:
 	# Derives the biome automatically from how far into the run the player
@@ -430,7 +430,7 @@ func load_run(run_id: String) -> bool:
 	current_shop_slots = data.get("shop_slots", [])
 
 	difficulty  = data.get("difficulty", "normal")
-	current_biome = data.get("biome", "grassland")
+	current_biome = data.get("biome", "forest")
 	tarot_cards = data.get("tarot_cards", [])
 	run_flags   = data.get("flags", [])
 

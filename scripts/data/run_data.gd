@@ -22,4 +22,4 @@ extends Resource
 
 @export var tarot_cards: Array = []       # Array of TarotCardData resources
 
-@export var difficulty: int = 1
+@export var difficulty: String = "normal"
