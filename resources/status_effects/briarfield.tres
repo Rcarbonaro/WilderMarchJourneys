@@ -13,4 +13,5 @@ duration_rounds = 2
 can_stack = true
 mov_modifier = -1
 damage_dealt_modifier = 0.9
+visual_classification = "debuff"
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

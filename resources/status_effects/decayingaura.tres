@@ -14,4 +14,5 @@ max_stacks = 3
 atk_modifier = -2
 matk_modifier = -2
 damage_dealt_modifier = 0.9
+visual_classification = "debuff"
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

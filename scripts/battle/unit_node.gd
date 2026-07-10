@@ -728,14 +728,14 @@ func _ensure_walk_particles() -> void:
 	_walk_particles.position             = walk_particle_offset
 	_walk_particles.emitting             = false
 	_walk_particles.one_shot             = false
-	_walk_particles.amount               = 4
-	_walk_particles.lifetime             = 0.45
+	_walk_particles.amount               = 10
+	_walk_particles.lifetime             = 1.1
 	_walk_particles.randomness           = 0.6
 	_walk_particles.direction            = Vector2(0, -1)
 	_walk_particles.spread               = 50.0
 	_walk_particles.gravity              = Vector2(0, 60.0)
-	_walk_particles.initial_velocity_min = 8.0
-	_walk_particles.initial_velocity_max = 24.0
+	_walk_particles.initial_velocity_min = 6.0
+	_walk_particles.initial_velocity_max = 1
 	_walk_particles.scale_amount_min     = 1.5
 	_walk_particles.scale_amount_max     = 3.5
 	_walk_particles.color                = Color(0.72, 0.65, 0.52, 0.55)   # dusty tan
@@ -855,10 +855,23 @@ func move_along_path(path: Array) -> void:
 var _buff_glow: CPUParticles2D = null
 var _debuff_glow: CPUParticles2D = null
 
-const STATUS_GLOW_Y_OFFSET: float = HP_BAR_Y_OFFSET - 10.0
-# Sits just above the HP bar. HP_BAR_Y_OFFSET is already tuned to sit at the
-# bottom edge of the unit's own tile, so anchoring off it keeps this in the
-# right place regardless of sprite size.
+const STATUS_GLOW_TILE_HALF: float = 48.0
+# Half of TILE_SIZE (96px). Units are positioned at their tile's CENTER, so
+# +/- this value from the unit's own position lands exactly on the tile's
+# bottom/top edge.
+
+const STATUS_GLOW_EDGE_MARGIN: float = 6.0
+# Keeps each stream's spawn point just inside the tile edge, rather than
+# exactly on the boundary line, so sparkles don't look like they're
+# spawning half-outside the tile.
+
+func _make_fade_gradient(base_color: Color) -> Gradient:
+	# Fades each sparkle to fully transparent over its lifetime, so it
+	# dissolves smoothly instead of just popping out of existence.
+	var g := Gradient.new()
+	g.set_color(0, base_color)
+	g.set_color(1, Color(base_color.r, base_color.g, base_color.b, 0.0))
+	return g
 
 func _ensure_status_glow(which: String) -> CPUParticles2D:
 	var existing: CPUParticles2D = _buff_glow if which == "buff" else _debuff_glow
@@ -867,35 +880,52 @@ func _ensure_status_glow(which: String) -> CPUParticles2D:
 
 	var glow := CPUParticles2D.new()
 	add_child(glow)
-	glow.texture               = _get_dust_circle_texture()   # reuse the same soft round texture as the walk dust
-	glow.position              = Vector2(0, STATUS_GLOW_Y_OFFSET)
+	glow.texture               = _get_dust_circle_texture()
 	glow.emitting              = false
 	glow.one_shot              = false
-	glow.amount                = 6
-	glow.lifetime              = 1.1
-	glow.randomness            = 0.7
-	glow.direction             = Vector2(0, -1)
-	glow.spread                = 180.0
-	glow.gravity               = Vector2(0, -6.0)   # drifts gently upward, unlike the walk dust
-	glow.initial_velocity_min  = 2.0
-	glow.initial_velocity_max  = 8.0
-	glow.scale_amount_min      = 0.8
-	glow.scale_amount_max      = 1.6
-	glow.spread                = 60.0
+	glow.amount                = 35
+	glow.lifetime              = .8
+	glow.randomness            = 0.6
+	glow.emission_shape        = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	glow.emission_rect_extents = Vector2(26.0, 2.0)
+	glow.spread                = 6.0
+	glow.scale_amount_min      = 1.0
+	glow.scale_amount_max      = 1.8
 
 	if which == "buff":
-		glow.color = Color(1.0, 0.85, 0.25, 0.75)   # gold
+		glow.position              = Vector2(0, STATUS_GLOW_TILE_HALF - STATUS_GLOW_EDGE_MARGIN)
+		glow.direction             = Vector2(0, -1)
+		glow.gravity               = Vector2(0, -16.0)
+		glow.initial_velocity_min  = 5.0
+		glow.initial_velocity_max  = 10.0
+		var buff_color = Color(1.0, 0.85, 0.25, 0.85)
+		glow.color      = buff_color
+		glow.color_ramp = _make_fade_gradient(buff_color)
 		_buff_glow = glow
 	else:
-		glow.color = Color(0.55, 0.15, 0.75, 0.75)   # purple
+		glow.position              = Vector2(0, -(STATUS_GLOW_TILE_HALF - STATUS_GLOW_EDGE_MARGIN))
+		glow.direction             = Vector2(0, 1)
+		glow.gravity               = Vector2(0, 16.0)
+		glow.initial_velocity_min  = 24.0
+		glow.initial_velocity_max  = 32.0
+		var debuff_color = Color(0.55, 0.15, 0.75, 0.55)
+		glow.color      = debuff_color
+		glow.color_ramp = _make_fade_gradient(debuff_color)
 		_debuff_glow = glow
 
 	return glow
 
-
 func _refresh_status_glow() -> void:
 	# Called any time active_statuses changes — apply, remove, or a natural
 	# expiry — so this never drifts out of sync with what's actually active.
+	for s in active_statuses:
+		var d: StatusEffectData = s["data"]
+		print("STATUS: ", d.display_name,
+			  " | classification=", d.visual_classification,
+			  " | is_buff=", d.classifies_as_buff(),
+			  " | is_debuff=", d.classifies_as_debuff())
+	# ── END TEMP DEBUG ──────────────────────────────────────────────────────
+	
 	var has_buff: bool   = get_buff_count()   > 0
 	var has_debuff: bool = get_debuff_count() > 0
 
@@ -988,11 +1018,7 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster 
 	})
 	_debug_print_status_applied(status_data, stacks)
 	update_visuals()
-	var is_buff := (status_data.atk_modifier > 0 or status_data.def_modifier > 0 or
-						status_data.matk_modifier > 0 or status_data.mdef_modifier > 0 or
-						status_data.mov_modifier > 0 or status_data.crit_chance_modifier > 0 or
-						status_data.damage_dealt_modifier > 0 or status_data.damage_taken_modifier < 0 or
-						status_data.grants_immunity)
+	var is_buff: bool = status_data.classifies_as_buff()
 	EventBus.publish.call_deferred(EventBus.ON_BUFF_APPLIED, {
 		"unit": self, "status_id": status_data.id, "is_buff": is_buff,
 		"status_data": status_data,
@@ -1361,33 +1387,21 @@ func has_status(status_id: String) -> bool:
 
 
 func get_buff_count() -> int:
-	# Returns how many BUFF (positive) statuses this unit has.
+	# Returns how many BUFF statuses this unit has.
 	var count = 0
 	for s in active_statuses:
 		var d: StatusEffectData = s["data"]
-		if d.is_stun or d.is_root:
-			continue   # Stun and root are always debuffs, never count as buffs.
-		var is_positive = (d.atk_modifier > 0 or d.def_modifier > 0 or
-						   d.matk_modifier > 0 or d.mdef_modifier > 0 or
-						   d.mov_modifier > 0 or d.crit_chance_modifier > 0 or
-						   d.damage_dealt_modifier > 0 or d.damage_taken_modifier < 0 or
-						   d.grants_immunity)
-		if is_positive:
+		if d.classifies_as_buff():
 			count += s["stacks"]
 	return count
 
 
 func get_debuff_count() -> int:
-	# Returns how many DEBUFF (negative) statuses this unit has.
+	# Returns how many DEBUFF statuses this unit has.
 	var count = 0
 	for s in active_statuses:
 		var d: StatusEffectData = s["data"]
-		var is_negative = (d.is_stun or d.is_root or d.is_invisible or
-						   d.atk_modifier < 0 or d.def_modifier < 0 or
-						   d.matk_modifier < 0 or d.mdef_modifier < 0 or
-						   d.mov_modifier < 0 or d.damage_taken_modifier > 0 or
-						   d.damage_dealt_modifier < 0)
-		if is_negative:
+		if d.classifies_as_debuff():
 			count += s["stacks"]
 	return count
 

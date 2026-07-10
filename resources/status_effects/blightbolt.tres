@@ -10,4 +10,5 @@ display_name = "Blightbolt"
 description = "Takes 5% more damage for 1 round."
 icon = ExtResource("1_6j08b")
 damage_taken_modifier = 0.05
+visual_classification = "debuff"
 metadata/_custom_type_script = "uid://gsbk18mmfnol"
