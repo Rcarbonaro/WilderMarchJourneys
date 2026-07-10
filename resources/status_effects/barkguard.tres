@@ -14,6 +14,7 @@ cleansable = false
 def_modifier = 3
 mdef_modifier = 1
 mov_modifier = -2
+visual_classification = "buff"
 has_visual_override = true
 override_scene = ExtResource("1_r54nc")
 enter_animation = "barkguard_up"

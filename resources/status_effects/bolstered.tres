@@ -11,4 +11,5 @@ description = "Increases defense and reflects 25% of DEF as damage to attackers 
 icon = ExtResource("1_xk0sm")
 def_modifier = 6
 damage_taken_modifier = 1.0
+visual_classification = "buff"
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

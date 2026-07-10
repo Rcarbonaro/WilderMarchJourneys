@@ -97,13 +97,51 @@ extends Resource
 # Special flags
 
 @export var is_root: bool = false        # movement = 0
-
 @export var is_stun: bool = false        # skip turn entirely
-
 @export var is_invisible: bool = false   # untargetable by ranged
-
 @export var grants_immunity: bool = false # blocks all debuffs
 
+# ── VISUAL CLASSIFICATION OVERRIDE ────────────────────────────────────────────
+# Buff/debuff classification (which glow shows on the unit, and which bucket
+# this counts toward in get_buff_count()/get_debuff_count()) is normally
+# AUTO-DETECTED from the stat modifier fields above. That breaks down for
+# statuses that are purely flavor/utility flags rather than stat changes --
+# e.g. Invisible is pure upside but touches no modifier field, so auto-detect
+# only classifies it via an explicit is_invisible check on the "negative"
+# side. Use this dropdown to pin the classification manually instead.
+@export_enum("auto", "buff", "debuff", "neutral") var visual_classification: String = "auto"
+# "auto"    — classify from the modifiers below (default; matches every
+#             existing status resource's current behavior).
+# "buff"    — always the gold glow, always counts as a buff.
+# "debuff"  — always the purple glow, always counts as a debuff.
+# "neutral" — no glow, counts toward neither bucket.
+
+func classifies_as_buff() -> bool:
+	match visual_classification:
+		"buff":
+			return true
+		"debuff", "neutral":
+			return false
+	if is_stun or is_root:
+		return false
+	return (atk_modifier > 0 or def_modifier > 0 or matk_modifier > 0 or
+			mdef_modifier > 0 or mov_modifier > 0 or crit_chance_modifier > 0 or
+			damage_dealt_modifier > 0 or damage_taken_modifier < 0 or
+			grants_immunity)
+
+
+func classifies_as_debuff() -> bool:
+	match visual_classification:
+		"debuff":
+			return true
+		"buff", "neutral":
+			return false
+	if is_stun or is_root:
+		return true
+	return (is_invisible or atk_modifier < 0 or def_modifier < 0 or
+			matk_modifier < 0 or mdef_modifier < 0 or mov_modifier < 0 or
+			damage_taken_modifier > 0 or damage_dealt_modifier < 0)
+			
 # ── VISUAL OVERRIDE ANIMATIONS ────────────────────────────────────────────────
 # Some statuses fundamentally change how a unit looks for their whole duration —
 # e.g. a "Bark Armor" buff that replaces the unit's idle/attack/walk animations

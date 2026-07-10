@@ -1080,16 +1080,21 @@ func _try_use_ability(cell: Vector2i) -> void:
 
 	print("DEBUG: Current Total Mana Spent: ", total_mana_spent, " / Threshold: ", ARCANA_THRESHOLD)
 
-	# execute_ability uses 'await' for VFX, so we await it here too.
-	# 'simulated_cells' (the UNFILTERED line) is also passed through so a
-	# dash ability can correctly compute where it physically has to stop —
-	# see execute_ability's raw_target_cells doc comment for why the
-	# team-filtered version alone isn't enough for that.
 	await executor.execute_ability(selected_unit, selected_ability, filtered_cells, cell, simulated_cells)
 
-	# ── ARCANA CHARGE TRACKING ────────────────────────────────────────────────
-	# Every mana point spent by ANY player unit counts toward the pool.
-	# When the pool hits the threshold, the Spellsword gets a free charge.
+# ── SAFETY: the cast may have been interrupted mid-resolution ─────────────
+# If the acting unit died while we were awaiting above (self-damage, a
+# Thorns-style reflect, or hazard/aura damage taken while being displaced
+# by their own ability), _on_unit_died() already called deselect_unit()
+# for us — which clears BOTH selected_unit and selected_ability. If that
+# happened, there's nothing left to finish: bail out now, before the
+# Unleash check below tries to dereference a null selected_ability.
+	if selected_ability == null or not is_instance_valid(selected_unit):
+		current_phase = TurnPhase.PLAYER_TURN
+		deselect_unit()
+		return
+
+# ── ARCANA CHARGE TRACKING ────────────────────────────────────────────────
 	if is_instance_valid(selected_unit):
 		total_mana_spent += selected_ability.mana_cost
 		print("DEBUG: Spent ", selected_ability.mana_cost, " mana. Total: ", total_mana_spent)
@@ -1098,15 +1103,9 @@ func _try_use_ability(cell: Vector2i) -> void:
 			total_mana_spent -= ARCANA_THRESHOLD
 			_grant_arcana_charge_to_spellsword()
 
-	# ── UNLEASH THRESHOLD CHECK ────────────────────────────────────────────────
-	# Polls the running HP-cost total tracked on the executor (it accumulates
-	# there automatically for every execute_ability call, player or enemy).
-	# Once it crosses the threshold, unleash_available flips on for the whole
-	# party — check _check_unleash_threshold for how this is consumed.
+# ── UNLEASH THRESHOLD CHECK ────────────────────────────────────────────────
 	_check_unleash_threshold()
 
-	# If the ability just used WAS the Unleash ability, consume the charge now
-	# that it has successfully executed.
 	if selected_ability.is_unleash_ability:
 		consume_unleash()
 

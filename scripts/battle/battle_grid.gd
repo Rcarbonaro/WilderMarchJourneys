@@ -31,7 +31,7 @@
 
 extends Node2D
 
-const GRID_WIDTH  = 100
+const GRID_WIDTH  = 19
 const GRID_HEIGHT = 9
 const TILE_SIZE   = 96   # pixels per tile — must match highlight_manager.gd
 
@@ -1269,3 +1269,31 @@ func _spawn_feature_visual(cell: Vector2i, feature: MapFeatureData, layer: Node2
 				sprite.texture = _get_feature_placeholder_texture(Color(0.5, 0.5, 0.5))
 	sprite.position = grid_to_world(cell)
 	layer.add_child(sprite)
+
+func is_dangerous_for(cell: Vector2i, unit) -> bool:
+	# Returns true if a unit entering this cell right now would trigger
+	# hazard damage (i.e. get hurt for stepping onto it). Used by the
+	# pathfinder to PREFER routes that avoid hazards when a safe alternative
+	# exists. This does NOT block movement — a unit can still be routed
+	# through or onto a hazardous tile if that's the only way to reach
+	# their destination, or if the destination itself is hazardous.
+	#
+	# Mirrors the skip/trigger logic in apply_hazard_to_unit(..., "enter"):
+	# a TRUE impassable wall never reaches here anyway (already filtered out
+	# earlier by _is_blocked_by_wall_hazard), but a "damaging wall"
+	# (is_wall_hazard=true, blocks_movement=false) counts as dangerous just
+	# like a normal hazard tile.
+	#
+	# 'unit' is currently unused (no per-unit hazard immunity exists yet),
+	# but is kept in the signature so that hook can be added later without
+	# changing every call site.
+	if not hazard_map.has(cell):
+		return false
+	for hazard_id in hazard_map[cell]:
+		var entry = hazard_map[cell][hazard_id]
+		var hdata: HazardData = entry["data"]
+		if hdata.is_wall_hazard and hdata.blocks_movement:
+			continue   # Impassable walls don't damage — and can't be entered anyway.
+		if hdata.trigger_on_enter:
+			return true
+	return false

@@ -7,7 +7,7 @@
 script = ExtResource("1_hsta4")
 id = "hulkingsporelingaura"
 display_name = "Hulking Sporeling Aura"
-description = "Reduces unit attack and magic attack. Lasts 3 rounds. Stacks up to 3 times."
+description = "Reduces unit attack and magic attack, and increases damage taken. Lasts 3 rounds. Stacks up to 3 times."
 icon = ExtResource("1_r5tdv")
 duration_rounds = 3
 can_stack = true
@@ -15,6 +15,7 @@ max_stacks = 3
 expires_at = "end_of_player_round"
 atk_modifier = -2
 matk_modifier = -2
+damage_taken_modifier = 0.34
 trigger_timing = "start_of_turn"
 dot_flat_amount = 0
 dot_damage_percent = 0.0
