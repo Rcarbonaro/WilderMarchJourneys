@@ -8,22 +8,44 @@
 # modifiers) lives in the ShopEngine autoload. This script only builds the
 # cards and reacts to button presses.
 #
-# Expected node tree:
+# Expected node tree -- see the README for the full step-by-step walkthrough:
 #   ShopScene (Node2D)
+#     Background (TextureRect)         <- just assign a texture in the Inspector, no script involvement
 #     GoldLabel (Label)
-#     HBoxContainer (HBoxContainer)   <- item cards built here at runtime
+#     HBoxContainer (HBoxContainer)    <- shop item cards built here at runtime
 #     RefreshButton (Button)
 #     ContinueButton (Button)
+#     EquipPanel (VBoxContainer)
+#       RosterScroll (ScrollContainer)
+#         RosterList (VBoxContainer)   <- one row per party/bench unit, built at runtime
+#       SelectedUnitLabel (Label)
+#       SlotsContainer (HBoxContainer) <- 3 equip-slot buttons, built at runtime
+#       InventoryScroll (ScrollContainer)
+#         InventoryList (VBoxContainer) <- one row per unequipped item, built at runtime
 
 extends Node2D
+
+const MAX_EQUIP_SLOTS := 3
+# Not enforced anywhere else in the backend (RunState.party's
+# equipped_item_ids is just a plain Array with no size cap) -- this is a
+# UI-level constraint matching the original 3-slots-per-unit design. Raise
+# it here if you want more/fewer slots; nothing else needs to change.
 
 @onready var gold_label: Label = $GoldLabel
 @onready var slot_container: HBoxContainer = $HBoxContainer
 @onready var refresh_button: Button = $RefreshButton
 @onready var continue_button: Button = $ContinueButton
 
+@onready var roster_list: VBoxContainer = $EquipPanel/RosterScroll/RosterList
+@onready var selected_unit_label: Label = $EquipPanel/SelectedUnitLabel
+@onready var slots_container: HBoxContainer = $EquipPanel/SlotsContainer
+@onready var inventory_list: VBoxContainer = $EquipPanel/InventoryScroll/InventoryList
+
 var _slot_panels: Array = []
 var _placeholder_icon: ImageTexture = null
+
+var _selected_party_index: int = -1          # index into a combined party+bench list, or -1
+var _selected_inventory_item_id: String = ""  # currently-picked-up inventory item, or ""
 
 
 func _ready() -> void:
@@ -43,6 +65,9 @@ func _ready() -> void:
 func _refresh_display() -> void:
 	_update_gold_label()
 	_rebuild_slots()
+	_rebuild_roster()
+	_rebuild_equip_slots()
+	_rebuild_inventory()
 
 
 func _update_gold_label() -> void:
@@ -102,8 +127,11 @@ func _get_display_name(entry: Dictionary) -> String:
 		return unit_data.display_name if unit_data != null and "display_name" in unit_data else item_id
 	# Both "equipment" and "consumable" items are stored in ContentLoader's
 	# equipment dictionary (content/equipment/*.json) in this project.
+	# NOTE: equipment JSON uses "name", not "display_name" (UnitData .tres
+	# resources use "display_name" -- these are two different content
+	# systems with two different field names for the same concept).
 	var content: Dictionary = ContentLoader.get_equipment(item_id)
-	return content.get("display_name", item_id)
+	return content.get("name", item_id)
 
 
 func _get_display_icon(entry: Dictionary) -> Texture2D:
@@ -154,3 +182,127 @@ func _on_refresh_pressed() -> void:
 
 func _on_continue_pressed() -> void:
 	StageDirector.enter_current_stage()
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# EQUIP MANAGEMENT
+#
+# A party/bench entry is a plain Dictionary (see run_state.gd):
+#   { "unit_id": String, "instance_id": String, "level": int,
+#     "equipped_item_ids": Array, "permanent_modifiers": Array }
+# Equipping/unequipping just means editing that SAME dictionary's
+# equipped_item_ids array in place (Dictionaries are passed by reference in
+# GDScript, so mutating the entry you got from _get_full_roster() mutates
+# the actual entry sitting inside RunManager.current_run.party/bench).
+# Nothing needs to be "written back" separately.
+# ══════════════════════════════════════════════════════════════════════════
+
+func _get_full_roster() -> Array:
+	var roster: Array = []
+	roster.append_array(RunManager.current_run.party)
+	roster.append_array(RunManager.current_run.bench)
+	return roster
+
+
+func _rebuild_roster() -> void:
+	for child in roster_list.get_children():
+		child.queue_free()
+
+	var roster := _get_full_roster()
+	for i in range(roster.size()):
+		var entry: Dictionary = roster[i]
+		var btn := Button.new()
+		var unit_data := _load_unit_data(entry.get("unit_id", ""))
+		var label : String = unit_data.display_name if unit_data != null else entry.get("unit_id", "?")
+		btn.text = ("▶ " if i == _selected_party_index else "") + label + " (Lv " + str(entry.get("level", 1)) + ")"
+		btn.pressed.connect(func(): _on_roster_entry_pressed(i))
+		roster_list.add_child(btn)
+
+
+func _on_roster_entry_pressed(index: int) -> void:
+	_selected_party_index = index
+	_rebuild_roster()
+	_rebuild_equip_slots()
+
+
+func _get_selected_entry() -> Dictionary:
+	var roster := _get_full_roster()
+	if _selected_party_index < 0 or _selected_party_index >= roster.size():
+		return {}
+	return roster[_selected_party_index]
+
+
+func _rebuild_equip_slots() -> void:
+	for child in slots_container.get_children():
+		child.queue_free()
+
+	var entry := _get_selected_entry()
+	if entry.is_empty():
+		selected_unit_label.text = "Select a unit above to manage equipment."
+		return
+
+	var unit_data := _load_unit_data(entry.get("unit_id", ""))
+	selected_unit_label.text = "Equipping: " + (unit_data.display_name if unit_data != null else entry.get("unit_id", "?"))
+
+	var equipped: Array = entry.get("equipped_item_ids", [])
+	while equipped.size() < MAX_EQUIP_SLOTS:
+		equipped.append(null)
+
+	for i in range(MAX_EQUIP_SLOTS):
+		var item_id = equipped[i]
+		var btn := Button.new()
+		if item_id == null or item_id == "":
+			btn.text = "Empty Slot %d" % (i + 1)
+		else:
+			btn.text = ContentLoader.get_equipment(item_id).get("name", item_id)
+		btn.pressed.connect(func(): _on_equip_slot_pressed(i))
+		slots_container.add_child(btn)
+
+
+func _on_equip_slot_pressed(slot_index: int) -> void:
+	var entry := _get_selected_entry()
+	if entry.is_empty():
+		return
+
+	var equipped: Array = entry.get("equipped_item_ids", [])
+	while equipped.size() < MAX_EQUIP_SLOTS:
+		equipped.append(null)
+
+	if _selected_inventory_item_id != "":
+		# Equipping: put the picked-up inventory item into this slot,
+		# returning whatever was already there back to the inventory.
+		var old_item = equipped[slot_index]
+		equipped[slot_index] = _selected_inventory_item_id
+		RunManager.current_run.equipment_inventory.erase(_selected_inventory_item_id)
+		if old_item != null and old_item != "":
+			RunManager.current_run.equipment_inventory.append(old_item)
+		_selected_inventory_item_id = ""
+	else:
+		# No item picked up -- treat this as "unequip": send it back to the bag.
+		if equipped[slot_index] != null and equipped[slot_index] != "":
+			RunManager.current_run.equipment_inventory.append(equipped[slot_index])
+			equipped[slot_index] = null
+
+	entry["equipped_item_ids"] = equipped
+	RunManager.save_run()
+	_rebuild_equip_slots()
+	_rebuild_inventory()
+
+
+func _rebuild_inventory() -> void:
+	for child in inventory_list.get_children():
+		child.queue_free()
+
+	for item_id in RunManager.current_run.equipment_inventory:
+		var btn := Button.new()
+		var prefix := "[Selected] " if item_id == _selected_inventory_item_id else ""
+		btn.text = prefix + ContentLoader.get_equipment(item_id).get("name", item_id)
+		btn.pressed.connect(func(): _on_inventory_item_pressed(item_id))
+		inventory_list.add_child(btn)
+
+
+func _on_inventory_item_pressed(item_id: String) -> void:
+	# Clicking the same item again deselects it; clicking a different one
+	# switches the selection. Then click an equip slot above to place it.
+	_selected_inventory_item_id = "" if _selected_inventory_item_id == item_id else item_id
+	_rebuild_inventory()

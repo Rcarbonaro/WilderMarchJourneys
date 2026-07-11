@@ -411,3 +411,12 @@ extends Resource
 # behave as if one wasn't available — basic attacks, passive triggers,
 # anything that shouldn't benefit from or deplete the charge.
 # Defaults to true so all existing abilities are unchanged.
+
+@export_enum("none", "fire", "ice", "lightning") var element: String = "none"
+# Purely visual -- adds a matching particle layer across the whole AOE
+# footprint when this ability resolves (see _play_elemental_particles() in
+# ability_executor.gd). Runs ALONGSIDE effect_scene, not instead of it, so
+# your existing hand-built scenes (e.g. purple lightning) keep playing
+# exactly as they do now and just gain particles on top. Does NOT affect
+# damage calculation -- that's still damage_type above. Leave "none" for
+# abilities that don't need this.
