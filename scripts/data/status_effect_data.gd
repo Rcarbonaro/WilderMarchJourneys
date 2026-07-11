@@ -251,3 +251,15 @@ func classifies_as_debuff() -> bool:
 # Used only when dot_damage_mode is "physical" or "magical".
 # This is the SAME multiplier role as an ability's base_damage_multiplier.
 # e.g. 0.4 = the DoT tick deals 40% of what a normal hit using that stat would.
+
+
+func is_hidden() -> bool:
+	# A status with no id, no description, AND no icon has nothing to show
+	# the player and no way to distinguish itself in a tooltip or stack
+	# list -- this is almost always a purely mechanical/internal status
+	# (e.g. a backend flag carrying only modifier fields, never meant to be
+	# player-facing). These are excluded from the buff/debuff counts, the
+	# status icon row, and the ambient glow particles. Their actual
+	# mechanical effects (stat modifiers, DoT, etc.) still apply normally --
+	# this only controls what gets counted/displayed.
+	return id.is_empty() and description.is_empty() and icon == null

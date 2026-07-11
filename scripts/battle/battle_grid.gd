@@ -344,8 +344,20 @@ func register_unit(unit, cell: Vector2i) -> void:
 	_refresh_tether_lines()
 
 
-func unregister_unit(cell: Vector2i) -> void:
-	# Frees a single cell. For multi-tile units, call for each occupied cell.
+func unregister_unit(cell: Vector2i, unit = null) -> void:
+	# Frees a single cell -- but ONLY if 'unit' is actually who's registered
+	# there. Without this check, a unit that's overlapping another (e.g. via
+	# snap_to_allow_overlap()'s deliberate Cancel-Move overlap, where THIS
+	# unit was never the cell's official resident) would erase the OTHER
+	# unit's legitimate registration when it later moves away normally --
+	# leaving that other unit's grid_position correct but unit_positions
+	# pointing at nothing, making them permanently unclickable and their
+	# tile permanently misreported as empty.
+	# 'unit' defaults to null for backward compatibility with old call sites,
+	# but every call site should pass it -- an unconditional erase() is
+	# exactly the bug described above.
+	if unit != null and unit_positions.get(cell) != unit:
+		return
 	unit_positions.erase(cell)
 	_refresh_tether_lines()
 
@@ -367,11 +379,13 @@ func register_large_unit(unit, cells: Array) -> void:
 
 
 func unregister_large_unit(unit) -> void:
-	# Removes ALL of a large unit's cells from the registry.
-	# Reads from unit.occupied_cells (set in unit_node.gd).
+	# Removes ALL of a large unit's cells from the registry -- but only the
+	# ones actually registered to THIS unit (same reasoning as
+	# unregister_unit() above).
 	if "occupied_cells" in unit:
 		for cell in unit.occupied_cells:
-			unit_positions.erase(cell)
+			if unit_positions.get(cell) == unit:
+				unit_positions.erase(cell)
 	_refresh_tether_lines()
 
 

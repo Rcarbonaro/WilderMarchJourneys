@@ -2,12 +2,12 @@
   "id": "forest_scaling_stage_3",
   "stage_index": 3,
   "base_modifiers": [
-    { "type": "add_stat", "stat": "hp",  "amount": 10 },
-    { "type": "add_stat", "stat": "atk", "amount": 2 }
+    { "type": "add_stat", "stat": "hp",  "amount": 2 },
+    { "type": "add_stat", "stat": "atk", "amount": 1 }
   ],
   "difficulty_modifiers": {
-    "hard":      [ { "type": "add_stat", "stat": "hp", "amount": 20 } ],
-    "nightmare": [ { "type": "add_stat", "stat": "hp", "amount": 40 } ]
+    "hard":      [ { "type": "add_stat", "stat": "hp", "amount": 4 } ],
+    "nightmare": [ { "type": "add_stat", "stat": "hp", "amount": 2 } ]
   },
   "conditional_modifiers": [
     {

@@ -1,7 +1,7 @@
 {
   "id": "stage_2_scaling",
   "stage_index": 2,
-  "elite_stat_multiplier": 1.5,
+  "elite_stat_multiplier": 1.0,
   "base_modifiers": [],
   "difficulty_modifiers": {
     "hard": [{ "type": "add_stat", "stat": "atk", "amount": 2 }],

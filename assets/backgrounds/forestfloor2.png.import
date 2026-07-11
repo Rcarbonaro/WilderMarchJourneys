@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d3rec5bosxsbt"
-path="res://.godot/imported/forestfloor1.png-dcdc5df95a20d2179e8440435fbecf95.ctex"
+uid="uid://dqqmsdpfquahq"
+path="res://.godot/imported/forestfloor2.png-d04a7b9ef9562783efaca6a5347f2d35.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/backgrounds/forestfloor1.png"
-dest_files=["res://.godot/imported/forestfloor1.png-dcdc5df95a20d2179e8440435fbecf95.ctex"]
+source_file="res://assets/backgrounds/forestfloor2.png"
+dest_files=["res://.godot/imported/forestfloor2.png-d04a7b9ef9562783efaca6a5347f2d35.ctex"]
 
 [params]
 
