@@ -5,6 +5,10 @@
 [node name="ShopScene" type="Node2D" unique_id=2082842883]
 script = ExtResource("1_j2r6p")
 
+[node name="Background" type="TextureRect" parent="." unique_id=1444448327]
+offset_right = 40.0
+offset_bottom = 40.0
+
 [node name="GoldLabel" type="Label" parent="." unique_id=405149072]
 offset_left = -6.0
 offset_top = 36.0
@@ -30,3 +34,32 @@ offset_top = 818.0
 offset_right = 1077.0
 offset_bottom = 1005.0
 text = "Continue"
+
+[node name="EquipPanel" type="VBoxContainer" parent="." unique_id=26446109]
+offset_left = 1547.0
+offset_top = 16.0
+offset_right = 1910.0
+offset_bottom = 439.0
+
+[node name="RosterScroll" type="ScrollContainer" parent="EquipPanel" unique_id=1632000082]
+custom_minimum_size = Vector2(40, 200)
+layout_mode = 2
+
+[node name="RosterList" type="VBoxContainer" parent="EquipPanel/RosterScroll" unique_id=1279192998]
+custom_minimum_size = Vector2(40, 100)
+layout_mode = 2
+
+[node name="SelectedUnitLabel" type="Label" parent="EquipPanel" unique_id=502563998]
+layout_mode = 2
+
+[node name="SlotsContainer" type="HBoxContainer" parent="EquipPanel" unique_id=558230820]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+
+[node name="InventoryScroll" type="ScrollContainer" parent="EquipPanel" unique_id=478783734]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+
+[node name="InventoryList" type="VBoxContainer" parent="EquipPanel/InventoryScroll" unique_id=532306017]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2

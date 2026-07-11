@@ -21,4 +21,5 @@ aoe_shape = "square"
 aoe_size = 3
 damage_type = "magical"
 scaling_stat = "matk"
+element = "fire"
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

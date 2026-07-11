@@ -1824,9 +1824,11 @@ func _play_aoe_vfx(caster, ability: AbilityData, target_cells: Array,
 		var caster_world: Vector2 = grid_ref.grid_to_world(caster.grid_position)
 		var target_world: Vector2 = grid_ref.grid_to_world(origin_cell)
 		vfx_node.rotation = caster_world.angle_to_point(target_world)
-
+	
 	vfx_node.position = center_world
 	spawn_root.add_child(vfx_node)
+
+	_play_elemental_particles(ability, target_cells)   # fire-and-forget, layers on top
 
 	if vfx_node is AnimatedSprite2D:
 		vfx_node.play("default")
@@ -1943,3 +1945,206 @@ func _spawn_damage_number(amount: int, pos: Vector2, color_override = null) -> v
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(damage_label, "modulate:a", 0.0, 0.75)
 	tween.chain().tween_callback(damage_label.queue_free)
+
+
+
+# ── ELEMENTAL AOE PARTICLES ────────────────────────────────────────────────────
+
+static func _get_soft_particle_texture() -> ImageTexture:
+	# Small soft-edged circle, shared by every elemental particle effect below.
+	var size := 16
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	var center := Vector2(size / 2.0, size / 2.0)
+	var radius := size / 2.0
+	for x in range(size):
+		for y in range(size):
+			var dist: float = Vector2(x, y).distance_to(center)
+			var alpha: float = clamp(1.0 - (dist / radius), 0.0, 1.0)
+			img.set_pixel(x, y, Color(1, 1, 1, alpha))
+	return ImageTexture.create_from_image(img)
+
+
+func _make_fade_gradient(base_color: Color) -> Gradient:
+	var g := Gradient.new()
+	g.set_color(0, base_color)
+	g.set_color(1, Color(base_color.r, base_color.g, base_color.b, 0.0))
+	return g
+
+
+func _play_elemental_particles(ability: AbilityData, target_cells: Array) -> void:
+	# Fire-and-forget: spawns a particle layer across the whole AOE footprint,
+	# matching ability.element. Called from _play_aoe_vfx() WITHOUT await, so
+	# it never extends how long that function blocks its caller -- it plays
+	# out independently on its own timeline.
+	if ability.element == "none":
+		return
+	var spawn_root = _get_spawn_root()
+	if spawn_root == null or target_cells.is_empty() or grid_ref == null:
+		return
+
+	var TILE_SIZE: float = 96.0
+	var min_x = target_cells[0].x;  var max_x = target_cells[0].x
+	var min_y = target_cells[0].y;  var max_y = target_cells[0].y
+	for cell in target_cells:
+		min_x = min(min_x, cell.x);  max_x = max(max_x, cell.x)
+		min_y = min(min_y, cell.y);  max_y = max(max_y, cell.y)
+
+	var area_size := Vector2((max_x - min_x + 1) * TILE_SIZE, (max_y - min_y + 1) * TILE_SIZE)
+	var center_cell := Vector2i(int((min_x + max_x) / 2.0), int((min_y + max_y) / 2.0))
+	var center_world: Vector2 = grid_ref.grid_to_world(center_cell)
+
+	match ability.element:
+		"ice":
+			await _play_ice_particles(spawn_root, center_world, area_size)
+		"fire":
+			await _play_fire_particles(spawn_root, center_world, area_size)
+		"lightning":
+			await _play_lightning_particles(spawn_root, center_world, area_size)
+
+
+func _play_ice_particles(spawn_root: Node, center: Vector2, area_size: Vector2) -> void:
+	# PHASE 1 — "forms": light blue motes drift slowly inward across the
+	# whole footprint, like frost crystallizing.
+	var form := CPUParticles2D.new()
+	spawn_root.add_child(form)
+	form.position               = center
+	form.texture                = _get_soft_particle_texture()
+	form.emitting                = true
+	form.one_shot                = false
+	form.amount                  = 24
+	form.lifetime                = 0.5
+	form.explosiveness           = 0.1
+	form.emission_shape          = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	form.emission_rect_extents   = area_size / 2.0
+	form.direction                = Vector2(0, -1)
+	form.spread                   = 180.0
+	form.gravity                  = Vector2.ZERO
+	form.initial_velocity_min     = 4.0
+	form.initial_velocity_max     = 14.0     # slow drift, not a burst
+	form.scale_amount_min         = 1.0
+	form.scale_amount_max         = 2.2
+	var ice_color := Color(0.55, 0.85, 1.0, 0.8)
+	form.color      = ice_color
+	form.color_ramp = _make_fade_gradient(ice_color)
+
+	await get_tree().create_timer(0.5).timeout
+	form.emitting = false
+
+	# PHASE 2 — "shatters": a single sharp outward burst from the center.
+	var shatter := CPUParticles2D.new()
+	spawn_root.add_child(shatter)
+	shatter.position             = center
+	shatter.texture              = _get_soft_particle_texture()
+	shatter.one_shot              = true
+	shatter.explosiveness         = 1.0
+	shatter.amount                = 26
+	shatter.lifetime              = 0.4
+	shatter.direction              = Vector2(0, -1)
+	shatter.spread                 = 180.0
+	shatter.gravity                = Vector2(0, 140.0)
+	shatter.initial_velocity_min   = 90.0
+	shatter.initial_velocity_max   = 220.0
+	shatter.scale_amount_min       = 1.5
+	shatter.scale_amount_max       = 3.0
+	var shard_color := Color(0.75, 0.95, 1.0, 0.9)
+	shatter.color      = shard_color
+	shatter.color_ramp = _make_fade_gradient(shard_color)
+	shatter.emitting   = true
+
+	await get_tree().create_timer(0.7).timeout
+	if is_instance_valid(form):    form.queue_free()
+	if is_instance_valid(shatter): shatter.queue_free()
+
+
+func _play_fire_particles(spawn_root: Node, center: Vector2, area_size: Vector2) -> void:
+	# PHASE 1 — red/orange flames burst upward across the footprint.
+	var fire := CPUParticles2D.new()
+	spawn_root.add_child(fire)
+	fire.position               = center
+	fire.texture                = _get_soft_particle_texture()
+	fire.emitting                = true
+	fire.one_shot                = false
+	fire.amount                  = 30
+	fire.lifetime                = 0.45
+	fire.explosiveness            = 0.3
+	fire.emission_shape           = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	fire.emission_rect_extents    = area_size / 2.0
+	fire.direction                 = Vector2(0, -1)
+	fire.spread                    = 20.0
+	fire.gravity                   = Vector2(0, -30.0)   # keeps rising rather than falling back
+	fire.initial_velocity_min      = 40.0
+	fire.initial_velocity_max      = 90.0
+	fire.scale_amount_min          = 1.5
+	fire.scale_amount_max          = 3.2
+	var fire_color := Color(1.0, 0.4, 0.1, 0.85)
+	fire.color      = fire_color
+	fire.color_ramp = _make_fade_gradient(fire_color)
+
+	await get_tree().create_timer(0.6).timeout
+	fire.emitting = false
+
+	# PHASE 2 — smoke lingers after the flames die down.
+	var smoke := CPUParticles2D.new()
+	spawn_root.add_child(smoke)
+	smoke.position               = center
+	smoke.texture                = _get_soft_particle_texture()
+	smoke.emitting                = true
+	smoke.one_shot                = false
+	smoke.amount                  = 14
+	smoke.lifetime                = 1.3
+	smoke.explosiveness            = 0.2
+	smoke.emission_shape           = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	smoke.emission_rect_extents    = area_size / 2.0
+	smoke.direction                 = Vector2(0, -1)
+	smoke.spread                    = 25.0
+	smoke.gravity                   = Vector2(0, -18.0)
+	smoke.initial_velocity_min      = 10.0
+	smoke.initial_velocity_max      = 25.0
+	smoke.scale_amount_min          = 2.5
+	smoke.scale_amount_max          = 5.0
+	var smoke_color := Color(0.35, 0.35, 0.38, 0.5)
+	smoke.color      = smoke_color
+	smoke.color_ramp = _make_fade_gradient(smoke_color)
+
+	await get_tree().create_timer(0.9).timeout
+	smoke.emitting = false
+	await get_tree().create_timer(1.4).timeout
+	if is_instance_valid(fire):  fire.queue_free()
+	if is_instance_valid(smoke): smoke.queue_free()
+
+
+func _play_lightning_particles(spawn_root: Node, center: Vector2, area_size: Vector2) -> void:
+	# Sharp, quick purple sparks across the footprint -- layers on top of
+	# your existing purple lightning effect_scene rather than replacing it.
+	var bolt := CPUParticles2D.new()
+	spawn_root.add_child(bolt)
+	bolt.position              = center
+	bolt.texture               = _get_soft_particle_texture()
+	bolt.one_shot                = true
+	bolt.explosiveness           = 1.0
+	bolt.amount                  = 22
+	bolt.lifetime                = 0.25    # fast and sharp, not a lingering effect
+	bolt.emission_shape           = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	bolt.emission_rect_extents    = area_size / 2.0
+	bolt.direction                 = Vector2(0, -1)
+	bolt.spread                    = 180.0
+	bolt.gravity                   = Vector2.ZERO
+	bolt.initial_velocity_min      = 120.0
+	bolt.initial_velocity_max      = 260.0
+	bolt.scale_amount_min          = 0.8
+	bolt.scale_amount_max          = 1.8
+	var spark_color := Color(0.75, 0.35, 1.0, 0.95)
+	bolt.color      = spark_color
+	bolt.color_ramp = _make_fade_gradient(spark_color)
+	bolt.emitting   = true
+
+	await get_tree().create_timer(0.12).timeout
+	# A quick second flicker -- reads as an electrical crackle rather than
+	# one uniform puff.
+	bolt.emitting = true
+
+	await get_tree().create_timer(0.4).timeout
+	if is_instance_valid(bolt): bolt.queue_free()
+	
+	
+	

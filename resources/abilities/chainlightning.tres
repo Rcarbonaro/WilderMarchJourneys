@@ -21,4 +21,5 @@ scaling_stat = "matk"
 chain_simultaneous = true
 chain_bounce_scene_first = ExtResource("2_s3a6l")
 chain_bounce_scene_secondary = ExtResource("2_s3a6l")
+element = "lightning"
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

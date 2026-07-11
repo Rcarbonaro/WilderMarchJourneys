@@ -370,7 +370,7 @@ func _spawn_test_enemies(encounter_index: int) -> void:
 			if ent_data              != null: spawn_unit(ent_data,              Vector2i(18, 8), false, 1)
 			if sporeling_data        != null: spawn_unit(sporeling_data,        Vector2i(16, 4), false, 1)
 			if sporeling_data        != null: spawn_unit(sporeling_data,        Vector2i(18, 3), false, 1)
-			if leshy_data            != null: spawn_unit(leshy_data,            Vector2i(18, 8), false, 1)
+			if leshy_data            != null: spawn_unit(leshy_data,            Vector2i(18, 6), false, 1)
 			if leshy_data            != null: spawn_unit(leshy_data,            Vector2i(19, 9), false, 1)
 
 		_:

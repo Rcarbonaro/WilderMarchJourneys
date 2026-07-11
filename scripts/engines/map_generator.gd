@@ -161,37 +161,29 @@ func _generate_player_spawns(width: int, height: int, party_size: int) -> Array[
 
 
 func _generate_enemy_spawns(width: int, height: int, enemy_count: int) -> Array[Vector2i]:
-	# Picks cells from a thin strip along the RIGHT edge, chosen to be as
-	# SPREAD OUT as possible via greedy farthest-point selection -- this is
-	# what makes enemies land "further apart" rather than just "somewhere
-	# on the right," even though both sides draw from a similarly-shaped zone.
+	# CHANGED: this used to call _pick_spread_cells() -- a greedy
+	# farthest-point selection deliberately designed to scatter enemies as
+	# far apart from EACH OTHER as possible. That's now replaced with the
+	# exact same "closest to a random anchor" approach _generate_player_spawns()
+	# already uses, so enemies cluster together by default instead of
+	# spreading across the whole zone. _pick_spread_cells() has been removed
+	# since nothing else called it -- if you want a specific spawn table or
+	# encounter to spread its enemies out instead (e.g. a boss with adds
+	# meant to surround the party), reintroduce it as an opt-in parameter
+	# rather than the default.
+	var center_row: int = clampi(height / 2 + (randi() % 3 - 1), 0, height - 1)
+	var anchor := Vector2(width - 1, center_row)
+
 	var candidates: Array[Vector2i] = []
 	for x in range(max(0, width - ENEMY_ZONE_COLUMNS), width):
 		for y in range(height):
 			candidates.append(Vector2i(x, y))
-	return _pick_spread_cells(candidates, enemy_count)
 
-
-func _pick_spread_cells(candidates: Array[Vector2i], count: int) -> Array[Vector2i]:
-	var chosen: Array[Vector2i] = []
-	if candidates.is_empty() or count <= 0:
-		return chosen
-	var pool := candidates.duplicate()
-	pool.shuffle()
-	chosen.append(pool.pop_back())
-	while chosen.size() < count and pool.size() > 0:
-		var best_cell: Vector2i = pool[0]
-		var best_min_dist: float = -1.0
-		for cell in pool:
-			var min_dist: float = INF
-			for picked in chosen:
-				min_dist = min(min_dist, Vector2(cell).distance_to(Vector2(picked)))
-			if min_dist > best_min_dist:
-				best_min_dist = min_dist
-				best_cell = cell
-		chosen.append(best_cell)
-		pool.erase(best_cell)
-	return chosen
+	candidates.sort_custom(func(a, b): return Vector2(a).distance_to(anchor) < Vector2(b).distance_to(anchor))
+	var count: int = min(enemy_count, candidates.size())
+	var result: Array[Vector2i] = []
+	result.assign(candidates.slice(0, count))
+	return result
 
 # ── GUARANTEED CONNECTIVITY ────────────────────────────────────────────────────
 
