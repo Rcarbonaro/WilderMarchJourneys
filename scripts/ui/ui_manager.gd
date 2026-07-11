@@ -585,14 +585,15 @@ func _refresh_live_values() -> void:
 			for child in status_icon_row.get_children():
 				child.queue_free()
 			for entry in unit.active_statuses:
-				_add_status_icon(entry["data"], entry["stacks"])
+				_add_status_icon(entry["data"], entry["stacks"], entry["remaining_rounds"])
+
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # INTERNAL — STATUS ICONS
 # ══════════════════════════════════════════════════════════════════════════════
 
-func _add_status_icon(status_data, stacks: int) -> void:
+func _add_status_icon(status_data, stacks: int, remaining_rounds: int = -1) -> void:
 	if status_icon_row == null:
 		return
 
@@ -609,7 +610,7 @@ func _add_status_icon(status_data, stacks: int) -> void:
 		img.fill(MISSING_ICON_COLOR)
 		btn.texture_normal = ImageTexture.create_from_image(img)
 
-	btn.pressed.connect(func(): _show_status_tooltip(status_data, btn))
+	btn.pressed.connect(func(): _show_status_tooltip(status_data, btn, remaining_rounds))
 	status_icon_row.add_child(btn)
 
 	if stacks > 1:
@@ -625,7 +626,7 @@ func _add_status_icon(status_data, stacks: int) -> void:
 # INTERNAL — STATUS TOOLTIP
 # ══════════════════════════════════════════════════════════════════════════════
 
-func _show_status_tooltip(status_data, anchor_node: Control) -> void:
+func _show_status_tooltip(status_data, anchor_node: Control, remaining_rounds: int = -1) -> void:
 	_hide_status_tooltip()
 
 	_status_tooltip             = PanelContainer.new()
@@ -647,6 +648,19 @@ func _show_status_tooltip(status_data, anchor_node: Control) -> void:
 	desc.autowrap_mode       = TextServer.AUTOWRAP_WORD
 	desc.add_theme_font_size_override("font_size", 13)
 	vbox.add_child(desc)
+
+	var duration := Label.new()
+	if status_data.is_permanent:
+		duration.text = "Permanent"
+	elif remaining_rounds == 1:
+		duration.text = "1 turn left"
+	else:
+		duration.text = "%d turns left" % remaining_rounds
+	duration.add_theme_font_size_override("font_size", 13)
+	duration.add_theme_color_override("font_color", Color(0.8, 0.8, 0.85))
+	vbox.add_child(duration)
+
+	# Position above the status icon, nudged inside the viewport.
 
 	# Position above the status icon, nudged inside the viewport.
 	var vp:  Vector2 = get_viewport().get_visible_rect().size
@@ -907,3 +921,37 @@ func _hide_turn_announcement() -> void:
 		_announcement_instance.queue_free()
 	_announcement_instance = null
 		
+
+var _big_warning_label: Label = null
+var _big_warning_tween: Tween = null
+
+func show_big_warning_popup(text: String, duration: float = 2.2) -> void:
+	if _big_warning_label == null or not is_instance_valid(_big_warning_label):
+		_big_warning_label = Label.new()
+		_big_warning_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_big_warning_label.add_theme_font_size_override("font_size", 34)
+		_big_warning_label.add_theme_color_override("font_color", Color(1.0, 0.35, 0.3))
+		_big_warning_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.95))
+		_big_warning_label.add_theme_constant_override("outline_size", 7)
+		_big_warning_label.z_index      = 250
+		_big_warning_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_big_warning_label)
+
+	_big_warning_label.text     = text
+	_big_warning_label.modulate = Color(1, 1, 1, 1)
+	_big_warning_label.visible  = true
+
+	await get_tree().process_frame
+	if not is_instance_valid(_big_warning_label):
+		return
+	var vp: Vector2 = get_viewport().get_visible_rect().size
+	_big_warning_label.position = Vector2(
+		(vp.x - _big_warning_label.size.x) / 2.0,
+		(vp.y - _big_warning_label.size.y) / 2.0
+	)
+
+	if _big_warning_tween != null and _big_warning_tween.is_valid():
+		_big_warning_tween.kill()
+	_big_warning_tween = create_tween()
+	_big_warning_tween.tween_interval(duration)
+	_big_warning_tween.tween_property(_big_warning_label, "modulate:a", 0.0, 0.4)

@@ -503,6 +503,22 @@ func _battle_defeat() -> void:
 	battle_ended.emit("defeat")
 
 # ── INPUT ROUTING ─────────────────────────────────────────────────────────────
+func _get_all_units_at(cell: Vector2i) -> Array:
+	# Unlike grid.get_unit_at(), which only returns the grid's "official"
+	# registered resident of a cell, this returns EVERY unit whose
+	# grid_position matches cell -- including one that's overlapping another
+	# unit via snap_to_allow_overlap() (Cancel Move snapping back onto a tile
+	# an ally has since moved into). Needed so the player can still select
+	# and move away the "hidden" unit even when it isn't the cell's
+	# registered occupant.
+	var all_units: Array = player_units + enemy_units
+	var result: Array = []
+	for u in all_units:
+		if is_instance_valid(u) and u.grid_position == cell:
+			result.append(u)
+	return result
+
+var _overlap_tap_cycle: Dictionary = {}   # cell -> index of the last unit shown from that tile's stack
 
 func on_tile_tapped(cell: Vector2i) -> void:
 	# Main entry point for all grid taps. Called by input_handler.gd.
@@ -541,19 +557,44 @@ func on_tile_tapped(cell: Vector2i) -> void:
 
 	# ── STATE A: Nothing selected → select a unit or show enemy info ──────────
 	if selected_unit == null:
-		var unit = grid.get_unit_at(cell)
-		if is_instance_valid(unit):
+		var units_here: Array = _get_all_units_at(cell)
+
+		if units_here.size() > 1:
+			# Multiple units share this tile (an unresolved overlap from Cancel
+			# Move). Put whichever hasn't acted first, so a fresh tap on this
+			# tile still defaults to "the one you probably need to move" --
+			# but CYCLE through the rest on repeated taps, so the already-acted
+			# unit is still reachable for inspection/selection instead of being
+			# permanently hidden behind the one we prioritize.
+			var ordered: Array = []
+			for u in units_here:
+				if u.is_player_unit and not u.has_acted:
+					ordered.push_front(u)
+				else:
+					ordered.push_back(u)
+
+			var next_index: int = _overlap_tap_cycle.get(cell, -1) + 1
+			if next_index >= ordered.size():
+				next_index = 0
+			_overlap_tap_cycle[cell] = next_index
+
+			var unit = ordered[next_index]
 			if unit.is_player_unit:
-				# Tapping an ally clears any lingering enemy threat range, then
-				# proceeds to the normal selection flow. select_unit() below
-				# already calls _show_unit_info() for us.
 				highlight.clear_threat_range()
 				select_unit(unit)
 			else:
-				# Tapped an enemy: show their info panel AND their threat range
-				# (green = where they can move, red = everywhere they could
-				# then attack from any of those tiles). Does not select them —
-				# enemies can't be controlled by the player.
+				_show_unit_info(unit)
+				_show_enemy_threat_range(unit)
+			return
+
+		_overlap_tap_cycle.erase(cell)   # no longer overlapping -- clear any stale cycle state
+
+		var unit = grid.get_unit_at(cell)
+		if is_instance_valid(unit):
+			if unit.is_player_unit:
+				highlight.clear_threat_range()
+				select_unit(unit)
+			else:
 				_show_unit_info(unit)
 				_show_enemy_threat_range(unit)
 		else:
@@ -779,7 +820,7 @@ func cancel_unit_move() -> void:
 	# register_unit() now automatically detects that and relocates whoever's
 	# there to the nearest free tile FIRST — so this can never silently
 	# orphan another unit and make them permanently unclickable.
-	unit.snap_to(origin)
+	unit.snap_to_allow_overlap(origin)
 	unit.has_moved         = false
 	unit.can_cancel_move   = false
 	unit.pre_move_position = Vector2i(-1, -1)
@@ -1018,9 +1059,31 @@ func on_ability_selected(ability: AbilityData) -> void:
 	highlight.show_attack_range(valid_targets)
 
 # ── ABILITY EXECUTION ─────────────────────────────────────────────────────────
-
+func _unit_has_occupancy_conflict(unit) -> bool:
+	# True if 'unit' currently shares its tile with another living unit —
+	# i.e. it's the overlap Cancel Move's snap_to_allow_overlap() can create.
+	# Used to force the player to resolve the overlap by moving away BEFORE
+	# they're allowed to commit to an ability from that tile — otherwise the
+	# unit could act, become has_acted, and permanently softlock the overlap
+	# (see _check_for_occupancy_conflicts / end_player_turn).
+	if not is_instance_valid(unit):
+		return false
+	var all_units: Array = player_units + enemy_units
+	for other in all_units:
+		if other != unit and is_instance_valid(other) and other.grid_position == unit.grid_position:
+			return true
+	return false
+	
 func _try_use_ability(cell: Vector2i) -> void:
 	if selected_unit == null or selected_ability == null:
+		return
+		
+	if selected_unit == null or selected_ability == null:
+		return
+
+	if _unit_has_occupancy_conflict(selected_unit):
+		if ui_manager and ui_manager.has_method("show_big_warning_popup"):
+			ui_manager.show_big_warning_popup("Move off the shared tile first")
 		return
 
 	# 1. Range check — is the tapped cell within the ability's targeting range?
@@ -1230,9 +1293,30 @@ func _filter_cells_by_team(cells: Array, ability: AbilityData, caster) -> Array:
 
 # ── END OF PLAYER TURN ────────────────────────────────────────────────────────
 
+func _check_for_occupancy_conflicts() -> bool:
+	# True if any two living units — ally or enemy — currently share the
+	# same grid_position. Only possible right now via Cancel Move's
+	# snap_to_allow_overlap(); every other movement path still goes through
+	# the normal collision-respecting checks.
+	var all_units: Array = player_units + enemy_units
+	for i in range(all_units.size()):
+		for j in range(i + 1, all_units.size()):
+			var a = all_units[i]
+			var b = all_units[j]
+			if is_instance_valid(a) and is_instance_valid(b) and a.grid_position == b.grid_position:
+				return true
+	return false
+
+
 func end_player_turn() -> void:
 	# Called by the "End Turn" button, or automatically when all units have acted.
+	if _check_for_occupancy_conflicts():
+		if ui_manager and ui_manager.has_method("show_big_warning_popup"):
+			ui_manager.show_big_warning_popup("Two units cannot occupy the same space")
+		return
+
 	_return_selected_to_idle()
+
 	current_phase    = TurnPhase.ENEMY_TURN
 	selected_ability = null
 	deselect_unit()
@@ -1269,18 +1353,6 @@ func end_player_turn() -> void:
 	if aura_manager != null:
 		aura_manager.tick_auras_end_of_player_round(player_units, enemy_units)
 
-	# ── TICK SHIELDS / THORNS / GUARDIANS ─────────────────────────────────────
-	# Hazard ticking used to happen here too (as part of grid.tick_all_effects())
-	# but has been MOVED to the end of the ENEMY's turn instead (see
-	# _on_enemy_turn_complete below) — a hazard placed during the player's turn
-	# now survives through the enemy's response to it before its duration
-	# counts down, instead of potentially expiring before the enemy ever gets
-	# a turn to react to it. Shields/Thorns/Guardian durations were NOT asked
-	# to move, so they still tick here, unchanged.
-	grid.tick_shields()
-	grid.tick_thorns()
-	grid.tick_guardians()
-
 	# ── APPLY HAZARD DAMAGE AT START OF EACH ENEMY TURN ──────────────────────
 	# Every enemy unit standing on a hazard tile at the start of the enemy turn
 	# takes damage from that hazard.
@@ -1293,7 +1365,6 @@ func end_player_turn() -> void:
 	# every player unit can act again on the next player turn.
 	for unit in player_units:
 		if is_instance_valid(unit):
-			unit.tick_statuses_end_of_round("player")
 			unit.has_moved       = false
 			unit.has_acted       = false
 			unit.can_cancel_move = false
@@ -1328,6 +1399,7 @@ func _on_enemy_turn_complete() -> void:
 	for unit in enemy_units:
 		if is_instance_valid(unit):
 			grid.apply_hazard_to_unit(unit, unit.grid_position, "end_of_turn")
+			
 
 	# ── TICK HAZARDS ──────────────────────────────────────────────────────────
 	# Moved here (end of the ENEMY's turn) from end_player_turn() above, so a
@@ -1344,6 +1416,16 @@ func _on_enemy_turn_complete() -> void:
 	for unit in player_units:
 		if is_instance_valid(unit):
 			grid.apply_hazard_to_unit(unit, unit.grid_position, "start_of_turn")
+			unit.tick_statuses_end_of_round("player")
+
+	# ── TICK SHIELDS / THORNS / GUARDIANS (moved from end_player_turn) ────────
+	# Same reasoning as hazard ticking above: an effect applied during the
+	# player's turn should survive the enemy's full response to it before
+	# its duration counts down, instead of losing a round of usefulness by
+	# ticking immediately at the end of the same turn it was cast on.
+	grid.tick_shields()
+	grid.tick_thorns()
+	grid.tick_guardians()
 
 	# Reset enemy turn flags and count down their cooldowns.
 	for unit in enemy_units:

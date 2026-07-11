@@ -553,7 +553,7 @@ func die() -> void:
 		if tile_footprint.size() > 1:
 			grid_ref.unregister_large_unit(self)
 		else:
-			grid_ref.unregister_unit(grid_position)
+			grid_ref.unregister_unit(grid_position, self)
 
 	# Remove from tether, guardian, shield, thorns maps immediately.
 	if grid_ref != null and grid_ref.has_method("unregister_tether"):
@@ -636,7 +636,7 @@ func move_to(new_cell: Vector2i) -> void:
 		_update_occupied_cells()
 		grid_ref.register_large_unit(self, occupied_cells)
 	else:
-		grid_ref.unregister_unit(grid_position)
+		grid_ref.unregister_unit(grid_position, self)
 		grid_position = new_cell
 		_update_occupied_cells()
 		grid_ref.register_unit(self, new_cell)
@@ -800,7 +800,7 @@ func move_along_path(path: Array) -> void:
 			_update_occupied_cells()
 			grid_ref.register_large_unit(self, occupied_cells)
 		else:
-			grid_ref.unregister_unit(grid_position)
+			grid_ref.unregister_unit(grid_position, self)
 			grid_position = step_cell
 			_update_occupied_cells()
 			grid_ref.register_unit(self, step_cell)
@@ -949,10 +949,49 @@ func snap_to(new_cell: Vector2i) -> void:
 		_update_occupied_cells()
 		grid_ref.register_large_unit(self, occupied_cells)
 	else:
-		grid_ref.unregister_unit(grid_position)
+		grid_ref.unregister_unit(grid_position, self)
 		grid_position = new_cell
 		_update_occupied_cells()
 		grid_ref.register_unit(self, new_cell)
+	position = grid_ref.grid_to_world(new_cell)
+
+func snap_to_allow_overlap(new_cell: Vector2i) -> void:
+	# Like snap_to(), but if new_cell is already occupied by ANOTHER unit,
+	# this does NOT trigger register_unit()'s "rescue displaced unit" safety
+	# net — it lets this unit's grid_position/visual overlap them instead.
+	# Used specifically by Cancel Move snapping back to a tile an ally has
+	# since moved into. battle_manager.gd blocks ending the turn while any
+	# such overlap exists (see _check_for_occupancy_conflicts), forcing the
+	# player to resolve it themselves rather than an ally silently getting
+	# bumped somewhere they didn't choose.
+	#
+	# NOTE: while overlapping, this unit is NOT the grid's "official"
+	# resident of that cell — tapping that tile will find the OTHER unit,
+	# not this one, until the overlap is resolved by moving one of them.
+	if grid_ref == null:
+		return
+
+	if tile_footprint.size() > 1:
+		grid_ref.unregister_large_unit(self)
+		grid_position = new_cell
+		_update_occupied_cells()
+		var any_occupied: bool = false
+		for c in occupied_cells:
+			if grid_ref.unit_positions.has(c):
+				any_occupied = true
+				break
+		if not any_occupied:
+			grid_ref.register_large_unit(self, occupied_cells)
+	else:
+		grid_ref.unregister_unit(grid_position, self)
+		grid_position = new_cell
+		_update_occupied_cells()
+		if not grid_ref.unit_positions.has(new_cell):
+			grid_ref.register_unit(self, new_cell)
+		# else: leave unit_positions pointing at the existing occupant —
+		# grid_position above still correctly reflects where THIS unit
+		# visually is, for _check_for_occupancy_conflicts() to detect.
+
 	position = grid_ref.grid_to_world(new_cell)
 
 
@@ -974,13 +1013,6 @@ func look_at_target(target_pos: Vector2i, custom_animation_name: String = "") ->
 # ── STATUS EFFECTS ────────────────────────────────────────────────────────────
 
 func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster = null) -> void:
-	# Applies a status effect to this unit. Checks for immunity first,
-	# then either refreshes an existing instance or adds a new one.
-	#
-	# source_caster is the unit who applied this status (may be null).
-	# It's recorded so Taunt knows who to redirect attacks toward, and so
-	# DoT damage can scale off the correct unit's ATK/MATK.
-
 	#This helps prevent recursion loops
 	_apply_status_depth += 1
 	if _apply_status_depth > 8:
@@ -989,12 +1021,13 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster 
 			" — something is triggering a status chain. Skipping to prevent crash.")
 		_apply_status_depth -= 1
 		return
-	
+
 	# If the unit has an immunity status, block all incoming status applications.
 	for s in active_statuses:
 		if s["data"].grants_immunity:
 			print("🛡️ ", unit_data.display_name, " is immune! Status '",
 				  status_data.display_name, "' blocked.")
+			_apply_status_depth -= 1
 			return
 
 	# If this status is already active, refresh its duration and optionally stack.
@@ -1003,9 +1036,9 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster 
 			if status_data.can_stack:
 				s["stacks"] = min(s["stacks"] + stacks, status_data.max_stacks)
 			s["remaining_rounds"] = status_data.duration_rounds
-			# Refresh the source caster too — re-taunting updates who to attack.
 			s["source_caster"] = source_caster
 			_debug_print_status_applied(status_data, s["stacks"])
+			_apply_status_depth -= 1
 			return
 
 	# Brand new status — add it to the list.
@@ -1018,17 +1051,18 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster 
 	})
 	_debug_print_status_applied(status_data, stacks)
 	update_visuals()
+
 	var is_buff: bool = status_data.classifies_as_buff()
 	EventBus.publish.call_deferred(EventBus.ON_BUFF_APPLIED, {
 		"unit": self, "status_id": status_data.id, "is_buff": is_buff,
 		"status_data": status_data,
 	})
 
-	# ── VISUAL OVERRIDE ENTRY ───────────────────────────────────────────────
 	if status_data.has_visual_override:
 		_begin_visual_override(status_data)
 
 	_refresh_status_glow()
+	_apply_status_depth -= 1
 
 
 func remove_status(status_id: String) -> void:
@@ -1083,32 +1117,12 @@ func cleanse_statuses() -> int:
 	return ids_to_cleanse.size()
 	update_visuals()
 	_refresh_status_glow()
-
-
 func tick_statuses_end_of_round(team_that_just_ended: String) -> void:
-	# Called once per round, ALWAYS with the team that this unit belongs to —
-	# player units are only ever ticked with "player", enemy units only ever
-	# ticked with "enemy" (see battle_manager.gd's end_player_turn and
-	# _on_enemy_turn_complete). Because of that, every status on this unit
-	# decrements by exactly 1 every time this function runs, full stop.
-	#
-	# NOTE: status_effect_data.expires_at previously tried to filter which
-	# team-round a status counts down on, but since a unit only ever receives
-	# ticks for ITS OWN team, that filter was comparing against a value that
-	# never varies — for player units team_that_just_ended is always "player",
-	# for enemy units it's always "enemy". A status whose expires_at didn't
-	# happen to match the unit's own team simply never ticked down at all,
-	# which is the bug being fixed here. expires_at is no longer read for
-	# countdown purposes; duration_rounds now always means "this many of the
-	# unit's own turns must end" regardless of team.
 	var to_remove = []
 	for s in active_statuses:
 		var data: StatusEffectData = s["data"]
 
 		# ── DAMAGE OVER TIME ────────────────────────────────────────────────
-		# Fires at the end of the ENEMY round specifically, regardless of which
-		# team the status is currently sitting on. This lets a player-applied
-		# DoT debuff on an enemy tick once per full round as intended.
 		if data.has_dot and team_that_just_ended == "enemy":
 			_apply_dot_tick(s)
 			if not is_instance_valid(self):
@@ -1117,29 +1131,28 @@ func tick_statuses_end_of_round(team_that_just_ended: String) -> void:
 		if data.is_permanent:
 			continue   # Permanent statuses never count down toward expiry.
 
-		# Always decrement — this function only ever runs once per round for
-		# this unit's own team, so every call is exactly one round passing.
-		s["remaining_rounds"] -= 1
-		if s["remaining_rounds"] <= 0:
-			to_remove.append(s)
+		# ── DURATION COUNTDOWN ──────────────────────────────────────────────
+		# Gate the countdown so it only ticks down when this unit's OWN team 
+		# finishes their turn, preventing the double-count.
+		var my_team = "player" if is_player_unit else "enemy"
+		if team_that_just_ended == my_team:
+			s["remaining_rounds"] -= 1
+			if s["remaining_rounds"] <= 0:
+				to_remove.append(s)
 
 	for s in to_remove:
 		active_statuses.erase(s)
 		print("⏱️ Status '", s["data"].display_name, "' expired on ", unit_data.display_name)
+		
 		# If the expiring status was driving a visual override, play its exit
 		# animation and restore the unit's normal look.
 		if s["data"].has_visual_override and _active_visual_override == s["data"]:
 			_end_visual_override(s["data"])
 
-	# Refresh sprite transparency if anything actually expired this round —
-	# this is what makes invisibility correctly fade back to normal when the
-	# TURN LIMIT runs out, not just when attacking breaks it early. Done once
-	# after the loop (rather than once per removed status) since it's a single
-	# full recheck of has_status("invisible") either way.
+	# Refresh sprite transparency if anything actually expired this round.
 	if not to_remove.is_empty():
 		update_visuals()
 		_refresh_status_glow()
-
 
 func _apply_dot_tick(status_entry: Dictionary) -> void:
 	# Deals one tick of damage-over-time damage based on the status's
@@ -1387,20 +1400,22 @@ func has_status(status_id: String) -> bool:
 
 
 func get_buff_count() -> int:
-	# Returns how many BUFF statuses this unit has.
 	var count = 0
 	for s in active_statuses:
 		var d: StatusEffectData = s["data"]
+		if d.is_hidden():
+			continue
 		if d.classifies_as_buff():
 			count += s["stacks"]
 	return count
 
 
 func get_debuff_count() -> int:
-	# Returns how many DEBUFF statuses this unit has.
 	var count = 0
 	for s in active_statuses:
 		var d: StatusEffectData = s["data"]
+		if d.is_hidden():
+			continue
 		if d.classifies_as_debuff():
 			count += s["stacks"]
 	return count

@@ -640,9 +640,18 @@ func calculate_damage(caster, target, ability: AbilityData) -> int:
 	# -- 3. Base damage calculation ───────────────────────────────────────────
 	var base: float = float(offensive_stat - defensive_stat) * ability.base_damage_multiplier
 
-	# -- 4. Critical hit check ────────────────────────────────────────────────
+	# -- # -- 4. Critical hit check ────────────────────────────────────────────────
 	var crit_chance: float = caster.get_effective_crit_chance()
 	crit_chance += ability.bonus_crit_chance_per_caster_buff * float(caster_buff_count)
+
+	# Crit chance can't push a hit past 100% "more critical" — any excess
+	# converts into bonus CRIT DAMAGE instead, at a 1:2 rate (each 1% of
+	# crit chance over 100 becomes +2% crit damage).
+	var overflow_crit_damage_bonus: float = 0.0
+	if crit_chance > 100.0:
+		overflow_crit_damage_bonus = (crit_chance - 100.0) * 2.0
+		crit_chance = 100.0
+
 	var roll: float = randf() * 100.0
 
 	if roll < crit_chance:
@@ -657,6 +666,8 @@ func calculate_damage(caster, target, ability: AbilityData) -> int:
 		# included. This replaces the old direct read of get_stats().crit_damage.
 		var crit_dmg_pct: float = caster.get_effective_crit_damage()
 		crit_dmg_pct += ability.bonus_crit_dmg_per_caster_buff * float(caster_buff_count)
+		crit_dmg_pct += overflow_crit_damage_bonus
+
 
 		# Recalculate base damage using the boosted attack value.
 		var crit_atk: int = int(offensive_stat * (crit_dmg_pct / 100.0))
