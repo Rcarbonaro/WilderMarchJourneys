@@ -1,0 +1,105 @@
+{
+  "id": "thief_in_the_night_graph",
+  "start_node": "start",
+  "nodes": [
+    {
+      "id": "start",
+      "text": "While resting for the night, you notice some movement near your supplies.",
+      "image": "res://content/dialogue/thief_in_the_night/scene1.png",
+      "conditions": [],
+      "choices": [
+        {
+          "id": "ignore",
+          "text": "Ignore it",
+          "cost": null,
+          "conditions": [],
+          "effects": [],
+          "next_node_id": "end_ignore",
+          "leads_to_combat": false
+        },
+        {
+          "id": "investigate",
+          "text": "Investigate",
+          "cost": null,
+          "conditions": [],
+          "effects": [],
+          "next_node_id": "child_found",
+          "leads_to_combat": false
+        }
+      ]
+    },
+
+    {
+      "id": "child_found",
+      "text": "You discover a small child stealing some of your rations.\n\n\"I-I'm sorry,\" the child stammers. \"M-my brother and I are so hungry...\"",
+      "image": "res://content/dialogue/thief_in_the_night/scene2.png",
+      "conditions": [],
+      "choices": [
+        {
+          "id": "give_food",
+          "text": "Give supplies to the thief",
+          "cost": {
+            "type": "gold",
+            "amount": 3
+          },
+          "conditions": [],
+          "effects": [
+            {
+              "type": "add_equipment",
+              "equipment_id": "blade"
+            }
+          ],
+          "next_node_id": "end_generous",
+          "leads_to_combat": false
+        },
+        {
+          "id": "spare_child",
+          "text": "Take the food and spare the thief",
+          "cost": null,
+          "conditions": [],
+          "effects": [],
+          "next_node_id": "end_spare",
+          "leads_to_combat": false
+        },
+        {
+          "id": "execute_child",
+          "text": "Execute the thief",
+          "cost": null,
+          "conditions": [],
+          "effects": [
+            {
+              "type": "add_gold",
+              "amount": 4
+            }
+          ],
+          "next_node_id": "end_execute",
+          "leads_to_combat": false
+        }
+      ]
+    },
+
+    {
+      "id": "end_ignore",
+      "text": "You roll over and ignore the disturbance. By morning, everything is quiet.",
+      "choices": []
+    },
+
+    {
+      "id": "end_generous",
+      "text": "\"T-thank you!\" the child says gratefully. \"Here, take this!\" They hand you a Blade before running off to share the food with their brother.",
+      "choices": []
+    },
+
+    {
+      "id": "end_spare",
+      "text": "The child lowers their head, returns the food, and quietly disappears into the darkness.",
+      "choices": []
+    },
+
+    {
+      "id": "end_execute",
+      "text": "You execute the child without hesitation. Searching the body, you find 4 gold.",
+      "choices": []
+    }
+  ]
+}

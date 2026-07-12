@@ -14,6 +14,8 @@ const ACHIEVEMENTS_SCENE_PATH: String = "res://scenes/meta/AchievementsScene.tsc
 @onready var achievements_button: Button = $CenterContainer/VBoxContainer/AchievementsButton
 @onready var upgrades_button: Button = $CenterContainer/VBoxContainer/UpgradesButton
 @onready var settings_button: Button = $CenterContainer/VBoxContainer/SettingsButton
+@onready var quit_button: Button = $CenterContainer/VBoxContainer/QuitButton
+
 
 func _ready() -> void:
 	# Connect UI signals to our logic functions
@@ -22,7 +24,8 @@ func _ready() -> void:
 	achievements_button.pressed.connect(_on_achievements_pressed)
 	upgrades_button.pressed.connect(_on_upgrades_pressed)
 	settings_button.pressed.connect(_on_settings_pressed)
-
+	quit_button.pressed.connect(_on_quit_pressed)
+	
 	# Determine if there is a save file or active run to continue
 	# If not, grey out the Continue button gracefully
 	_evaluate_continue_button_state()
@@ -62,3 +65,6 @@ func _change_scene_to(target_scene_path: String) -> void:
 		get_tree().change_scene_to_file(target_scene_path)
 	else:
 		printerr("❌ Scene routing failed: Cannot locate target path: ", target_scene_path)
+func _on_quit_pressed() -> void:
+	print("Quitting game...")
+	get_tree().quit()

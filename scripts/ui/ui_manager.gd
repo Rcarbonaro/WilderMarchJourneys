@@ -80,6 +80,7 @@ var ability_bar:         Control         = null  # HBoxContainer
 var cancel_move_button:  Button          = null
 var end_turn_button:     Button          = null
 var grid_toggle_button:  Button          = null
+var speed_toggle_button: Button = null
 var _prev_bar_hp: int = -1
 
 ### Pause Menu Variables
@@ -115,7 +116,6 @@ var _mana_bar_width: float = 192.0
 # ══════════════════════════════════════════════════════════════════════════════
 # SETUP
 # ══════════════════════════════════════════════════════════════════════════════
-
 func _ready() -> void:
 	# ── Find every named node by searching the whole scene recursively ─────────
 	# The second argument (true) means "search child nodes". The third (false)
@@ -139,13 +139,19 @@ func _ready() -> void:
 	grid_toggle_button = find_child("GridToggleButton", true, false) as Button
 	mana_bar_fill      = find_child("ManaBarFill",      true, false) as Control
 
+	speed_toggle_button = find_child("SpeedToggleButton", true, false) as Button
+	if speed_toggle_button:
+		speed_toggle_button.toggle_mode = true
+		speed_toggle_button.text        = "Speed: 1x"
+		if not speed_toggle_button.pressed.is_connected(_on_speed_toggle_pressed):
+			speed_toggle_button.pressed.connect(_on_speed_toggle_pressed)
 
 	if mana_bar_fill is TextureRect:
 		(mana_bar_fill as TextureRect).expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
 		(mana_bar_fill as TextureRect).stretch_mode = TextureRect.STRETCH_SCALE
 		mana_bar_fill.custom_minimum_size = Vector2.ZERO
 
-#Find Pause Menu items
+	#Find Pause Menu items
 	pause_menu         = find_child("PauseMenu",          true, false) as Control
 	if pause_menu:
 		pause_menu.visible = false
@@ -174,7 +180,7 @@ func _ready() -> void:
 	if end_turn_button:
 		if not end_turn_button.pressed.is_connected(_on_end_turn_pressed):
 			end_turn_button.pressed.connect(_on_end_turn_pressed)
-	
+
 	if cancel_move_button:
 		cancel_move_button.text    = "↩ Cancel Movement"
 		cancel_move_button.visible = false
@@ -210,11 +216,22 @@ func _ready() -> void:
 	if bottom_bar:
 		bottom_bar.visible = false
 
+			
+func _on_speed_toggle_pressed() -> void:
+	var now_fast: bool = speed_toggle_button.button_pressed
+	CombatFeedback.set_speed_multiplier(2.0 if now_fast else 1.0)
+	speed_toggle_button.text = "Speed: 2x" if now_fast else "Speed: 1x"
+
+	if mana_bar_fill is TextureRect:
+		(mana_bar_fill as TextureRect).expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
+		(mana_bar_fill as TextureRect).stretch_mode = TextureRect.STRETCH_SCALE
+		mana_bar_fill.custom_minimum_size = Vector2.ZERO
+
 
 func _build_stat_rows() -> void:
-	# Creates 7 icon+value rows inside the StatsGrid container.
-	# The GridContainer only needs to exist in the scene; the rows are all
-	# built here so you don't have to manually add 14 sub-nodes in the editor.
+	for child in stats_grid.get_children():
+		child.queue_free()
+
 	stats_grid.columns = 3
 	stats_grid.add_theme_constant_override("h_separation", 13)
 	stats_grid.add_theme_constant_override("v_separation", 6)

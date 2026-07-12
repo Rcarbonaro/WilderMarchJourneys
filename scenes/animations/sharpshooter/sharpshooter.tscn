@@ -382,8 +382,8 @@ tile_footprint = null
 is_spellsword = null
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1298568116]
-position = Vector2(-7, -22.999998)
-scale = Vector2(0.46666667, 0.4711066)
+position = Vector2(-0.25000024, 0.5565598)
+scale = Vector2(0.40757576, 0.44329748)
 sprite_frames = SubResource("SpriteFrames_grxbi")
 animation = &"die"
 autoplay = "idle"

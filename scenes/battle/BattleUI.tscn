@@ -168,6 +168,10 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 16
 text = "Toggle Grid"
 
+[node name="SpeedToggleButton" type="Button" parent="BottomBar/HBoxContainer/ActionColumn/HBoxContainer" unique_id=1332653228]
+layout_mode = 2
+text = "Speed: 1x"
+
 [node name="VSeparator4" type="VSeparator" parent="BottomBar/HBoxContainer" unique_id=1404341109]
 custom_minimum_size = Vector2(0, 15)
 layout_mode = 2

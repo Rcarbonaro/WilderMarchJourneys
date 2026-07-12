@@ -266,21 +266,32 @@ func screen_shake(amplitude: float, duration: float) -> void:
 		_shake_remaining = duration
 
 
+var current_speed_multiplier: float = 1.0
+
+func set_speed_multiplier(mult: float) -> void:
+	current_speed_multiplier = mult
+	if not _hit_stop_active:
+		Engine.time_scale = mult
+	# If hit-stop is active right now, don't stomp its 0.0 freeze --
+	# apply_hit_stop()'s own timer will pick up current_speed_multiplier
+	# when it restores below.
+
+
 func apply_hit_stop() -> void:
 	## Freezes Engine.time_scale to 0 for hit_stop_duration real-time seconds.
 	## Only fires for crits. The real-time timer (ignore_time_scale = true)
-	## always counts actual wall-clock seconds so the freeze lasts predictably.
+	## always counts actual wall-clock seconds so the freeze lasts predictably
+	## regardless of the current speed multiplier.
 	if _hit_stop_active:
-		return   # don't stack — one freeze at a time
+		return
 	_hit_stop_active  = true
 	Engine.time_scale = 0.0
 	get_tree().create_timer(hit_stop_duration, true, false, true).timeout.connect(
 		func():
-			Engine.time_scale = 1.0
+			Engine.time_scale = current_speed_multiplier   # ← was hardcoded 1.0
 			_hit_stop_active  = false,
 		CONNECT_ONE_SHOT
 	)
-
 
 func flash_bar(bar_fill: Control) -> void:
 	## Call from ui_manager.gd when HP decreases. Briefly tints the fill red.

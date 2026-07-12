@@ -1,0 +1,14 @@
+{
+  "id": "the_thief_in_the_night",
+  "title": "The Thief in the Night",
+  "description": "While resting for the night, you notice movement near your supplies.",
+  "biomes": [],
+  "stage_min": 1,
+  "stage_max": 30,
+  "spawn_weight": 1.0,
+  "flags_required": [],
+  "flags_blocked": [],
+  "flags_set_on_completion": [],
+  "dialogue_graph_id": "thief_in_the_night_graph",
+  "once_per_run": false
+}
