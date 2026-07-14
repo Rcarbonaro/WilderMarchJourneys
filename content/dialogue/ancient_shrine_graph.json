@@ -1,0 +1,41 @@
+{
+  "id": "ancient_shrine_graph",
+  "start_node": "start",
+  "nodes": [
+    {
+      "id": "start",
+      "text": "A shrine reads: \"Those who give will receive. Those who take will be taken.\"",
+      "image": "res://content/dialogue/ancient_shrine/scene.png",
+      "conditions": [],
+      "choices": [
+        {
+          "id": "donate",
+          "text": "Donate 10 gold",
+          "cost": { "type": "gold", "amount": 10 },
+          "effects": [
+            { "type": "add_equipment_random", "tier": "advanced" }
+          ],
+          "next_node_id": "end_donate"
+        },
+        {
+          "id": "steal",
+          "text": "Steal the enchanted item",
+          "effects": [
+            { "type": "add_equipment_random", "tier": "advanced" },
+            { "type": "add_tarot_cursed", "amount": 1 }
+          ],
+          "next_node_id": "end_steal"
+        },
+        {
+          "id": "leave",
+          "text": "Leave",
+          "effects": [],
+          "next_node_id": "end_leave"
+        }
+      ]
+    },
+    { "id": "end_donate", "text": "Your offering glows. A powerful item materializes.", "choices": [] },
+    { "id": "end_steal", "text": "You seize the item. A dark force curses you.", "choices": [] },
+    { "id": "end_leave", "text": "You leave the shrine untouched.", "choices": [] }
+  ]
+}

@@ -50,8 +50,37 @@ extends Resource
 # anything yet -- reserved for whenever your boss-stage handling needs to
 # tell a boss apart from a regular elite.
 
-# Base stats
+# ── SEGMENTED HEALTH / BOSS PHASES ────────────────────────────────────────────
+# ADDED. Any unit can opt into this — not gated behind tier == "boss" — so a
+# tough sub-boss or an elite pack leader can use the exact same system.
 
+@export var hp_segment_count: int = 1
+# 1 = normal single HP bar (default, zero behavior change for every existing
+# unit). >1 = HP is divided into this many equal segments visually and
+# mechanically — damage that would cross a segment boundary is clamped
+# exactly at the boundary (no bleed-through into the next segment in the
+# same hit). See unit_node.gd's take_damage() and boss_phase_controller.gd.
+
+@export var boss_phases: Array[BossPhaseData] = []
+# Must have exactly hp_segment_count entries when hp_segment_count > 1 —
+# boss_phases[0] is how the unit behaves in its FIRST (topmost) segment,
+# boss_phases[hp_segment_count - 1] is its final segment. Ignored entirely
+# when hp_segment_count == 1.
+
+@export var ends_battle_on_death: bool = false
+# CHECK for a boss whose death should immediately win the battle even if
+# other enemies (its own summoned reinforcements, an untouched second pack,
+# etc.) are still alive. See battle_manager.gd's _check_battle_end().
+
+# ── INTERRUPT / REACTION ABILITIES ────────────────────────────────────────────
+@export var innate_interrupts: Array[InterruptAbilityData] = []
+# Reactive abilities this unit can ALWAYS use, with no status needed —
+# e.g. a monster that innately lashes out whenever it's struck. Combined at
+# runtime with any interrupts granted by active statuses (counterattack
+# stance, etc.) — see unit_node.gd's get_active_interrupts().
+
+
+# Base stats
 @export var base_stats: StatsData
 
 # Ability

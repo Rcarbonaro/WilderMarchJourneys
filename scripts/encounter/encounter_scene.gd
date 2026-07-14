@@ -10,14 +10,14 @@
 #     Background (TextureRect)
 #     TitleLabel (Label)
 #     DescriptionLabel (RichTextLabel)
-#     ChoicesContainer (VBoxContainer)   <- choice buttons built here at runtime
+#     ChoicesContainer (HBoxContainer)   <- choice buttons built here at runtime
 
 extends Node2D
 
 @onready var background: TextureRect = $Background
 @onready var title_label: Label = $TitleLabel
 @onready var desc_label: RichTextLabel = $DescriptionLabel
-@onready var choices_container: VBoxContainer = $ChoicesContainer
+@onready var choices_container: HBoxContainer = $ChoicesContainer
 
 var _encounter_id: String = ""
 var _placeholder_bg: ImageTexture = null

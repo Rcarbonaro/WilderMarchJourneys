@@ -166,6 +166,40 @@ signal movement_finished
 #Var for when a character is dying:
 var _death_started: bool = false
 
+signal hp_segment_depleted(depleted_segment_index: int)
+# Emitted by take_damage() the instant a segmented-HP unit's current segment
+# hits its floor. BossPhaseController listens for this to run retreat +
+# summon + phase-advance. Harmless no-op for any unit with hp_segment_count == 1
+# (never fires).
+
+var current_segment_index: int = 0
+# Which segment (0 = first/topmost) a segmented-HP unit is currently in.
+# Unused for normal units.
+
+var is_phase_transitioning: bool = false
+# While true, take_damage() is a no-op — set/cleared by BossPhaseController
+# around its retreat+summon sequence so multi-hit abilities can't finish
+# damaging a boss that's already mid-transition (bleed-through prevention
+# across the WHOLE transition, not just the triggering hit).
+
+var last_damage_attacker = null
+# The most recent unit to deal damage to this unit. Set at the top of
+# take_damage(). Used by BossPhaseController to know who to retreat from.
+
+var interrupt_cooldowns: Dictionary = {}
+# Maps InterruptAbilityData.id -> rounds remaining before it can fire again.
+# Ticked down by CombatHooks.run_round_tick — see the wiring note below.
+
+var boss_phase_stat_multipliers: Dictionary = {}
+# { "atk": float, "matk": float, "def": float, "mdef": float, "mov_bonus": int }
+# Written by BossPhaseController._apply_phase(). Empty dict = no multiplier
+# (every existing get_effective_*() stays unchanged for non-boss units).
+
+var phase_granted_abilities: Array = []
+# Abilities unlocked by boss phases so far, on top of unit_data.starting_abilities.
+# Read by ai_system.gd's _choose_enemy_ability() — see the one-line addition below.
+
+var current_boss_phase_index: int = 0
 
 # ── LIFECYCLE ─────────────────────────────────────────────────────────────────
 
@@ -393,6 +427,8 @@ func get_effective_atk() -> int:
 		base += s["data"].atk_modifier * s["stacks"]
 	# Add permanent Momentum bonuses from any aura this unit benefits from.
 	# Each key in momentum_bonuses is an aura_id; we sum all the atk values.
+	if boss_phase_stat_multipliers.has("atk"):
+		base = int(round(base * boss_phase_stat_multipliers["atk"]))	
 	for aura_id in momentum_bonuses:
 		base += momentum_bonuses[aura_id].get("atk", 0)
 	return max(0, base)
@@ -404,6 +440,8 @@ func get_effective_matk() -> int:
 		base += s["data"].matk_modifier * s["stacks"]
 	for aura_id in momentum_bonuses:
 		base += momentum_bonuses[aura_id].get("matk", 0)
+	if boss_phase_stat_multipliers.has("matk"):
+		base = int(round(base * boss_phase_stat_multipliers["matk"]))
 	return max(0, base)
 
 
@@ -413,6 +451,8 @@ func get_effective_def() -> int:
 		base += s["data"].def_modifier * s["stacks"]
 	for aura_id in momentum_bonuses:
 		base += momentum_bonuses[aura_id].get("def", 0)
+	if boss_phase_stat_multipliers.has("def"):
+		base = int(round(base * boss_phase_stat_multipliers["def"]))
 	return max(0, base)
 
 
@@ -422,6 +462,8 @@ func get_effective_mdef() -> int:
 		base += s["data"].mdef_modifier * s["stacks"]
 	for aura_id in momentum_bonuses:
 		base += momentum_bonuses[aura_id].get("mdef", 0)
+	if boss_phase_stat_multipliers.has("mdef"):
+		base = int(round(base * boss_phase_stat_multipliers["mdef"]))
 	return max(0, base)
 
 
@@ -434,6 +476,8 @@ func get_effective_mov() -> int:
 		base += s["data"].mov_modifier * s["stacks"]
 	for aura_id in momentum_bonuses:
 		base += momentum_bonuses[aura_id].get("mov", 0)
+	if boss_phase_stat_multipliers.has("mov"):
+		base = int(round(base * boss_phase_stat_multipliers["mov"]))
 	return max(0, base)
 
 
@@ -445,6 +489,8 @@ func get_effective_crit_chance() -> float:
 	# Momentum crit_chance is already a float percentage — add it directly.
 	for aura_id in momentum_bonuses:
 		base += momentum_bonuses[aura_id].get("crit_chance", 0.0)
+	if boss_phase_stat_multipliers.has("crit_chance"):
+		base = int(round(base * boss_phase_stat_multipliers["crit_chance"]))
 	return base
 
 
@@ -456,6 +502,8 @@ func get_effective_crit_damage() -> float:
 	var base: float = get_stats().crit_damage
 	for aura_id in momentum_bonuses:
 		base += momentum_bonuses[aura_id].get("crit_damage", 0.0)
+	if boss_phase_stat_multipliers.has("crit_damage"):
+		base = int(round(base * boss_phase_stat_multipliers["crit_damage"]))
 	return base
 	
 func get_effective_max_hp() -> int:
@@ -503,15 +551,47 @@ func restore_mana(amount: int) -> void:
 	
 # ── COMBAT ────────────────────────────────────────────────────────────────────
 
-func take_damage(amount: int, damage_type: String, is_crit: bool = false, apply_shake: bool = true) -> int:
-	var actual = max(1, amount)
+func take_damage(amount: int, damage_type: String, is_crit: bool = false, apply_shake: bool = true, attacker = null) -> int:
+	if is_phase_transitioning:
+		return 0   # Fully invulnerable during a boss retreat/summon sequence.
+
+	if attacker != null:
+		last_damage_attacker = attacker
+
+	var requested: int = max(1, amount)
+	var actual: int = requested
+
+	# ── SEGMENTED HP CLAMP (no bleed-through) ─────────────────────────────────
+	var segment_count: int = 1
+	if unit_data != null and "hp_segment_count" in unit_data:
+		segment_count = unit_data.hp_segment_count
+
+	var crossed_segment: bool = false
+	if segment_count > 1:
+		var max_hp: int = get_effective_max_hp()
+		var remaining_segments: int = segment_count - current_segment_index
+		# The floor is the HP value at the BOTTOM of the current segment —
+		# i.e. the top of the NEXT segment down. 0 for the final segment
+		# (normal death applies there, no special clamping).
+		var floor_hp: int = 0
+		if remaining_segments > 1:
+			floor_hp = int(round(float(max_hp) * float(remaining_segments - 1) / float(segment_count)))
+
+		if floor_hp > 0 and current_hp - actual < floor_hp:
+			actual = current_hp - floor_hp   # clamp — discard any extra damage
+			crossed_segment = true
+
 	current_hp -= actual
 	_update_hp_label()
 
 	_flash_on_hit(damage_type, is_crit)
 	CombatFeedback.show_hit(self, actual, is_crit, damage_type, apply_shake)
-	
-	if current_hp <= 0:
+
+	if crossed_segment:
+		var depleted_index: int = current_segment_index
+		current_segment_index += 1
+		hp_segment_depleted.emit(depleted_index)
+	elif current_hp <= 0:
 		die()
 	else:
 		play_animation("hurt")
@@ -520,7 +600,6 @@ func take_damage(amount: int, damage_type: String, is_crit: bool = false, apply_
 				play_animation("idle")
 		)
 	return actual
-
 
 func heal(amount: int) -> void:
 	var max_hp = get_effective_max_hp()
@@ -1206,6 +1285,22 @@ func get_taunt_source():
 func is_taunted() -> bool:
 	return get_taunt_source() != null
 
+
+func get_active_interrupts() -> Array:
+	# Collects every interrupt this unit currently carries: innate ones from
+	# UnitData, plus one from EVERY active status that grants one. This is
+	# what makes multiple simultaneous reaction sources stack — each entry
+	# is evaluated completely independently by InterruptSystem.
+	var result: Array = []
+	if unit_data != null and "innate_interrupts" in unit_data:
+		for data in unit_data.innate_interrupts:
+			if data != null:
+				result.append({"data": data, "source": "innate"})
+	for s in active_statuses:
+		var status_data: StatusEffectData = s["data"]
+		if "grants_interrupt" in status_data and status_data.grants_interrupt != null:
+			result.append({"data": status_data.grants_interrupt, "source": "status", "status": status_data})
+	return result
 # ── VISUAL OVERRIDE TRANSITIONS ───────────────────────────────────────────────
 
 func _begin_visual_override(status_data: StatusEffectData) -> void:

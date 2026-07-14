@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://dcw6thumh8opy"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_ko5mk"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_oe7qj"]
+[ext_resource type="PackedScene" uid="uid://by83wa6a2kd4r" path="res://scenes/animations/barkskinelk/barkskinelk.tscn" id="2_scmb3"]
+
+[resource]
+script = ExtResource("2_oe7qj")
+id = "guardiancharge"
+display_name = "Goring Rush"
+description = "The Elk charges in a straight line, goring targets in its path"
+cooldown_rounds = 3
+max_range = 4
+aoe_shape = "line"
+aoe_size = 5
+base_damage_multiplier = 1.5
+displacement_squares = 2
+is_dash = true
+dash_effect_scene = ExtResource("2_scmb3")
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

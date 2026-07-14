@@ -9,7 +9,7 @@
 script = ExtResource("3_mvtr5")
 id = "basic_attack"
 display_name = "Oakenclaw"
-description = "Rend with oaken claws"
+description = "Rend with large oaken claws."
 icon = ExtResource("2_k604m")
 effect_scene = ExtResource("2_mvtr5")
 min_range = 1

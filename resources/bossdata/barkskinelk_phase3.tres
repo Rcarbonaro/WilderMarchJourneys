@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="BossPhaseData" format=3 uid="uid://dfxlmpwf8tnyh"]
+
+[ext_resource type="Script" uid="uid://hsnks4k5bnc" path="res://scripts/data/wave_entry_data.gd" id="1_26asq"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="1_wll4a"]
+[ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="2_7drto"]
+[ext_resource type="Resource" uid="uid://c5gcqlm66onca" path="res://resources/enemies/thornling_data.tres" id="4_h3d6c"]
+[ext_resource type="Script" uid="uid://bmq5rbimebljv" path="res://scripts/data/reinforcement_wave_data.gd" id="5_ijt1o"]
+
+[sub_resource type="Resource" id="Resource_i0bcx"]
+script = ExtResource("1_26asq")
+unit_data = ExtResource("4_h3d6c")
+count = 2
+metadata/_custom_type_script = "uid://hsnks4k5bnc"
+
+[sub_resource type="Resource" id="Resource_ksfa2"]
+script = ExtResource("5_ijt1o")
+entries = Array[ExtResource("1_26asq")]([SubResource("Resource_i0bcx")])
+metadata/_custom_type_script = "uid://bmq5rbimebljv"
+
+[resource]
+script = ExtResource("2_7drto")
+phase_name = "Barkskin Elk Wave 3"
+announcement_text = "Thornlings burst from the underbrush!"
+atk_multiplier = 1.1
+def_multiplier = 0.9
+mdef_multiplier = 0.9
+summon_wave = SubResource("Resource_ksfa2")
+metadata/_custom_type_script = "uid://c0wi65swh4rnn"

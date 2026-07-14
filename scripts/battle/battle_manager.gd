@@ -100,6 +100,9 @@ var unleash_available: bool = false
 @export var ai_system:      Node   # AISystem
 @export var ui_manager:     Node   # UIManager (BattleUI CanvasLayer)
 @export var synergy_system: Node   # SynergySystem (can be null if not added yet)
+@export var interrupt_system:        Node   # InterruptSystem
+@export var reinforcement_spawner:   Node   # ReinforcementSpawner
+@export var boss_phase_controller:   Node   # BossPhaseController
 
 # ── AURA MANAGER REFERENCE ────────────────────────────────────────────────────
 # NOT an export — we find and wire it automatically in _ready() by searching
@@ -167,6 +170,12 @@ func _ready() -> void:
 
 	# Apply synergy bonuses that are active from the very start of battle.
 	_refresh_synergies()
+	if interrupt_system != null:
+		interrupt_system.setup(grid, pathfinder, executor)
+	if reinforcement_spawner != null:
+		reinforcement_spawner.setup(grid, self)
+	if boss_phase_controller != null and reinforcement_spawner != null:
+		boss_phase_controller.setup(pathfinder, reinforcement_spawner)
 
 
 func _spawn_player_party_from_run() -> void:
@@ -319,6 +328,7 @@ func _spawn_test_enemies(encounter_index: int) -> void:
 	var bear_data              = load("res://resources/enemies/bear_data.tres")
 	var hulkingsporeling_data  = load("res://resources/enemies/hulkingsporeling_data.tres")
 	var leshy_data             = load("res://resources/enemies/leshy_data.tres")
+	var barkskin_elk_data             = load("res://resources/enemies/barkskin_elk_data.tres")
 
 	match encounter_index:
 		0:
@@ -372,6 +382,13 @@ func _spawn_test_enemies(encounter_index: int) -> void:
 			if sporeling_data        != null: spawn_unit(sporeling_data,        Vector2i(18, 3), false, 1)
 			if leshy_data            != null: spawn_unit(leshy_data,            Vector2i(18, 6), false, 1)
 			if leshy_data            != null: spawn_unit(leshy_data,            Vector2i(19, 9), false, 1)
+
+		5:   # ADDED — Barkskin Elk solo boss test
+			if barkskin_elk_data != null:
+				spawn_unit(barkskin_elk_data, Vector2i(16, 4), false, 1)
+			else:
+				push_warning("_spawn_test_enemies: barkskin_elk_data failed to load — check the path.")
+
 
 		_:
 			push_warning("_spawn_test_enemies: unknown encounter index %d — defaulting to Encounter 0." % encounter_index)
@@ -455,34 +472,36 @@ func spawn_unit(unit_data: UnitData, cell: Vector2i, is_player: bool, level: int
 			aura_manager.activate_aura(unit, spawn_aura_data)
 			print("🌀 Spawn aura activated: '", spawn_aura_data.id,
 				  "' on ", unit_data.display_name)
+	
+	if boss_phase_controller != null and "hp_segment_count" in unit_data and unit_data.hp_segment_count > 1:
+		boss_phase_controller.register_unit(unit)
 
 # ── DEATH HANDLING ────────────────────────────────────────────────────────────
 
 func _on_unit_died(unit) -> void:
-	# Connected to every unit's unit_died signal in spawn_unit.
-	# Note: AuraManager.remove_all_auras_for() is called INSIDE unit_node.die()
-	# BEFORE this signal fires, so momentum bonuses are already stripped by now.
 	print(unit.unit_data.display_name, " has fallen!")
+	var was_boss_kill: bool = (not unit.is_player_unit
+		and "ends_battle_on_death" in unit.unit_data
+		and unit.unit_data.ends_battle_on_death)
+
 	player_units.erase(unit)
 	enemy_units.erase(unit)
 
-	# Announces the death for anything that needs to react generically (e.g.
-	# tarot triggers like "The Pact"). Erased ABOVE first, on purpose, so
-	# "live_units" here never includes the unit that just died.
 	EventBus.publish(EventBus.ON_UNIT_DIED, {
 		"unit": unit, "is_player_unit": unit.is_player_unit,
 		"live_units": player_units if unit.is_player_unit else enemy_units,
 	})
 
-	# If the dead unit was selected, clean up the selection state.
 	if selected_unit == unit:
 		deselect_unit()
 
-	_check_battle_end()
+	if was_boss_kill:
+		_battle_victory()
+	else:
+		_check_battle_end()
 
 
 func _check_battle_end() -> void:
-	# The battle ends when one side runs out of units.
 	if enemy_units.is_empty():
 		_battle_victory()
 	elif player_units.is_empty():
@@ -1108,7 +1127,7 @@ func _try_use_ability(cell: Vector2i) -> void:
 	# 3. AOE double-tap preview.
 	# First tap on an AOE ability shows the blast zone overlay and returns.
 	# Second tap on the same cell confirms and executes.
-	var simulated_cells = _get_aoe_cells(cell, selected_ability)
+	var simulated_cells = get_aoe_cells(cell, selected_ability)
 	# "chain" (automatic-bounce mode) picks its one initial target the same
 	# way "single" does — a double-tap-to-confirm doesn't make sense here
 	# since there's no multi-tile blast zone to preview, just one tapped tile.
@@ -1139,7 +1158,7 @@ func _try_use_ability(cell: Vector2i) -> void:
 	await get_tree().create_timer(0.5).timeout
 
 	# Filter out cells belonging to the wrong team before passing to the executor.
-	var filtered_cells = _filter_cells_by_team(simulated_cells, selected_ability, selected_unit)
+	var filtered_cells = filter_cells_by_team(simulated_cells, selected_ability, selected_unit)
 
 	print("DEBUG: Current Total Mana Spent: ", total_mana_spent, " / Threshold: ", ARCANA_THRESHOLD)
 
@@ -1192,7 +1211,6 @@ func _try_use_ability(cell: Vector2i) -> void:
 
 	# Normal cleanup after the ability fully resolves.
 	_finish_ability(selected_unit)
-
 
 func _finish_ability(unit) -> void:
 	# Called after an ability fully resolves, including any post-attack movement.
@@ -1875,8 +1893,13 @@ func _refresh_ability_highlights(valid_cells: Array) -> void:
 		highlight.show_attack_range(valid_cells)
 
 
-func _get_aoe_cells(center: Vector2i, ability: AbilityData) -> Array:
-	# Returns every grid cell inside this ability's AOE pattern.
+func get_aoe_cells(center: Vector2i, ability: AbilityData, origin_unit = null) -> Array:   
+	# 'origin_unit' is whoever's casting — used for "line" and "cone" to know
+	# which direction to project from. Defaults to selected_unit so every
+	# existing player call site keeps working unmodified.
+	if origin_unit == null:
+		origin_unit = selected_unit
+
 	var cells = []
 	var size  = ability.aoe_size if "aoe_size" in ability else 1
 
@@ -1885,11 +1908,6 @@ func _get_aoe_cells(center: Vector2i, ability: AbilityData) -> Array:
 			cells = [center]
 
 		"chain":
-			# Only the FIRST target is picked by tapping — every bounce after
-			# that is found automatically (or, for chain_manual_targets,
-			# picked through the separate multi-tap flow, which never calls
-			# this function at all). So the "AOE" for a single chain tap is
-			# just the one tile that was tapped.
 			cells = [center]
 
 		"square":
@@ -1900,8 +1918,8 @@ func _get_aoe_cells(center: Vector2i, ability: AbilityData) -> Array:
 						cells.append(c)
 
 		"line":
-			if selected_unit:
-				var origin = selected_unit.grid_position
+			if origin_unit:                                    # CHANGED (was selected_unit)
+				var origin = origin_unit.grid_position          # CHANGED
 				var dir    = center - origin
 				var step   = Vector2i(sign(dir.x), sign(dir.y))
 				if step.x != 0 and step.y != 0:
@@ -1925,8 +1943,8 @@ func _get_aoe_cells(center: Vector2i, ability: AbilityData) -> Array:
 						cells.append(c)
 
 		"cone":
-			if selected_unit:
-				var origin  = selected_unit.grid_position
+			if origin_unit:                                     # CHANGED (was selected_unit)
+				var origin  = origin_unit.grid_position          # CHANGED
 				var dir     = center - origin
 				var forward = Vector2i.ZERO
 				var side    = Vector2i.ZERO
@@ -1948,6 +1966,25 @@ func _get_aoe_cells(center: Vector2i, ability: AbilityData) -> Array:
 							cells.append(c)
 
 	return cells
+
+
+func filter_cells_by_team(cells: Array, ability: AbilityData, caster) -> Array:   # RENAMED (was _filter_cells_by_team) — logic unchanged
+	var result = []
+	for cell in cells:
+		var unit_on_cell = grid.get_unit_at(cell)
+		if unit_on_cell == null:
+			result.append(cell)
+			continue
+		match ability.affects_team:
+			"enemies":
+				if unit_on_cell.is_player_unit != caster.is_player_unit:
+					result.append(cell)
+			"allies":
+				if unit_on_cell.is_player_unit == caster.is_player_unit:
+					result.append(cell)
+			"all":
+				result.append(cell)
+	return result
 
 # ── UNLEASH (HP-COST ACCUMULATOR) ─────────────────────────────────────────────
 
@@ -1992,6 +2029,7 @@ func _grant_arcana_charge_to_spellsword() -> void:
 			print("DEBUG: Arcana Charge granted to: ", unit.unit_data.display_name)
 			if unit.has_method("play_animation"):
 				unit.play_animation("arcana_charge")
+				
 func _announce_then_start_enemy_turn() -> void:
 	# Shows "Enemy's Turn" announcement, then hands control to the AI.
 	# Runs as an independent coroutine so end_player_turn() stays synchronous
@@ -2001,7 +2039,7 @@ func _announce_then_start_enemy_turn() -> void:
 	print("--- ENEMY TURN (Round ", round_number, ") ---")
 	ai_system.run_enemy_turn(
 		enemy_units, player_units, grid, pathfinder, executor,
-		_on_enemy_turn_complete
+		_on_enemy_turn_complete, self
 	)
 
 

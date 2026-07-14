@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="MapAssetData" format=3 uid="uid://bwg6taswxwbs"]
+
+[ext_resource type="Script" uid="uid://dfylspjn3xqr7" path="res://scripts/data/map_asset_data.gd" id="1_io30u"]
+[ext_resource type="Texture2D" uid="uid://cpndpkpmueich" path="res://sprites/map_assets/mushroom1.png" id="2_4qkyi"]
+
+[resource]
+script = ExtResource("1_io30u")
+id = "mushroom1"
+display_name = "Mushroom"
+texture = ExtResource("2_4qkyi")
+metadata/_custom_type_script = "uid://dfylspjn3xqr7"

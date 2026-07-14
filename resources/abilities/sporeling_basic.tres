@@ -14,7 +14,6 @@ description = "Sporeling unleashes a small cloud of toxic spores, dealing magic 
 icon = ExtResource("2_hbmw4")
 effect_scene = ExtResource("2_d2q47")
 aoe_shape = "square"
-aoe_size = 3
 damage_type = "magical"
 scaling_stat = "matk"
 spawns_hazard = ExtResource("5_d2q47")

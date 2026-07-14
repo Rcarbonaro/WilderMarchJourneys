@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="BiomeMapConfig" format=3 uid="uid://o5djspotqasw"]
+
+[ext_resource type="Script" uid="uid://dyg7lknboanbl" path="res://scripts/data/tile_type_data.gd" id="1_g7ow1"]
+[ext_resource type="Resource" uid="uid://cvte2ym8ki0j2" path="res://resources/tiles/tile_dirt.tres" id="2_8kx0b"]
+[ext_resource type="Script" uid="uid://dfylspjn3xqr7" path="res://scripts/data/map_asset_data.gd" id="2_vutjl"]
+[ext_resource type="Script" uid="uid://bgb1qqs8mxmwe" path="res://scripts/data/biome_map_config.gd" id="3_rd032"]
+[ext_resource type="Resource" uid="uid://qdw4tivs4tc3" path="res://content/map_assets/tree1.tres" id="3_xlt8b"]
+[ext_resource type="Resource" uid="uid://b4vijaublx4oi" path="res://content/map_assets/tree2.tres" id="4_8kx0b"]
+[ext_resource type="Resource" uid="uid://d02c5p67oqchd" path="res://content/map_assets/tree3.tres" id="5_iab5n"]
+[ext_resource type="Resource" uid="uid://bwg6taswxwbs" path="res://content/map_assets/mushroom1.tres" id="6_13ai6"]
+[ext_resource type="Resource" uid="uid://c6j7ata3sooai" path="res://content/map_assets/flower1.tres" id="7_hp0jr"]
+
+[resource]
+script = ExtResource("3_rd032")
+id = "forest"
+ground_tile_pool = Array[ExtResource("1_g7ow1")]([ExtResource("2_8kx0b")])
+obstacle_pool = Array[ExtResource("2_vutjl")]([ExtResource("3_xlt8b"), ExtResource("4_8kx0b"), ExtResource("5_iab5n"), ExtResource("6_13ai6"), ExtResource("7_hp0jr")])
+obstacle_weights = Array[float]([0.3, 0.3, 0.2, 0.9, 0.9])
+metadata/_custom_type_script = "uid://bgb1qqs8mxmwe"

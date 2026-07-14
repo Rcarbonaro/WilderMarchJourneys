@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://d1rnt0ah763bw"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_v4xn3"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_4rymo"]
+[ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="2_8rcqy"]
+
+[resource]
+script = ExtResource("2_4rymo")
+id = "barkskinelkbasic"
+display_name = "Basic Attack"
+description = "The twisted guardian gores its target with its antlers."
+effect_scene = ExtResource("2_8rcqy")
+displacement_squares = 1
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

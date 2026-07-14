@@ -1,0 +1,79 @@
+[gd_scene format=3 uid="uid://bkclrsnsfup8v"]
+
+[ext_resource type="Script" uid="uid://01w1tymoafld" path="res://scripts/battle/unit_node.gd" id="1_ynv3l"]
+[ext_resource type="Resource" uid="uid://bwnaicxo5cl5n" path="res://resources/units/windmage_data.tres" id="2_1hdh2"]
+[ext_resource type="Texture2D" uid="uid://ppvi2ek6rrk0" path="res://sprites/barkskinelk/barkskin_elk_attack.png" id="3_7lwon"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h1piq"]
+atlas = ExtResource("3_7lwon")
+region = Rect2(768, 256, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_x518w"]
+atlas = ExtResource("3_7lwon")
+region = Rect2(0, 512, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_s8p6a"]
+atlas = ExtResource("3_7lwon")
+region = Rect2(256, 512, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_u73sg"]
+atlas = ExtResource("3_7lwon")
+region = Rect2(512, 512, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wny3x"]
+atlas = ExtResource("3_7lwon")
+region = Rect2(768, 512, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hikri"]
+atlas = ExtResource("3_7lwon")
+region = Rect2(0, 768, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_e27jo"]
+atlas = ExtResource("3_7lwon")
+region = Rect2(256, 768, 256, 256)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_grxbi"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_h1piq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_x518w")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_s8p6a")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_u73sg")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wny3x")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hikri")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_e27jo")
+}],
+"loop": true,
+"name": &"default",
+"speed": 14.0
+}]
+
+[node name="bear" type="Node2D" unique_id=15020637]
+script = ExtResource("1_ynv3l")
+unit_data = ExtResource("2_1hdh2")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1298568116]
+position = Vector2(5.4653816, 0.5611124)
+scale = Vector2(0.44948924, 0.42625868)
+sprite_frames = SubResource("SpriteFrames_grxbi")
+frame_progress = 0.43214703
+
+[node name="HPLabel" type="Label" parent="." unique_id=1793699435]
+offset_left = -33.0
+offset_top = 45.0
+offset_right = 40.0
+offset_bottom = 62.0
+theme_override_font_sizes/font_size = 10

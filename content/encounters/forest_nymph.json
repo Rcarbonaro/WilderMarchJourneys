@@ -1,0 +1,15 @@
+{
+  "id": "forest_nymph",
+  "title": "The Forest Nymph",
+  "description": "A mysterious dryad begs for help healing a dying bird.",
+  "biomes": ["forest"],
+  "stage_min": 1,
+  "stage_max": 30,
+  "spawn_weight": 1.0,
+  "flags_required": [],
+  "flags_blocked": [],
+  "flags_set_on_completion": [],
+  "dialogue_graph_id": "forest_nymph_graph",
+  "once_per_run": false,
+  "notes": "Rewards handled inside dialogue graph."
+}

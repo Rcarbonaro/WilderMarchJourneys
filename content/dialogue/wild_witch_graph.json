@@ -1,0 +1,52 @@
+{
+  "id": "wild_witch_graph",
+  "start_node": "start",
+  "nodes": [
+    {
+      "id": "start",
+      "text": "The witch smiles warmly. \"Careful—some of these plants bite.\"",
+      "image": "res://content/dialogue/wild_witch/scene.png",
+      "conditions": [],
+      "choices": [
+        {
+          "id": "steal",
+          "text": "Attempt to steal from the witch",
+          "effects": [
+            { "type": "rng_loot", "table_id": "witch_theft_table" }
+          ],
+          "next_node_id": "end_steal"
+        },
+        {
+          "id": "help",
+          "text": "Offer to help with her gardening",
+          "effects": [
+            { "type": "add_item", "item_id": "potion_healing" },
+            { "type": "set_flag", "flag_id": "witch_garden_help" }
+          ],
+          "next_node_id": "end_help"
+        },
+        {
+          "id": "leave",
+          "text": "Leave",
+          "effects": [],
+          "next_node_id": "end_leave"
+        }
+      ]
+    },
+    {
+      "id": "end_steal",
+      "text": "You attempt to steal from the witch…",
+      "choices": []
+    },
+    {
+      "id": "end_help",
+      "text": "You help her garden. She gives you a potion and promises future gifts.",
+      "choices": []
+    },
+    {
+      "id": "end_leave",
+      "text": "You leave the witch to her garden.",
+      "choices": []
+    }
+  ]
+}

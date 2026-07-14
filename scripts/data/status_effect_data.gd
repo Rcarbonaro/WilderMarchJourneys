@@ -4,16 +4,6 @@
 # can be applied to a unit. The actual live instance is tracked in unit_node.gd's
 # active_statuses array.
 #
-# NEW ADDITIONS:
-#   - Visual override animations: a status can swap the unit's entire animation
-#     set (idle/attack/walk/etc.) for as long as it's active, with one-shot
-#     transition animations playing on enter and exit.
-#   - Taunt: forces the affected unit to direct damaging single-target attacks
-#     at the unit who applied the taunt.
-#   - Damage-over-time (DoT): deals damage at the end of each enemy round,
-#     either flat or scaling off the caster's ATK/MATK with an adjustable %.
-#   - cleansable is now actually wired up: a cleanse ability (is_cleanse on
-#     AbilityData) reads this flag to decide what it can and can't strip.
 
 class_name StatusEffectData
 
@@ -216,6 +206,17 @@ func classifies_as_debuff() -> bool:
 
 @export var override_hurt_animation: String = ""
 # Replaces "hurt" for the duration of this status.
+
+
+# ── INTERRUPT / REACTION GRANT ────────────────────────────────────────────────
+# A status can grant a TEMPORARY interrupt ability for as long as it's active
+# — e.g. a "Counterattack Stance" buff that lets the unit hit back at
+# anything that attacks them while it's up. Uses the exact same
+# InterruptAbilityData + InterruptSystem pipeline as an innate one on
+# UnitData — the only difference is this one disappears when the status ends.
+
+@export var grants_interrupt: InterruptAbilityData = null
+# Leave null for a status with no reactive behavior (the vast majority).
 
 # ── TAUNT ─────────────────────────────────────────────────────────────────────
 # A taunted unit can still freely use AOE, buff, heal, and movement abilities,

@@ -1,0 +1,15 @@
+{
+  "id": "oracle_summons",
+  "title": "The Oracle’s Summons",
+  "description": "The oracle offers a glimpse of your future.",
+  "biomes": ["any"],
+  "stage_min": 1,
+  "stage_max": 30,
+  "spawn_weight": 1.0,
+  "flags_required": [],
+  "flags_blocked": [],
+  "flags_set_on_completion": [],
+  "dialogue_graph_id": "oracle_summons_graph",
+  "once_per_run": false,
+  "notes": "Tarot rewards handled in dialogue graph."
+}

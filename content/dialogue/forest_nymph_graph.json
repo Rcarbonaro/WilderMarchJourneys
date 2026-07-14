@@ -1,0 +1,52 @@
+{
+  "id": "forest_nymph_graph",
+  "start_node": "start",
+  "nodes": [
+    {
+      "id": "start",
+      "text": "A strange woman in a dress of vines cradles a dying bird. \"Please, help!\"",
+      "image": "res://content/dialogue/forest_nymph/scene.png",
+      "conditions": [],
+      "choices": [
+        {
+          "id": "apologize",
+          "text": "Apologize for being unable to help",
+          "conditions": [
+            { "type": "resource_missing", "resource": "gold", "amount": 3 },
+            { "type": "resource_missing", "resource": "potion_healing", "amount": 1 }
+          ],
+          "effects": [],
+          "next_node_id": "end_apologize"
+        },
+        {
+          "id": "offer_supplies",
+          "text": "Offer supplies to help nurse the bird to health",
+          "cost": { "type": "gold", "amount": 3 },
+          "conditions": [
+            { "type": "resource_at_least", "resource": "gold", "amount": 3 }
+          ],
+          "effects": [
+            { "type": "add_unit", "unit_id": "dryad" }
+          ],
+          "next_node_id": "end_supplies"
+        },
+        {
+          "id": "offer_potion",
+          "text": "Offer a potion to heal the bird",
+          "cost": { "type": "potion_healing", "amount": 1 },
+          "conditions": [
+            { "type": "resource_at_least", "resource": "potion_healing", "amount": 1 }
+          ],
+          "effects": [
+            { "type": "add_unit", "unit_id": "dryad" },
+            { "type": "add_item", "item_id": "skill_scroll" }
+          ],
+          "next_node_id": "end_potion"
+        }
+      ]
+    },
+    { "id": "end_apologize", "text": "The woman lowers her head sadly. You continue on your way.", "choices": [] },
+    { "id": "end_supplies", "text": "With your help, the bird recovers. Grateful, the Dryad joins your party!", "choices": [] },
+    { "id": "end_potion", "text": "The potion heals the bird instantly. The Dryad joins you and grants a Skill Scroll!", "choices": [] }
+  ]
+}

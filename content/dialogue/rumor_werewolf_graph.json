@@ -1,0 +1,45 @@
+{
+  "id": "werewolf_rumor_graph",
+  "start_node": "start",
+  "nodes": [
+    {
+      "id": "start",
+      "text": "Two refugees approach. The blacksmith insists claw marks mean a werewolf is near.",
+      "image": "res://content/dialogue/werewolf_rumor/scene.png",
+      "conditions": [],
+      "choices": [
+        {
+          "id": "agree",
+          "text": "Agree to help",
+          "cost": null,
+          "conditions": [],
+          "effects": [
+            { "type": "add_equipment", "equipment_id": "silver_blade" },
+            { "type": "set_flag", "flag_id": "werewolf_hunt_active" }
+          ],
+          "next_node_id": "end_agree"
+        },
+        {
+          "id": "refuse",
+          "text": "Refuse the offer",
+          "cost": null,
+          "conditions": [],
+          "effects": [
+            { "type": "modify_resource", "resource": "gold", "amount": 4 }
+          ],
+          "next_node_id": "end_refuse"
+        }
+      ]
+    },
+    {
+      "id": "end_agree",
+      "text": "The blacksmith beams and hands you a silver blade.",
+      "choices": []
+    },
+    {
+      "id": "end_refuse",
+      "text": "The husband apologizes and gives you a few coins.",
+      "choices": []
+    }
+  ]
+}
