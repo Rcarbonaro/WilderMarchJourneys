@@ -1,0 +1,21 @@
+{
+  "id": "stage_8_scaling",
+  "stage_index": 8,
+  "bonus_enemy_count": 3,
+  "elite_chance": 0.5,
+  "min_elites": 1,
+  "max_elites": 3,
+  "elite_stat_multiplier": 1.0,
+  "base_modifiers": [
+    { "type": "add_stat", "stat": "atk", "amount": 3 },
+    { "type": "add_stat", "stat": "matk", "amount": 3 },
+    { "type": "add_stat", "stat": "def", "amount": 1 },
+    { "type": "add_stat", "stat": "mdef", "amount": 1 },
+    { "type": "add_stat", "stat": "hp",  "amount": 5 }
+  ],
+  "difficulty_modifiers": {
+    "hard": [{ "type": "add_stat", "stat": "atk", "amount": 2 }],
+    "nightmare": [{ "type": "add_stat", "stat": "atk", "amount": 4 }, { "type": "add_stat", "stat": "hp", "amount": 5 }]
+  },
+  "conditional_modifiers": []
+}

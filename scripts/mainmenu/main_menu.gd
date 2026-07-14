@@ -19,6 +19,7 @@ const ACHIEVEMENTS_SCENE_PATH: String = "res://scenes/meta/AchievementsScene.tsc
 
 func _ready() -> void:
 	# Connect UI signals to our logic functions
+	AudioManager.play_menu_music()
 	continue_button.pressed.connect(_on_continue_pressed)
 	new_game_button.pressed.connect(_on_new_game_pressed)
 	achievements_button.pressed.connect(_on_achievements_pressed)

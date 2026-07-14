@@ -105,3 +105,6 @@ var has_arcana_charge: bool = false
 # about how the aura behaves afterward (following the unit, ticking,
 # expiring, being cleansed if cleansable, etc.) works completely identically
 # to a normal cast aura. Works for both player units and enemies.
+
+@export var hurt_sfx:  AudioStream = null
+@export var death_sfx: AudioStream = null

@@ -1,0 +1,11 @@
+{
+  "id": "boss_forest_stage10",
+  "biome": "forest",
+  "stage_type": "boss",
+  "stage_min": 10,
+  "stage_max": 10,
+  "guaranteed_enemy_ids": ["barkskin_elk"],
+  "enemy_pool": [],
+  "total_enemies_min": 1,
+  "total_enemies_max": 1
+}

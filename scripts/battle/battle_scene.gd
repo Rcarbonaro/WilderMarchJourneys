@@ -9,14 +9,6 @@ extends Node2D
 @onready var background_texture: TextureRect = $BattleBackgrounds/BackgroundTexture
 
 func _enter_tree() -> void:
-	# Runs BEFORE _ready() -- and, importantly, before BattleManager's own
-	# _ready() too, since Godot calls _enter_tree() top-down (parent first)
-	# but _ready() bottom-up (children first). BattleManager's
-	# _spawn_player_party_from_run()/_spawn_stage_enemies() both read
-	# MapGenerator.last_result, so the map has to exist before either of
-	# those run. Test mode (RunManager.is_test_mode) never calls this at
-	# all -- your _spawn_test_enemies() sandbox keeps using its own fixed
-	# Vector2i positions exactly as before.
 	if RunManager.is_test_mode:
 		return
 	if RunManager.current_run == null:
@@ -26,10 +18,19 @@ func _enter_tree() -> void:
 
 	var biome := _get_current_biome()
 	var party_size: int = RunManager.current_run.party.size()
-	MapGenerator.generate_map($BattleGrid.GRID_WIDTH, $BattleGrid.GRID_HEIGHT, biome, party_size, 8)
+
+	# ADDED — keep the number of generated enemy spawn cells in sync with
+	# resolve_spawn_table()'s own bonus_enemy_count, so a scaling-boosted
+	# roster always has enough physical cells to land on instead of losing
+	# enemies to the "more enemies than spawn cells" warning.
+	var base_enemy_spawn_cells := 8
+	var scaling_config := ContentLoader.get_scaling_config(RunManager.current_run.stage_index)
+	var bonus_enemy_count: int = int(scaling_config.get("bonus_enemy_count", 0))
+	var enemy_spawn_cell_count: int = base_enemy_spawn_cells + bonus_enemy_count
+
+	MapGenerator.generate_map($BattleGrid.GRID_WIDTH, $BattleGrid.GRID_HEIGHT, biome, party_size, enemy_spawn_cell_count)
 	$BattleGrid.setup_grid(MapGenerator.last_result.get("tile_map", {}))
 	$BattleGrid.spawn_scatter_features(MapGenerator.last_result.get("feature_placements", []))
-
 
 func _get_current_biome() -> String:
 	if RunManager.current_run == null or RunManager.current_run.biome_sequence.is_empty():
@@ -38,7 +39,13 @@ func _get_current_biome() -> String:
 	if slot >= RunManager.current_run.biome_sequence.size():
 		return "forest"
 	return RunManager.current_run.biome_sequence[slot]
-
+const BIOME_MUSIC := {
+	"forest": [
+		preload("res://assets/audio/music/forest_ambient_1.ogg"),
+		preload("res://assets/audio/music/forest_ambient_2.ogg"),
+		preload("res://assets/audio/music/forest_ambient_3.ogg"),
+	],
+}
 
 func _ready() -> void:
 	# 1. Connect UI to BattleManager
@@ -52,8 +59,32 @@ func _ready() -> void:
 	$BattleBackgrounds.layer = -1
 
 	# 2: set up biome
-	setup_battle_background(_get_current_biome() if not RunManager.is_test_mode else "forest")
-	
+	var biome: String = _get_current_biome() if not RunManager.is_test_mode else "forest"
+	setup_battle_background(biome)
+
+	# ── MUSIC ──────────────────────────────────────────────────────────────
+	# Default to the biome's ambient playlist for every combat. A boss stage
+	# (stage_type == "boss") overrides it with its own track/playlist from
+	# that stage's scaling config, if one is set there.
+	if BIOME_MUSIC.has(biome):
+		AudioManager.play_next_in_playlist(BIOME_MUSIC[biome])
+		
+	if not RunManager.is_test_mode and RunManager.current_run != null:
+		var stage_index: int = RunManager.current_run.stage_index
+		if ContentLoader.get_stage_type(stage_index) == "boss":
+			var scaling_config := ContentLoader.get_scaling_config(stage_index)
+			if scaling_config.has("music_playlist") and scaling_config["music_playlist"] is Array \
+					and not scaling_config["music_playlist"].is_empty():
+				var loaded: Array = []
+				for path in scaling_config["music_playlist"]:
+					loaded.append(load(path))
+				AudioManager.play_music_playlist(loaded, true)
+			elif scaling_config.has("music_track") and scaling_config["music_track"] != "":
+				AudioManager.play_music(load(scaling_config["music_track"]))
+			# If neither is set on the stage's scaling config, the biome
+			# playlist started above just keeps playing through the boss
+			# fight too -- not an error, just "no override authored yet."
+
 	# 3: Connect BattleManager back to the UI Manager
 	battle_manager.ui_manager = battle_ui
 
@@ -65,10 +96,9 @@ func _ready() -> void:
 	# generation entirely -- fall back to the old flat test map for that case.
 	if RunManager.is_test_mode:
 		_setup_test_map()
-	
+
 	# 5. Setup camera for screen shake
 	CombatFeedback.register_camera($Camera2D)
-	
 
 func _setup_test_map() -> void:
 	# Creates a flat grid of dirt tiles. ONLY used in test mode now -- real
@@ -93,15 +123,21 @@ func _setup_test_map() -> void:
 
 func _on_battle_ended(result: String) -> void:
 	if RunManager.is_test_mode:
-		# Test mode never had a real run in progress -- there's nothing for
-		# StageDirector to advance or reward. Just report the result.
 		print("Test battle ended: ", result)
 		return
 	if result == "victory":
+		# TEMPORARY — until biomes 2 and 3 have their own stage-10 bosses
+		# built, clearing stage 10 counts as clearing the whole game.
+		# Remove this early-return once biome 2/3 content exists, so
+		# StageDirector.complete_stage() can carry the run past stage 10
+		# normally.
+		if RunManager.current_run != null and RunManager.current_run.stage_index == 10:
+			if battle_ui and battle_ui.has_method("show_game_victory_popup"):
+				battle_ui.show_game_victory_popup()
+			return
 		StageDirector.complete_stage()
 	elif result == "defeat":
 		get_tree().change_scene_to_file("res://scenes/meta/GameOverScreen.tscn")
-
 
 
 # 🗺️ The Biome Resource Database

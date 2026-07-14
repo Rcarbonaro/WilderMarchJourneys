@@ -1008,3 +1008,96 @@ func show_big_warning_popup(text: String, duration: float = 2.2) -> void:
 	_big_warning_tween = create_tween()
 	_big_warning_tween.tween_interval(duration)
 	_big_warning_tween.tween_property(_big_warning_label, "modulate:a", 0.0, 0.4)
+
+@export var victory_scene:   PackedScene = null
+@export var defeat_scene:    PackedScene = null
+@export var victory_texture: Texture2D   = null
+@export var defeat_texture:  Texture2D   = null
+@export var battle_result_banner_duration: float = 2.2
+# Same override pattern as show_turn_announcement -- drop in a custom scene
+# or texture later for real victory/defeat art without touching this code.
+
+func show_battle_result_banner(is_victory: bool) -> void:
+	_hide_turn_announcement()   # clear any lingering "Enemy's Turn" banner first
+
+	var custom_scene:   PackedScene = victory_scene   if is_victory else defeat_scene
+	var custom_texture: Texture2D   = victory_texture if is_victory else defeat_texture
+	var label_text:     String      = "Victory!"      if is_victory else "Defeat..."
+	var label_color:    Color       = Color(1.0, 0.85, 0.2) if is_victory else Color(0.85, 0.2, 0.2)
+
+	var content: Control
+
+	if custom_scene != null:
+		content = custom_scene.instantiate() as Control
+	elif custom_texture != null:
+		var img := TextureRect.new()
+		img.texture             = custom_texture
+		img.expand_mode         = TextureRect.EXPAND_IGNORE_SIZE
+		img.stretch_mode        = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		img.custom_minimum_size = custom_texture.get_size()
+		content = img
+	else:
+		var panel := PanelContainer.new()
+		panel.custom_minimum_size = Vector2(400, 120)
+		var lbl := Label.new()
+		lbl.text                 = label_text
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+		lbl.add_theme_font_size_override("font_size", 48)
+		lbl.add_theme_color_override("font_color", label_color)
+		lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+		lbl.add_theme_constant_override("outline_size", 8)
+		panel.add_child(lbl)
+		content = panel
+
+	var wrapper := CenterContainer.new()
+	wrapper.set_anchors_preset(Control.PRESET_FULL_RECT)
+	wrapper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	wrapper.z_index      = 210   # above regular turn banners (which use 200)
+	add_child(wrapper)
+	wrapper.add_child(content)
+	_announcement_instance = wrapper
+
+	await get_tree().create_timer(battle_result_banner_duration).timeout
+	# Deliberately not fading/hiding it here -- battle_manager.gd emits
+	# battle_ended right after this await returns, and the scene change
+	# that follows (StageDirector.complete_stage() / GameOverScreen) tears
+	# the whole banner down along with the rest of the scene anyway.
+
+func show_game_victory_popup() -> void:
+	var overlay := ColorRect.new()
+	overlay.color = Color(0, 0, 0, 0.75)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.z_index = 300
+	add_child(overlay)
+
+	var box := VBoxContainer.new()
+	box.set_anchors_preset(Control.PRESET_CENTER)
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+
+	var title := Label.new()
+	title.text = "Game Victory!"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 48)
+	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2))
+	box.add_child(title)
+
+	var subtitle := Label.new()
+	subtitle.text = "You have driven back the corruption."
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.add_theme_font_size_override("font_size", 20)
+	box.add_child(subtitle)
+
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(0, 30)
+	box.add_child(spacer)
+
+	var button := Button.new()
+	button.text = "Return to Main Menu"
+	button.custom_minimum_size = Vector2(240, 50)
+	button.pressed.connect(func():
+		get_tree().change_scene_to_file("res://scenes/mainmenu/main_menu.tscn")
+	)
+	box.add_child(button)
+
+	overlay.add_child(box)

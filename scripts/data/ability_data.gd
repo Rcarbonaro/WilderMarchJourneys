@@ -66,6 +66,11 @@ extends Resource
 # variants for a custom animation too, suffix your own and check in
 # battle_manager/ai_system, or leave this blank to use the built-in fallback.
 
+# ── SFX ──────────────────────────────────────────────────────────────────────
+@export var cast_sfx:   AudioStream = null   # played when the ability is used
+@export var impact_sfx: AudioStream = null   # played when damage actually lands
+
+
 # ── COST ──────────────────────────────────────────────────────────────────────
 
 @export var mana_cost: int = 0
