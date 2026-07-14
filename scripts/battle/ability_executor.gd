@@ -114,7 +114,8 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 		  " | target_cells: ", target_cells,
 		  " | caster: ", caster.unit_data.display_name)
 	CombatHooks.run_before_ability_used(caster, ability)
-
+	AudioManager.play_sfx(ability.cast_sfx)  
+	
 	# ── STEP 1: APPLY COSTS ───────────────────────────────────────────────────
 	# Deduct mana and HP cost immediately (before damage resolves).
 	# If they have an Arcana Charge, consume it instead of mana.
@@ -465,6 +466,7 @@ func _apply_damage_with_effects(caster, target, ability: AbilityData, damage: in
 	# -- 3. APPLY DAMAGE TO TARGET ─────────────────────────────────────────────
 	var hp_before_damage: int = target.current_hp
 	var actual_damage = target.take_damage(damage, ability.damage_type, _last_hit_was_crit, true, caster)
+	AudioManager.play_sfx(ability.impact_sfx)
 	CombatHooks.run_damage_applied_reactions(caster, target, actual_damage, _last_hit_was_crit)
 
 	# -- 3.5 CRIT OVERLOAD ─────────────────────────────────────────────────────

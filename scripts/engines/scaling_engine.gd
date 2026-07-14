@@ -15,9 +15,6 @@ func get_stage_type(stage_index: int) -> String:
 
 
 func resolve_spawn_table(run_state: RunState) -> Array:
-	# Returns an Array of {"enemy_id": String, "count": int} describing the
-	# enemy roster for the CURRENT stage. Picks one matching spawn_table at
-	# random if more than one qualifies.
 	var biome := ""
 	if run_state.biome_sequence.size() > 0:
 		biome = run_state.biome_sequence[ContentLoader.get_biome_slot(run_state.stage_index)]
@@ -29,14 +26,36 @@ func resolve_spawn_table(run_state: RunState) -> Array:
 					  stage_type + "' stage_index=" + str(run_state.stage_index))
 		return []
 
-	var table: Dictionary = tables[randi() % tables.size()]
+	# CHANGED — try every candidate table (in random order) until one
+	# actually produces a non-empty roster, instead of committing to
+	# whichever table randi() happened to land on.
+	var shuffled_tables: Array = tables.duplicate()
+	shuffled_tables.shuffle()
+	for table in shuffled_tables:
+		var roster := _build_roster_from_table(table, run_state)
+		if not roster.is_empty():
+			return roster
+
+	push_warning("ScalingEngine: EVERY spawn table for biome='" + biome + "' stage_type='" +
+				  stage_type + "' stage_index=" + str(run_state.stage_index) +
+				  " produced an empty roster — check total_enemies_min/max and guaranteed_enemy_ids on those table files.")
+	return []
+
+
+func _build_roster_from_table(table: Dictionary, run_state: RunState) -> Array:
+	# Everything resolve_spawn_table() used to do inline, now factored out
+	# so it can be retried against multiple candidate tables.
 	var roster := []
 	for guaranteed_id in table.get("guaranteed_enemy_ids", []):
 		roster.append({"enemy_id": guaranteed_id, "count": 1})
+	var guaranteed_count := roster.size()
+
+	var scaling_config := ContentLoader.get_scaling_config(run_state.stage_index)
 
 	var total_min := int(table.get("total_enemies_min", 1))
 	var total_max := int(table.get("total_enemies_max", total_min))
 	var target_total: int = total_min + (randi() % max(1, total_max - total_min + 1))
+	target_total += int(scaling_config.get("bonus_enemy_count", 0))
 
 	var pool: Array = table.get("enemy_pool", [])
 	if pool.is_empty():
@@ -45,14 +64,10 @@ func resolve_spawn_table(run_state: RunState) -> Array:
 	for p in pool:
 		weights.append(float(p.get("weight", 1.0)))
 
-	# ADDED -- elite-frequency roll. elite_chance comes from the SAME
-	# per-stage scaling config elite_stat_multiplier already lives in
-	# (content/scaling/<stage>.json), so "how many elites this far into the
-	# run" is entirely data-driven: author elite_chance to be 0 (or just
-	# absent) on early stages and rise on later ones, exactly like every
-	# other scaling number in this project.
-	var scaling_config := ContentLoader.get_scaling_config(run_state.stage_index)
 	var elite_chance: float = float(scaling_config.get("elite_chance", 0.0))
+	var max_elites: int = int(scaling_config.get("max_elites", -1))
+	var min_elites: int = int(scaling_config.get("min_elites", 0))
+	var elite_count: int = 0
 	var elite_pool_indices: Array = []
 	if elite_chance > 0.0:
 		for i in range(pool.size()):
@@ -63,25 +78,37 @@ func resolve_spawn_table(run_state: RunState) -> Array:
 	var attempts := 0
 	while placed < target_total and attempts < target_total * 5:
 		attempts += 1
-
 		var chosen_entry: Dictionary
-		# Roll for elite FIRST, so "no elite-tagged enemy in this table's
-		# pool yet" quietly falls back to a normal pick instead of silently
-		# doing nothing -- see the elite-authoring note in the README if
-		# elites never seem to appear for a table you expect them in.
-		if elite_chance > 0.0 and not elite_pool_indices.is_empty() and randf() < elite_chance:
+		var roll_elite: bool = (elite_chance > 0.0 and not elite_pool_indices.is_empty()
+			and randf() < elite_chance
+			and (max_elites < 0 or elite_count < max_elites))
+		if roll_elite:
 			var elite_weights := []
 			for i in elite_pool_indices:
 				elite_weights.append(weights[i])
 			chosen_entry = pool[elite_pool_indices[_weighted_pick(elite_weights)]]
+			elite_count += 1
 		else:
 			chosen_entry = pool[_weighted_pick(weights)]
-
 		roster.append({"enemy_id": chosen_entry.get("enemy_id", ""), "count": 1})
 		placed += 1
 
-	return roster
+	if min_elites > elite_count and not elite_pool_indices.is_empty():
+		if max_elites >= 0 and min_elites > max_elites:
+			min_elites = max_elites
+		var convertible: Array = range(guaranteed_count, roster.size())
+		convertible.shuffle()
+		for idx in convertible:
+			if elite_count >= min_elites:
+				break
+			var elite_weights := []
+			for i in elite_pool_indices:
+				elite_weights.append(weights[i])
+			var chosen_entry = pool[elite_pool_indices[_weighted_pick(elite_weights)]]
+			roster[idx] = {"enemy_id": chosen_entry.get("enemy_id", ""), "count": 1}
+			elite_count += 1
 
+	return roster
 
 var _enemy_tier_cache: Dictionary = {}   # enemy_id -> "normal"/"elite"/"boss", avoids re-loading the same .tres every roll
 

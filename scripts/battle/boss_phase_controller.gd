@@ -39,10 +39,6 @@ func register_unit(unit) -> void:
 
 func _on_segment_depleted(depleted_index: int, unit) -> void:
 	var attacker = unit.last_damage_attacker
-	print("🦌 Segment ", depleted_index, " depleted. Attacker: ", attacker, " | pathfinder_ref: ", pathfinder_ref)   # ADDED
-
-	# Guard against a stale/missing attacker reference (shouldn't normally
-	# happen since take_damage always sets this right before emitting).
 	var phase_data: BossPhaseData = unit.unit_data.boss_phases[depleted_index]
 	var next_index: int = depleted_index + 1
 
@@ -54,6 +50,14 @@ func _on_segment_depleted(depleted_index: int, unit) -> void:
 		})
 
 	await _run_retreat(unit, attacker, phase_data.retreat_squares)
+
+	# ADDED — summon animation, played after the retreat lands and before
+	# reinforcements actually appear.
+	if is_instance_valid(unit) and phase_data.summon_animation_name != "":
+		unit.play_animation(phase_data.summon_animation_name)
+		await get_tree().create_timer(phase_data.summon_animation_duration).timeout
+		if is_instance_valid(unit):
+			unit.play_animation("idle")
 
 	if is_instance_valid(unit) and phase_data.summon_wave != null and reinforcement_spawner_ref != null:
 		reinforcement_spawner_ref.spawn_wave(phase_data.summon_wave, unit)
@@ -100,9 +104,13 @@ func _run_retreat(unit, attacker, squares: int) -> void:
 
 func _apply_phase(unit, phase_index: int) -> void:
 	if phase_index >= unit.unit_data.boss_phases.size():
-		return   # already in the final phase — nothing further to apply.
+		return
 	unit.current_boss_phase_index = phase_index
 	var phase: BossPhaseData = unit.unit_data.boss_phases[phase_index]
+
+	if phase.phase_music != null:   # ADDED
+		AudioManager.play_music(phase.phase_music)
+
 	unit.boss_phase_stat_multipliers = {
 		"atk": phase.atk_multiplier, "matk": phase.matk_multiplier,
 		"def": phase.def_multiplier, "mdef": phase.mdef_multiplier,

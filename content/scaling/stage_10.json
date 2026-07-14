@@ -1,0 +1,11 @@
+{
+  "id": "stage_10_scaling",
+  "stage_index": 10,
+  "elite_stat_multiplier": 1.0,
+  "base_modifiers": [],
+  "difficulty_modifiers": {
+    "hard": [{ "type": "add_stat", "stat": "atk", "amount": 4 }],
+    "nightmare": [{ "type": "add_stat", "stat": "atk", "amount": 8 }, { "type": "add_stat", "stat": "hp", "amount": 15 }]
+  },
+  "conditional_modifiers": []
+}

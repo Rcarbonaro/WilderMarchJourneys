@@ -1,6 +1,6 @@
-# res://scripts/autoloads/game_state.gd
+# res://scripts/autoloads/run_manager.gd
 #
-# GAME STATE -- the single autoload that holds "what's currently loaded":
+# RUN MANANGER-- the single autoload that holds "what's currently loaded":
 # the active RunState (or null if no run is in progress) and the MetaState
 # (always loaded). Also owns save/load to disk.
 #
@@ -13,13 +13,6 @@
 # -- so registering this script under the name "RunManager" makes every one
 # of those existing calls resolve here with zero other files needing to
 # change.
-#
-# ADDED BELOW (everything above this point is your original game_state.gd,
-# untouched): add_gold, spend_gold, advance_stage, get_current_stage_type,
-# get_difficulty, is_test_mode, test_encounter_index, list_save_files,
-# delete_save, start_new_run_for_mode -- the full surface your combat
-# scripts, stage_director.gd, and scaling_engine.gd already expect to exist.
-
 extends Node
 
 var current_run: RunState = null

@@ -90,4 +90,3 @@ func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "win" and is_instance_valid(finish):
 		finish.queue_free()
 		has_won.emit()
-

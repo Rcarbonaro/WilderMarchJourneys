@@ -51,3 +51,19 @@ extends Resource
 # cannot take further damage (blocks bleed-through from multi-hit abilities
 # still resolving against its old position). Cleared the instant the
 # sequence finishes. See boss_phase_controller.gd.
+
+
+# ── SUMMON ANIMATION ─────────────────────────────────────────────────────────
+@export var summon_animation_name: String = ""
+# Played right after the retreat finishes, before reinforcements actually
+# appear. Leave blank to skip (reinforcements just appear with no dedicated
+# animation — falls back to whatever "idle" is already doing).
+
+@export var summon_animation_duration: float = 0.6
+# How long to hold on this animation before spawning the wave. Match this to
+# however long the actual animation clip runs — same pattern as the 0.5s
+# delay already used for regular attacks elsewhere in the project.
+
+@export var phase_music: AudioStream = null
+# Leave null for a phase transition that shouldn't touch the current track
+# (play_music() no-ops on null, so whatever's already playing just continues).

@@ -590,10 +590,14 @@ func take_damage(amount: int, damage_type: String, is_crit: bool = false, apply_
 	if crossed_segment:
 		var depleted_index: int = current_segment_index
 		current_segment_index += 1
+		if unit_data != null and unit_data.hurt_sfx != null:   # ADDED
+			AudioManager.play_sfx(unit_data.hurt_sfx)           # ADDED
 		hp_segment_depleted.emit(depleted_index)
 	elif current_hp <= 0:
 		die()
 	else:
+		if unit_data != null and unit_data.hurt_sfx != null:   # ADDED
+			AudioManager.play_sfx(unit_data.hurt_sfx)           # ADDED
 		play_animation("hurt")
 		get_tree().create_timer(0.25).timeout.connect(func():
 			if is_instance_valid(self) and current_hp > 0:
@@ -608,6 +612,8 @@ func heal(amount: int) -> void:
 
 
 func die() -> void:
+	if unit_data != null and unit_data.death_sfx != null:  
+		AudioManager.play_sfx(unit_data.death_sfx)
 	if _death_started:
 		return
 	_death_started = true

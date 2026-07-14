@@ -116,6 +116,13 @@ var aura_manager: Node = null
 
 func _ready() -> void:
 	EventBus.publish(EventBus.ON_BATTLE_START, {})
+
+	# ADDED — stage announcement banner. Test mode has no real stage_index,
+	# so it's skipped there rather than showing a meaningless number.
+	if not RunManager.is_test_mode and RunManager.current_run != null and ui_manager:
+		if ui_manager.has_method("show_announcement_banner"):
+			ui_manager.show_announcement_banner("Stage " + str(RunManager.current_run.stage_index))
+
 	# Null-safety first: print a clear error rather than crashing with a vague message.
 	if grid == null:
 		printerr("❌ BattleManager: 'grid' export slot is empty! Drag BattleGrid in.")
@@ -509,16 +516,20 @@ func _check_battle_end() -> void:
 
 
 func _battle_victory() -> void:
-	print("🏆 Victory!")
+	print("Player Victory!")
 	current_phase  = TurnPhase.GAME_OVER
 	is_battle_over = true
+	if ui_manager and ui_manager.has_method("show_battle_result_banner"):
+		await ui_manager.show_battle_result_banner(true)   # ADDED
 	battle_ended.emit("victory")
 
 
 func _battle_defeat() -> void:
-	print("💀 Defeat!")
+	print("Player Defeat!")
 	current_phase  = TurnPhase.GAME_OVER
 	is_battle_over = true
+	if ui_manager and ui_manager.has_method("show_battle_result_banner"):
+		await ui_manager.show_battle_result_banner(false)   # ADDED
 	battle_ended.emit("defeat")
 
 # ── INPUT ROUTING ─────────────────────────────────────────────────────────────

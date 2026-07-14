@@ -20,6 +20,7 @@ const TEST_ENCOUNTER_SCENE_PATH := "res://scenes/meta/TestEncounterPickScene.tsc
 @onready var test_button: Button = $CenterContainer/VBoxContainer/TestModeButton
 
 func _ready() -> void:
+	AudioManager.play_menu_music()
 	random_button.pressed.connect(_on_random_pressed)
 	draft_button.pressed.connect(_on_draft_pressed)
 	back_button.pressed.connect(_on_back_pressed)

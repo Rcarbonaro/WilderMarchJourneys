@@ -47,6 +47,7 @@ var _remaining_gold: int = 0
 
 
 func _ready() -> void:
+	AudioManager.play_menu_music()
 	_config = ContentLoader.get_game_mode_config("draft")
 	_party_size = int(_config.get("party_size", 4))
 	_remaining_gold = int(_config.get("draft_budget", 20))

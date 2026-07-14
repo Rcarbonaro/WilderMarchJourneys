@@ -25,4 +25,5 @@ atk_multiplier = 1.1
 def_multiplier = 0.9
 mdef_multiplier = 0.9
 summon_wave = SubResource("Resource_ksfa2")
+summon_animation_name = "summon"
 metadata/_custom_type_script = "uid://c0wi65swh4rnn"
