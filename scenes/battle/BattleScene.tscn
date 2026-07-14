@@ -10,6 +10,9 @@
 [ext_resource type="Script" uid="uid://b7ttftkyy71c8" path="res://scripts/battle/ai_system.gd" id="7_5u8xp"]
 [ext_resource type="Script" uid="uid://tmqx7l74t3pp" path="res://scripts/battle/input_handler.gd" id="8_yvj2l"]
 [ext_resource type="PackedScene" uid="uid://brhj26oifku43" path="res://scenes/animations/hexweaver/tethermanager.tscn" id="10_rpe18"]
+[ext_resource type="Script" uid="uid://ckvuw6h060lw2" path="res://scripts/battle/interrupt_system.gd" id="11_4ro08"]
+[ext_resource type="Script" uid="uid://djlc4njxeu70v" path="res://scripts/battle/reinforcement_spawner.gd" id="12_5u8xp"]
+[ext_resource type="Script" uid="uid://1dcwu7techbo" path="res://scripts/battle/boss_phase_controller.gd" id="13_yvj2l"]
 
 [node name="BattleScene" type="Node2D" unique_id=1882324266]
 script = ExtResource("1_nnhtb")
@@ -21,7 +24,7 @@ position = Vector2(1, -1)
 battle_manager = NodePath("../BattleManager")
 grid = NodePath("../BattleGrid")
 
-[node name="BattleManager" type="Node" parent="." unique_id=1196931915 node_paths=PackedStringArray("grid", "pathfinder", "executor", "highlight", "ai_system", "ui_manager")]
+[node name="BattleManager" type="Node" parent="." unique_id=1196931915 node_paths=PackedStringArray("grid", "pathfinder", "executor", "highlight", "ai_system", "ui_manager", "interrupt_system", "reinforcement_spawner", "boss_phase_controller")]
 script = ExtResource("3_rpe18")
 grid = NodePath("../BattleGrid")
 pathfinder = NodePath("../PathfindingSystem")
@@ -29,6 +32,9 @@ executor = NodePath("../AbilityExecutor")
 highlight = NodePath("../HightlightManager")
 ai_system = NodePath("../AISystem")
 ui_manager = NodePath("../InputHandler")
+interrupt_system = NodePath("../InterruptSystem")
+reinforcement_spawner = NodePath("../ReinforcementSpawner")
+boss_phase_controller = NodePath("../BossPhaseController")
 
 [node name="PathfindingSystem" type="Node" parent="." unique_id=763641049]
 script = ExtResource("4_vvcci")
@@ -64,3 +70,12 @@ expand_mode = 1
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=1914155619]
 position = Vector2(961, 540)
+
+[node name="InterruptSystem" type="Node" parent="." unique_id=800841335]
+script = ExtResource("11_4ro08")
+
+[node name="ReinforcementSpawner" type="Node" parent="." unique_id=123108393]
+script = ExtResource("12_5u8xp")
+
+[node name="BossPhaseController" type="Node" parent="." unique_id=1259071661]
+script = ExtResource("13_yvj2l")

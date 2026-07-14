@@ -1,6 +1,9 @@
 [gd_scene format=3 uid="uid://dfksluvm8bkq2"]
 
+[ext_resource type="Script" uid="uid://b0e45m7iu5jhk" path="res://scripts/encounter/encounter_scene.gd" id="1_5pimu"]
+
 [node name="EncounterScene" type="Node2D" unique_id=1559897194]
+script = ExtResource("1_5pimu")
 
 [node name="Background" type="TextureRect" parent="." unique_id=921359840]
 offset_right = 40.0
@@ -20,6 +23,7 @@ offset_right = 1050.0
 offset_bottom = 1065.0
 text = "Description of Encounter."
 
-[node name="ChoicesContainer" type="VBoxContainer" parent="." unique_id=1780508539]
-offset_right = 40.0
-offset_bottom = 40.0
+[node name="ChoicesContainer" type="HBoxContainer" parent="." unique_id=444802204]
+offset_top = 608.0
+offset_right = 1915.0
+offset_bottom = 693.0

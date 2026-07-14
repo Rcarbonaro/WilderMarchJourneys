@@ -45,6 +45,16 @@ const ON_FLAG_SET           := "on_flag_set"
 const ON_TAROT_ACQUIRED     := "on_tarot_acquired"
 const ON_EQUIPMENT_ACQUIRED := "on_equipment_acquired"
 const ON_BATTLE_START       := "on_battle_start"
+
+const ON_BOSS_PHASE_CHANGED    := "on_boss_phase_changed"
+# Payload: { "unit": UnitNode, "phase_name": String, "text": String }.
+# Publish handled entirely by boss_phase_controller.gd. UI subscribes to
+# show the announcement banner — see ui_manager.gd wiring note below.
+
+const ON_REINFORCEMENTS_SPAWNED := "on_reinforcements_spawned"
+# Payload: { "text": String, "wave": ReinforcementWaveData, "summoner": UnitNode }.
+
+
 # Publish this once, near the top of battle_scene.gd's _ready(). It resets
 # every "once_per_battle" tarot trigger guard and any battle-scoped custom
 # handler state (see effect_system.gd and custom_tarot_handlers.gd).

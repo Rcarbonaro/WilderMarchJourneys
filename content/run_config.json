@@ -1,0 +1,17 @@
+{
+  "stages_per_biome": 10,
+  "biome_order": ["forest", "swamp", "desert"],
+  "scout_cost": 1,
+  "stage_type_template": {
+    "1": "combat",
+    "2": "combat",
+    "3": "encounter",
+    "4": "combat",
+    "5": "subboss",
+    "6": "encounter",
+    "7": "combat",
+    "8": "special_combat",
+    "9": "encounter",
+    "10": "boss"
+  }
+}

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="WaveEntryData" format=3 uid="uid://com5v2jtym2tw"]
+
+[ext_resource type="Script" uid="uid://hsnks4k5bnc" path="res://scripts/data/wave_entry_data.gd" id="1_5ejy7"]
+[ext_resource type="Resource" uid="uid://11jpnqjwrrto" path="res://resources/enemies/sporeling_data.tres" id="2_nnt53"]
+
+[resource]
+script = ExtResource("1_5ejy7")
+unit_data = ExtResource("2_nnt53")
+count = 2
+metadata/_custom_type_script = "uid://hsnks4k5bnc"

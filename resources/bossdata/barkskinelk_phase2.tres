@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="BossPhaseData" format=3 uid="uid://pakcjr51mst"]
+
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="1_4mjdm"]
+[ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="2_87a2d"]
+[ext_resource type="Script" uid="uid://hsnks4k5bnc" path="res://scripts/data/wave_entry_data.gd" id="3_bulwo"]
+[ext_resource type="Resource" uid="uid://com5v2jtym2tw" path="res://resources/bossdata/barkskinelk_wave2.tres" id="4_4mjdm"]
+[ext_resource type="Script" uid="uid://bmq5rbimebljv" path="res://scripts/data/reinforcement_wave_data.gd" id="5_2dx5x"]
+
+[sub_resource type="Resource" id="Resource_8r4rj"]
+script = ExtResource("5_2dx5x")
+entries = Array[ExtResource("3_bulwo")]([ExtResource("4_4mjdm")])
+metadata/_custom_type_script = "uid://bmq5rbimebljv"
+
+[resource]
+script = ExtResource("2_87a2d")
+phase_name = "barkskinphase2"
+announcement_text = "The Barkskin Elk summons two sporelings!"
+atk_multiplier = 1.1
+def_multiplier = 0.9
+mdef_multiplier = 0.9
+summon_wave = SubResource("Resource_8r4rj")
+metadata/_custom_type_script = "uid://c0wi65swh4rnn"

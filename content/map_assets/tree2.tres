@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="MapAssetData" format=3 uid="uid://b4vijaublx4oi"]
+
+[ext_resource type="Script" uid="uid://dfylspjn3xqr7" path="res://scripts/data/map_asset_data.gd" id="1_s1i7s"]
+[ext_resource type="Texture2D" uid="uid://don0s8xp0uhiy" path="res://sprites/map_assets/tree2.png" id="2_ccl0g"]
+
+[resource]
+script = ExtResource("1_s1i7s")
+id = "tree2"
+display_name = "Tree"
+texture = ExtResource("2_ccl0g")
+footprint = Array[Vector2i]([Vector2i(0, 1)])
+is_wall = true
+movement_cost = 3
+blocks_line_of_sight = true
+metadata/_custom_type_script = "uid://dfylspjn3xqr7"

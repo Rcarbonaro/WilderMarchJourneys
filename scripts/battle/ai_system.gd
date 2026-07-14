@@ -37,14 +37,18 @@ var current_enemy_index: int = 0
 var active_done_callback: Callable = Callable()
 # The function BattleManager passed in to call when all enemies are done.
 
+var active_battle_manager: Node = null
+
+
 # ── MAIN ENTRY POINT ──────────────────────────────────────────────────────────
 
 func run_enemy_turn(enemies: Array, players: Array, grid: Node,
 					pathfinder: Node, executor: Node,
-					done_callback: Callable) -> void:
+					done_callback: Callable, battle_manager: Node = null) -> void:
 	# Called by BattleManager at the start of the enemy phase.
 	# Stores the callback and kicks off the enemy-by-enemy processing loop.
 	active_done_callback = done_callback
+	active_battle_manager = battle_manager 
 
 	# Filter out any enemies that are already dead (current_hp <= 0), already
 	# acted, or freed. THE FIX: this used to only check is_instance_valid() and
@@ -97,7 +101,6 @@ func _process_next_enemy(players: Array, grid: Node,
 	# Small delay between enemies so the player can follow what's happening.
 	await get_tree().create_timer(0.4).timeout
 	_process_next_enemy(players, grid, pathfinder, executor)
-
 
 func _run_single_enemy(enemy, players: Array, grid: Node,
 					   pathfinder: Node, executor: Node) -> void:
@@ -238,7 +241,6 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 		# applied AUTOMATICALLY inside move_along_path() as the enemy crosses
 		# each one — no separate call needed here like there used to be.
 		# Aura: fire entry damage/status for any player aura they walked into.
-		# Aura: fire entry damage/status for any player aura they walked into.
 		if grid.has_node("AuraManager"):
 			grid.get_node("AuraManager").on_enemy_unit_moved(enemy)
 		# The entry effects may have just killed them — check again.
@@ -271,11 +273,6 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 	if not is_instance_valid(enemy) or enemy.current_hp <= 0:
 		return
 
-	# Re-check validity before the combat phase — the enemy could have died
-	# from entry effects above, or never moved but died some other way.
-	if not is_instance_valid(enemy) or enemy.current_hp <= 0:
-			return
-
 	# 6. Combat phase — attack if we're now in range with line of sight.
 	# target_player could have died during this enemy's movement phase.
 	if not is_instance_valid(target_player) or target_player.current_hp <= 0:
@@ -293,8 +290,6 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 		print("⚔️ AI executing ability: ", chosen_ability.display_name,
 			  " on target: ", target_player.grid_position)
 
-		# Use the ability's custom attack animation if one is set, otherwise
-		# fall back to the normal directional attack/attack_up/attack_down logic.
 		if chosen_ability.attack_animation_name != "":
 			enemy.look_at_target(target_player.grid_position, chosen_ability.attack_animation_name)
 		else:
@@ -306,14 +301,28 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 
 		await get_tree().create_timer(0.5).timeout
 
-		# The enemy may have died during the pre-attack delay (e.g. from a DoT
-		# status tick). Check before handing to the executor.
 		if not is_instance_valid(enemy):
 			return
 
+		# ── COMPUTE AOE CELLS ─────────────────────────────────────────────────
+		# Same two-step pipeline the player flow uses: expand the ability's
+		# shape from the target cell, then strip out cells the ability
+		# shouldn't affect (e.g. an "enemies"-only ability skips allies
+		# caught in its own blast radius). Falls back to a single-cell hit
+		# if no battle_manager was wired in (keeps old behavior as a safety net).
+		var simulated_cells: Array = [target_player.grid_position]
+		var filtered_cells:  Array = [target_player.grid_position]
+		if active_battle_manager != null:
+			simulated_cells = active_battle_manager.get_aoe_cells(
+				target_player.grid_position, chosen_ability, enemy
+			)
+			filtered_cells = active_battle_manager.filter_cells_by_team(
+				simulated_cells, chosen_ability, enemy
+			)
+
 		await executor.execute_ability(
 			enemy, chosen_ability,
-			[target_player.grid_position], target_player.grid_position
+			filtered_cells, target_player.grid_position, simulated_cells
 		)
 
 		# Apply cooldown — guard again because execute_ability is async and the

@@ -72,39 +72,39 @@ extends Resource
 
 
 func to_dict() -> Dictionary:
-    return {
-        "run_id": run_id, "player_seed": player_seed,
-        "draft_or_random_mode": draft_or_random_mode, "difficulty": difficulty,
-        "stage_index": stage_index, "biome_sequence": biome_sequence,
-        "gold": gold, "equipment_inventory": equipment_inventory,
-        "party": party, "bench": bench, "tarot_cards": tarot_cards,
-        "flags": flags, "encounters_completed": encounters_completed,
-        "shop_slot_modifier": shop_slot_modifier,
-        "drop_rate_modifiers": drop_rate_modifiers,
-        "shop_price_modifiers": shop_price_modifiers,
-        "shop_inventory": shop_inventory,
-        "runtime_effect_state": runtime_effect_state,
-    }
+	return {
+		"run_id": run_id, "player_seed": player_seed,
+		"draft_or_random_mode": draft_or_random_mode, "difficulty": difficulty,
+		"stage_index": stage_index, "biome_sequence": biome_sequence,
+		"gold": gold, "equipment_inventory": equipment_inventory,
+		"party": party, "bench": bench, "tarot_cards": tarot_cards,
+		"flags": flags, "encounters_completed": encounters_completed,
+		"shop_slot_modifier": shop_slot_modifier,
+		"drop_rate_modifiers": drop_rate_modifiers,
+		"shop_price_modifiers": shop_price_modifiers,
+		"shop_inventory": shop_inventory,
+		"runtime_effect_state": runtime_effect_state,
+	}
 
 
 static func from_dict(data: Dictionary) -> RunState:
-    var rs := RunState.new()
-    rs.run_id = data.get("run_id", "")
-    rs.player_seed = data.get("player_seed", 0)
-    rs.draft_or_random_mode = data.get("draft_or_random_mode", "random")
-    rs.difficulty = data.get("difficulty", "normal")
-    rs.stage_index = data.get("stage_index", 1)
-    rs.biome_sequence.assign(data.get("biome_sequence", []))
-    rs.gold = data.get("gold", 10)
-    rs.equipment_inventory.assign(data.get("equipment_inventory", []))
-    rs.party = data.get("party", [])
-    rs.bench = data.get("bench", [])
-    rs.tarot_cards = data.get("tarot_cards", [])
-    rs.flags.assign(data.get("flags", []))
-    rs.encounters_completed.assign(data.get("encounters_completed", []))
-    rs.shop_slot_modifier = data.get("shop_slot_modifier", 0)
-    rs.drop_rate_modifiers = data.get("drop_rate_modifiers", [])
-    rs.shop_price_modifiers = data.get("shop_price_modifiers", [])
-    rs.shop_inventory = data.get("shop_inventory", [])
-    rs.runtime_effect_state = data.get("runtime_effect_state", {})
-    return rs
+	var rs := RunState.new()
+	rs.run_id = data.get("run_id", "")
+	rs.player_seed = data.get("player_seed", 0)
+	rs.draft_or_random_mode = data.get("draft_or_random_mode", "random")
+	rs.difficulty = data.get("difficulty", "normal")
+	rs.stage_index = data.get("stage_index", 1)
+	rs.biome_sequence.assign(data.get("biome_sequence", []))
+	rs.gold = data.get("gold", 10)
+	rs.equipment_inventory.assign(data.get("equipment_inventory", []))
+	rs.party = data.get("party", [])
+	rs.bench = data.get("bench", [])
+	rs.tarot_cards = data.get("tarot_cards", [])
+	rs.flags.assign(data.get("flags", []))
+	rs.encounters_completed.assign(data.get("encounters_completed", []))
+	rs.shop_slot_modifier = data.get("shop_slot_modifier", 0)
+	rs.drop_rate_modifiers = data.get("drop_rate_modifiers", [])
+	rs.shop_price_modifiers = data.get("shop_price_modifiers", [])
+	rs.shop_inventory = data.get("shop_inventory", [])
+	rs.runtime_effect_state = data.get("runtime_effect_state", {})
+	return rs

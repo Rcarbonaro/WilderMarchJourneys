@@ -1,0 +1,32 @@
+{
+  "id": "oracle_summons_graph",
+  "start_node": "start",
+  "nodes": [
+    {
+      "id": "start",
+      "text": "\"I can show you your future,\" the oracle intones. \"But you may not like what you see.\"",
+      "image": "res://content/dialogue/oracle_summons/scene.png",
+      "conditions": [],
+      "choices": [
+        {
+          "id": "view_future",
+          "text": "View the future",
+          "effects": [
+            { "type": "add_tarot_random", "amount": 2, "allow_cursed_chance": 0.1 }
+          ],
+          "next_node_id": "end_view"
+        },
+        {
+          "id": "refuse",
+          "text": "Refuse to view the future",
+          "effects": [
+            { "type": "modify_resource", "resource": "gold", "amount": 2 }
+          ],
+          "next_node_id": "end_refuse"
+        }
+      ]
+    },
+    { "id": "end_view", "text": "Visions swirl before your eyes…", "choices": [] },
+    { "id": "end_refuse", "text": "You decline and leave with a small payment.", "choices": [] }
+  ]
+}

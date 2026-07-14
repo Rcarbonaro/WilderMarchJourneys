@@ -215,7 +215,43 @@ func _ready() -> void:
 	# Start hidden — becomes visible when a unit is tapped or selected.
 	if bottom_bar:
 		bottom_bar.visible = false
+	EventBus.subscribe(EventBus.ON_BOSS_PHASE_CHANGED, _on_boss_phase_changed)
 
+# ── BOSS PHASE / STAGE ANNOUNCEMENT BANNER ────────────────────────────────────
+var _announcement_label: Label = null
+
+func show_announcement_banner(text: String, duration: float = 2.0) -> void:
+	if text == "":
+		return
+
+	# Build the label once, lazily, and reuse it on every subsequent call.
+	if _announcement_label == null:
+		_announcement_label = Label.new()
+		_announcement_label.name = "AnnouncementBanner"
+		_announcement_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_announcement_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_announcement_label.add_theme_font_size_override("font_size", 36)
+		_announcement_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+		_announcement_label.position = Vector2(-300, 60)
+		_announcement_label.size = Vector2(600, 60)
+		_announcement_label.modulate.a = 0.0
+		_announcement_label.z_index = 100
+		add_child(_announcement_label)   # 'self' here is ui_manager — assumes
+										  # ui_manager is itself a CanvasLayer
+										  # or Control; see note below if not.
+
+	_announcement_label.text = text
+
+	# Cancel any in-flight fade from a rapid second call (e.g. two phase
+	# transitions close together) so they don't visually fight each other.
+	var tween := create_tween()
+	tween.tween_property(_announcement_label, "modulate:a", 1.0, 0.3)
+	tween.tween_interval(duration)
+	tween.tween_property(_announcement_label, "modulate:a", 0.0, 0.5)
+
+func _on_boss_phase_changed(payload: Dictionary) -> void:
+	show_announcement_banner(payload.get("text", ""))
+	
 			
 func _on_speed_toggle_pressed() -> void:
 	var now_fast: bool = speed_toggle_button.button_pressed

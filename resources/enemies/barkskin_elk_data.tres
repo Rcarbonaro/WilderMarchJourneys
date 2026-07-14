@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://i1jr5w488au3"]
+
+[ext_resource type="Resource" uid="uid://b7lqjktayfc4f" path="res://resources/stats/barkskinelk_stats.tres" id="1_k6qyd"]
+[ext_resource type="Texture2D" uid="uid://cvyi3pft2lyh4" path="res://sprites/barkskinelk/barkskin_elk_sprite.png" id="2_21b2m"]
+[ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="3_bnyys"]
+[ext_resource type="Resource" uid="uid://1vwsjhmjwmyh" path="res://resources/bossdata/barkskinelk_phase1.tres" id="4_jl2ba"]
+[ext_resource type="Resource" uid="uid://pakcjr51mst" path="res://resources/bossdata/barkskinelk_phase2.tres" id="5_62kjh"]
+[ext_resource type="Resource" uid="uid://dfxlmpwf8tnyh" path="res://resources/bossdata/barkskinelk_phase3.tres" id="6_67ac7"]
+[ext_resource type="Resource" uid="uid://d0l7oqg170y2" path="res://resources/bossdata/barkskinelk_phase4.tres" id="7_v6v75"]
+[ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="8_m34cu"]
+[ext_resource type="Texture2D" uid="uid://tml2fckt7g5t" path="res://sprites/barkskinelk/barkskin_elk_portrait.png" id="9_m8bms"]
+[ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="10_ecm2g"]
+[ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="11_5ccl8"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="12_4q87t"]
+[ext_resource type="Resource" uid="uid://d1rnt0ah763bw" path="res://resources/abilities/barkskinelk_basic.tres" id="13_mu7rn"]
+[ext_resource type="Resource" uid="uid://dcw6thumh8opy" path="res://resources/abilities/guardiancharge.tres" id="14_edkxm"]
+[ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="15_1gnuj"]
+
+[resource]
+script = ExtResource("10_ecm2g")
+id = "barkskinelk"
+display_name = "Barkskin Elk"
+description = "The former guardian of the forest, corrupted by unknown magic."
+portrait = ExtResource("9_m8bms")
+battle_sprite = ExtResource("2_21b2m")
+stats_by_level = Array[ExtResource("15_1gnuj")]([ExtResource("1_k6qyd")])
+rarity = "rare"
+tier = "boss"
+hp_segment_count = 4
+boss_phases = Array[ExtResource("3_bnyys")]([ExtResource("4_jl2ba"), ExtResource("5_62kjh"), ExtResource("6_67ac7"), ExtResource("7_v6v75")])
+ends_battle_on_death = true
+base_stats = ExtResource("1_k6qyd")
+starting_abilities = Array[ExtResource("12_4q87t")]([ExtResource("13_mu7rn"), ExtResource("14_edkxm")])
+metadata/_custom_type_script = "uid://utmj7y8m802a"

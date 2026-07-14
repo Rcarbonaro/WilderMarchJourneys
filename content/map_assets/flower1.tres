@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="MapAssetData" format=3 uid="uid://c6j7ata3sooai"]
+
+[ext_resource type="Script" uid="uid://dfylspjn3xqr7" path="res://scripts/data/map_asset_data.gd" id="1_skfwx"]
+[ext_resource type="Texture2D" uid="uid://0vg6o87mlvlq" path="res://sprites/map_assets/flower1.png" id="2_55e33"]
+
+[resource]
+script = ExtResource("1_skfwx")
+id = "flower1"
+display_name = "Flower"
+texture = ExtResource("2_55e33")
+metadata/_custom_type_script = "uid://dfylspjn3xqr7"

@@ -16,6 +16,7 @@ const ENCOUNTER_LABELS: Array[String] = [
 	"Encounter 2: Bears + Sporelings",
 	"Encounter 3: Bears + Wolves + Leshy",
 	"Encounter 4: Hard Mode",
+	"Encounter 5: Boss"
 ]
 
 @onready var back_button: Button = $CenterContainer/VBoxContainer/BackButton
