@@ -25,6 +25,7 @@ func _ready() -> void:
 	draft_button.pressed.connect(_on_draft_pressed)
 	back_button.pressed.connect(_on_back_pressed)
 	test_button.pressed.connect(_on_test_pressed)
+	AudioManager.wire_all_buttons_in(self)
 
 
 func _on_random_pressed() -> void:

@@ -34,6 +34,7 @@ PopupManager="*uid://1wba4qgy2u6j"
 CustomEquipmentHandlers="*uid://oflyhola0f81"
 CustomTarotHandlers="*uid://1tdbryg4fv1g"
 AudioManager="*uid://b1pla8eqgjpg4"
+SettingsManager="*uid://bggcwrapvtnq7"
 
 [display]
 

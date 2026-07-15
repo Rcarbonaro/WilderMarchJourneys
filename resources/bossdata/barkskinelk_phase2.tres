@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="1_4mjdm"]
 [ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="2_87a2d"]
+[ext_resource type="AudioStream" uid="uid://baxia4ma11ehe" path="res://assets/audio/music/elk_boss_theme.ogg" id="2_bulwo"]
 [ext_resource type="Script" uid="uid://hsnks4k5bnc" path="res://scripts/data/wave_entry_data.gd" id="3_bulwo"]
 [ext_resource type="Resource" uid="uid://com5v2jtym2tw" path="res://resources/bossdata/barkskinelk_wave2.tres" id="4_4mjdm"]
 [ext_resource type="Script" uid="uid://bmq5rbimebljv" path="res://scripts/data/reinforcement_wave_data.gd" id="5_2dx5x"]
@@ -20,4 +21,5 @@ def_multiplier = 0.9
 mdef_multiplier = 0.9
 summon_wave = SubResource("Resource_8r4rj")
 summon_animation_name = "summon"
+phase_music = ExtResource("2_bulwo")
 metadata/_custom_type_script = "uid://c0wi65swh4rnn"

@@ -215,6 +215,26 @@ layout_mode = 2
 toggle_mode = true
 text = "Toggle Grid"
 
+[node name="MusicVolumeLabel" type="Label" parent="PauseMenu/VBoxContainer" unique_id=255310434]
+layout_mode = 2
+text = "Music Volume"
+horizontal_alignment = 1
+
+[node name="MusicVolumeSlider" type="HSlider" parent="PauseMenu/VBoxContainer" unique_id=1028190081]
+layout_mode = 2
+value = 50.0
+tick_count = 10
+
+[node name="SFXVolumeLabel" type="Label" parent="PauseMenu/VBoxContainer" unique_id=1115682273]
+layout_mode = 2
+text = "SFX Volume"
+horizontal_alignment = 1
+
+[node name="SFXVolumeSlider" type="HSlider" parent="PauseMenu/VBoxContainer" unique_id=984981469]
+layout_mode = 2
+value = 50.0
+tick_count = 10
+
 [node name="MenuQuitButton" type="Button" parent="PauseMenu/VBoxContainer" unique_id=1072940260]
 layout_mode = 2
 text = "Quit"

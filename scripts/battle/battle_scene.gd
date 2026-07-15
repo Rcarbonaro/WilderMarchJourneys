@@ -63,12 +63,11 @@ func _ready() -> void:
 	setup_battle_background(biome)
 
 	# ── MUSIC ──────────────────────────────────────────────────────────────
-	# Default to the biome's ambient playlist for every combat. A boss stage
-	# (stage_type == "boss") overrides it with its own track/playlist from
-	# that stage's scaling config, if one is set there.
-	if BIOME_MUSIC.has(biome):
-		AudioManager.play_next_in_playlist(BIOME_MUSIC[biome])
-		
+	# Decide which track to play FIRST, then make exactly one AudioManager
+	# call. Calling the biome playlist AND a boss override back-to-back in
+	# the same frame used to create two competing tweens fighting over the
+	# same AudioStreamPlayer -- this way there's only ever one.
+	var boss_override_played := false
 	if not RunManager.is_test_mode and RunManager.current_run != null:
 		var stage_index: int = RunManager.current_run.stage_index
 		if ContentLoader.get_stage_type(stage_index) == "boss":
@@ -79,12 +78,14 @@ func _ready() -> void:
 				for path in scaling_config["music_playlist"]:
 					loaded.append(load(path))
 				AudioManager.play_music_playlist(loaded, true)
+				boss_override_played = true
 			elif scaling_config.has("music_track") and scaling_config["music_track"] != "":
 				AudioManager.play_music(load(scaling_config["music_track"]))
-			# If neither is set on the stage's scaling config, the biome
-			# playlist started above just keeps playing through the boss
-			# fight too -- not an error, just "no override authored yet."
+				boss_override_played = true
 
+	if not boss_override_played and BIOME_MUSIC.has(biome):
+		AudioManager.play_next_in_playlist(BIOME_MUSIC[biome])
+		
 	# 3: Connect BattleManager back to the UI Manager
 	battle_manager.ui_manager = battle_ui
 
@@ -146,13 +147,6 @@ const BIOME_BACKGROUNDS = {
 	"forest": [
 		"res://assets/backgrounds/forestfloor1.png",
 		"res://assets/backgrounds/forestfloor1.png"
-	],
-	"desert": [
-		"res://assets/backgrounds/forest)floor1.png",
-		"res://assets/backgrounds/forest)floor1.png"
-	],
-	"dungeon": [
-		"res://assets/backgrounds/forest)floor1.png"
 	]
 }
 
