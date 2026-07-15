@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="BossPhaseData" format=3 uid="uid://1vwsjhmjwmyh"]
 
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="1_6i3lu"]
+[ext_resource type="AudioStream" uid="uid://baxia4ma11ehe" path="res://assets/audio/music/elk_boss_theme.ogg" id="2_tm3c4"]
 [ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="2_whu4g"]
 
 [resource]
@@ -9,4 +10,5 @@ phase_name = "Phase 1"
 announcement_text = "The Elk retreats and prepares its next charge!"
 atk_multiplier = 1.1
 matk_multiplier = 1.1
+phase_music = ExtResource("2_tm3c4")
 metadata/_custom_type_script = "uid://c0wi65swh4rnn"

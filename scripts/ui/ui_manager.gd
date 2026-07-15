@@ -55,6 +55,8 @@ extends CanvasLayer
 @export var player_turn_scene:          PackedScene = null
 @export var enemy_turn_scene:           PackedScene = null
 
+@onready var music_volume_slider: HSlider = $PauseMenu/VBoxContainer/MusicVolumeSlider
+@onready var sfx_volume_slider:   HSlider = $PauseMenu/VBoxContainer/SFXVolumeSlider
 
 # ── SCENE NODE REFERENCES ─────────────────────────────────────────────────────
 # These are populated in _ready() by searching the scene tree for each name.
@@ -139,6 +141,15 @@ func _ready() -> void:
 	grid_toggle_button = find_child("GridToggleButton", true, false) as Button
 	mana_bar_fill      = find_child("ManaBarFill",      true, false) as Control
 
+	if sfx_volume_slider != null:
+		sfx_volume_slider.min_value = 0
+		sfx_volume_slider.max_value = 100
+		sfx_volume_slider.step      = 10
+		sfx_volume_slider.value = SettingsManager.sfx_volume
+		sfx_volume_slider.value_changed.connect(_on_sfx_volume_changed)
+
+	AudioManager.wire_all_buttons_in(self)   # ADDED — must be LAST, after every button above exists
+	
 	speed_toggle_button = find_child("SpeedToggleButton", true, false) as Button
 	if speed_toggle_button:
 		speed_toggle_button.toggle_mode = true
@@ -216,6 +227,28 @@ func _ready() -> void:
 	if bottom_bar:
 		bottom_bar.visible = false
 	EventBus.subscribe(EventBus.ON_BOSS_PHASE_CHANGED, _on_boss_phase_changed)
+	
+	#Volume Sliders
+	if music_volume_slider != null:
+		music_volume_slider.min_value = 0     # CHANGED
+		music_volume_slider.max_value = 100   # CHANGED
+		music_volume_slider.step      = 10    # CHANGED
+		music_volume_slider.value = SettingsManager.music_volume
+		music_volume_slider.value_changed.connect(_on_music_volume_changed)
+	if sfx_volume_slider != null:
+		sfx_volume_slider.min_value = 0
+		sfx_volume_slider.max_value = 100
+		sfx_volume_slider.step      = 10
+		sfx_volume_slider.value = SettingsManager.sfx_volume
+		sfx_volume_slider.value_changed.connect(_on_sfx_volume_changed)
+
+
+func _on_music_volume_changed(value: float) -> void:
+	SettingsManager.set_music_volume(value)
+
+
+func _on_sfx_volume_changed(value: float) -> void:
+	SettingsManager.set_sfx_volume(value)
 
 # ── BOSS PHASE / STAGE ANNOUNCEMENT BANNER ────────────────────────────────────
 var _announcement_label: Label = null
@@ -372,11 +405,9 @@ func hide_unit_info() -> void:
 	# EndTurnButton, GridToggleButton, and CancelMoveButton are NOT in the
 	# list above, so they stay fully visible and functional at all times.
 
-
 func show_unit_abilities(unit) -> void:
 	# Rebuilds the ability button row for the currently selected player unit.
 	clear_abilities()
-
 	if unit == null:
 		return
 	if not ("unit_data" in unit) or unit.unit_data == null:
@@ -388,10 +419,8 @@ func show_unit_abilities(unit) -> void:
 	if ability_bar == null:
 		push_warning("UIManager: AbilityBar node not found — ability buttons cannot appear.")
 		return
-
 	if bottom_bar:
 		bottom_bar.visible = true
-
 	for ability in unit.unit_data.starting_abilities:
 		if ability == null:
 			continue
@@ -403,12 +432,11 @@ func show_unit_abilities(unit) -> void:
 		btn.custom_minimum_size     = Vector2(110, 40)
 		btn.size_flags_horizontal   = Control.SIZE_EXPAND_FILL
 		btn.mouse_filter            = Control.MOUSE_FILTER_STOP
-
+		
 		var cooldown: int = unit.ability_cooldowns.get(ability.id, 0)
 		if cooldown > 0:
 			btn.disabled = true
 			btn.text    += " (%d)" % cooldown
-
 		btn.pressed.connect(func():
 			if battle_manager and battle_manager.has_method("on_ability_selected"):
 				battle_manager.on_ability_selected(ability)
@@ -416,10 +444,10 @@ func show_unit_abilities(unit) -> void:
 		
 		btn.mouse_entered.connect(func(): _show_ability_tooltip(ability, btn))
 		btn.mouse_exited.connect(_hide_ability_tooltip)
+		AudioManager.wire_button_sfx(btn)   # ADDED
 		ability_bar.add_child(btn)
+
 		
-
-
 func set_cancel_move_visible(visible_state: bool) -> void:
 	if cancel_move_button:
 		cancel_move_button.visible = visible_state
@@ -1101,3 +1129,90 @@ func show_game_victory_popup() -> void:
 	box.add_child(button)
 
 	overlay.add_child(box)
+
+
+# ── STAGE INTRO ANNOUNCEMENT ──────────────────────────────────────────────────
+# Same override pattern as show_turn_announcement: a plain gray placeholder
+# box by default, replaceable per stage_type with a custom texture or a full
+# custom scene later, with zero code changes needed once art exists.
+@export var combat_intro_scene:         PackedScene = null
+@export var subboss_intro_scene:        PackedScene = null
+@export var special_combat_intro_scene: PackedScene = null
+@export var boss_intro_scene:           PackedScene = null
+@export var encounter_intro_scene:      PackedScene = null
+
+@export var combat_intro_texture:         Texture2D = null
+@export var subboss_intro_texture:        Texture2D = null
+@export var special_combat_intro_texture: Texture2D = null
+@export var boss_intro_texture:           Texture2D = null
+@export var encounter_intro_texture:      Texture2D = null
+
+@export var stage_intro_duration: float = 2.0
+
+func show_stage_intro_announcement(stage_type: String, stage_number: int) -> void:
+	_hide_turn_announcement()   # clear anything lingering first
+
+	var custom_scene:   PackedScene = null
+	var custom_texture: Texture2D   = null
+	match stage_type:
+		"combat":
+			custom_scene   = combat_intro_scene
+			custom_texture = combat_intro_texture
+		"subboss":
+			custom_scene   = subboss_intro_scene
+			custom_texture = subboss_intro_texture
+		"special_combat":
+			custom_scene   = special_combat_intro_scene
+			custom_texture = special_combat_intro_texture
+		"boss":
+			custom_scene   = boss_intro_scene
+			custom_texture = boss_intro_texture
+		"encounter":
+			custom_scene   = encounter_intro_scene
+			custom_texture = encounter_intro_texture
+
+	var label_text: String = "Stage %d" % stage_number
+	var content: Control
+
+	if custom_scene != null:
+		# Full custom scene overrides everything — you're responsible for
+		# whatever it displays (it can read stage_number itself if it has a
+		# method for that; not assumed here).
+		content = custom_scene.instantiate() as Control
+
+	elif custom_texture != null:
+		var img := TextureRect.new()
+		img.texture             = custom_texture
+		img.expand_mode         = TextureRect.EXPAND_IGNORE_SIZE
+		img.stretch_mode        = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		img.custom_minimum_size = custom_texture.get_size()
+		content = img
+
+	else:
+		# Placeholder — plain gray box with the stage number, used until
+		# real art/scenes exist for each stage_type.
+		var panel := PanelContainer.new()
+		panel.custom_minimum_size = Vector2(360, 90)
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color(0.3, 0.3, 0.3, 0.9)
+		style.set_corner_radius_all(8)
+		panel.add_theme_stylebox_override("panel", style)
+
+		var lbl := Label.new()
+		lbl.text                 = label_text
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+		lbl.add_theme_font_size_override("font_size", 36)
+		panel.add_child(lbl)
+		content = panel
+
+	var wrapper := CenterContainer.new()
+	wrapper.set_anchors_preset(Control.PRESET_FULL_RECT)
+	wrapper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	wrapper.z_index      = 205   # above regular turn banners (200), below victory/defeat (210)
+	add_child(wrapper)
+	wrapper.add_child(content)
+	_announcement_instance = wrapper
+
+	await get_tree().create_timer(stage_intro_duration).timeout
+	_hide_turn_announcement()

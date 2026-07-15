@@ -52,6 +52,8 @@ func _ready() -> void:
 	_party_size = int(_config.get("party_size", 4))
 	_remaining_gold = int(_config.get("draft_budget", 20))
 	roster_grid.columns = 7           # Determines columns of units
+	
+	AudioManager.wire_all_buttons_in(self)
 
 	back_button.pressed.connect(_on_back_pressed)
 	confirm_button.pressed.connect(_on_confirm_pressed)

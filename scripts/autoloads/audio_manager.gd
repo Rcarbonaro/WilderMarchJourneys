@@ -12,15 +12,17 @@ var _playlist_shuffle: bool = false
 var _playlist_index: int = -1   # -1 = single-track mode, not a playlist
 
 func _ready() -> void:
+	var sfx_bus: String = "SFX" if AudioServer.get_bus_index("SFX") != -1 else "Master"   # ADDED
 	for i in range(SFX_POOL_SIZE):
 		var p := AudioStreamPlayer.new()
+		p.bus = sfx_bus   # ADDED
 		add_child(p)
 		_sfx_players.append(p)
 	_music_player = AudioStreamPlayer.new()
 	_music_player.bus = "Music" if AudioServer.get_bus_index("Music") != -1 else "Master"
+	print("🐛 music player bus: ", _music_player.bus)   # ADDED temporarily
 	add_child(_music_player)
 	_music_player.finished.connect(_on_music_finished)
-
 
 func play_sfx(stream: AudioStream, volume_db: float = 0.0) -> void:
 	if stream == null:
@@ -145,3 +147,43 @@ func play_next_in_playlist(tracks: Array, fade_seconds: float = 0.6) -> void:
 		_playlist_index = (_playlist_index + 1) % _playlist.size()
 
 	_crossfade_to(_playlist[_playlist_index], fade_seconds)
+
+# ── UI SFX (button hover/press) ───────────────────────────────────────────────
+const UI_HOVER_SFX: AudioStream = preload("res://assets/audio/sfx/ui_hover.wav")
+const UI_PRESS_SFX: AudioStream = preload("res://assets/audio/sfx/ui_click.wav")
+# Swap these two paths to whatever your actual hover/press SFX files are.
+
+func play_ui_hover() -> void:
+	play_sfx(UI_HOVER_SFX)
+
+
+func play_ui_press() -> void:
+	play_sfx(UI_PRESS_SFX)
+
+
+func wire_button_sfx(button: BaseButton) -> void:
+	# Connects a SINGLE button's hover/press to the shared UI SFX. Safe to
+	# call more than once on the same button -- the is_connected() checks
+	# prevent duplicate connections (which would otherwise double up the
+	# sound every time this runs again).
+	if button == null:
+		return
+	if not button.mouse_entered.is_connected(play_ui_hover):
+		button.mouse_entered.connect(play_ui_hover)
+	if not button.pressed.is_connected(play_ui_press):
+		button.pressed.connect(play_ui_press)
+
+
+func wire_all_buttons_in(root: Node) -> void:
+	# Recursively finds EVERY Button (and button-like control -- CheckButton,
+	# etc., since they all extend BaseButton) under 'root' and wires it.
+	# Call this once per scene, after its buttons already exist (e.g. at the
+	# END of that scene's _ready()) -- new buttons added later in the same
+	# scene (a dynamically built ability bar, a popup, etc.) need their own
+	# wire_button_sfx() call, or you can re-run wire_all_buttons_in() again
+	# after building them, since re-wiring an already-wired button is a safe
+	# no-op.
+	if root is BaseButton:
+		wire_button_sfx(root)
+	for child in root.get_children():
+		wire_all_buttons_in(child)
