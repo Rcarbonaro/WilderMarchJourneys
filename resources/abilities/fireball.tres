@@ -19,6 +19,7 @@ max_range = 4
 affects_team = "all"
 aoe_shape = "square"
 aoe_size = 3
+base_damage_multiplier = 1.2
 damage_type = "magical"
 scaling_stat = "matk"
 element = "fire"
