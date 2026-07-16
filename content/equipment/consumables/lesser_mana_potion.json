@@ -1,0 +1,5 @@
+{
+  "id": "mana_potion", "name": "Lesser Mana Potion", "type": "consumable",
+  "icon": "res://art/icons/mana_potion.png",
+  "effect_type": "restore_mana_flat", "mana_amount": 10
+}

@@ -1,0 +1,10 @@
+{
+  "id": "shop_entry_stat_potion_atk",
+  "item_type": "equipment",
+  "item_id": "stat_potion_atk",
+  "base_price": 4,
+  "tags": ["starter"],
+  "conditions": [],
+  "spawn_weight": 2.0,
+  "notes": "Rarity lives on the equipment/unit definition itself (ContentLoader.get_equipment), not duplicated here."
+}

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="MapFeatureData" format=3 uid="uid://c7snbwbn2rwfi"]
+
+[ext_resource type="Script" uid="uid://cjx7n1a62jwb4" path="res://scripts/data/map_feature_data.gd" id="1_o8i7l"]
+[ext_resource type="Texture2D" uid="uid://0vg6o87mlvlq" path="res://sprites/map_assets/flower1.png" id="2_we50m"]
+
+[resource]
+script = ExtResource("1_o8i7l")
+id = "flower1"
+display_name = "Flower"
+texture = ExtResource("2_we50m")
+min_feature_density = 0.1
+max_feature_density = 0.2
+biomes = Array[String](["forest"])
+metadata/_custom_type_script = "uid://cjx7n1a62jwb4"

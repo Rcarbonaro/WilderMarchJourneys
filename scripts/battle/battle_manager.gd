@@ -2064,3 +2064,38 @@ func _announce_then_start_player_turn() -> void:
 	_refresh_synergies()
 	if selected_unit != null and is_instance_valid(selected_unit):
 		_show_abilities_for(selected_unit)
+
+# battle_manager.gd
+func on_item_selected(item_id: String, unit) -> void:
+	var data := ContentLoader.get_equipment(item_id)
+	if data.is_empty():
+		return
+	match data.get("effect_type", ""):
+		"heal_flat":
+			unit.heal(int(data.get("heal_amount", 0)))
+		"heal_percent":
+			unit.heal(int(unit.get_stats().hp * float(data.get("heal_percent", 0.0))))
+		"restore_mana_flat":
+			unit.restore_mana(int(data.get("mana_amount", 0)))
+		"restore_mana_percent":
+			unit.restore_mana(int(unit.get_stats().mana * float(data.get("mana_percent", 0.0))))
+		"stat_buff":
+			var status := StatusEffectData.new()
+			status.id = "consumable_" + item_id
+			status.duration_rounds = int(data.get("buff_duration_rounds", 3))
+			match data.get("buff_stat", "atk"):
+				"atk": status.atk_modifier = float(data.get("buff_amount", 0.0))
+				"def": status.def_modifier = float(data.get("buff_amount", 0.0))
+				"mov": status.mov_modifier = float(data.get("buff_amount", 0.0))
+				"crit_chance": status.crit_chance_modifier = float(data.get("buff_amount", 0.0))
+				# add matk/mdef/crit_damage the same way if you use those too
+			unit.apply_status(status)
+		"reduce_cooldown":
+			var reduction: int = int(data.get("cooldown_reduction", 1))
+			for ability_id in unit.ability_cooldowns.keys():
+				unit.ability_cooldowns[ability_id] = max(0, unit.ability_cooldowns[ability_id] - reduction)
+
+	RunManager.current_run.equipment_inventory.erase(item_id)
+	unit.has_used_item_this_turn = true   # new bool field on unit_node.gd, reset at start of each of that unit's turns
+	ui_manager.clear_items()
+	ui_manager.show_usable_items(unit)

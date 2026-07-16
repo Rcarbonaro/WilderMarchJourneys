@@ -1,0 +1,10 @@
+{
+  "id": "shop_entry_lesser_mana_potion",
+  "item_type": "equipment",
+  "item_id": "lesser_mana_potion",
+  "base_price": 4,
+  "tags": ["starter"],
+  "conditions": [],
+  "spawn_weight": 1.5,
+  "notes": "Rarity lives on the equipment/unit definition itself (ContentLoader.get_equipment), not duplicated here."
+}
