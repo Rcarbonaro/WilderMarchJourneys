@@ -1,0 +1,10 @@
+{
+  "id": "shop_entry_lesser_healing_potion",
+  "item_type": "equipment",
+  "item_id": "lesser_healing_potion",
+  "base_price": 4,
+  "tags": ["starter"],
+  "conditions": [],
+  "spawn_weight": 2.0,
+  "notes": "Rarity lives on the equipment/unit definition itself (ContentLoader.get_equipment), not duplicated here."
+}

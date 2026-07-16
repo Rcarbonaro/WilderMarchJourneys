@@ -1229,6 +1229,10 @@ func spawn_scatter_features(feature_placements: Array) -> void:
 		for offset in feature.footprint:
 			var fc: Vector2i = cell + offset
 			_apply_feature_tile_rules(fc, feature)
+			
+		print("Feature '%s' at %s: blocks_movement=%s, tile.is_wall=%s, blocks_line_of_sight=%s" % [
+			feature.id, cell, feature.blocks_movement, tile_map[cell].is_wall, feature.blocks_line_of_sight
+		])
 
 		_spawn_feature_visual(cell, feature, layer)
 

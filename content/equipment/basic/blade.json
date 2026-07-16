@@ -6,8 +6,7 @@
   "subtype": "blade",
   "tags": ["forgeable", "melee"],
   "effects": [
-    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "atk",  "amount": 2, "value_mode": "flat", "scope": "permanent" },
-    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "matk", "amount": 2, "value_mode": "flat", "scope": "permanent" }
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "atk",  "amount": 2, "value_mode": "flat", "scope": "permanent" }
   ],
   "stackable": true,
   "consumable": false

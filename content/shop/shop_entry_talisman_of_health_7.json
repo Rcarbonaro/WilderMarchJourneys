@@ -1,0 +1,10 @@
+{
+  "id": "shop_entry_gilded_talisman_of_health_7",
+  "item_type": "equipment",
+  "item_id": "talisman_of_health",
+  "base_price": 8,
+  "tags": ["starter"],
+  "conditions": [],
+  "spawn_weight": 1.0,
+  "notes": "Rarity lives on the equipment/unit definition itself (ContentLoader.get_equipment), not duplicated here."
+}

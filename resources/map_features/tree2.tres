@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="MapFeatureData" format=3 uid="uid://cx8lqwunnsrmc"]
+
+[ext_resource type="Script" uid="uid://cjx7n1a62jwb4" path="res://scripts/data/map_feature_data.gd" id="1_085uj"]
+[ext_resource type="Texture2D" uid="uid://don0s8xp0uhiy" path="res://sprites/map_assets/tree2.png" id="2_exxy6"]
+
+[resource]
+script = ExtResource("1_085uj")
+id = "tree2"
+display_name = "tree"
+texture = ExtResource("2_exxy6")
+category = "blocking"
+blocks_movement = true
+blocks_line_of_sight = true
+footprint = Array[Vector2i]([Vector2i(1, 1)])
+spawn_weight = 3.0
+min_distance_from_spawns = 3
+biomes = Array[String](["forest"])
+metadata/_custom_type_script = "uid://cjx7n1a62jwb4"
