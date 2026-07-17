@@ -34,7 +34,7 @@ func _exit_tree() -> void:
 	CombatHooks.on_damage_applied_reactions.erase(_on_damage_applied)
 
 
-func _on_damage_applied(attacker, target, actual_damage: int, _is_crit: bool) -> void:
+func _on_damage_applied(attacker, target, actual_damage: int, _is_crit: bool, damage_type: String) -> void:
 	if actual_damage <= 0:
 		return
 	if not is_instance_valid(target) or target.current_hp <= 0:

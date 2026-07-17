@@ -13,5 +13,15 @@
   { "id": "forge_talisman_monocle",    "inputs": ["talisman", "monocle"],    "output_equipment_id": "bloody_mantle" },
   { "id": "forge_spellbook_spellbook", "inputs": ["spellbook", "spellbook"], "output_equipment_id": "soul_jar" },
   { "id": "forge_spellbook_monocle",   "inputs": ["spellbook", "monocle"],   "output_equipment_id": "oracles_lens" },
-  { "id": "forge_monocle_monocle",     "inputs": ["monocle", "monocle"],     "output_equipment_id": "crystal_sight" }
+  { "id": "forge_monocle_monocle",     "inputs": ["monocle", "monocle"],     "output_equipment_id": "crystal_sight" },
+  { "id": "forge_armor_staff",     "inputs": ["armor", "staff"],     "output_equipment_id": "archmages_bulwark" },
+  { "id": "forge_blade_staff",     "inputs": ["blade", "staff"],     "output_equipment_id": "arcblade_focus" },
+  { "id": "forge_staff_mantle",     "inputs": ["staff", "mantle"],     "output_equipment_id": "veilstaff" },
+  { "id": "forge_staff_monocle",     "inputs": ["staff", "monocle"],     "output_equipment_id": "starcall_prism" },
+  { "id": "forge_staff_spellbook",     "inputs": ["staff", "spellbook"],     "output_equipment_id": "archons_grimoire" },
+  { "id": "forge_staff_staff",     "inputs": ["staff", "staff"],     "output_equipment_id": "worldroot_staff" },
+  { "id": "forge_staff_talisman",     "inputs": ["staff", "talisman"],     "output_equipment_id": "lifebinders_staff" },
+  { "id": "forge_armor_mantle",     "inputs": ["armor", "mantle"],     "output_equipment_id": "wardens_cloak" }
+
+
 ]

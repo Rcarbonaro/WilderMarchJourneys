@@ -10,16 +10,16 @@ offset_right = 40.0
 offset_bottom = 40.0
 
 [node name="GoldLabel" type="Label" parent="." unique_id=405149072]
-offset_left = -6.0
-offset_top = 36.0
-offset_right = 181.0
-offset_bottom = 243.0
+offset_left = 36.0
+offset_top = 60.0
+offset_right = 178.0
+offset_bottom = 143.0
 
 [node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1352691112]
-offset_left = 81.0
-offset_top = 357.0
-offset_right = 1031.0
-offset_bottom = 1429.0
+offset_left = 614.0
+offset_top = 153.0
+offset_right = 1823.0
+offset_bottom = 707.0
 
 [node name="RefreshButton" type="Button" parent="." unique_id=177932080]
 offset_left = 13.0
@@ -36,10 +36,10 @@ offset_bottom = 1005.0
 text = "Continue"
 
 [node name="EquipPanel" type="VBoxContainer" parent="." unique_id=26446109]
-offset_left = 1547.0
-offset_top = 16.0
-offset_right = 1910.0
-offset_bottom = 439.0
+offset_left = 31.0
+offset_top = 116.0
+offset_right = 318.0
+offset_bottom = 549.0
 
 [node name="RosterScroll" type="ScrollContainer" parent="EquipPanel" unique_id=1632000082]
 custom_minimum_size = Vector2(40, 200)

@@ -96,7 +96,7 @@ func _build_slot_panel(offer_entry: Dictionary) -> Control:
 	panel.custom_minimum_size = Vector2(140, 180)
 
 	var icon_rect := TextureRect.new()
-	icon_rect.custom_minimum_size = Vector2(64, 64)
+	icon_rect.custom_minimum_size = Vector2(64, 150)
 	icon_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 	icon_rect.texture = _get_display_icon(entry)
 	vbox.add_child(icon_rect)
@@ -292,6 +292,14 @@ func _on_equip_slot_pressed(slot_index: int) -> void:
 func _rebuild_inventory() -> void:
 	for child in inventory_list.get_children():
 		child.queue_free()
+	for item_id in RunManager.current_run.equipment_inventory:
+		if ContentLoader.get_equipment(item_id).get("type", "") == "consumable":
+			continue   # consumables live in the combat item bar, not the equip screen
+		var btn := Button.new()
+		var prefix := "[Selected] " if item_id == _selected_inventory_item_id else ""
+		btn.text = prefix + ContentLoader.get_equipment(item_id).get("name", item_id)
+		btn.pressed.connect(func(): _on_inventory_item_pressed(item_id))
+		inventory_list.add_child(btn)
 
 	for item_id in RunManager.current_run.equipment_inventory:
 		var btn := Button.new()

@@ -1,0 +1,13 @@
+{
+  "id": "guardian_mantle",
+  "name": "Guardian Mantle",
+  "description": "+2 MDEF, +8 HP. Whenever an adjacent ally would take magical damage, redirect 50% of that damage to yourself.",
+  "type": "advanced",
+  "subtype": "mantle_talisman",
+  "tags": ["tank", "support"],
+  "effects": [
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "mdef", "amount": 2, "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "hp", "amount": 8, "value_mode": "flat", "scope": "permanent" },
+    { "type": "custom", "custom_id": "guardian_mantle" }
+  ]
+}

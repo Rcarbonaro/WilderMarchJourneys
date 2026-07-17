@@ -1,5 +1,5 @@
 {
   "id": "lesser_healing_potion", "name": "Lesser Healing Potion", "type": "consumable",
-  "icon": "res://art/icons/healing_potion.png",
+  "icon": "res://art/sprites/UI/hp_icon.png",
   "effect_type": "heal_flat", "heal_amount": 5
 }

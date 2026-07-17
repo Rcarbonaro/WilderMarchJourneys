@@ -1,0 +1,13 @@
+{
+  "id": "phantom_veil",
+  "name": "Phantom Veil",
+  "description": "+2 MDEF, +15% critical chance. Whenever you land a critical hit, the target deals 20% less damage for 1 round.",
+  "type": "advanced",
+  "subtype": "mantle_monocle",
+  "tags": ["utility"],
+  "effects": [
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "mdef", "amount": 2, "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "crit_chance", "amount": 15, "value_mode": "flat", "scope": "permanent" },
+    { "type": "custom", "custom_id": "phantom_veil" }
+  ]
+}

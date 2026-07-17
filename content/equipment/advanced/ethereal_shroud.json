@@ -1,0 +1,12 @@
+{
+  "id": "ethereal_shroud",
+  "name": "Ethereal Shroud",
+  "description": "+5 MDEF. Whenever you are targeted by a magical attack, there is a 25% chance to absorb it, taking no damage and gaining 10 temporary HP for 2 rounds.",
+  "type": "advanced",
+  "subtype": "mantle_mantle",
+  "tags": ["tank", "magic"],
+  "effects": [
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "mdef", "amount": 5, "value_mode": "flat", "scope": "permanent" },
+    { "type": "custom", "custom_id": "ethereal_shroud" }
+  ]
+}

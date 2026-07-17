@@ -26,9 +26,6 @@ func resolve_spawn_table(run_state: RunState) -> Array:
 					  stage_type + "' stage_index=" + str(run_state.stage_index))
 		return []
 
-	# CHANGED — try every candidate table (in random order) until one
-	# actually produces a non-empty roster, instead of committing to
-	# whichever table randi() happened to land on.
 	var shuffled_tables: Array = tables.duplicate()
 	shuffled_tables.shuffle()
 	for table in shuffled_tables:
@@ -43,8 +40,6 @@ func resolve_spawn_table(run_state: RunState) -> Array:
 
 
 func _build_roster_from_table(table: Dictionary, run_state: RunState) -> Array:
-	# Everything resolve_spawn_table() used to do inline, now factored out
-	# so it can be retried against multiple candidate tables.
 	var roster := []
 	for guaranteed_id in table.get("guaranteed_enemy_ids", []):
 		roster.append({"enemy_id": guaranteed_id, "count": 1})
@@ -68,11 +63,21 @@ func _build_roster_from_table(table: Dictionary, run_state: RunState) -> Array:
 	var max_elites: int = int(scaling_config.get("max_elites", -1))
 	var min_elites: int = int(scaling_config.get("min_elites", 0))
 	var elite_count: int = 0
+	for guaranteed_entry in roster:   # ADDED -- guaranteed elites count toward the cap too
+		if _get_enemy_tier(guaranteed_entry.get("enemy_id", "")) == "elite":
+			elite_count += 1
+
 	var elite_pool_indices: Array = []
+	var normal_pool_indices: Array = []
 	if elite_chance > 0.0:
 		for i in range(pool.size()):
 			if _get_enemy_tier(pool[i].get("enemy_id", "")) == "elite":
 				elite_pool_indices.append(i)
+			else:
+				normal_pool_indices.append(i)
+	else:
+		for i in range(pool.size()):
+			normal_pool_indices.append(i)
 
 	var placed := roster.size()
 	var attempts := 0
@@ -89,7 +94,13 @@ func _build_roster_from_table(table: Dictionary, run_state: RunState) -> Array:
 			chosen_entry = pool[elite_pool_indices[_weighted_pick(elite_weights)]]
 			elite_count += 1
 		else:
-			chosen_entry = pool[_weighted_pick(weights)]
+			if normal_pool_indices.is_empty():
+				chosen_entry = pool[_weighted_pick(weights)]
+			else:
+				var normal_weights := []
+				for i in normal_pool_indices:
+					normal_weights.append(weights[i])
+				chosen_entry = pool[normal_pool_indices[_weighted_pick(normal_weights)]]
 		roster.append({"enemy_id": chosen_entry.get("enemy_id", ""), "count": 1})
 		placed += 1
 
@@ -110,7 +121,7 @@ func _build_roster_from_table(table: Dictionary, run_state: RunState) -> Array:
 
 	return roster
 
-var _enemy_tier_cache: Dictionary = {}   # enemy_id -> "normal"/"elite"/"boss", avoids re-loading the same .tres every roll
+var _enemy_tier_cache: Dictionary = {}
 
 func _get_enemy_tier(enemy_id: String) -> String:
 	if _enemy_tier_cache.has(enemy_id):
@@ -126,11 +137,6 @@ func _get_enemy_tier(enemy_id: String) -> String:
 
 
 func apply_scaling(base_stats: StatsData, run_state: RunState, tier: String = "normal") -> StatsData:
-	# Returns a NEW StatsData with every applicable modifier from this
-	# stage's scaling config baked in. base_stats is never mutated directly.
-	# ADDED 'tier' param: when "elite" (or "boss"), an extra flat multiplier
-	# is applied on top of everything else -- see the elite_stat_multiplier
-	# read below.
 	var scaled := StatsData.new()
 	scaled.hp = base_stats.hp
 	scaled.atk = base_stats.atk
@@ -142,38 +148,51 @@ func apply_scaling(base_stats: StatsData, run_state: RunState, tier: String = "n
 	scaled.crit_damage = base_stats.crit_damage
 	scaled.mana = base_stats.mana
 
+	# ---- GLOBAL DIFFICULTY CURVE (ADDED) -------------------------------------
+	# A smooth baseline that grows every stage, independent of whether a
+	# per-stage scaling file exists for this stage_index and independent of
+	# which biome occupies this slot -- so it automatically covers every
+	# future stage and every future biome with zero per-stage authoring.
+	var global_config: Dictionary = ContentLoader.global_difficulty
+	var stages_elapsed: int = max(0, run_state.stage_index - 1)
+	if not global_config.is_empty():
+		var growth: Dictionary = global_config.get("stat_growth_per_stage", {})
+		scaled.hp   += int(round(float(growth.get("hp", 0.0))   * stages_elapsed))
+		scaled.atk  += int(round(float(growth.get("atk", 0.0))  * stages_elapsed))
+		scaled.matk += int(round(float(growth.get("matk", 0.0)) * stages_elapsed))
+		scaled.def  += int(round(float(growth.get("def", 0.0))  * stages_elapsed))
+		scaled.mdef += int(round(float(growth.get("mdef", 0.0)) * stages_elapsed))
+
+	# ---- PER-STAGE SCALING CONFIG (unchanged, now optional per-stage) -------
 	var config := ContentLoader.get_scaling_config(run_state.stage_index)
-	if config.is_empty():
-		return scaled
+	if not config.is_empty():
+		var context := {"run_state": run_state}
+		_apply_stat_modifiers(scaled, config.get("base_modifiers", []))
 
-	var context := {"run_state": run_state}
-	_apply_stat_modifiers(scaled, config.get("base_modifiers", []))
+		var difficulty_mods: Dictionary = config.get("difficulty_modifiers", {})
+		if difficulty_mods.has(run_state.difficulty):
+			_apply_stat_modifiers(scaled, difficulty_mods[run_state.difficulty])
 
-	var difficulty_mods: Dictionary = config.get("difficulty_modifiers", {})
-	if difficulty_mods.has(run_state.difficulty):
-		_apply_stat_modifiers(scaled, difficulty_mods[run_state.difficulty])
+		for conditional in config.get("conditional_modifiers", []):
+			if EffectSystem.evaluate_condition(conditional.get("condition", {}), context):
+				_apply_stat_modifiers(scaled, conditional.get("effects", []))
 
-	for conditional in config.get("conditional_modifiers", []):
-		if EffectSystem.evaluate_condition(conditional.get("condition", {}), context):
-			_apply_stat_modifiers(scaled, conditional.get("effects", []))
-
-	# ADDED -- elite/boss multiplier, applied AFTER every other modifier so it
-	# scales the fully-modified total rather than just the base stat. Reads
-	# "elite_stat_multiplier" from the SAME per-stage scaling config file
-	# (defaults to 1.5 if that key isn't set), so you can tune how much
-	# stronger elites are on a stage-by-stage (or even per-difficulty) basis
-	# right alongside every other scaling number, instead of a separate file.
+	# ---- ELITE / BOSS MULTIPLIER ---------------------------------------------
+	# Applied AFTER global growth + per-stage modifiers, so it scales the
+	# fully-modified total. Per-stage "elite_stat_multiplier" wins if that
+	# stage has a config; otherwise falls back to the global config's
+	# "default_elite_stat_multiplier"; otherwise 1.5. This means a stage with
+	# NO authored scaling file yet still gets a sensible elite multiplier.
 	if tier == "elite" or tier == "boss":
-		var elite_mult: float = float(config.get("elite_stat_multiplier", 1.5))
+		var elite_mult: float = float(config.get(
+			"elite_stat_multiplier",
+			global_config.get("default_elite_stat_multiplier", 1.5)
+		))
 		scaled.hp   = int(scaled.hp   * elite_mult)
 		scaled.atk  = int(scaled.atk  * elite_mult)
 		scaled.matk = int(scaled.matk * elite_mult)
 		scaled.def  = int(scaled.def  * elite_mult)
 		scaled.mdef = int(scaled.mdef * elite_mult)
-		# mov/crit_chance/crit_damage/mana deliberately NOT multiplied here --
-		# an elite with 3x movement or 3x crit chance usually isn't what
-		# "elite" is meant to convey. Add them to this block yourself if you
-		# want elites to scale on those too.
 
 	return scaled
 

@@ -1,0 +1,14 @@
+{
+  "id": "archmages_bulwark",
+  "name": "Archmage's Bulwark",
+  "description": "+2 MATK, +2 MDEF, +1 DEF. Whenever you spend mana, gain temporary HP equal to 25% of the mana spent (rounded up) for 1 round.",
+  "type": "advanced",
+  "subtype": "armor_staff",
+  "tags": ["magic", "tank"],
+  "effects": [
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "matk", "amount": 2, "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "mdef", "amount": 2, "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "def",  "amount": 1, "value_mode": "flat", "scope": "permanent" },
+    { "type": "custom", "custom_id": "archmages_bulwark" }
+  ]
+}

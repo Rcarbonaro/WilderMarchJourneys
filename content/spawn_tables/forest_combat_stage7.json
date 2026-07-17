@@ -1,0 +1,21 @@
+// content/spawn_tables/forest_combat_stage7.json
+{
+  "id": "forest_combat_stage7",
+  "biome": "forest",
+  "stage_type": "combat",
+  "stage_min": 7,
+  "stage_max": 7,
+  "total_enemies_min": 5,
+  "total_enemies_max": 7,
+  "guaranteed_enemy_ids": [],
+  "enemy_pool": [
+    { "enemy_id": "wolf", "weight": 2.0 },
+    { "enemy_id": "sylvaris", "weight": 2.0 },
+    { "enemy_id": "sporeling", "weight": 2.0 },
+    { "enemy_id": "thornling", "weight": 2.0 },
+    { "enemy_id": "bear", "weight": 1.0 },
+    { "enemy_id": "ent", "weight": 0.75 },
+    { "enemy_id": "leshy", "weight": 0.5 },
+    { "enemy_id": "hulkingsporeling", "weight": 1.0 }
+  ]
+}

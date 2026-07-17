@@ -1,0 +1,13 @@
+{
+  "id": "shadowcloak",
+  "name": "Shadowcloak",
+  "description": "+2 ATK, +2 MDEF. After defeating an enemy, gain +33% damage dealt and +1 MOV for 1 round.",
+  "type": "advanced",
+  "subtype": "blade_mantle",
+  "tags": ["melee"],
+  "effects": [
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "atk", "amount": 2, "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "mdef", "amount": 2, "value_mode": "flat", "scope": "permanent" },
+    { "type": "custom", "custom_id": "shadowcloak" }
+  ]
+}

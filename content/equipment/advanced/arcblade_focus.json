@@ -1,0 +1,13 @@
+{
+  "id": "arcblade_focus",
+  "name": "Arcblade Focus",
+  "description": "+2 ATK, +3 MATK. After casting a spell, your next basic attack deals 50% more damage. After using a basic attack, your next spell deals 25% more damage.",
+  "type": "advanced",
+  "subtype": "blade_staff",
+  "tags": ["melee", "magic"],
+  "effects": [
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "atk",  "amount": 2, "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "matk", "amount": 3, "value_mode": "flat", "scope": "permanent" },
+    { "type": "custom", "custom_id": "arcblade_focus" }
+  ]
+}

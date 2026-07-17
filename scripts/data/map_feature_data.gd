@@ -57,3 +57,8 @@ extends Resource
 @export var biomes: Array[String] = []
 # Which biome(s) this feature is eligible to appear in, e.g. ["forest"].
 # Leave EMPTY to make it eligible in every biome regardless of name.
+
+@export var visual_offset: Vector2 = Vector2.ZERO
+# Pure cosmetic nudge in pixels, independent of footprint/blocking -- use
+# this for fine art alignment (e.g. a tree trunk that should sit a few
+# pixels lower than tile-center), NOT for changing which tiles are blocked.

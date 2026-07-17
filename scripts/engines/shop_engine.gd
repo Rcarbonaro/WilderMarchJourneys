@@ -28,9 +28,9 @@
 
 extends Node
 
-const BASE_SHOP_SLOTS: int = 3
-const MAX_SHOP_SLOTS: int = 5
-const REFRESH_BASE_COST: int = 1
+const BASE_SHOP_SLOTS: int = 5
+const MAX_SHOP_SLOTS: int = 7
+const REFRESH_BASE_COST: int = 3
 
 
 func generate_shop(run_state: RunState) -> Array:
@@ -179,6 +179,10 @@ func _player_already_owns_unit(unit_id: String, run_state: RunState) -> bool:
 
 func _final_price(entry: Dictionary, run_state: RunState) -> int:
 	var price: float = float(entry.get("base_price", 0))
+	if entry.get("item_type", "") == "unit":
+		var rarity_price := _get_unit_rarity_price(entry.get("item_id", ""))
+		if rarity_price > 0:
+			price = float(rarity_price)   # rarity-derived price wins over the JSON's base_price
 	for modifier in run_state.shop_price_modifiers:
 		if not EffectSystem.evaluate_conditions(modifier.get("active_while", []), {"run_state": run_state}):
 			continue
@@ -202,3 +206,21 @@ func _weighted_pick(weights: Array) -> int:
 		if roll <= cumulative:
 			return i
 	return weights.size() - 1
+
+
+const UNIT_PRICE_BY_RARITY: Dictionary = {
+	"common":   3,
+	"uncommon": 5,
+	"rare":     7,
+}
+
+func _get_unit_rarity_price(unit_id: String) -> int:
+	var path := "res://resources/units/" + unit_id + "_data.tres"
+	if not ResourceLoader.exists(path):
+		push_warning("ShopEngine: no UnitData found for '" + unit_id + "' at " + path +
+			" -- falling back to this shop entry's own base_price.")
+		return 0
+	var unit_data: UnitData = load(path) as UnitData
+	if unit_data == null:
+		return 0
+	return UNIT_PRICE_BY_RARITY.get(unit_data.rarity, 0)

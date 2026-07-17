@@ -1,0 +1,13 @@
+{
+  "id": "wardens_cloak",
+  "name": "Warden's Cloak",
+  "description": "+2 DEF, +3 MDEF. The first attack that hits you each round deals 25% less damage. Afterward, gain +3 DEF and +3 MDEF until the start of your next turn.",
+  "type": "advanced",
+  "subtype": "armor_mantle",
+  "tags": ["tank"],
+  "effects": [
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "def", "amount": 2, "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "mdef", "amount": 3, "value_mode": "flat", "scope": "permanent" },
+    { "type": "custom", "custom_id": "wardens_cloak" }
+  ]
+}
