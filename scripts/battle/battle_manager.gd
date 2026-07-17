@@ -186,6 +186,7 @@ func _ready() -> void:
 
 
 func _spawn_player_party_from_run() -> void:
+	RunManager.current_run.equipment_inventory.append("lesser_healing_potion")   # TEMP TEST — remove after confirming buttons work
 	print("🧙 Spawning Player Party Units from RunManager...")
 
 	if RunManager.current_run == null:
@@ -456,6 +457,7 @@ func spawn_unit(unit_data: UnitData, cell: Vector2i, is_player: bool, level: int
 		# Mirrorplate, etc.) and any permanent stat bonuses banked up over the
 		# run from tarot cards / encounter rewards. See equipment_runtime.gd.
 		EquipmentRuntime.apply_equipment_to_unit(unit, equipped_item_ids)
+		unit.equipped_item_ids = equipped_item_ids
 		EquipmentRuntime.apply_permanent_modifiers_to_unit(unit, permanent_modifiers)
 		print("🛡️ Ally spawned: ", unit_data.display_name)
 	else:
@@ -800,6 +802,8 @@ func _show_abilities_for(unit) -> void:
 	# Tells the UI to rebuild the ability button row for this unit.
 	if ui_manager and ui_manager.has_method("show_unit_abilities"):
 		ui_manager.show_unit_abilities(unit)
+	if ui_manager and ui_manager.has_method("show_usable_items"):   # ADDED
+		ui_manager.show_usable_items(unit)
 	if ui_manager and ui_manager.has_method("set_cancel_move_visible"):
 		ui_manager.set_cancel_move_visible(unit.can_cancel_move and not unit.has_acted)
 
@@ -1397,6 +1401,7 @@ func end_player_turn() -> void:
 			unit.has_moved       = false
 			unit.has_acted       = false
 			unit.can_cancel_move = false
+			unit.has_used_item_this_turn  = false 
 			CombatHooks.run_round_tick(unit)
 
 	# Count down enemy ability cooldowns so they become available again over time.
@@ -1470,6 +1475,7 @@ func _on_enemy_turn_complete() -> void:
 	# Count down player cooldowns too.
 	for unit in player_units:
 		if is_instance_valid(unit):
+			unit.has_used_item_this_turn = false
 			for key in unit.ability_cooldowns:
 				unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
 
@@ -2066,7 +2072,7 @@ func _announce_then_start_player_turn() -> void:
 		_show_abilities_for(selected_unit)
 
 # battle_manager.gd
-func on_item_selected(item_id: String, unit) -> void:
+func on_item_selected(item_id: String, slot_index: int, unit) -> void:
 	var data := ContentLoader.get_equipment(item_id)
 	if data.is_empty():
 		return
@@ -2084,18 +2090,22 @@ func on_item_selected(item_id: String, unit) -> void:
 			status.id = "consumable_" + item_id
 			status.duration_rounds = int(data.get("buff_duration_rounds", 3))
 			match data.get("buff_stat", "atk"):
-				"atk": status.atk_modifier = float(data.get("buff_amount", 0.0))
-				"def": status.def_modifier = float(data.get("buff_amount", 0.0))
-				"mov": status.mov_modifier = float(data.get("buff_amount", 0.0))
+				"atk": status.atk_modifier = int(data.get("buff_amount", 0))
+				"def": status.def_modifier = int(data.get("buff_amount", 0))
+				"mov": status.mov_modifier = int(data.get("buff_amount", 0))
 				"crit_chance": status.crit_chance_modifier = float(data.get("buff_amount", 0.0))
-				# add matk/mdef/crit_damage the same way if you use those too
 			unit.apply_status(status)
 		"reduce_cooldown":
 			var reduction: int = int(data.get("cooldown_reduction", 1))
 			for ability_id in unit.ability_cooldowns.keys():
 				unit.ability_cooldowns[ability_id] = max(0, unit.ability_cooldowns[ability_id] - reduction)
 
-	RunManager.current_run.equipment_inventory.erase(item_id)
-	unit.has_used_item_this_turn = true   # new bool field on unit_node.gd, reset at start of each of that unit's turns
-	ui_manager.clear_items()
+	# THE FIX: clear the SLOT it was actually equipped in -- it was never
+	# sitting in the shared unequipped bag.
+	if slot_index >= 0 and slot_index < unit.equipped_item_ids.size():
+		unit.equipped_item_ids[slot_index] = null
+
+	unit.has_used_item_this_turn = true
+	ui_manager.clear_abilities()
+	ui_manager.show_unit_abilities(unit)
 	ui_manager.show_usable_items(unit)

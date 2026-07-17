@@ -1,0 +1,20 @@
+{
+  "units": [
+    { "id": "divinator",     "cost": 7, "rarity": "rare" },
+    { "id": "dragoon",       "cost": 5, "rarity": "uncommon" },
+    { "id": "dreadknight",   "cost": 7, "rarity": "rare" },
+    { "id": "dryad",         "cost": 5, "rarity": "uncommon" },
+    { "id": "executioner",   "cost": 7, "rarity": "rare" },
+    { "id": "firemage",      "cost": 5, "rarity": "uncommon" },
+    { "id": "guardian",      "cost": 3, "rarity": "common" },
+    { "id": "hexweaver",     "cost": 5, "rarity": "uncommon" },
+    { "id": "icemage",       "cost": 5, "rarity": "uncommon" },
+    { "id": "plaguebringer", "cost": 7, "rarity": "rare" },
+    { "id": "rogue",         "cost": 3, "rarity": "common" },
+    { "id": "sharpshooter",  "cost": 3, "rarity": "common" },
+    { "id": "spellsword",    "cost": 3, "rarity": "common" },
+    { "id": "stonewarden",   "cost": 3, "rarity": "common" },
+    { "id": "stormblade",    "cost": 5, "rarity": "uncommon" },
+    { "id": "windmage",      "cost": 3, "rarity": "common" }
+  ]
+}

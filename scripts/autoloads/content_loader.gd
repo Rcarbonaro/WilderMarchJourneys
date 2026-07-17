@@ -30,6 +30,7 @@ const TAROT_DIR              := "res://content/tarot/"
 const ENCOUNTER_DIR          := "res://content/encounters/"
 const DIALOGUE_DIR           := "res://content/dialogue/"
 const EQUIPMENT_BASIC_DIR    := "res://content/equipment/basic/"
+const CONSUMABLE_DIR         := "res://content/equipment/consumable/"
 const EQUIPMENT_ADVANCED_DIR := "res://content/equipment/advanced/"
 const FORGING_RECIPES_FILE   := "res://content/equipment/forging_recipes.json"
 const SHOP_DIR                := "res://content/shop/"
@@ -37,6 +38,7 @@ const SCALING_DIR             := "res://content/scaling/"
 const SPAWN_TABLE_DIR         := "res://content/spawn_tables/"
 const STAGE_TYPE_MAP_FILE     := "res://content/scaling/stage_type_map.json"
 const GAME_MODES_DIR          := "res://content/game_modes/"
+const GLOBAL_DIFFICULTY_FILE := "res://content/scaling/global_difficulty.json"
 # One file per mode -- e.g. random.json, draft.json. Holds starting_gold,
 # starting_equipment_ids, party_size, excluded_unit_ids, and (draft only)
 # draft_budget, so every "how does Random differ from Draft" number lives
@@ -68,8 +70,9 @@ var spawn_tables: Dictionary = {}
 var forging_recipes: Dictionary = {}    # keyed by "subtypeA_subtypeB" (sorted)
 var stage_type_map: Dictionary = {}     # keyed by String(stage 1-10)
 var game_modes: Dictionary = {}         # keyed by mode id ("random", "draft")
-var reward_rules: Dictionary = {}       # ADDED -- keyed by "id", read directly by stage_director.gd
-var biome_pool: Array = []              # ADDED -- flat Array[String], loaded from BIOME_POOL_PATH
+var reward_rules: Dictionary = {}       # keyed by "id", read directly by stage_director.gd
+var biome_pool: Array = []              # flat Array[String], loaded from BIOME_POOL_PATH
+var global_difficulty: Dictionary = {}  
 
 # Every problem found while loading ends up here, so you can see a single
 # report instead of hunting through console output line by line.
@@ -92,12 +95,16 @@ func _load_all_content() -> void:
 	dialogue_graphs = _load_folder(DIALOGUE_DIR, ["id", "nodes", "start_node"])
 	shop_entries    = _load_folder(SHOP_DIR, ["id", "item_type", "item_id", "base_price"])
 	spawn_tables    = _load_folder(SPAWN_TABLE_DIR, ["id", "enemy_pool"])
+	global_difficulty = _load_single_file(GLOBAL_DIFFICULTY_FILE, []) 
 
 	var basic_equipment    = _load_folder(EQUIPMENT_BASIC_DIR, ["id", "name", "type"])
 	var advanced_equipment = _load_folder(EQUIPMENT_ADVANCED_DIR, ["id", "name", "type"])
+	var consumable_equipment = _load_folder(CONSUMABLE_DIR, ["id", "name", "type"])   # ADDED
 	equipment = basic_equipment.duplicate()
 	for key in advanced_equipment:
 		equipment[key] = advanced_equipment[key]
+	for key in consumable_equipment:   # ADDED
+		equipment[key] = consumable_equipment[key]
 
 	scaling_configs = _load_folder(SCALING_DIR, ["id", "stage_index"])
 	# stage_type_map.json lives in the SAME folder but is one lookup table,

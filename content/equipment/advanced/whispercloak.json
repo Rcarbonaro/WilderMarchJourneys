@@ -1,0 +1,13 @@
+{
+  "id": "whispercloak",
+  "name": "Whispercloak",
+  "description": "+2 MDEF, +15 mana. Whenever you cast a spell that costs mana, enemies within 3 tiles deal 20% less damage for 3 rounds.",
+  "type": "advanced",
+  "subtype": "mantle_spellbook",
+  "tags": ["support", "magic"],
+  "effects": [
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "mdef", "amount": 2, "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "mana", "amount": 15, "value_mode": "flat", "scope": "permanent" },
+    { "type": "custom", "custom_id": "whispercloak" }
+  ]
+}

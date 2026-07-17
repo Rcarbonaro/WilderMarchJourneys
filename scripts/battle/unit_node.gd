@@ -95,7 +95,11 @@ var ability_cooldowns: Dictionary = {}
 # Maps ability id → rounds remaining on cooldown.
 
 var equipped_items: Array = []
-
+var equipped_item_ids: Array = []
+# Same array object as this unit's RunState party entry's "equipped_item_ids"
+# (see spawn_unit() below) -- NOT a copy. Mutating a slot here (e.g. setting
+# it to null when a consumable is used) automatically updates the saved run
+# data too, since GDScript Arrays are passed by reference.
 
 # Help break recursion loop
 var _apply_status_depth: int = 0
@@ -126,6 +130,8 @@ var pre_move_position: Vector2i = Vector2i(-1, -1)
 
 var can_cancel_move: bool = false
 # True only between "unit finished moving" and "unit used an ability".
+
+var has_used_item_this_turn: bool = false
 
 var _is_moving: bool = false
 # True from the moment move_to()/move_along_path() starts until the instant

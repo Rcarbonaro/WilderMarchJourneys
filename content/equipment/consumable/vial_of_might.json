@@ -1,5 +1,5 @@
 {
   "id": "stat_potion_atk", "name": "Vial of Might", "type": "consumable",
-  "icon": "res://art/icons/stat_potion.png",
+  "icon": "res://art/sprites/UI/atk_icon.png",
   "effect_type": "stat_buff", "buff_stat": "atk", "buff_amount": 3, "buff_duration_rounds": 3
 }

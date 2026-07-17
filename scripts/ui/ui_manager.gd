@@ -1216,3 +1216,71 @@ func show_stage_intro_announcement(stage_type: String, stage_number: int) -> voi
 
 	await get_tree().create_timer(stage_intro_duration).timeout
 	_hide_turn_announcement()
+	
+
+#Show consumable/usable items in battle
+var _items_popup: PopupPanel = null
+
+func show_usable_items(unit) -> void:
+	if ability_bar == null or unit == null or unit.has_used_item_this_turn:
+		return
+
+	var consumables: Array = []   # [{ "item_id": String, "slot_index": int, "data": Dictionary }, ...]
+	for i in range(unit.equipped_item_ids.size()):
+		var item_id = unit.equipped_item_ids[i]
+		if item_id == null or item_id == "":
+			continue
+		var data := ContentLoader.get_equipment(item_id)
+		if data.get("type", "") == "consumable":
+			consumables.append({"item_id": item_id, "slot_index": i, "data": data})
+
+	# THE FIX (your 3rd point): no consumables equipped -> no button, period.
+	if consumables.is_empty():
+		return
+
+	var items_btn := Button.new()
+	items_btn.text = "Items"
+	items_btn.custom_minimum_size = Vector2(90, 40)
+	items_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	items_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	items_btn.pressed.connect(func(): _open_items_popup(items_btn, unit, consumables))
+	AudioManager.wire_button_sfx(items_btn)
+	ability_bar.add_child(items_btn)
+
+
+func _open_items_popup(anchor_button: Button, unit, consumables: Array) -> void:
+	if _items_popup != null and is_instance_valid(_items_popup):
+		_items_popup.queue_free()
+
+	_items_popup = PopupPanel.new()
+	var list := VBoxContainer.new()
+	list.add_theme_constant_override("separation", 4)
+	_items_popup.add_child(list)
+
+	for entry in consumables:
+		var data: Dictionary = entry["data"]
+		var item_id: String = entry["item_id"]
+		var slot_index: int = entry["slot_index"]
+
+		var btn := Button.new()
+		btn.text = data.get("name", item_id)
+		var icon_path: String = data.get("icon", "")
+		if icon_path != "" and ResourceLoader.exists(icon_path):
+			btn.icon = load(icon_path)
+		btn.expand_icon = true
+		btn.add_theme_constant_override("icon_max_width", 48)
+		btn.custom_minimum_size = Vector2(150, 36)
+		btn.pressed.connect(func():
+			_items_popup.hide()
+			if battle_manager and battle_manager.has_method("on_item_selected"):
+				battle_manager.on_item_selected(item_id, slot_index, unit)
+		)
+		AudioManager.wire_button_sfx(btn)
+		list.add_child(btn)
+
+	ability_bar.add_child(_items_popup)
+	# Positions the popup just above the "Items" button. Tweak the y-offset
+	# to taste once you see it against your actual action bar layout.
+	_items_popup.position = Vector2(anchor_button.global_position.x, anchor_button.global_position.y - 200)
+	_items_popup.popup()
+		

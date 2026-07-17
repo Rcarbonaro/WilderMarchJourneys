@@ -1276,16 +1276,23 @@ func _spawn_feature_visual(cell: Vector2i, feature: MapFeatureData, layer: Node2
 	if feature.texture != null:
 		sprite.texture = feature.texture
 	else:
-		# red = blocking, yellow = slowing, gray = decoration -- see
-		# map_feature_data.gd's own header comment for this same key.
 		match feature.category:
-			"blocking":
-				sprite.texture = _get_feature_placeholder_texture(Color(0.8, 0.2, 0.2))
-			"slowing":
-				sprite.texture = _get_feature_placeholder_texture(Color(0.8, 0.7, 0.2))
-			_:
-				sprite.texture = _get_feature_placeholder_texture(Color(0.5, 0.5, 0.5))
-	sprite.position = grid_to_world(cell)
+			"blocking": sprite.texture = _get_feature_placeholder_texture(Color(0.8, 0.2, 0.2))
+			"slowing":  sprite.texture = _get_feature_placeholder_texture(Color(0.8, 0.7, 0.2))
+			_:          sprite.texture = _get_feature_placeholder_texture(Color(0.5, 0.5, 0.5))
+
+	# Center over the WHOLE footprint, not just the anchor cell.
+	var min_offset := Vector2i.ZERO
+	var max_offset := Vector2i.ZERO
+	for offset in feature.footprint:
+		min_offset.x = min(min_offset.x, offset.x)
+		min_offset.y = min(min_offset.y, offset.y)
+		max_offset.x = max(max_offset.x, offset.x)
+		max_offset.y = max(max_offset.y, offset.y)
+	var center_offset := Vector2(min_offset + max_offset) * 0.5 * TILE_SIZE
+
+	sprite.position = grid_to_world(cell) + center_offset + feature.visual_offset
+
 	layer.add_child(sprite)
 
 func is_dangerous_for(cell: Vector2i, unit) -> bool:

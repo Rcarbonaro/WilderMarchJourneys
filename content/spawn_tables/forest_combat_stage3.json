@@ -1,0 +1,19 @@
+// content/spawn_tables/forest_combat_stage3.json
+{
+  "id": "forest_combat_stage3",
+  "biome": "forest",
+  "stage_type": "combat",
+  "stage_min": 3,
+  "stage_max": 3,
+  "total_enemies_min": 3,
+  "total_enemies_max": 4,
+  "guaranteed_enemy_ids": [],
+  "enemy_pool": [
+    { "enemy_id": "wolf", "weight": 3.0 },
+    { "enemy_id": "sylvaris", "weight": 2.0 },
+    { "enemy_id": "sporeling", "weight": 2.0 },
+    { "enemy_id": "thornling", "weight": 1.5 },
+    { "enemy_id": "bear", "weight": 0.75 },
+    { "enemy_id": "hulkingsporeling", "weight": 0.5 }
+  ]
+}

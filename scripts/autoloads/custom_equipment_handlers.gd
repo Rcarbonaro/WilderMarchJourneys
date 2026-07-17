@@ -12,6 +12,13 @@
 #   - on_unequip() removes that callback again, so gear that's taken off (or
 #     a unit that dies) doesn't keep affecting the game forever.
 #
+# SIGNATURE CHANGE (this pass): combat_hooks.gd's on_damage_applied_reactions
+# now also passes damage_type, and after_ability_used now also passes
+# target_cells, origin_cell, and the AbilityExecutor itself. Every handler
+# registered to either of those two hooks below has an updated function
+# signature to match -- even the ones that don't use the new parameter still
+# need to ACCEPT it, or Callable.call() errors with "too many arguments."
+#
 # A NOTE ON SIMPLE ITEMS: Barbed Arrow is just flat/percent stat bonuses with
 # no special behaviour -- it has no entry here at all. Its bonuses are
 # handled entirely by equipment_runtime.gd reading its plain "add_stat"
@@ -21,21 +28,25 @@
 # and every DEF bonus is mirrored to MDEF, exactly like the base items. That
 # mirroring is baked directly into each item's JSON (two add_stat effects)
 # rather than hidden in code, so it stays visible and editable as content.
+#
+# RENAME NOTE: "Bloody Mantle" was renamed to "Bloody Vial" -- same subtype
+# pair (Monocle + Talisman), same effect, just a new name/id to match the
+# item's actual JSON (bloody_vial.json).
 
 extends Node
 
 # ---- PER-UNIT RUNTIME STATE --------------------------------------------------
-# Keyed directly by the live UnitNode reference (Godot allows using an
-# Object as a Dictionary key). Cleared in on_unequip() so nothing leaks
-# between battles.
 var _bloodthirster_stacks: Dictionary = {}   # unit -> int (0-4)
 var _bloodthirster_acted: Dictionary  = {}   # unit -> bool (attacked this round?)
 var _stoneheart_triggered: Dictionary = {}   # unit -> bool (one-time per battle)
 var _oracle_lens_used: Dictionary     = {}   # unit -> bool (one-time per battle)
 
-# We remember the EXACT bound Callables we registered with CombatHooks so we
-# can remove the right one again on unequip (you can only erase a Callable
-# from an Array if you have the identical Callable you put in).
+var _arcblade_pending: Dictionary  = {}   # unit -> {"type": String, "multiplier": float} or {}
+var _arcblade_active: Dictionary   = {}   # unit -> float (damage multiplier active for the ability resolving RIGHT NOW; 1.0 = none)
+var _archons_grimoire_used: Dictionary = {}   # unit -> bool (one-time per battle)
+var _wardens_cloak_triggered: Dictionary = {} # unit -> bool (resets every round tick)
+var _starcall_prism_used_this_round: Dictionary = {} # unit -> bool (resets every round tick)
+
 var _registered_callbacks: Dictionary = {}   # "<custom_id>:<unit instance id>" -> Array of {list, callback}
 
 
@@ -43,8 +54,10 @@ func has_handler(custom_id: String) -> bool:
 	return custom_id in [
 		"bloodthirster", "vanguards_edge", "heartpiercer", "spellforged_blade",
 		"heavy_plate", "stoneheart_mail", "aegis_codex", "mirrorplate",
-		"vital_bloom", "soulweaver_charm", "bloody_mantle", "soul_jar",
+		"vital_bloom", "soulweaver_charm", "bloody_vial", "soul_jar",
 		"oracles_lens", "crystal_sight",
+		"archmages_bulwark", "arcblade_focus", "veilstaff", "starcall_prism",
+		"archons_grimoire", "worldroot_staff", "lifebinders_staff", "wardens_cloak",
 	]
 
 
@@ -60,10 +73,18 @@ func on_equip(custom_id: String, unit) -> void:
 		"mirrorplate":       _equip_mirrorplate(unit)
 		"vital_bloom":       _equip_vital_bloom(unit)
 		"soulweaver_charm":  _equip_soulweaver_charm(unit)
-		"bloody_mantle":     _equip_bloody_mantle(unit)
+		"bloody_vial":       _equip_bloody_vial(unit)
 		"soul_jar":          _equip_soul_jar(unit)
 		"oracles_lens":      _equip_oracles_lens(unit)
 		"crystal_sight":     _equip_crystal_sight(unit)
+		"archmages_bulwark": _equip_archmages_bulwark(unit)
+		"arcblade_focus":    _equip_arcblade_focus(unit)
+		"veilstaff":         _equip_veilstaff(unit)
+		"starcall_prism":    _equip_starcall_prism(unit)
+		"archons_grimoire":  _equip_archons_grimoire(unit)
+		"worldroot_staff":   _equip_worldroot_staff(unit)
+		"lifebinders_staff": _equip_lifebinders_staff(unit)
+		"wardens_cloak":     _equip_wardens_cloak(unit)
 
 
 func on_unequip(custom_id: String, unit) -> void:
@@ -77,12 +98,15 @@ func on_unequip(custom_id: String, unit) -> void:
 	_bloodthirster_acted.erase(unit)
 	_stoneheart_triggered.erase(unit)
 	_oracle_lens_used.erase(unit)
+	_arcblade_pending.erase(unit)
+	_arcblade_active.erase(unit)
+	_archons_grimoire_used.erase(unit)
+	_wardens_cloak_triggered.erase(unit)
+	_starcall_prism_used_this_round.erase(unit)
 	unit.momentum_bonuses.erase("equip_custom_" + custom_id)
 
 
 func _track(custom_id: String, unit, list: Array, callback: Callable) -> void:
-	# Helper: registers 'callback' into 'list' AND remembers it so
-	# on_unequip() can find and remove the exact same Callable later.
 	list.append(callback)
 	var key := custom_id + ":" + str(unit.get_instance_id())
 	if not _registered_callbacks.has(key):
@@ -91,9 +115,6 @@ func _track(custom_id: String, unit, list: Array, callback: Callable) -> void:
 
 # ==============================================================================
 # 1. BLOODTHIRSTER (Blade + Blade)
-# +5 ATK/+5 MATK flat (plain add_stat effects in its JSON, handled by
-# equipment_runtime.gd -- not repeated here). Each round the wearer attacks,
-# gain +1 ATK/+1 MATK, up to +4 total; resets to +0 the round they don't attack.
 # ==============================================================================
 
 func _equip_bloodthirster(unit) -> void:
@@ -105,7 +126,7 @@ func _equip_bloodthirster(unit) -> void:
 		Callable(self, "_bloodthirster_round_tick").bind(unit))
 
 
-func _bloodthirster_on_ability_used(caster, ability, unit) -> void:
+func _bloodthirster_on_ability_used(caster, ability, target_cells: Array, origin_cell: Vector2i, executor, unit) -> void:
 	if caster == unit and ability.base_damage_multiplier > 0:
 		_bloodthirster_acted[unit] = true
 
@@ -123,9 +144,6 @@ func _bloodthirster_round_tick(tick_unit, unit) -> void:
 
 # ==============================================================================
 # 2. VANGUARD'S EDGE (Blade + Armor)
-# +2 ATK/+2 MATK, +2 DEF/+2 MDEF flat. When attacking an enemy whose DEF is
-# lower than the wearer's own DEF, add 33% (rounded up) of that difference
-# as bonus flat damage.
 # ==============================================================================
 
 func _equip_vanguards_edge(unit) -> void:
@@ -143,9 +161,6 @@ func _vanguards_edge_modify_damage(attacker, target, damage: int, is_crit: bool,
 
 # ==============================================================================
 # 3. HEARTPIERCER (Blade + Talisman)
-# +2 ATK/+2 MATK, +5 HP flat. ATK (mirrored to MATK) increases by 1 for
-# every 10 HP the wearer is missing from max. Recalculated at the start of
-# every one of the wearer's own turns.
 # ==============================================================================
 
 func _equip_heartpiercer(unit) -> void:
@@ -166,8 +181,6 @@ func _heartpiercer_recalculate(unit) -> void:
 
 # ==============================================================================
 # 4. SPELLFORGED BLADE (Blade + Spellbook)
-# +2 ATK/+2 MATK, +10 mana flat. Damage dealt increases 10% for every 20
-# mana the wearer is missing from max.
 # ==============================================================================
 
 func _equip_spellforged_blade(unit) -> void:
@@ -185,16 +198,11 @@ func _spellforged_blade_modify_damage(attacker, target, damage: int, is_crit: bo
 	return int(damage * (1.0 + chunks * 0.10))
 
 # ==============================================================================
-# 5. BARBED ARROW (Blade + Monocle) -- intentionally no handler here.
-# +3 ATK/+3 MATK, +20% crit chance, +40% crit damage -- ALL plain add_stat
-# effects, fully handled by equipment_runtime.gd already.
+# 5. BARBED ARROW (Blade + Monocle) -- no handler, plain add_stat effects only.
 # ==============================================================================
 
 # ==============================================================================
 # 6. HEAVY PLATE (Armor + Armor)
-# +5 DEF/+5 MDEF flat to the wearer. Every ally within 1 tile (including
-# diagonals) gets +2 DEF/+2 MDEF for as long as they stay nearby. This is
-# recalculated every round, like a passive mini-aura.
 # ==============================================================================
 
 func _equip_heavy_plate(unit) -> void:
@@ -216,17 +224,12 @@ func _heavy_plate_round_tick(tick_unit, unit) -> void:
 		if dist <= 1:
 			nearby_allies.append(other)
 			other.momentum_bonuses[bonus_key] = {"def": 2, "mdef": 2}
-	# Strip the bonus from anyone who drifted out of range this round.
 	for other in unit.grid_ref.unit_positions.values():
 		if is_instance_valid(other) and other != unit and not other in nearby_allies:
 			other.momentum_bonuses.erase(bonus_key)
 
 # ==============================================================================
 # 7. STONEHEART MAIL (Armor + Talisman)
-# +1 DEF/+1 MDEF, +5 HP flat. The FIRST time the wearer drops to/below 25%
-# of max HP in a battle, gain temporary HP equal to 50% of max HP for 2
-# rounds. Reuses the combat side's EXISTING shield system (apply_shield) --
-# "temporary HP that absorbs damage first" is exactly what a shield already is.
 # ==============================================================================
 
 func _equip_stoneheart_mail(unit) -> void:
@@ -235,7 +238,7 @@ func _equip_stoneheart_mail(unit) -> void:
 		Callable(self, "_stoneheart_mail_on_damage_applied").bind(unit))
 
 
-func _stoneheart_mail_on_damage_applied(attacker, target, actual_damage: int, is_crit: bool, unit) -> void:
+func _stoneheart_mail_on_damage_applied(attacker, target, actual_damage: int, is_crit: bool, damage_type: String, unit) -> void:
 	if target != unit or _stoneheart_triggered.get(unit, false):
 		return
 	var max_hp: int = unit.get_stats().hp
@@ -246,10 +249,6 @@ func _stoneheart_mail_on_damage_applied(attacker, target, actual_damage: int, is
 
 # ==============================================================================
 # 8. AEGIS CODEX (Armor + Spellbook)
-# +1 DEF/+1 MDEF, +10% mana flat. Whenever the wearer uses an ability that
-# has a cooldown, gain +2 DEF/+2 MDEF for 1 round. Built the same way
-# synergy_system.gd builds its own temporary bonuses: construct a
-# StatusEffectData on the fly and apply it.
 # ==============================================================================
 
 func _equip_aegis_codex(unit) -> void:
@@ -257,7 +256,7 @@ func _equip_aegis_codex(unit) -> void:
 		Callable(self, "_aegis_codex_after_ability").bind(unit))
 
 
-func _aegis_codex_after_ability(caster, ability, unit) -> void:
+func _aegis_codex_after_ability(caster, ability, target_cells: Array, origin_cell: Vector2i, executor, unit) -> void:
 	if caster != unit or ability.cooldown_rounds <= 0:
 		return
 	var status := StatusEffectData.new()
@@ -271,10 +270,6 @@ func _aegis_codex_after_ability(caster, ability, unit) -> void:
 
 # ==============================================================================
 # 9. MIRRORPLATE (Armor + Monocle)
-# +1 DEF/+1 MDEF, +15% crit chance flat. On being hit, a chance equal to the
-# wearer's OWN crit chance to reflect 10% of the damage taken back at the
-# attacker as a critical hit (scaled by the wearer's crit damage). Can never
-# reduce the attacker below 1 HP.
 # ==============================================================================
 
 func _equip_mirrorplate(unit) -> void:
@@ -282,23 +277,19 @@ func _equip_mirrorplate(unit) -> void:
 		Callable(self, "_mirrorplate_on_damage_applied").bind(unit))
 
 
-func _mirrorplate_on_damage_applied(attacker, target, actual_damage: int, is_crit: bool, unit) -> void:
+func _mirrorplate_on_damage_applied(attacker, target, actual_damage: int, is_crit: bool, damage_type: String, unit) -> void:
 	if target != unit or attacker == null or not is_instance_valid(attacker):
 		return
 	if randf() * 100.0 >= unit.get_effective_crit_chance():
 		return
 	var crit_mult: float = unit.get_effective_crit_damage() / 100.0
 	var reflect := int(actual_damage * 0.10 * crit_mult)
-	reflect = min(reflect, attacker.current_hp - 1)   # never lethal
+	reflect = min(reflect, attacker.current_hp - 1)
 	if reflect > 0:
 		attacker.take_damage(reflect, "true")
 
 # ==============================================================================
 # 10. VITAL BLOOM (Talisman + Talisman)
-# No ATK/DEF -- pure defense. Gain temporary HP equal to 2% of max HP at the
-# start of every round; it always REPLACES the previous amount rather than
-# stacking (reusing apply_shield(), which already overwrites instead of
-# adding when called again on the same unit).
 # ==============================================================================
 
 func _equip_vital_bloom(unit) -> void:
@@ -313,8 +304,6 @@ func _vital_bloom_round_tick(tick_unit, unit) -> void:
 
 # ==============================================================================
 # 11. SOULWEAVER CHARM (Talisman + Spellbook)
-# +5 HP, +15 mana flat. Whenever the wearer spends mana, heal 2% of max HP
-# for every 10 mana spent (rounded UP to the next whole "chunk" of 10).
 # ==============================================================================
 
 func _equip_soulweaver_charm(unit) -> void:
@@ -329,17 +318,15 @@ func _soulweaver_charm_on_mana_spent(spender, amount: int, unit) -> void:
 	unit.heal(chunks * int(ceil(unit.get_stats().hp * 0.02)))
 
 # ==============================================================================
-# 12. BLOODY MANTLE (Talisman + Monocle)
-# Upon dealing a critical hit, gain temporary HP equal to 25% of the
-# wearer's ATK (rounded down).
+# 12. BLOODY VIAL (Talisman + Monocle) -- renamed from "Bloody Mantle".
 # ==============================================================================
 
-func _equip_bloody_mantle(unit) -> void:
-	_track("bloody_mantle", unit, CombatHooks.on_damage_applied_reactions,
-		Callable(self, "_bloody_mantle_on_damage_applied").bind(unit))
+func _equip_bloody_vial(unit) -> void:
+	_track("bloody_vial", unit, CombatHooks.on_damage_applied_reactions,
+		Callable(self, "_bloody_vial_on_damage_applied").bind(unit))
 
 
-func _bloody_mantle_on_damage_applied(attacker, target, actual_damage: int, is_crit: bool, unit) -> void:
+func _bloody_vial_on_damage_applied(attacker, target, actual_damage: int, is_crit: bool, damage_type: String, unit) -> void:
 	if attacker != unit or not is_crit:
 		return
 	var temp_hp := int(floor(unit.get_effective_atk() * 0.25))
@@ -348,8 +335,6 @@ func _bloody_mantle_on_damage_applied(attacker, target, actual_damage: int, is_c
 
 # ==============================================================================
 # 13. SOUL JAR (Spellbook + Spellbook)
-# Whenever an ENEMY of the wearer dies within 5 tiles of the wearer, restore
-# 5% (rounded up) of the wearer's max mana, up to their maximum.
 # ==============================================================================
 
 func _equip_soul_jar(unit) -> void:
@@ -367,8 +352,6 @@ func _soul_jar_on_unit_died(dead_unit, unit) -> void:
 
 # ==============================================================================
 # 14. ORACLE'S LENS (Spellbook + Monocle)
-# +10 mana, +10% crit chance flat. The FIRST spell-type ability the wearer
-# casts each battle gets +50% crit chance, one time only.
 # ==============================================================================
 
 func _equip_oracles_lens(unit) -> void:
@@ -385,7 +368,7 @@ func _oracles_lens_before_ability(caster, ability, unit) -> void:
 	unit.momentum_bonuses["equip_custom_oracles_lens_temp"] = {"crit_chance": 50.0}
 
 
-func _oracles_lens_after_ability(caster, ability, unit) -> void:
+func _oracles_lens_after_ability(caster, ability, target_cells: Array, origin_cell: Vector2i, executor, unit) -> void:
 	if caster != unit:
 		return
 	if unit.momentum_bonuses.has("equip_custom_oracles_lens_temp"):
@@ -394,8 +377,6 @@ func _oracles_lens_after_ability(caster, ability, unit) -> void:
 
 # ==============================================================================
 # 15. CRYSTAL SIGHT (Monocle + Monocle)
-# +20% crit chance flat. Critical hits made by the wearer ignore 25% of the
-# target's effective DEF for that hit.
 # ==============================================================================
 
 func _equip_crystal_sight(unit) -> void:
@@ -406,9 +387,218 @@ func _equip_crystal_sight(unit) -> void:
 func _crystal_sight_modify_damage(attacker, target, damage: int, is_crit: bool, unit) -> int:
 	if attacker != unit or not is_crit:
 		return damage
-	# We only receive the FINAL damage number here, not the raw ATK/DEF used
-	# to build it -- so this approximates "ignore 25% of DEF" by adding back
-	# 25% of the target's effective DEF as flat bonus damage. Good enough for
-	# most cases; for an exact recompute you'd extend the hook signature to
-	# pass atk/def through instead of just the final number.
 	return damage + int(target.get_effective_def() * 0.25)
+
+# ==============================================================================
+# 16. ARCHMAGE'S BULWARK (Armor + Staff)
+# ==============================================================================
+
+func _equip_archmages_bulwark(unit) -> void:
+	_track("archmages_bulwark", unit, CombatHooks.on_mana_spent,
+		Callable(self, "_archmages_bulwark_on_mana_spent").bind(unit))
+
+
+func _archmages_bulwark_on_mana_spent(spender, amount: int, unit) -> void:
+	if spender != unit or amount <= 0:
+		return
+	if unit.grid_ref != null:
+		unit.grid_ref.apply_shield(unit, int(ceil(amount * 0.25)), 1)
+
+# ==============================================================================
+# 17. ARCBLADE FOCUS (Blade + Staff)
+# ==============================================================================
+
+func _equip_arcblade_focus(unit) -> void:
+	_arcblade_pending[unit] = {}
+	_arcblade_active[unit] = 1.0
+	_track("arcblade_focus", unit, CombatHooks.before_ability_used,
+		Callable(self, "_arcblade_focus_before_ability").bind(unit))
+	_track("arcblade_focus", unit, CombatHooks.after_ability_used,
+		Callable(self, "_arcblade_focus_after_ability").bind(unit))
+	_track("arcblade_focus", unit, CombatHooks.outgoing_damage_modifiers,
+		Callable(self, "_arcblade_focus_modify_damage").bind(unit))
+
+
+func _arcblade_focus_before_ability(caster, ability, unit) -> void:
+	if caster != unit:
+		return
+	var pending: Dictionary = _arcblade_pending.get(unit, {})
+	if pending.get("type", "") == ability.ability_type:
+		_arcblade_active[unit] = float(pending.get("multiplier", 1.0))
+		_arcblade_pending[unit] = {}
+	else:
+		_arcblade_active[unit] = 1.0
+
+
+func _arcblade_focus_after_ability(caster, ability, target_cells: Array, origin_cell: Vector2i, executor, unit) -> void:
+	if caster != unit:
+		return
+	_arcblade_active[unit] = 1.0
+	if ability.ability_type == "spell":
+		_arcblade_pending[unit] = {"type": "basic_attack", "multiplier": 1.5}
+	elif ability.ability_type == "basic_attack":
+		_arcblade_pending[unit] = {"type": "spell", "multiplier": 1.25}
+
+
+func _arcblade_focus_modify_damage(attacker, target, damage: int, is_crit: bool, unit) -> int:
+	if attacker != unit:
+		return damage
+	var mult: float = _arcblade_active.get(unit, 1.0)
+	if mult == 1.0:
+		return damage
+	return int(damage * mult)
+
+# ==============================================================================
+# 18. VEILSTAFF (Staff + Mantle)
+# +2 MATK, +3 MDEF flat. Whenever the wearer takes MAGIC damage, restore
+# mana equal to 50% of the attacker's MATK (rounded up).
+# Now exact: damage_type is checked directly instead of firing on any hit.
+# ==============================================================================
+
+func _equip_veilstaff(unit) -> void:
+	_track("veilstaff", unit, CombatHooks.on_damage_applied_reactions,
+		Callable(self, "_veilstaff_on_damage_applied").bind(unit))
+
+
+func _veilstaff_on_damage_applied(attacker, target, actual_damage: int, is_crit: bool, damage_type: String, unit) -> void:
+	if target != unit or attacker == null or not is_instance_valid(attacker):
+		return
+	if damage_type != "magical":
+		return
+	unit.restore_mana(int(ceil(attacker.get_effective_matk() * 0.5)))
+
+# ==============================================================================
+# 19. STARCALL PRISM (Staff + Monocle)
+# +2 MATK, +15% crit chance flat. When casting a spell or ability, a chance
+# equal to half the wearer's crit chance to immediately cast it again on the
+# same target/area at no cost. Once per round.
+# Now exact: genuinely re-invokes AbilityExecutor.execute_ability() with the
+# same target_cells, then refunds whatever mana that recast spent (so it
+# nets out to free). Recursion is safe: the "used this round" flag is set
+# BEFORE the recast runs, so the recast's own after_ability_used firing
+# can't proc Starcall Prism a second time.
+# ==============================================================================
+
+func _equip_starcall_prism(unit) -> void:
+	_starcall_prism_used_this_round[unit] = false
+	_track("starcall_prism", unit, CombatHooks.on_unit_round_tick,
+		Callable(self, "_starcall_prism_round_tick").bind(unit))
+	_track("starcall_prism", unit, CombatHooks.after_ability_used,
+		Callable(self, "_starcall_prism_after_ability").bind(unit))
+
+
+func _starcall_prism_round_tick(tick_unit, unit) -> void:
+	if tick_unit == unit:
+		_starcall_prism_used_this_round[unit] = false
+
+
+func _starcall_prism_after_ability(caster, ability, target_cells: Array, origin_cell: Vector2i, executor, unit) -> void:
+	if caster != unit or _starcall_prism_used_this_round.get(unit, false):
+		return
+	if ability.ability_type != "spell" and ability.ability_type != "ability":
+		return
+	if executor == null or not executor.has_method("execute_ability"):
+		return
+	if randf() * 100.0 >= unit.get_effective_crit_chance() * 0.5:
+		return
+
+	_starcall_prism_used_this_round[unit] = true   # set BEFORE recasting -- see note above
+
+	var mana_before_recast: int = unit.current_mana
+	executor.execute_ability(caster, ability, target_cells, origin_cell)
+	if is_instance_valid(unit):
+		var spent: int = mana_before_recast - unit.current_mana
+		if spent > 0:
+			unit.restore_mana(spent)
+
+# ==============================================================================
+# 20. ARCHON'S GRIMOIRE (Staff + Spellbook)
+# ==============================================================================
+
+func _equip_archons_grimoire(unit) -> void:
+	_archons_grimoire_used[unit] = false
+	_track("archons_grimoire", unit, CombatHooks.after_ability_used,
+		Callable(self, "_archons_grimoire_after_ability").bind(unit))
+
+
+func _archons_grimoire_after_ability(caster, ability, target_cells: Array, origin_cell: Vector2i, executor, unit) -> void:
+	if caster != unit or _archons_grimoire_used.get(unit, false):
+		return
+	if ability.mana_cost > 0:
+		unit.restore_mana(ability.mana_cost)
+	_archons_grimoire_used[unit] = true
+
+# ==============================================================================
+# 21. WORLDROOT STAFF (Staff + Staff)
+# ==============================================================================
+
+func _equip_worldroot_staff(unit) -> void:
+	_track("worldroot_staff", unit, CombatHooks.after_ability_used,
+		Callable(self, "_worldroot_staff_after_ability").bind(unit))
+
+
+func _worldroot_staff_after_ability(caster, ability, target_cells: Array, origin_cell: Vector2i, executor, unit) -> void:
+	if caster != unit or ability.ability_type != "spell" or ability.mana_cost <= 0:
+		return
+	if randf() < 0.5:
+		unit.restore_mana(ability.mana_cost)
+
+# ==============================================================================
+# 22. LIFEBINDER'S STAFF (Staff + Talisman)
+# +2 MATK, +6 HP flat. Whenever the wearer spends mana to target an ally
+# with a spell, that ally gains 5 temporary HP for 1 round.
+# Now exact: resolves the REAL units hit via target_cells + grid_ref,
+# instead of guessing from adjacency.
+# ==============================================================================
+
+func _equip_lifebinders_staff(unit) -> void:
+	_track("lifebinders_staff", unit, CombatHooks.after_ability_used,
+		Callable(self, "_lifebinders_staff_after_ability").bind(unit))
+
+
+func _lifebinders_staff_after_ability(caster, ability, target_cells: Array, origin_cell: Vector2i, executor, unit) -> void:
+	if caster != unit or ability.ability_type != "spell" or ability.mana_cost <= 0:
+		return
+	if ability.affects_team != "allies" and ability.affects_team != "all":
+		return
+	if unit.grid_ref == null:
+		return
+	for cell in target_cells:
+		var target = unit.grid_ref.get_unit_at(cell)
+		if target != null and is_instance_valid(target) and target.is_player_unit == unit.is_player_unit:
+			unit.grid_ref.apply_shield(target, 5, 1)
+
+# ==============================================================================
+# 23. WARDEN'S CLOAK (Armor + Mantle)
+# ==============================================================================
+
+func _equip_wardens_cloak(unit) -> void:
+	_wardens_cloak_triggered[unit] = false
+	_track("wardens_cloak", unit, CombatHooks.on_unit_round_tick,
+		Callable(self, "_wardens_cloak_round_tick").bind(unit))
+	_track("wardens_cloak", unit, CombatHooks.on_damage_applied_reactions,
+		Callable(self, "_wardens_cloak_on_damage_applied").bind(unit))
+
+
+func _wardens_cloak_round_tick(tick_unit, unit) -> void:
+	if tick_unit == unit:
+		_wardens_cloak_triggered[unit] = false
+
+
+func _wardens_cloak_on_damage_applied(attacker, target, actual_damage: int, is_crit: bool, damage_type: String, unit) -> void:
+	if target != unit or _wardens_cloak_triggered.get(unit, false):
+		return
+	_wardens_cloak_triggered[unit] = true
+
+	var refund := int(ceil(actual_damage * 0.25))
+	if refund > 0:
+		unit.heal(refund)
+
+	var status := StatusEffectData.new()
+	status.id = "wardens_cloak_buff"
+	status.display_name = "Warden's Cloak"
+	status.duration_rounds = 1
+	status.can_stack = false
+	status.def_modifier = 3
+	status.mdef_modifier = 3
+	unit.apply_status(status)

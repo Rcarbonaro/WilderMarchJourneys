@@ -1,0 +1,11 @@
+{
+  "id": "global_difficulty",
+  "stat_growth_per_stage": {
+    "hp": 1.5,
+    "atk": 0.4,
+    "matk": 0.4,
+    "def": 0.2,
+    "mdef": 0.2
+  },
+  "default_elite_stat_multiplier": 1.0
+}

@@ -402,7 +402,7 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 			await _launch_projectile(caster, ability, target_cells[0])
 		else:
 			await _play_aoe_vfx(caster, ability, target_cells, origin_cell)
-	CombatHooks.run_after_ability_used(caster, ability)
+	CombatHooks.run_after_ability_used(caster, ability, target_cells, origin_cell, self)
 
 # ── DAMAGE APPLICATION (with Shield / Thorns / Guardian / Tether / Crit Overload) ──
 
@@ -467,7 +467,7 @@ func _apply_damage_with_effects(caster, target, ability: AbilityData, damage: in
 	var hp_before_damage: int = target.current_hp
 	var actual_damage = target.take_damage(damage, ability.damage_type, _last_hit_was_crit, true, caster)
 	AudioManager.play_sfx(ability.impact_sfx)
-	CombatHooks.run_damage_applied_reactions(caster, target, actual_damage, _last_hit_was_crit)
+	CombatHooks.run_damage_applied_reactions(caster, target, actual_damage, _last_hit_was_crit, ability.damage_type)
 
 	# -- 3.5 CRIT OVERLOAD ─────────────────────────────────────────────────────
 	# If this hit was a critical strike AND the caster has an active aura with

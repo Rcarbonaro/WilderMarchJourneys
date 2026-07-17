@@ -1,0 +1,13 @@
+{
+  "id": "archons_grimoire",
+  "name": "Archon's Grimoire",
+  "description": "+3 MATK, +20 mana. The first spell or ability used each battle costs no mana.",
+  "type": "advanced",
+  "subtype": "staff_spellbook",
+  "tags": ["magic"],
+  "effects": [
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "matk", "amount": 3, "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "mana", "amount": 20, "value_mode": "flat", "scope": "permanent" },
+    { "type": "custom", "custom_id": "archons_grimoire" }
+  ]
+}
