@@ -1,7 +1,7 @@
 {
   "id": "aegis_codex",
   "name": "Aegis Codex",
-  "description": "+1 DEF, +1 MDEF, +10% mana. When this unit uses an ability with a cooldown, gain +2 DEF/+2 MDEF for 1 round.",
+  "description": "+1 DEF, +1 MDEF, +10% mana. When this unit uses an ability with a mana cost or cooldown, gain +2 DEF/+2 MDEF for 1 round.",
   "type": "advanced",
   "subtype": "armor_spellbook",
   "tags": ["magic", "tank"],

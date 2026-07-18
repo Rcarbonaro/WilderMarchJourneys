@@ -270,6 +270,7 @@ func find_spawn_tables_for(biome: String, stage_type: String, stage_index: int) 
 	# Returns every spawn table whose biome/stage_type/range matches. There
 	# can be more than one (several "combat" tables for forest stages 1-10);
 	# ScalingEngine picks one at random.
+	var stage_within_biome := get_stage_within_biome(stage_index)
 	var matches := []
 	for id in spawn_tables:
 		var table = spawn_tables[id]
@@ -279,7 +280,7 @@ func find_spawn_tables_for(biome: String, stage_type: String, stage_index: int) 
 			continue
 		var min_s = int(table.get("stage_min", 1))
 		var max_s = int(table.get("stage_max", 999))
-		if stage_index >= min_s and stage_index <= max_s:
+		if stage_within_biome >= min_s and stage_within_biome <= max_s:   
 			matches.append(table)
 	return matches
 
@@ -288,6 +289,9 @@ func get_forging_recipe(subtype_a: String, subtype_b: String) -> Dictionary:
 
 func get_game_mode_config(mode_id: String) -> Dictionary:
 	return game_modes.get(mode_id, {})
+
+func get_stage_within_biome(stage_index: int) -> int:   
+	return ((stage_index - 1) % 10) + 1
 
 func get_stage_type(stage_index: int) -> String:
 	# Stage TYPE (combat/encounter/subboss/special_combat/boss) repeats every

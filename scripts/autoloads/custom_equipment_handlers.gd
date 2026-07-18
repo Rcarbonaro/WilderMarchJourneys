@@ -58,6 +58,8 @@ func has_handler(custom_id: String) -> bool:
 		"oracles_lens", "crystal_sight",
 		"archmages_bulwark", "arcblade_focus", "veilstaff", "starcall_prism",
 		"archons_grimoire", "worldroot_staff", "lifebinders_staff", "wardens_cloak",
+		"shadowcloak", "ethereal_shroud", "guardian_mantle", "phantom_veil",
+		"whispercloak",
 	]
 
 
@@ -85,6 +87,11 @@ func on_equip(custom_id: String, unit) -> void:
 		"worldroot_staff":   _equip_worldroot_staff(unit)
 		"lifebinders_staff": _equip_lifebinders_staff(unit)
 		"wardens_cloak":     _equip_wardens_cloak(unit)
+		"shadowcloak":       _equip_shadowcloak(unit)
+		"ethereal_shroud":   _equip_ethereal_shroud(unit)
+		"guardian_mantle":   _equip_guardian_mantle(unit)
+		"phantom_veil":      _equip_phantom_veil(unit)
+		"whispercloak":      _equip_whispercloak(unit)
 
 
 func on_unequip(custom_id: String, unit) -> void:
@@ -151,7 +158,7 @@ func _equip_vanguards_edge(unit) -> void:
 		Callable(self, "_vanguards_edge_modify_damage").bind(unit))
 
 
-func _vanguards_edge_modify_damage(attacker, target, damage: int, is_crit: bool, unit) -> int:
+func _vanguards_edge_modify_damage(attacker, target, damage: int, is_crit: bool, damage_type: String, unit) -> int:
 	if attacker != unit:
 		return damage
 	var def_diff: int = unit.get_effective_def() - target.get_effective_def()
@@ -188,7 +195,7 @@ func _equip_spellforged_blade(unit) -> void:
 		Callable(self, "_spellforged_blade_modify_damage").bind(unit))
 
 
-func _spellforged_blade_modify_damage(attacker, target, damage: int, is_crit: bool, unit) -> int:
+func _spellforged_blade_modify_damage(attacker, target, damage: int, is_crit: bool, damage_type: String, unit) -> int:
 	if attacker != unit:
 		return damage
 	var missing_mana: int = unit.get_stats().mana - unit.current_mana
@@ -384,7 +391,7 @@ func _equip_crystal_sight(unit) -> void:
 		Callable(self, "_crystal_sight_modify_damage").bind(unit))
 
 
-func _crystal_sight_modify_damage(attacker, target, damage: int, is_crit: bool, unit) -> int:
+func _crystal_sight_modify_damage(attacker, target, damage: int, is_crit: bool, damage_type: String, unit) -> int:
 	if attacker != unit or not is_crit:
 		return damage
 	return damage + int(target.get_effective_def() * 0.25)
@@ -440,7 +447,7 @@ func _arcblade_focus_after_ability(caster, ability, target_cells: Array, origin_
 		_arcblade_pending[unit] = {"type": "spell", "multiplier": 1.25}
 
 
-func _arcblade_focus_modify_damage(attacker, target, damage: int, is_crit: bool, unit) -> int:
+func _arcblade_focus_modify_damage(attacker, target, damage: int, is_crit: bool, damage_type: String, unit) -> int:
 	if attacker != unit:
 		return damage
 	var mult: float = _arcblade_active.get(unit, 1.0)
@@ -602,3 +609,141 @@ func _wardens_cloak_on_damage_applied(attacker, target, actual_damage: int, is_c
 	status.def_modifier = 3
 	status.mdef_modifier = 3
 	unit.apply_status(status)
+
+# ==============================================================================
+# 24. SHADOWCLOAK (Blade + Mantle)  -- NEW
+# +2 ATK, +2 MDEF flat. After defeating an enemy, gain +33% damage dealt and
+# +1 MOV for 1 round.
+#
+# IMPLEMENTATION NOTE: rather than using the on_unit_died hook (which only
+# passes the dead unit, not who killed it), this checks target.current_hp
+# right inside the wearer's OWN outgoing_damage_modifiers callback --
+# if the hit we just dealt brought the target to 0 or below, that's a kill,
+# with no extra hook wiring needed.
+# ==============================================================================
+
+func _equip_shadowcloak(unit) -> void:
+	_track("shadowcloak", unit, CombatHooks.outgoing_damage_modifiers,
+		Callable(self, "_shadowcloak_modify_damage").bind(unit))
+
+
+func _shadowcloak_modify_damage(attacker, target, damage: int, is_crit: bool, damage_type: String, unit) -> int:
+	if attacker != unit or not is_instance_valid(target):
+		return damage
+	if target.current_hp - damage <= 0:
+		var status := StatusEffectData.new()
+		status.id = "shadowcloak_buff"
+		status.display_name = "Shadowcloak"
+		status.duration_rounds = 1
+		status.can_stack = false
+		status.damage_dealt_modifier = 0.33
+		status.mov_modifier = 1
+		unit.apply_status(status)
+	return damage
+
+# ==============================================================================
+# 25. ETHEREAL SHROUD (Mantle + Mantle)  -- NEW
+# +5 MDEF flat. Whenever targeted by a magical attack, 25% chance to absorb
+# it entirely (take no damage) and gain 10 temporary HP for 2 rounds.
+# ==============================================================================
+
+func _equip_ethereal_shroud(unit) -> void:
+	_track("ethereal_shroud", unit, CombatHooks.outgoing_damage_modifiers,
+		Callable(self, "_ethereal_shroud_modify_damage").bind(unit))
+
+
+func _ethereal_shroud_modify_damage(attacker, target, damage: int, is_crit: bool, damage_type: String, unit) -> int:
+	if target != unit or damage_type != "magical":
+		return damage
+	if randf() < 0.25:
+		if unit.grid_ref != null:
+			unit.grid_ref.apply_shield(unit, 10, 2)
+		return 0
+	return damage
+
+# ==============================================================================
+# 26. GUARDIAN MANTLE (Mantle + Talisman)  -- NEW
+# +2 MDEF, +8 HP flat. Whenever an adjacent ally would take magical damage,
+# redirect 50% of that damage to the wearer instead.
+#
+# IMPLEMENTATION NOTE: the redirected half is applied straight to the wearer
+# via take_damage(), bypassing outgoing_damage_modifiers/
+# on_damage_applied_reactions for that redirected chunk (those two hooks are
+# only invoked from ability_executor.gd's explicit call sites, not from
+# take_damage() itself) -- so other gear the wearer has (Mirrorplate,
+# Stoneheart Mail, etc.) won't react to this specific redirected damage.
+# Safe either way: no risk of a hook-recursion loop.
+# ==============================================================================
+
+func _equip_guardian_mantle(unit) -> void:
+	_track("guardian_mantle", unit, CombatHooks.outgoing_damage_modifiers,
+		Callable(self, "_guardian_mantle_modify_damage").bind(unit))
+
+
+func _guardian_mantle_modify_damage(attacker, target, damage: int, is_crit: bool, damage_type: String, unit) -> int:
+	if target == unit or damage_type != "magical" or not is_instance_valid(target):
+		return damage
+	if target.is_player_unit != unit.is_player_unit or unit.grid_ref == null:
+		return damage
+	var dist = max(abs(target.grid_position.x - unit.grid_position.x),
+					abs(target.grid_position.y - unit.grid_position.y))
+	if dist > 1:
+		return damage
+
+	var redirected := int(damage * 0.5)
+	if redirected > 0:
+		unit.take_damage(redirected, damage_type)
+	return damage - redirected
+
+# ==============================================================================
+# 27. PHANTOM VEIL (Mantle + Monocle)  -- NEW
+# +2 MDEF, +15% crit chance flat. Whenever the wearer lands a critical hit,
+# the target deals 20% less damage for 1 round.
+# ==============================================================================
+
+func _equip_phantom_veil(unit) -> void:
+	_track("phantom_veil", unit, CombatHooks.on_damage_applied_reactions,
+		Callable(self, "_phantom_veil_on_damage_applied").bind(unit))
+
+
+func _phantom_veil_on_damage_applied(attacker, target, actual_damage: int, is_crit: bool, damage_type: String, unit) -> void:
+	if attacker != unit or not is_crit or not is_instance_valid(target):
+		return
+	var status := StatusEffectData.new()
+	status.id = "phantom_veil_debuff"
+	status.display_name = "Phantom Veil"
+	status.duration_rounds = 1
+	status.can_stack = false
+	status.damage_dealt_modifier = -0.20
+	target.apply_status(status)
+
+# ==============================================================================
+# 28. WHISPERCLOAK (Mantle + Spellbook)  -- NEW
+# +2 MDEF, +15 mana flat. Whenever the wearer casts a spell that costs mana,
+# every enemy within 3 tiles deals 20% less damage for 3 rounds.
+# ==============================================================================
+
+func _equip_whispercloak(unit) -> void:
+	_track("whispercloak", unit, CombatHooks.after_ability_used,
+		Callable(self, "_whispercloak_after_ability").bind(unit))
+
+
+func _whispercloak_after_ability(caster, ability, target_cells: Array, origin_cell: Vector2i, executor, unit) -> void:
+	if caster != unit or ability.ability_type != "spell" or ability.mana_cost <= 0:
+		return
+	if unit.grid_ref == null:
+		return
+	for cell in unit.grid_ref.unit_positions:
+		var other = unit.grid_ref.unit_positions[cell]
+		if not is_instance_valid(other) or other.is_player_unit == unit.is_player_unit:
+			continue
+		var dist = max(abs(other.grid_position.x - unit.grid_position.x),
+						abs(other.grid_position.y - unit.grid_position.y))
+		if dist <= 3:
+			var status := StatusEffectData.new()
+			status.id = "whispercloak_debuff"
+			status.display_name = "Whispercloak"
+			status.duration_rounds = 3
+			status.can_stack = false
+			status.damage_dealt_modifier = -0.20
+			other.apply_status(status)

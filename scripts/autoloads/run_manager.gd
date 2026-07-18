@@ -131,6 +131,28 @@ func get_current_stage_type() -> String:
 	return ContentLoader.get_stage_type(current_run.stage_index)
 
 
+# ADDED -- these three were being called from deployment_manager.gd's Scout
+# Ahead feature (get_upcoming_stage_index/get_stage_type_for_index) and its
+# button label (get_scout_cost), but were never actually defined anywhere.
+# All three are thin wrappers around functionality that already exists
+# elsewhere (ContentLoader.get_stage_type(), current_run.stage_index).
+
+func get_upcoming_stage_index() -> int:
+	if current_run == null:
+		return 0
+	return current_run.stage_index + 1
+
+
+func get_stage_type_for_index(stage_index: int) -> String:
+	return ContentLoader.get_stage_type(stage_index)
+
+
+const SCOUT_COST := 15   # gold cost to scout ahead -- tune freely
+
+func get_scout_cost() -> int:
+	return SCOUT_COST
+
+
 func get_difficulty() -> String:
 	if current_run == null:
 		return "normal"

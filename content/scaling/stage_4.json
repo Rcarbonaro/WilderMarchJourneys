@@ -1,8 +1,9 @@
 {
   "id": "stage_4_scaling",
   "stage_index": 2,
-  "elite_chance": 0.34,
-  "max_elites": 1,
+  "elite_chance": 0.3,
+  "min_elites": 1,
+  "max_elites": 2,
   "elite_stat_multiplier": 1.0,
   "base_modifiers": [
     { "type": "add_stat", "stat": "atk", "amount": 1 },

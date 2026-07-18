@@ -1,0 +1,127 @@
+[gd_scene format=3 uid="uid://bksrgi6ba4saq"]
+
+[ext_resource type="Script" uid="uid://2gi1qfdkqlkt" path="res://scripts/deployment/deployment_manager.gd" id="1_0c7r6"]
+
+[node name="DeploymentScene" type="Node2D" unique_id=1391455873]
+script = ExtResource("1_0c7r6")
+
+[node name="StageLabel" type="Label" parent="." unique_id=1917124124]
+offset_left = 662.0
+offset_right = 1404.0
+offset_bottom = 137.0
+
+[node name="PreviewLayer" type="Node2D" parent="." unique_id=1948338457]
+position = Vector2(969, 400)
+
+[node name="RosterScroll" type="ScrollContainer" parent="." unique_id=829570540]
+offset_left = 6.0
+offset_top = 64.0
+offset_right = 378.0
+offset_bottom = 613.0
+
+[node name="RosterList" type="VBoxContainer" parent="RosterScroll" unique_id=406574603]
+layout_mode = 2
+
+[node name="EquipPanel" type="Control" parent="." unique_id=276356741]
+layout_mode = 3
+anchors_preset = 0
+offset_top = 737.0
+offset_right = 387.0
+offset_bottom = 1070.0
+
+[node name="SelectedUnitLabel" type="Label" parent="EquipPanel" unique_id=2115706909]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="SlotsContainer" type="HBoxContainer" parent="EquipPanel" unique_id=1757267150]
+layout_mode = 0
+offset_top = 39.0
+offset_right = 164.0
+offset_bottom = 61.0
+
+[node name="ForgeRow" type="HBoxContainer" parent="EquipPanel" unique_id=1818521909]
+layout_mode = 0
+offset_top = 171.0
+offset_right = 393.0
+offset_bottom = 229.0
+
+[node name="ForgeSlotALabel" type="Label" parent="EquipPanel/ForgeRow" unique_id=156430300]
+layout_mode = 2
+text = "A: (empty)"
+
+[node name="SetSlotAButton" type="Button" parent="EquipPanel/ForgeRow" unique_id=444542429]
+layout_mode = 2
+text = "Set Slot A"
+
+[node name="ForgeSlotBLabel" type="Label" parent="EquipPanel/ForgeRow" unique_id=15243161]
+layout_mode = 2
+text = "B: (empty)"
+
+[node name="SetSlotBButton" type="Button" parent="EquipPanel/ForgeRow" unique_id=1359118948]
+layout_mode = 2
+text = "Set Slot B"
+
+[node name="ForgeButton" type="Button" parent="EquipPanel/ForgeRow" unique_id=808891739]
+layout_mode = 2
+text = "Forge"
+
+[node name="ForgeStatusLabel" type="Label" parent="EquipPanel/ForgeRow" unique_id=1897158691]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="EquipPanel" unique_id=1693607309]
+layout_mode = 0
+offset_left = 96.0
+offset_top = 141.0
+offset_right = 308.0
+offset_bottom = 164.0
+text = "Forge Advanced Equipment"
+
+[node name="InventoryScroll" type="ScrollContainer" parent="." unique_id=993765927]
+offset_left = 444.0
+offset_top = 16.0
+offset_right = 593.0
+offset_bottom = 613.0
+
+[node name="InventoryList" type="VBoxContainer" parent="InventoryScroll" unique_id=1241574980]
+layout_mode = 2
+
+[node name="ShopButton" type="Button" parent="." unique_id=1501529511]
+offset_left = 1277.0
+offset_top = 882.0
+offset_right = 1420.0
+offset_bottom = 982.0
+text = "Shop"
+
+[node name="ContinueButton" type="Button" parent="." unique_id=1073666761]
+offset_left = 1642.0
+offset_top = 902.0
+offset_right = 1772.0
+offset_bottom = 979.0
+text = "Continue"
+
+[node name="ScoutButton" type="Button" parent="." unique_id=1050116355]
+offset_left = 882.0
+offset_top = 882.0
+offset_right = 1037.0
+offset_bottom = 986.0
+
+[node name="ScoutPanel" type="PanelContainer" parent="." unique_id=1057363677]
+offset_left = 1457.0
+offset_top = 51.0
+offset_right = 1897.0
+offset_bottom = 725.0
+
+[node name="ScoutMargin" type="MarginContainer" parent="ScoutPanel" unique_id=233937037]
+layout_mode = 2
+
+[node name="ScoutVBox" type="VBoxContainer" parent="ScoutPanel/ScoutMargin" unique_id=517428427]
+layout_mode = 2
+
+[node name="ScoutText" type="RichTextLabel" parent="ScoutPanel/ScoutMargin/ScoutVBox" unique_id=1699465534]
+layout_mode = 2
+fit_content = true
+
+[node name="ScoutCloseButton" type="Button" parent="ScoutPanel/ScoutMargin/ScoutVBox" unique_id=1380070234]
+layout_mode = 2
+text = "Close"

@@ -30,12 +30,22 @@
 #   added -- this file only adds new, optional notifications; it changes no
 #   existing behaviour.
 
+# CHANGED (this pass, round 2): outgoing_damage_modifiers now ALSO receives
+# damage_type, for the same reason on_damage_applied_reactions got it --
+# Ethereal Shroud and Guardian Mantle both need to know "is this magical?"
+# BEFORE damage is applied (to block/redirect it), not after. Every existing
+# handler on this hook (Vanguard's Edge, Spellforged Blade, Crystal Sight,
+# Arcblade Focus) has had its signature updated in custom_equipment_handlers.gd
+# to match -- if you have any other custom code registered here, it needs
+# the extra parameter added too, even if unused, or Callable.call() errors.
+
 extends Node
 
-# func(attacker, target, damage: int, is_crit: bool) -> int
+# func(attacker, target, damage: int, is_crit: bool, damage_type: String) -> int
 # Receives the damage about to be dealt and returns the (possibly modified)
 # damage that should actually be applied. Used by Vanguard's Edge,
-# Spellforged Blade, and Crystal Sight.
+# Spellforged Blade, Crystal Sight, Arcblade Focus, Ethereal Shroud, and
+# Guardian Mantle.
 var outgoing_damage_modifiers: Array[Callable] = []
 
 # func(attacker, target, actual_damage: int, is_crit: bool, damage_type: String) -> void
@@ -69,11 +79,11 @@ var on_mana_spent: Array[Callable] = []
 var on_unit_died: Array[Callable] = []
 
 
-func run_outgoing_damage_modifiers(attacker, target, damage: int, is_crit: bool) -> int:
+func run_outgoing_damage_modifiers(attacker, target, damage: int, is_crit: bool, damage_type: String) -> int:
 	var result := damage
 	for modifier in outgoing_damage_modifiers:
 		if modifier.is_valid():
-			result = modifier.call(attacker, target, result, is_crit)
+			result = modifier.call(attacker, target, result, is_crit, damage_type)
 	return result
 
 
