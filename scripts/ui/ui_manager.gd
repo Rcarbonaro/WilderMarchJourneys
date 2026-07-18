@@ -1111,7 +1111,7 @@ func show_game_victory_popup() -> void:
 	box.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "You have driven back the corruption."
+	subtitle.text = "Congratulations, you have completed the tutorial!"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.add_theme_font_size_override("font_size", 20)
 	box.add_child(subtitle)

@@ -63,7 +63,7 @@ func _build_roster_from_table(table: Dictionary, run_state: RunState) -> Array:
 	var max_elites: int = int(scaling_config.get("max_elites", -1))
 	var min_elites: int = int(scaling_config.get("min_elites", 0))
 	var elite_count: int = 0
-	for guaranteed_entry in roster:   # ADDED -- guaranteed elites count toward the cap too
+	for guaranteed_entry in roster:
 		if _get_enemy_tier(guaranteed_entry.get("enemy_id", "")) == "elite":
 			elite_count += 1
 
@@ -119,6 +119,35 @@ func _build_roster_from_table(table: Dictionary, run_state: RunState) -> Array:
 			roster[idx] = {"enemy_id": chosen_entry.get("enemy_id", ""), "count": 1}
 			elite_count += 1
 
+	# ---- DIFFICULTY SPAWN BONUSES (ADDED) ------------------------------------
+	# Applied AFTER the whole base roster is built, as GUARANTEED extra
+	# enemies on top of everything above -- not mixed into the random roll,
+	# so "hard adds 1 normal enemy" and "nightmare adds 1 elite" are always
+	# true, every single stage, regardless of what that stage's own
+	# elite_chance/max_elites happen to be.
+	var spawn_bonus: Dictionary = ContentLoader.global_difficulty.get("difficulty_spawn_bonus", {}).get(run_state.difficulty, {})
+
+	var bonus_normal: int = int(spawn_bonus.get("bonus_normal_enemies", 0))
+	for i in range(bonus_normal):
+		if normal_pool_indices.is_empty():
+			break
+		var normal_weights := []
+		for idx in normal_pool_indices:
+			normal_weights.append(weights[idx])
+		var chosen_entry = pool[normal_pool_indices[_weighted_pick(normal_weights)]]
+		roster.append({"enemy_id": chosen_entry.get("enemy_id", ""), "count": 1})
+
+	var bonus_elite: int = int(spawn_bonus.get("bonus_elite_enemies", 0))
+	for i in range(bonus_elite):
+		if elite_pool_indices.is_empty():
+			break
+		var elite_weights := []
+		for idx in elite_pool_indices:
+			elite_weights.append(weights[idx])
+		var chosen_entry = pool[elite_pool_indices[_weighted_pick(elite_weights)]]
+		roster.append({"enemy_id": chosen_entry.get("enemy_id", ""), "count": 1})
+		elite_count += 1
+
 	return roster
 
 var _enemy_tier_cache: Dictionary = {}
@@ -148,11 +177,6 @@ func apply_scaling(base_stats: StatsData, run_state: RunState, tier: String = "n
 	scaled.crit_damage = base_stats.crit_damage
 	scaled.mana = base_stats.mana
 
-	# ---- GLOBAL DIFFICULTY CURVE (ADDED) -------------------------------------
-	# A smooth baseline that grows every stage, independent of whether a
-	# per-stage scaling file exists for this stage_index and independent of
-	# which biome occupies this slot -- so it automatically covers every
-	# future stage and every future biome with zero per-stage authoring.
 	var global_config: Dictionary = ContentLoader.global_difficulty
 	var stages_elapsed: int = max(0, run_state.stage_index - 1)
 	if not global_config.is_empty():
@@ -163,7 +187,6 @@ func apply_scaling(base_stats: StatsData, run_state: RunState, tier: String = "n
 		scaled.def  += int(round(float(growth.get("def", 0.0))  * stages_elapsed))
 		scaled.mdef += int(round(float(growth.get("mdef", 0.0)) * stages_elapsed))
 
-	# ---- PER-STAGE SCALING CONFIG (unchanged, now optional per-stage) -------
 	var config := ContentLoader.get_scaling_config(run_state.stage_index)
 	if not config.is_empty():
 		var context := {"run_state": run_state}
@@ -177,12 +200,6 @@ func apply_scaling(base_stats: StatsData, run_state: RunState, tier: String = "n
 			if EffectSystem.evaluate_condition(conditional.get("condition", {}), context):
 				_apply_stat_modifiers(scaled, conditional.get("effects", []))
 
-	# ---- ELITE / BOSS MULTIPLIER ---------------------------------------------
-	# Applied AFTER global growth + per-stage modifiers, so it scales the
-	# fully-modified total. Per-stage "elite_stat_multiplier" wins if that
-	# stage has a config; otherwise falls back to the global config's
-	# "default_elite_stat_multiplier"; otherwise 1.5. This means a stage with
-	# NO authored scaling file yet still gets a sensible elite multiplier.
 	if tier == "elite" or tier == "boss":
 		var elite_mult: float = float(config.get(
 			"elite_stat_multiplier",
@@ -193,6 +210,20 @@ func apply_scaling(base_stats: StatsData, run_state: RunState, tier: String = "n
 		scaled.matk = int(scaled.matk * elite_mult)
 		scaled.def  = int(scaled.def  * elite_mult)
 		scaled.mdef = int(scaled.mdef * elite_mult)
+
+	# ---- DIFFICULTY STAT MULTIPLIER (ADDED) ----------------------------------
+	# Applied LAST, after global growth + per-stage modifiers + elite
+	# multiplier, so it scales the fully-assembled total -- same reasoning
+	# as why the elite multiplier itself is applied last, just one layer
+	# further out. mov/crit_chance/crit_damage/mana deliberately untouched,
+	# matching the elite multiplier's existing behavior.
+	var diff_mult: float = float(global_config.get("difficulty_stat_multiplier", {}).get(run_state.difficulty, 1.0))
+	if diff_mult != 1.0:
+		scaled.hp   = int(scaled.hp   * diff_mult)
+		scaled.atk  = int(scaled.atk  * diff_mult)
+		scaled.matk = int(scaled.matk * diff_mult)
+		scaled.def  = int(scaled.def  * diff_mult)
+		scaled.mdef = int(scaled.mdef * diff_mult)
 
 	return scaled
 

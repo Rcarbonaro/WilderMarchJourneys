@@ -6,6 +6,8 @@
 #   "Draft Mode" -> hands off to DraftScene, where the player spends a gold
 #                   budget to hand-pick their own 4 units.
 #   "Back"       -> returns to the main menu without starting anything.
+# Both Random and Draft now show a difficulty popup first -- see
+# _show_difficulty_popup().
 
 extends Control
 
@@ -13,6 +15,7 @@ const TAROT_PICK_SCENE_PATH := "res://scenes/meta/TarotPickScene.tscn"
 const DRAFT_SCENE_PATH := "res://scenes/meta/DraftScene.tscn"
 const MAIN_MENU_SCENE_PATH := "res://scenes/mainmenu/main_menu.tscn"
 const TEST_ENCOUNTER_SCENE_PATH := "res://scenes/meta/TestEncounterPickScene.tscn"
+const DIFFICULTY_POPUP_SCENE_PATH := "res://scenes/mainmenu/DifficultySelectPopup.tscn"   # ADDED
 
 @onready var random_button: Button = $CenterContainer/VBoxContainer/RandomModeButton
 @onready var draft_button: Button = $CenterContainer/VBoxContainer/DraftModeButton
@@ -28,11 +31,23 @@ func _ready() -> void:
 	AudioManager.wire_all_buttons_in(self)
 
 
+func _show_difficulty_popup(on_chosen: Callable) -> void:   # ADDED
+	var popup = load(DIFFICULTY_POPUP_SCENE_PATH).instantiate()
+	add_child(popup)
+	popup.difficulty_chosen.connect(on_chosen)
+	# cancelled is intentionally not connected to anything -- the popup just
+	# frees itself and the player's back on this screen, nothing to undo yet.
+
+
 func _on_random_pressed() -> void:
-	print("Starting a new run in Random mode...")
+	_show_difficulty_popup(_start_random_run)   # CHANGED -- was the whole body below
+
+
+func _start_random_run(difficulty: String) -> void:   # CHANGED -- was _on_random_pressed's body, now takes difficulty
+	print("Starting a new run in Random mode (difficulty: ", difficulty, ")...")
 	var config := ContentLoader.get_game_mode_config("random")
 
-	RunManager.start_new_run("normal")
+	RunManager.start_new_run(difficulty)   # CHANGED -- was hardcoded "normal"
 	RunManager.current_run.draft_or_random_mode = "random"
 	RunManager.current_run.gold = int(config.get("starting_gold", 10))
 	for equipment_id in config.get("starting_equipment_ids", []):
@@ -62,7 +77,17 @@ func _on_random_pressed() -> void:
 
 
 func _on_draft_pressed() -> void:
-	print("Opening Draft Mode...")
+	_show_difficulty_popup(_start_draft_run)   # CHANGED -- was the whole body below
+
+
+func _start_draft_run(difficulty: String) -> void:   # CHANGED -- was _on_draft_pressed's body, now takes difficulty
+	print("Opening Draft Mode (difficulty: ", difficulty, ")...")
+	# Create the run NOW (rather than letting DraftScene do it later) so its
+	# difficulty is already set -- DraftScene's start_new_run_for_mode()
+	# reads current_run.difficulty if a run already exists, falling back to
+	# "normal" only when it doesn't. Without this, Draft mode would silently
+	# always be "normal" regardless of what was picked here.
+	RunManager.start_new_run(difficulty)   # ADDED
 	get_tree().change_scene_to_file(DRAFT_SCENE_PATH)
 
 

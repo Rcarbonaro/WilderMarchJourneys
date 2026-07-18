@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://r5rh2ummp7q1"]
+
+[ext_resource type="Script" uid="uid://d37imvv51v2a5" path="res://scripts/deployment/deployment_unit_preview.gd" id="1_drgy5"]
+
+[node name="DeploymentUnitPreview" type="Node2D" unique_id=85907526]
+script = ExtResource("1_drgy5")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1293959229]

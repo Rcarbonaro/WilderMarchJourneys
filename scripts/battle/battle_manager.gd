@@ -246,7 +246,6 @@ func _load_unit_data(unit_id: String) -> UnitData:
 
 
 func _spawn_stage_enemies() -> void:
-	# Route to test enemies or real enemies depending on mode.
 	if RunManager.is_test_mode:
 		_spawn_test_enemies(RunManager.test_encounter_index)
 		return
@@ -257,16 +256,17 @@ func _spawn_stage_enemies() -> void:
 		printerr("❌ BattleManager: RunManager.current_run is null — cannot resolve a spawn table.")
 		return
 
-	var roster: Array = ScalingEngine.resolve_spawn_table(RunManager.current_run)
-	if roster.is_empty():
-		printerr("❌ ScalingEngine.resolve_spawn_table() returned nothing — check that a spawn ",
+	# CHANGED: reads the roster StageDirector already resolved (and cached,
+	# if this stage was scouted ahead of time) instead of calling
+	# ScalingEngine.resolve_spawn_table() again -- guarantees the enemies
+	# shown in a scout report are the ones that actually show up here.
+	var content: Dictionary = StageDirector.get_or_generate_stage_content(RunManager.current_run.stage_index)
+	var enemy_roster: Array = content.get("enemies", [])
+	if enemy_roster.is_empty():
+		printerr("❌ StageDirector.get_or_generate_stage_content() returned no enemies — check that a spawn ",
 				 "table exists in content/spawn_tables/ for this biome/stage_type/stage_index.")
 		return
 
-	# battle_scene.gd's _enter_tree() already called MapGenerator.generate_map()
-	# for this exact stage before this function ever runs (child _ready()
-	# always runs after parent _enter_tree() in Godot), so the positions are
-	# already sitting in MapGenerator.last_result.
 	var enemy_spawns: Array = MapGenerator.last_result.get("enemy_spawns", [])
 	if enemy_spawns.is_empty():
 		printerr("⚠️ MapGenerator.last_result has no enemy_spawns — did battle_scene.gd's ",
@@ -276,45 +276,25 @@ func _spawn_stage_enemies() -> void:
 						Vector2i(13, 3), Vector2i(15, 2), Vector2i(18, 8), Vector2i(16, 4)]
 
 	var spawn_index: int = 0
-	for entry in roster:
-		var enemy_id: String = entry.get("enemy_id", "")
-		var copies: int = int(entry.get("count", 1))
-		var path := "res://resources/enemies/" + enemy_id + "_data.tres"
-		if not ResourceLoader.exists(path):
-			printerr("⚠️ Enemy resource not found for id '", enemy_id, "' at ", path, " — skipped.")
-			continue
-		var enemy_data: UnitData = load(path) as UnitData
+	for enemy_data in enemy_roster:
+		if spawn_index >= enemy_spawns.size():
+			printerr("⚠️ Spawn table produced more enemies than there are generated ",
+					 "enemy_spawns cells — remaining enemies skipped. ",
+					 "Consider raising the base enemy spawn cell count in ",
+					 "StageDirector.get_or_generate_stage_content(), or trimming this stage's spawn table.")
+			break
 
-		for _copy_i in range(copies):
-			if spawn_index >= enemy_spawns.size():
-				printerr("⚠️ Spawn table produced more enemies than there are generated ",
-						 "enemy_spawns cells — remaining copies of ", enemy_id, " skipped. ",
-						 "Consider raising enemy_count in the MapGenerator.generate_map() call, ",
-						 "or trimming this stage's spawn table.")
-				break
+		var working_copy: UnitData = enemy_data.duplicate(true)
+		var level: int = 1
+		if level - 1 < working_copy.stats_by_level.size():
+			working_copy.stats_by_level[level - 1] = ScalingEngine.apply_scaling(
+				enemy_data.stats_by_level[level - 1], RunManager.current_run, enemy_data.tier
+			)
 
-			# ScalingEngine.apply_scaling() returns a NEW StatsData -- but
-			# unit_data.stats_by_level[level-1] is read live by unit_node.gd
-			# every time (not cached at setup), and enemy_data is a SHARED,
-			# cached Resource (every wolf this battle loads the exact same
-			# wolf_data.tres instance). Writing the scaled stats directly
-			# into enemy_data.stats_by_level would corrupt that shared
-			# resource for every other wolf spawned this battle (and the
-			# next one, since load() keeps reusing the same cached instance).
-			# duplicate(true) gives THIS ONE enemy its own independent copy
-			# to safely overwrite instead.
-			var working_copy: UnitData = enemy_data.duplicate(true)
-			var level: int = 1
-			if level - 1 < working_copy.stats_by_level.size():
-				working_copy.stats_by_level[level - 1] = ScalingEngine.apply_scaling(
-					enemy_data.stats_by_level[level - 1], RunManager.current_run, enemy_data.tier
-				)
-
-			spawn_unit(working_copy, enemy_spawns[spawn_index], false, level)
-			spawn_index += 1
+		spawn_unit(working_copy, enemy_spawns[spawn_index], false, level)
+		spawn_index += 1
 
 	print("🐺 Monster waves deployed! (", spawn_index, " enemies)")
-
 
 func _spawn_test_enemies(encounter_index: int) -> void:
 	# ════════════════════════════════════════════════════════════════════════

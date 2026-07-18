@@ -181,7 +181,7 @@ func _on_refresh_pressed() -> void:
 
 
 func _on_continue_pressed() -> void:
-	StageDirector.enter_current_stage()
+	get_tree().change_scene_to_file(StageDirector.DEPLOYMENT_SCENE_PATH)
 
 
 # ══════════════════════════════════════════════════════════════════════════

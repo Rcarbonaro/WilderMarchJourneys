@@ -1,7 +1,7 @@
 {
-  "id": "shop_entry_blade_1",
+  "id": "shop_entry_armor_2",
   "item_type": "equipment",
-  "item_id": "blade",
+  "item_id": "armor",
   "base_price": 8,
   "tags": ["starter"],
   "conditions": [],

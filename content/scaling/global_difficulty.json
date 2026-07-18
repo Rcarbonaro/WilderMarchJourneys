@@ -7,5 +7,15 @@
     "def": 0.2,
     "mdef": 0.2
   },
-  "default_elite_stat_multiplier": 1.0
+  "default_elite_stat_multiplier": 1.5,
+  "difficulty_stat_multiplier": {
+    "normal": 1.0,
+    "hard": 1.15,
+    "nightmare": 1.30
+  },
+  "difficulty_spawn_bonus": {
+    "normal": { "bonus_normal_enemies": 0, "bonus_elite_enemies": 0 },
+    "hard": { "bonus_normal_enemies": 1, "bonus_elite_enemies": 0 },
+    "nightmare": { "bonus_normal_enemies": 1, "bonus_elite_enemies": 1 }
+  }
 }

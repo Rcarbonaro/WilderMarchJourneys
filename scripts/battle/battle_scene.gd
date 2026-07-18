@@ -23,12 +23,7 @@ func _enter_tree() -> void:
 	# resolve_spawn_table()'s own bonus_enemy_count, so a scaling-boosted
 	# roster always has enough physical cells to land on instead of losing
 	# enemies to the "more enemies than spawn cells" warning.
-	var base_enemy_spawn_cells := 8
-	var scaling_config := ContentLoader.get_scaling_config(RunManager.current_run.stage_index)
-	var bonus_enemy_count: int = int(scaling_config.get("bonus_enemy_count", 0))
-	var enemy_spawn_cell_count: int = base_enemy_spawn_cells + bonus_enemy_count
-
-	MapGenerator.generate_map($BattleGrid.GRID_WIDTH, $BattleGrid.GRID_HEIGHT, biome, party_size, enemy_spawn_cell_count)
+	StageDirector.get_or_generate_stage_content(RunManager.current_run.stage_index)
 	$BattleGrid.setup_grid(MapGenerator.last_result.get("tile_map", {}))
 	$BattleGrid.spawn_scatter_features(MapGenerator.last_result.get("feature_placements", []))
 

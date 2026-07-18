@@ -8,7 +8,7 @@ class_name MetaState
 extends Resource
 
 @export var player_id: String = ""
-@export var difficulty_unlocks: Dictionary = {"normal": true, "hard": false, "nightmare": false}
+@export var difficulty_unlocks: Dictionary = {"normal": true, "hard": true, "nightmare": true}
 @export var achievements: Array[String] = []
 @export var endless_teams: Array = []
 # Each entry: { "team_name": "...", "units": [ <full unit save Dictionary>, ... ], "created_from_run": "run_id" }

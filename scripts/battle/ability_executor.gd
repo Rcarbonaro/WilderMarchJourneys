@@ -708,7 +708,7 @@ func calculate_damage(caster, target, ability: AbilityData) -> int:
 			print("🎯 Isolated target bonus: +", ability.bonus_damage_isolated * 100, "%")
 
 	var final_damage = max(1, int(base))
-	final_damage = CombatHooks.run_outgoing_damage_modifiers(caster, target, final_damage, _last_hit_was_crit)
+	final_damage = CombatHooks.run_outgoing_damage_modifiers(caster, target, final_damage, _last_hit_was_crit, ability.damage_type)
 	return final_damage
 
 

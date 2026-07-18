@@ -1,6 +1,7 @@
 {
   "id": "stage_10_scaling",
   "stage_index": 10,
+  "music_track": "res://assets/audio/music/elk_boss_theme.ogg",
   "elite_stat_multiplier": 1.0,
   "base_modifiers": [],
   "difficulty_modifiers": {
