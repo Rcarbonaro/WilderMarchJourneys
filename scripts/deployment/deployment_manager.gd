@@ -289,11 +289,16 @@ func _rebuild_inventory() -> void:
 	for child in inventory_list.get_children():
 		child.queue_free()
 	for item_id in RunManager.current_run.equipment_inventory:
-		if ContentLoader.get_equipment(item_id).get("type", "") == "consumable":
-			continue   # consumables live in the combat item bar, not here
-		var btn := Button.new()
+		# CHANGED: consumables used to be skipped here under the assumption
+		# they lived in a separate "combat item bar" bag -- but potions
+		# actually equip into the SAME equipped_item_ids slots as basic/
+		# advanced gear (that's what battle_scene.gd's Items popup reads
+		# from), so they need to go through this same equip flow too.
+		var item_data: Dictionary = ContentLoader.get_equipment(item_id)
 		var prefix := "[Selected] " if item_id == _selected_inventory_item_id else ""
-		btn.text = prefix + ContentLoader.get_equipment(item_id).get("name", item_id)
+		var suffix := " (Consumable)" if item_data.get("type", "") == "consumable" else ""
+		var btn := Button.new()
+		btn.text = prefix + item_data.get("name", item_id) + suffix
 		btn.pressed.connect(func(): _on_inventory_item_pressed(item_id))
 		inventory_list.add_child(btn)
 
