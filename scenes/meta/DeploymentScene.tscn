@@ -4,6 +4,8 @@
 
 [node name="DeploymentScene" type="Node2D" unique_id=1391455873]
 script = ExtResource("1_0c7r6")
+preview_bounds = null
+min_preview_separation = null
 
 [node name="StageLabel" type="Label" parent="." unique_id=1917124124]
 offset_left = 662.0
@@ -15,9 +17,9 @@ position = Vector2(969, 400)
 
 [node name="RosterScroll" type="ScrollContainer" parent="." unique_id=829570540]
 offset_left = 6.0
-offset_top = 64.0
-offset_right = 378.0
-offset_bottom = 613.0
+offset_top = 83.0
+offset_right = 797.0
+offset_bottom = 632.0
 
 [node name="RosterList" type="VBoxContainer" parent="RosterScroll" unique_id=406574603]
 layout_mode = 2
@@ -26,7 +28,7 @@ layout_mode = 2
 layout_mode = 3
 anchors_preset = 0
 offset_top = 737.0
-offset_right = 387.0
+offset_right = 701.0
 offset_bottom = 1070.0
 
 [node name="SelectedUnitLabel" type="Label" parent="EquipPanel" unique_id=2115706909]
@@ -69,6 +71,9 @@ text = "Forge"
 [node name="ForgeStatusLabel" type="Label" parent="EquipPanel/ForgeRow" unique_id=1897158691]
 layout_mode = 2
 
+[node name="ForgePreviewLabel" type="RichTextLabel" parent="EquipPanel/ForgeRow" unique_id=2137456618]
+layout_mode = 2
+
 [node name="Label" type="Label" parent="EquipPanel" unique_id=1693607309]
 layout_mode = 0
 offset_left = 96.0
@@ -78,10 +83,10 @@ offset_bottom = 164.0
 text = "Forge Advanced Equipment"
 
 [node name="InventoryScroll" type="ScrollContainer" parent="." unique_id=993765927]
-offset_left = 444.0
-offset_top = 16.0
-offset_right = 593.0
-offset_bottom = 613.0
+offset_left = 711.0
+offset_top = 83.0
+offset_right = 1228.0
+offset_bottom = 680.0
 
 [node name="InventoryList" type="VBoxContainer" parent="InventoryScroll" unique_id=1241574980]
 layout_mode = 2
@@ -101,9 +106,9 @@ offset_bottom = 979.0
 text = "Continue"
 
 [node name="ScoutButton" type="Button" parent="." unique_id=1050116355]
-offset_left = 882.0
+offset_left = 722.0
 offset_top = 882.0
-offset_right = 1037.0
+offset_right = 877.0
 offset_bottom = 986.0
 
 [node name="ScoutPanel" type="PanelContainer" parent="." unique_id=1057363677]
@@ -125,3 +130,10 @@ fit_content = true
 [node name="ScoutCloseButton" type="Button" parent="ScoutPanel/ScoutMargin/ScoutVBox" unique_id=1380070234]
 layout_mode = 2
 text = "Close"
+
+[node name="BackGroundTexture" type="TextureRect" parent="." unique_id=634542175]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2

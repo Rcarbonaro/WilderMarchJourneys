@@ -14,7 +14,7 @@
           "cost": null,
           "conditions": [],
           "effects": [
-            { "type": "add_equipment", "equipment_id": "silver_blade" },
+            { "type": "add_equipment", "equipment_id": "blade" },
             { "type": "set_flag", "flag_id": "werewolf_hunt_active" }
           ],
           "next_node_id": "end_agree"

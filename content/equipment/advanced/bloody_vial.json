@@ -6,8 +6,8 @@
   "subtype": "monocle_talisman",
   "tags": ["support"],
   "effects": [
-    { "type": "custom", "custom_id": "bloody_talisman" }
+    { "type": "custom", "custom_id": "bloody_talisman" },
     { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "crit_chance",  "amount": 15, "value_mode": "flat", "scope": "permanent" },
-    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "mdef", "amount": 3, "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "mdef", "amount": 3, "value_mode": "flat", "scope": "permanent" }
   ]
 }

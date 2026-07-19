@@ -35,6 +35,13 @@ const UNIT_PREVIEW_SCENE_PATH := "res://scenes/deployment/DeploymentUnitPreview.
 # background art. (0,0) to (500,160) by default just gives a starting box;
 # reposition/resize freely, nothing else needs to change.
 
+@onready var background_texture: TextureRect = $BackgroundTexture
+# Add a TextureRect named "BackgroundTexture" as a direct child of
+# DeploymentScene's root, FIRST in the child order (so everything else draws
+# on top of it). Set its Layout > Anchors Preset to "Full Rect" in the editor
+# so it fills the screen. _setup_deployment_background() below fills in its
+# texture at runtime based on the run's current biome.
+
 @onready var roster_list: VBoxContainer     = $RosterScroll/RosterList
 @onready var selected_unit_label: Label     = $EquipPanel/SelectedUnitLabel
 @onready var slots_container: HBoxContainer = $EquipPanel/SlotsContainer
@@ -46,6 +53,10 @@ const UNIT_PREVIEW_SCENE_PATH := "res://scenes/deployment/DeploymentUnitPreview.
 @onready var set_slot_b_button: Button      = $EquipPanel/ForgeRow/SetSlotBButton
 @onready var forge_button: Button           = $EquipPanel/ForgeRow/ForgeButton
 @onready var forge_status_label: Label      = $EquipPanel/ForgeRow/ForgeStatusLabel
+@onready var forge_preview_label: RichTextLabel = $EquipPanel/ForgeRow/ForgePreviewLabel
+# Add a RichTextLabel named "ForgePreviewLabel" under ForgeRow (enable BBCode)
+# -- shows each set slot's stats/description, and the resulting item's
+# stats/description once both slots match a real recipe.
 
 @onready var shop_button: Button            = $ShopButton
 @onready var continue_button: Button        = $ContinueButton
@@ -92,6 +103,7 @@ func _ready() -> void:
 	_rebuild_inventory()
 	_update_scout_button()
 	_update_stage_label()
+	_setup_deployment_background()
 	_spawn_unit_previews()
 
 
@@ -144,6 +156,11 @@ func _rebuild_roster() -> void:
 		equip_btn.pressed.connect(func(): _on_roster_entry_pressed(i))
 		row.add_child(equip_btn)
 
+		var more_info_btn := Button.new()
+		more_info_btn.text = "More Info"
+		more_info_btn.pressed.connect(func(): _on_more_info_pressed(i))
+		row.add_child(more_info_btn)
+
 		roster_list.add_child(row)
 
 
@@ -169,6 +186,89 @@ func _get_selected_entry() -> Dictionary:
 	if _selected_party_index < 0 or _selected_party_index >= roster.size():
 		return {}
 	return roster[_selected_party_index]
+
+
+# ── MORE INFORMATION POPUP ────────────────────────────────────────────────────
+# Reuses the same UnitInfoPopup class the Draft screen and in-battle
+# "Information" button use (see unit_info_popup.gd) -- this is exactly what
+# that class's own header comment describes it for: any screen just builds
+# stat_lines + equipped_item_entries that make sense for its situation and
+# hands them to the same popup.
+
+func _on_more_info_pressed(index: int) -> void:
+	var roster := _get_full_roster()
+	if index < 0 or index >= roster.size():
+		return
+	var entry: Dictionary = roster[index]
+	var unit_data := _load_unit_data(entry.get("unit_id", ""))
+	if unit_data == null:
+		return
+
+	var level: int = int(entry.get("level", 1))
+	var stats_index: int = clamp(level - 1, 0, unit_data.stats_by_level.size() - 1)
+	if unit_data.stats_by_level.is_empty():
+		return
+	var stats: StatsData = unit_data.stats_by_level[stats_index]
+
+	# Base stats at this unit's current level -- NOT live battle numbers
+	# (there's no live battle here), same idea as how the Draft screen shows
+	# level-1 base numbers.
+	var stat_lines: Array[String] = [
+		"HP: %d" % stats.hp,
+		"Mana: %d" % stats.mana,
+		"ATK: %d" % stats.atk,
+		"MATK: %d" % stats.matk,
+		"DEF: %d" % stats.def,
+		"MDEF: %d" % stats.mdef,
+		"Crit %%: %.0f%%" % stats.crit_chance,
+		"Crit DMG: %.0f%%" % stats.crit_damage,
+		"MOV: %d" % stats.mov,
+	]
+
+	# CHANGED: pulls each equipped item's FULL raw equipment Dictionary
+	# (icon, name, effects, description) via ContentLoader.get_equipment(),
+	# same shape live battle passes in via unit.equipped_items -- so
+	# unit_info_popup.gd's new stat-line/description rendering works here too.
+	var equipped_entries: Array = []
+	for item_id in entry.get("equipped_item_ids", []):
+		if item_id == null or item_id == "":
+			continue
+		equipped_entries.append(ContentLoader.get_equipment(item_id))
+
+	var popup_instance := UnitInfoPopup.new()
+	add_child(popup_instance)
+	popup_instance.setup(unit_data, stat_lines, equipped_entries)
+
+
+# ── BIOME BACKGROUND ───────────────────────────────────────────────────────────
+
+func _setup_deployment_background() -> void:
+	if RunManager.current_run == null or background_texture == null:
+		return
+
+	var biome := "forest"
+	if RunManager.current_run.biome_sequence.size() > 0:
+		var slot := ContentLoader.get_biome_slot(RunManager.current_run.stage_index)
+		if slot < RunManager.current_run.biome_sequence.size():
+			biome = RunManager.current_run.biome_sequence[slot]
+
+	# Reuses battle_scene.gd's existing BIOME_BACKGROUNDS table instead of
+	# keeping a second copy here that could drift out of sync -- it's a
+	# top-level const, so it's readable straight off the script itself
+	# without needing to instantiate BattleScene.
+	var battle_scene_script := preload("res://scripts/battle/battle_scene.gd")
+	var biome_backgrounds: Dictionary = battle_scene_script.BIOME_BACKGROUNDS
+	if not biome_backgrounds.has(biome):
+		biome = "forest"
+
+	var available: Array = biome_backgrounds.get(biome, [])
+	if available.is_empty():
+		return
+
+	var chosen_path: String = available[randi() % available.size()]
+	var texture_resource = load(chosen_path)
+	if texture_resource:
+		background_texture.texture = texture_resource
 
 
 # ── AMBIENT BACKGROUND PREVIEW ────────────────────────────────────────────────
@@ -322,6 +422,7 @@ func _on_set_slot_a_pressed() -> void:
 		forge_slot_a_label.text = "A: " + ContentLoader.get_equipment(_forge_slot_a).get("name", _forge_slot_a)
 		_selected_inventory_item_id = ""
 		_rebuild_inventory()
+		_update_forge_preview()
 	else:
 		forge_status_label.text = "Select a BASIC equipment item from inventory first."
 
@@ -332,12 +433,60 @@ func _on_set_slot_b_pressed() -> void:
 		forge_slot_b_label.text = "B: " + ContentLoader.get_equipment(_forge_slot_b).get("name", _forge_slot_b)
 		_selected_inventory_item_id = ""
 		_rebuild_inventory()
+		_update_forge_preview()
 	else:
 		forge_status_label.text = "Select a BASIC equipment item from inventory first."
 
 
 func _is_basic_item(item_id: String) -> bool:
 	return item_id != "" and ContentLoader.get_equipment(item_id).get("type", "") == "basic"
+
+
+# CHANGED (new): shows each set slot's stats/description, and -- once both
+# slots match a real recipe -- the resulting advanced item's stats and
+# description too, so you know what you're about to make before forging.
+# Reuses UnitInfoPopup._describe_effect() rather than reimplementing the
+# same "+2 Atk" style formatting a second time.
+func _update_forge_preview() -> void:
+	if forge_preview_label == null:
+		return
+
+	var lines: Array[String] = []
+	lines.append(_describe_item_for_preview("A", _forge_slot_a))
+	lines.append(_describe_item_for_preview("B", _forge_slot_b))
+
+	if _forge_slot_a != "" and _forge_slot_b != "":
+		var subtype_a: String = ContentLoader.get_equipment(_forge_slot_a).get("subtype", "")
+		var subtype_b: String = ContentLoader.get_equipment(_forge_slot_b).get("subtype", "")
+		var recipe: Dictionary = ContentLoader.get_forging_recipe(subtype_a, subtype_b)
+		if not recipe.is_empty():
+			lines.append("")
+			lines.append(_describe_item_for_preview("Will forge into", recipe.get("output_equipment_id", "")))
+
+	forge_preview_label.bbcode_enabled = true
+	forge_preview_label.text = "\n".join(lines)
+
+
+func _describe_item_for_preview(label: String, item_id: String) -> String:
+	if item_id == "":
+		return "[b]%s:[/b] (empty)" % label
+
+	var data: Dictionary = ContentLoader.get_equipment(item_id)
+	var name: String = data.get("name", item_id)
+
+	var effect_lines: Array[String] = []
+	for effect in data.get("effects", []):
+		var described: String = UnitInfoPopup._describe_effect(effect)
+		if described != "":
+			effect_lines.append(described)
+
+	var text := "[b]%s: %s[/b]" % [label, name]
+	if not effect_lines.is_empty():
+		text += "\n" + ", ".join(effect_lines)
+	var description: String = data.get("description", "")
+	if description != "":
+		text += "\n" + description
+	return text
 
 
 func _on_forge_pressed() -> void:
@@ -367,6 +516,7 @@ func _on_forge_pressed() -> void:
 	forge_slot_a_label.text = "A: (empty)"
 	forge_slot_b_label.text = "B: (empty)"
 	forge_status_label.text = "Forged: " + ContentLoader.get_equipment(output_id).get("name", output_id) + "!"
+	_update_forge_preview()
 	RunManager.save_run()
 	_rebuild_inventory()
 

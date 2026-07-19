@@ -13,7 +13,7 @@
           "text": "Apologize for being unable to help",
           "conditions": [
             { "type": "resource_missing", "resource": "gold", "amount": 3 },
-            { "type": "resource_missing", "resource": "potion_healing", "amount": 1 }
+            { "type": "resource_missing", "resource": "lesser_healing_potion", "amount": 1 }
           ],
           "effects": [],
           "next_node_id": "end_apologize"
