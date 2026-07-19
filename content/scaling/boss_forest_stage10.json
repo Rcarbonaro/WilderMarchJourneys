@@ -1,11 +1,12 @@
 {
   "id": "boss_forest_stage10",
-  "biome": "forest",
-  "stage_type": "boss",
-  "stage_min": 10,
-  "stage_max": 10,
-  "guaranteed_enemy_ids": ["barkskin_elk"],
-  "enemy_pool": [],
-  "total_enemies_min": 1,
-  "total_enemies_max": 1
+  "stage_index": 10,
+  "music_track": "res://assets/audio/music/elk_boss_theme.ogg",
+  "elite_stat_multiplier": 1.0,
+  "base_modifiers": [],
+  "difficulty_modifiers": {
+    "hard": [{ "type": "add_stat", "stat": "atk", "amount": 4 }],
+    "nightmare": [{ "type": "add_stat", "stat": "atk", "amount": 8 }, { "type": "add_stat", "stat": "hp", "amount": 15 }]
+  },
+  "conditional_modifiers": []
 }

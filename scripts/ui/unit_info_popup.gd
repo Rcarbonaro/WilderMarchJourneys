@@ -5,16 +5,21 @@
 # icons + descriptions), stats, and (optionally) equipped items.
 #
 # WHY THIS IS ITS OWN FILE: both the Draft screen (picking your starting
-# party) and the in-battle "Information" button (inspecting a unit/enemy
-# mid-fight) need to show almost exactly the same content. Rather than build
-# this panel twice, both screens just instantiate THIS class and feed it
-# whatever data makes sense for their situation:
+# party), the in-battle "Information" button (inspecting a unit/enemy
+# mid-fight), and now DeploymentScene's "More Information" button all need to
+# show almost exactly the same content. Rather than build this panel three
+# times, all three screens just instantiate THIS class and feed it whatever
+# data makes sense for their situation:
 #   - Draft screen: a UnitData with no live stats yet, so it passes the
 #     unit's level-1 base numbers and an empty equipped-items list (nobody
 #     has equipment during the draft).
 #   - Battle screen: a UnitData PLUS that unit's CURRENT live numbers
 #     (get_effective_atk(), etc., which already account for equipment,
 #     buffs, and auras) and their actual equipped items.
+#   - DeploymentScene: a UnitData plus that roster entry's base stats at its
+#     current level (no live battle buffs, since it's not in a fight), and
+#     its equipped items resolved from equipped_item_ids via
+#     ContentLoader.get_equipment().
 #
 # This popup is entirely self-contained:
 #   - It builds its own dim backdrop behind the card, full-screen.
@@ -35,8 +40,14 @@
 # numbers or live in-battle numbers, which is exactly the point: that
 # decision belongs to whichever screen is calling this.
 #
-# 'equipped_item_entries' is an Array of Dictionaries shaped like
-# { "icon": Texture2D (or null), "name": String }. Leave it as the default
+# 'equipped_item_entries' is an Array of Dictionaries. At minimum, shape it
+# like { "icon": Texture2D (or null), "name": String } to just show icon +
+# name. CHANGED: if the dictionary ALSO has "effects" (an Array of add_stat
+# effect Dictionaries, same shape as your equipment JSON files) and/or
+# "description" (String), those are now rendered too -- so you can just pass
+# the RAW equipment Dictionary straight from ContentLoader.get_equipment()
+# or a live unit's equipped_items array, unmodified, and get full stat +
+# description display for free. Leave equipped_item_entries as the default
 # empty array to skip the "Equipped Items" section entirely.
 #
 # CUSTOMIZING THE LOOK: set 'theme_resource' to a UnitInfoPopupTheme resource
@@ -189,7 +200,6 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 	content.add_child(HSeparator.new())
 
 	# ── STATS ─────────────────────────────────────────────────────────────────
-# ── STATS ─────────────────────────────────────────────────────────────────
 	var stats_header := Label.new()
 	stats_header.text = "Stats"
 	stats_header.add_theme_font_size_override("font_size", 24)
@@ -320,6 +330,40 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 			content.add_child(_wrap_in_plate(item_row,
 				theme_resource.equipped_item_plate, theme_resource.equipped_item_plate_patch_margin))
 
+			# CHANGED: if this entry has "effects" and/or "description" (the
+			# same raw shape as your equipment JSON files), show a stat
+			# summary and the flavor/mechanic text right under the icon+name
+			# row. Entries that only have {"icon","name"} (the old minimal
+			# shape) simply skip this block -- nothing breaks for them.
+			var effect_lines: Array[String] = []
+			for effect in item_entry.get("effects", []):
+				var described := _describe_effect(effect)
+				if described != "":
+					effect_lines.append(described)
+			var item_description: String = item_entry.get("description", "")
+
+			if not effect_lines.is_empty() or item_description != "":
+				var detail_box := VBoxContainer.new()
+				detail_box.add_theme_constant_override("separation", 2)
+
+				if not effect_lines.is_empty():
+					var stats_line_label := Label.new()
+					stats_line_label.text = ", ".join(effect_lines)
+					stats_line_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+					stats_line_label.add_theme_font_size_override("font_size", 13)
+					detail_box.add_child(stats_line_label)
+
+				if item_description != "":
+					var item_desc_label := Label.new()
+					item_desc_label.text = item_description
+					item_desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+					item_desc_label.add_theme_font_size_override("font_size", 12)
+					item_desc_label.modulate = Color(1, 1, 1, 0.85)
+					detail_box.add_child(item_desc_label)
+
+				content.add_child(_wrap_in_plate(detail_box,
+					theme_resource.equipped_item_plate, theme_resource.equipped_item_plate_patch_margin))
+
 	# ── CARD BORDER ───────────────────────────────────────────────────────────
 	# Drawn LAST so it's the topmost child of _card, on top of 'scroll' and
 	# everything in it -- meant for a frame graphic with a transparent middle.
@@ -392,3 +436,29 @@ static func texture_or_black_box(tex: Texture2D, size: Vector2i) -> Texture2D:
 	var img := Image.create(size.x, size.y, false, Image.FORMAT_RGBA8)
 	img.fill(Color.BLACK)
 	return ImageTexture.create_from_image(img)
+
+
+static func _describe_effect(effect: Dictionary) -> String:
+	# CHANGED (new): turns one raw "add_stat" effect Dictionary (same shape
+	# used throughout your equipment JSON files) into a short readable line
+	# like "+2 Atk" or "+15% Crit Chance". Used both here (Equipped Items)
+	# and reusable from deployment_manager.gd's forge preview via
+	# UnitInfoPopup._describe_effect(effect) so the formatting logic only
+	# lives in one place. "custom" effects return "" -- those are described
+	# by the item's own "description" field instead, not derivable from a
+	# generic formatter.
+	if effect.get("type", "") != "add_stat":
+		return ""
+
+	var stat: String = effect.get("stat", "")
+	var amount = effect.get("amount", 0)
+	var value_mode: String = effect.get("value_mode", "flat")
+	var stat_display := stat.replace("_", " ").capitalize()
+	var sign := "+" if float(amount) >= 0 else ""
+
+	# crit_chance/crit_damage are always percentage-point stats even under
+	# "flat" value_mode; anything explicitly "percent" (e.g. mana% bonuses)
+	# also gets a % suffix.
+	if stat in ["crit_chance", "crit_damage"] or value_mode == "percent":
+		return "%s%s%% %s" % [sign, str(amount), stat_display]
+	return "%s%s %s" % [sign, str(amount), stat_display]

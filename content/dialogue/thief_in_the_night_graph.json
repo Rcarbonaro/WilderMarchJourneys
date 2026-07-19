@@ -46,7 +46,7 @@
           "effects": [
             {
               "type": "add_equipment",
-              "equipment_id": "blade"
+              "equipment_id": "talisman_of_health"
             }
           ],
           "next_node_id": "end_generous",
@@ -86,7 +86,7 @@
 
     {
       "id": "end_generous",
-      "text": "\"T-thank you!\" the child says gratefully. \"Here, take this!\" They hand you a Blade before running off to share the food with their brother.",
+      "text": "\"T-thank you!\" the child says gratefully. \"Here, take this!\" They hand you an amulet before running off to share the food with their brother.",
       "choices": []
     },
 

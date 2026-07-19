@@ -20,11 +20,15 @@ func _process(delta: float) -> void:
 	# Calculate the movement for this frame
 	var movement = scroll_speed * direction * delta
 	current_pan += movement
-	
+
 	# Apply the movement to the custom viewport offset of every layer
 	for layer in parallax_layers:
 		layer.screen_offset.x += movement
-	
+
 	# Reverse direction if we hit our maximum panning threshold
 	if abs(current_pan) >= max_pan_distance:
+		# Clamp so an unusually long frame can't overshoot the threshold by
+		# a variable amount before reversing -- keeps the back-and-forth
+		# motion visually consistent regardless of frame timing.
+		current_pan = clamp(current_pan, -max_pan_distance, max_pan_distance)
 		direction *= -1

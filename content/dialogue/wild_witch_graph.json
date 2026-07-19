@@ -20,7 +20,7 @@
           "id": "help",
           "text": "Offer to help with her gardening",
           "effects": [
-            { "type": "add_item", "item_id": "potion_healing" },
+            { "type": "add_item", "item_id": "lesser_healing_potion" },
             { "type": "set_flag", "flag_id": "witch_garden_help" }
           ],
           "next_node_id": "end_help"
