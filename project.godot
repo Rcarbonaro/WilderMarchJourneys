@@ -41,7 +41,6 @@ AudioManager="*uid://b1pla8eqgjpg4"
 SettingsManager="*uid://bggcwrapvtnq7"
 UiColors="*uid://cgab0ldv833ap"
 CursorManager="*uid://dh4lapp3pefh1"
-MagicParticlesOverlay="*uid://d3k2m8fq7r1yh"
 BiomeThemeManager="*uid://b71k6ex8hwk0w"
 
 [display]

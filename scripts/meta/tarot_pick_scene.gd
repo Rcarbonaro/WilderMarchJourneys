@@ -82,7 +82,7 @@ func _build_choice_cards() -> void:
 		var vbox := VBoxContainer.new()
 		vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		vbox.alignment = BoxContainer.ALIGNMENT_END   # push text to the bottom of the card
+		vbox.alignment = BoxContainer.ALIGNMENT_CENTER   # center text vertically on the card
 		card.add_child(vbox)
  
 		# Semi-transparent backdrop behind the text, since it now sits on

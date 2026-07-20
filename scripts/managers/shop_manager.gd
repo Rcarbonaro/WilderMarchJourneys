@@ -116,7 +116,113 @@ func _build_slot_panel(offer_entry: Dictionary) -> Control:
 	buy_button.pressed.connect(func(): _on_buy_pressed(shop_entry_id))
 	vbox.add_child(buy_button)
 
+	# ADDED: "More Info" on every card -- units, equipment, and consumables
+	# alike -- so the player can see what they'd actually be buying before
+	# spending gold on it.
+	var more_info_button := Button.new()
+	more_info_button.text = "More Info"
+	more_info_button.pressed.connect(func(): _on_shop_more_info_pressed(entry))
+	vbox.add_child(more_info_button)
+
 	return panel
+
+
+# ── MORE INFORMATION POPUP ────────────────────────────────────────────────────
+# Same idea as deployment_manager.gd's Info button and battle's in-combat
+# "Information" button: reuse UnitInfoPopup rather than building a third
+# custom info panel. Units get the full character-sheet popup (level-1 base
+# numbers, no equipped items yet -- same convention the Draft screen uses,
+# since a unit sitting in the shop isn't equipped or leveled yet either).
+# Equipment/consumables get the smaller item-preview popup, matching
+# deployment_manager.gd's forge-preview popup.
+
+func _on_shop_more_info_pressed(entry: Dictionary) -> void:
+	var item_type: String = entry.get("item_type", "")
+	var item_id: String = entry.get("item_id", "")
+	if item_type == "unit":
+		_show_shop_unit_info_popup(item_id)
+	else:
+		_show_shop_item_info_popup(item_id)
+
+
+func _show_shop_unit_info_popup(unit_id: String) -> void:
+	var unit_data := _load_unit_data(unit_id)
+	if unit_data == null or unit_data.stats_by_level.is_empty():
+		return
+	var stats: StatsData = unit_data.stats_by_level[0]   # level-1 base numbers, same as the Draft screen.
+	var stat_lines: Array[String] = [
+		"HP: %d" % stats.hp,
+		"Mana: %d" % stats.mana,
+		"ATK: %d" % stats.atk,
+		"MATK: %d" % stats.matk,
+		"DEF: %d" % stats.def,
+		"MDEF: %d" % stats.mdef,
+		"Crit %%: %.0f%%" % stats.crit_chance,
+		"Crit DMG: %.0f%%" % stats.crit_damage,
+		"MOV: %d" % stats.mov,
+	]
+	var popup_instance := UnitInfoPopup.new()
+	add_child(popup_instance)
+	popup_instance.setup(unit_data, stat_lines, [])
+
+
+func _show_shop_item_info_popup(item_id: String) -> void:
+	var data: Dictionary = ContentLoader.get_equipment(item_id)
+
+	var popup := PopupPanel.new()
+	add_child(popup)
+
+	var margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 16)
+	popup.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	vbox.custom_minimum_size = Vector2(280, 0)
+	margin.add_child(vbox)
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 10)
+	vbox.add_child(header)
+
+	var icon_rect := TextureRect.new()
+	icon_rect.custom_minimum_size = Vector2(48, 48)
+	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon_rect.texture = UnitInfoPopup.texture_or_black_box(
+		UnitInfoPopup._resolve_icon(data.get("icon")), Vector2i(48, 48))
+	header.add_child(icon_rect)
+
+	var name_label := Label.new()
+	name_label.text = data.get("name", item_id)
+	name_label.add_theme_font_size_override("font_size", 20)
+	header.add_child(name_label)
+
+	var effect_lines: Array[String] = []
+	for effect in data.get("effects", []):
+		var described: String = UnitInfoPopup._describe_effect(effect)
+		if described != "":
+			effect_lines.append(described)
+	if not effect_lines.is_empty():
+		var stats_label := Label.new()
+		stats_label.text = ", ".join(effect_lines)
+		stats_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+		vbox.add_child(stats_label)
+
+	var description: String = data.get("description", "")
+	if description != "":
+		var desc_label := Label.new()
+		desc_label.text = description
+		desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+		vbox.add_child(desc_label)
+
+	var close_btn := Button.new()
+	close_btn.text = "Close"
+	close_btn.pressed.connect(func(): popup.queue_free())
+	vbox.add_child(close_btn)
+
+	popup.popup_centered(Vector2(320, 220))
 
 
 func _get_display_name(entry: Dictionary) -> String:
@@ -292,21 +398,34 @@ func _on_equip_slot_pressed(slot_index: int) -> void:
 func _rebuild_inventory() -> void:
 	for child in inventory_list.get_children():
 		child.queue_free()
+	# BUGFIX: this used to loop over equipment_inventory a SECOND time right
+	# after the first loop, adding every single item again -- including
+	# consumables, which the first loop had specifically just excluded. That
+	# meant every owned item appeared twice in this list (three times for
+	# consumables' non-skip copy, effectively), each copy acting as its own
+	# fully-functional (but redundant/confusing) selectable button. The
+	# second loop added nothing the first one didn't already do correctly,
+	# so it's just removed.
 	for item_id in RunManager.current_run.equipment_inventory:
 		if ContentLoader.get_equipment(item_id).get("type", "") == "consumable":
 			continue   # consumables live in the combat item bar, not the equip screen
-		var btn := Button.new()
-		var prefix := "[Selected] " if item_id == _selected_inventory_item_id else ""
-		btn.text = prefix + ContentLoader.get_equipment(item_id).get("name", item_id)
-		btn.pressed.connect(func(): _on_inventory_item_pressed(item_id))
-		inventory_list.add_child(btn)
 
-	for item_id in RunManager.current_run.equipment_inventory:
+		# ADDED: an "Info" button next to each row, matching deployment_
+		# manager.gd's equip panel.
+		var row := HBoxContainer.new()
+
 		var btn := Button.new()
 		var prefix := "[Selected] " if item_id == _selected_inventory_item_id else ""
 		btn.text = prefix + ContentLoader.get_equipment(item_id).get("name", item_id)
 		btn.pressed.connect(func(): _on_inventory_item_pressed(item_id))
-		inventory_list.add_child(btn)
+		row.add_child(btn)
+
+		var info_btn := Button.new()
+		info_btn.text = "Info"
+		info_btn.pressed.connect(func(): _show_shop_item_info_popup(item_id))
+		row.add_child(info_btn)
+
+		inventory_list.add_child(row)
 
 
 func _on_inventory_item_pressed(item_id: String) -> void:

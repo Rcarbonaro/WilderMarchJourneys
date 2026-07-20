@@ -145,6 +145,14 @@ func complete_stage() -> void:
 		# already handled routing to the victory screen, see run_manager.gd.
 		return
 
+	# BUGFIX: the shop only ever regenerated when shop_inventory happened to
+	# be EMPTY (see shop_manager.gd's _ready()) -- so if the player didn't buy
+	# out every single slot, the exact same leftover offer (same items, same
+	# prices) just followed them into the next stage's shop visit indefinitely.
+	# Clearing it here, every time a stage completes, guarantees a completely
+	# fresh ShopEngine.generate_shop() roll the next time ShopScene loads.
+	RunManager.current_run.shop_inventory.clear()
+
 	get_tree().change_scene_to_file(DEPLOYMENT_SCENE_PATH)
 
 
@@ -167,3 +175,4 @@ func _apply_reward_rules() -> void:
 		var rule: Dictionary = ContentLoader.reward_rules[rule_id]
 		if EffectSystem.evaluate_conditions(rule.get("conditions", []), context):
 			EffectSystem.apply_effects(rule.get("effects", []), context)
+			

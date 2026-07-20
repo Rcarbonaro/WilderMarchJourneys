@@ -1,6 +1,44 @@
-[gd_scene load_steps=6 format=3 uid="uid://d3k2m8fq7r1yh"]
+[gd_scene format=3 uid="uid://cslcf4uikvjyv"]
 
-[ext_resource type="Script" path="res://scripts/global/magic_particles_overlay.gd" id="1_script"]
+[sub_resource type="GDScript" id="GDScript_so1dv"]
+script/source = "# res://scripts/global/magic_particles_overlay.gd
+#
+# Magical CURSOR TRAIL. A single GPUParticles2D follows the mouse every
+# frame; because local_coords = false, particles that have already been
+# emitted stay put in screen space once spawned instead of following the
+# emitter -- so as the emitter chases the cursor, it leaves a trail of
+# sparks that burst outward in every direction and fade out fast
+# (lifetime is only 0.45s). This is intentionally light on particle count
+# and screen coverage (a handful of small sparks near the cursor, not a
+# full-viewport effect) so it doesn't cost meaningful frame time.
+#
+# Registered as an Autoload named \"MagicParticlesOverlay\" so it persists
+# across every scene change and sits above menus, battle, and popups alike.
+extends CanvasLayer
+
+@onready var _trail: GPUParticles2D = $CursorTrail
+
+
+func _process(_delta: float) -> void:
+	_trail.position = get_viewport().get_mouse_position()
+
+
+# ── TUNING ────────────────────────────────────────────────────────────────
+# Open MagicParticlesOverlay.tscn, select \"CursorTrail\", and adjust in the
+# Inspector:
+#   - Amount: how many sparks exist at once (density of the trail)
+#   - Lifetime: how long each spark lasts before fading (lower = shorter
+#     trail that clings tighter to the cursor; higher = longer trail)
+#   - Process Material > Initial Velocity Min/Max: how fast sparks fly
+#     outward from the cursor
+#   - Process Material > Damping Min/Max: how quickly sparks decelerate --
+#     higher damping keeps sparks clustered close to the cursor even at
+#     high initial velocity
+#   - Process Material > Scale Min/Max: spark size
+# Want it OFF for a specific screen? Call:
+#   MagicParticlesOverlay.hide()
+#   MagicParticlesOverlay.show()   # to bring it back
+"
 
 [sub_resource type="Gradient" id="Gradient_glowtex"]
 offsets = PackedFloat32Array(0, 0.5, 1)
@@ -14,39 +52,30 @@ fill = 1
 fill_from = Vector2(0.5, 0.5)
 fill_to = Vector2(1, 0.5)
 
-[sub_resource type="Gradient" id="Gradient_colorramp"]
-offsets = PackedFloat32Array(0, 0.25, 1)
-colors = PackedColorArray(0.7, 0.92, 1, 0, 0.55, 0.85, 1, 0.9, 0.6, 0.8, 1, 0)
-
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_sparkle"]
 emission_shape = 1
 emission_sphere_radius = 2.0
-direction = Vector3(1, 0, 0)
+angle_max = 360.0
 spread = 180.0
-gravity = Vector3(0, 0, 0)
 initial_velocity_min = 18.0
 initial_velocity_max = 65.0
 angular_velocity_min = -60.0
 angular_velocity_max = 60.0
-angle_min = 0.0
-angle_max = 360.0
-scale_min = 0.06
-scale_max = 0.22
+gravity = Vector3(0, 0, 0)
 damping_min = 3.0
 damping_max = 7.0
-color_ramp = SubResource("Gradient_colorramp")
+scale_min = 0.06
+scale_max = 0.22
 hue_variation_min = -0.03
 hue_variation_max = 0.03
 
-[node name="MagicParticlesOverlay" type="CanvasLayer"]
+[node name="MagicParticlesOverlay" type="CanvasLayer" unique_id=2100845517]
 layer = 50
-script = ExtResource("1_script")
+script = SubResource("GDScript_so1dv")
 
-[node name="CursorTrail" type="GPUParticles2D" parent="."]
+[node name="CursorTrail" type="GPUParticles2D" parent="." unique_id=2079584361]
 amount = 50
-lifetime = 0.45
-explosiveness = 0.0
-randomness = 0.5
-local_coords = false
-process_material = SubResource("ParticleProcessMaterial_sparkle")
 texture = SubResource("GradientTexture2D_glowtex")
+lifetime = 0.45
+randomness = 0.5
+process_material = SubResource("ParticleProcessMaterial_sparkle")
