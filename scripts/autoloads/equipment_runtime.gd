@@ -22,6 +22,24 @@
 # WIRING NOTE: call apply_equipment_to_unit() once, right after
 # unit.setup(...) inside battle_manager.gd's spawn_unit() -- see the
 # checklist at the bottom of combat_hooks.gd.
+#
+# CONFIRMED CORRECT -- no changes made to this file. Traced it fully against
+# unit_node.gd's get_effective_atk()/get_effective_max_hp()/etc.: they sum
+# every key in momentum_bonuses using the same {"atk":.., "def":..} shape
+# apply_equipment_to_unit() writes here, so equipment stat bonuses were
+# always live/correct. The actual "unit_info_popup not up to date" bug was
+# entirely in ui_manager.gd, which was reading a different (and never
+# populated) unit.equipped_items field instead of resolving from
+# unit.equipped_item_ids -- fixed there instead of here.
+#
+# One minor note while I had this file open, NOT part of any reported bug:
+# remove_equipment_from_unit() below is fully correct but is never actually
+# called anywhere in the project (searched the whole codebase) -- there's
+# currently no flow where a unit is removed from an in-progress battle
+# without the whole battle/scene ending, so this isn't causing any visible
+# symptom today. Worth keeping in mind if you ever add mid-battle unit
+# swapping/retreat, since that would need to call this to unsubscribe
+# custom equipment handlers' CombatHooks cleanly.
 
 extends Node
 
@@ -152,3 +170,4 @@ func _apply_percent_bonus(unit, stat: String, percent_amount: float) -> void:
 			unit.momentum_bonuses["equip_percent_" + stat] = {stat: percent_amount}
 		_:
 			push_warning("EquipmentRuntime: percent value_mode not supported for stat '" + stat + "'")
+			

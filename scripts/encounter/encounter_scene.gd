@@ -85,8 +85,19 @@ func _display_node(node: Dictionary) -> void:
 
 	for choice in visible_choices:
 		var btn := Button.new()
-		btn.text = choice.get("text", choice.get("id", "Choose"))
 		var choice_id: String = choice.get("id", "")
+		var label: String = choice.get("text", choice_id if choice_id != "" else "Choose")
+
+		# BUGFIX: choices that couldn't be afforded used to just never show
+		# up at all (filtered out inside DialogueEngine.get_visible_choices()).
+		# They're now included, and we gray them out here with a reason
+		# instead -- e.g. "(lack 3 gold)" -- so the player can see the option
+		# exists and understand why they can't take it yet.
+		if not choice.get("_affordable", true):
+			label += " (%s)" % choice.get("_unaffordable_reason", "unavailable")
+			btn.disabled = true
+
+		btn.text = label
 		btn.pressed.connect(func(): _on_choice_pressed(choice_id))
 		choices_container.add_child(btn)
 

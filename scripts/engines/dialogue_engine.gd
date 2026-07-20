@@ -31,17 +31,29 @@ func get_current_node() -> Dictionary:
 
 
 func get_visible_choices() -> Array:
-	# Returns only the choices on the CURRENT node that pass their
-	# conditions AND that the player can currently afford.
+	# Returns every choice on the CURRENT node that passes its CONDITIONS
+	# (story flags, prior choices, etc. -- these still gate whether a choice
+	# exists at all, unchanged from before: a condition-driven alternate
+	# branch should stay fully hidden, not show up grayed out).
+	#
+	# BUGFIX: choices that fail their COST requirement (not enough gold, a
+	# missing item) used to be filtered out here too, right alongside
+	# condition failures -- so they just silently vanished instead of
+	# showing up grayed out with an explanation. Those are included now,
+	# with "_affordable" and "_unaffordable_reason" added onto a COPY of the
+	# choice dict, so encounter_scene.gd can render them disabled with a
+	# reason instead of hiding them.
 	var node := get_current_node()
 	var visible := []
 	for choice in node.get("choices", []):
 		var context := {"run_state": _run_state, "source": "dialogue"}
 		if not EffectSystem.evaluate_conditions(choice.get("conditions", []), context):
 			continue
-		if not _can_afford(choice.get("cost", null)):
-			continue
-		visible.append(choice)
+		var choice_copy: Dictionary = choice.duplicate()
+		var reason: String = _describe_unaffordable(choice.get("cost", null))
+		choice_copy["_affordable"] = (reason == "")
+		choice_copy["_unaffordable_reason"] = reason
+		visible.append(choice_copy)
 	return visible
 
 
@@ -75,15 +87,30 @@ func choose(choice_id: String) -> Dictionary:
 
 
 func _can_afford(cost) -> bool:
+	return _describe_unaffordable(cost) == ""
+
+
+func _describe_unaffordable(cost) -> String:
+	# Returns "" when affordable. Otherwise a short, human-readable reason
+	# ("lack 3 gold", "missing Iron Shield") meant to be shown right on a
+	# grayed-out choice button.
 	if cost == null:
-		return true
+		return ""
 	match cost.get("type", "gold"):
 		"gold":
-			return _run_state.gold >= int(cost.get("amount", 0))
+			var amount: int = int(cost.get("amount", 0))
+			var short_by: int = amount - _run_state.gold
+			if short_by > 0:
+				return "lack %d gold" % short_by
+			return ""
 		"equipment":
-			return _run_state.equipment_inventory.has(cost.get("equipment_id", ""))
+			var equipment_id: String = cost.get("equipment_id", "")
+			if not _run_state.equipment_inventory.has(equipment_id):
+				var item_name: String = ContentLoader.get_equipment(equipment_id).get("name", equipment_id)
+				return "missing %s" % item_name
+			return ""
 		_:
-			return true
+			return ""
 
 
 func _pay_cost(cost) -> void:
@@ -94,3 +121,4 @@ func _pay_cost(cost) -> void:
 			_run_state.gold = max(0, _run_state.gold - int(cost.get("amount", 0)))
 		"equipment":
 			_run_state.equipment_inventory.erase(cost.get("equipment_id", ""))
+		

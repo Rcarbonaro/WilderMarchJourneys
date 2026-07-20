@@ -109,6 +109,18 @@ var _last_status_fingerprint: String         = ""
 const STATUS_ICON_SIZE:  float = 50.0
 const MISSING_ICON_COLOR: Color = Color(0, 0, 0, 1)
 
+# Bug 7: stat-row coloring when a buff/debuff is currently changing a stat.
+const STAT_BUFF_COLOR: Color   = Color(0.45, 0.9, 0.45)    # green
+const STAT_DEBUFF_COLOR: Color = Color(0.75, 0.45, 0.95)   # purple
+# StatusEffectData's per-stat modifier field for each row shown in the bar.
+# "crit_damage" has no modifier field on StatusEffectData at all (see that
+# file), so it's intentionally left out here and never gets recolored.
+const STAT_MODIFIER_FIELDS: Dictionary = {
+	"atk": "atk_modifier", "matk": "matk_modifier",
+	"def": "def_modifier", "mdef": "mdef_modifier",
+	"mov": "mov_modifier", "crit_chance": "crit_chance_modifier",
+}
+
 # Fill widths in pixels, read from scene layout after the first layout pass.
 # Defaults here are safe fallbacks if HPBarBG/ManaBarBG can't be measured.
 var _hp_bar_width:   float = 192.0
@@ -657,6 +669,14 @@ func _refresh_live_values() -> void:
 		_stat_labels["crit_damage"].text  = "CDmg %.0f%%" % unit.get_effective_crit_damage()
 		_stat_labels["mov"].text          = "MOV %d"      % unit.get_effective_mov()
 
+		# Bug 7: color each stat green when a buff is the bigger influence on
+		# it right now, purple when a debuff is, and leave it at the default
+		# color when neither applies (or when a buff and a debuff on the same
+		# stat happen to be exactly equal in magnitude -- there's no clear
+		# "winner" to color it by in that case).
+		for stat_key in _stat_labels:
+			_apply_stat_modifier_color(_stat_labels[stat_key], unit, stat_key)
+
 	# ── Status effects (only rebuild when they actually changed) ──────────────
 	var fingerprint: String = ""
 	for s in unit.active_statuses:
@@ -671,6 +691,50 @@ func _refresh_live_values() -> void:
 				child.queue_free()
 			for entry in unit.active_statuses:
 				_add_status_icon(entry["data"], entry["stacks"], entry["remaining_rounds"])
+
+
+func _apply_stat_modifier_color(lbl: Label, unit, stat_key: String) -> void:
+	# Bug 7: figure out whether the currently active buffs or debuffs are
+	# the bigger net influence on this particular stat, and color the label
+	# accordingly. "Bigger" compares the raw MAGNITUDE of each side's total
+	# contribution to this stat -- e.g. +2 from a buff vs. -3 from a debuff
+	# colors purple (3 > 2), but +3 vs. -2 colors green (3 > 2) -- not the
+	# resulting stat total itself.
+	if stat_key == "mov":
+		# Root forces movement straight to 0 (see unit_node.gd's
+		# get_effective_mov()), bypassing the modifier math below entirely --
+		# so treat it as an unambiguous debuff regardless of what any
+		# mov_modifier numbers say.
+		for s in unit.active_statuses:
+			if s["data"].is_root:
+				lbl.add_theme_color_override("font_color", STAT_DEBUFF_COLOR)
+				return
+
+	var modifier_field: String = STAT_MODIFIER_FIELDS.get(stat_key, "")
+	if modifier_field == "":
+		# No buff/debuff has a data path to this stat (crit_damage has no
+		# modifier field on StatusEffectData at all) -- always neutral.
+		lbl.remove_theme_color_override("font_color")
+		return
+
+	var buff_total: float = 0.0
+	var debuff_total: float = 0.0
+	for s in unit.active_statuses:
+		var amount: float = float(s["data"].get(modifier_field)) * s["stacks"]
+		if amount > 0.0:
+			buff_total += amount
+		elif amount < 0.0:
+			debuff_total += -amount
+
+	if buff_total > debuff_total:
+		lbl.add_theme_color_override("font_color", STAT_BUFF_COLOR)
+	elif debuff_total > buff_total:
+		lbl.add_theme_color_override("font_color", STAT_DEBUFF_COLOR)
+	else:
+		# Neither present, or a buff and a debuff of exactly equal magnitude
+		# on the same stat -- no clear winner, so fall back to the default
+		# label color rather than picking one arbitrarily.
+		lbl.remove_theme_color_override("font_color")
 
 
 
@@ -832,9 +896,29 @@ func _on_more_info_pressed() -> void:
 		"MOV: %d"          % unit.get_effective_mov(),
 	]
 
+	# BUGFIX (unit_info_popup not up to date re: equipped items): this used
+	# to read unit.equipped_items (plural) -- but nothing anywhere in the
+	# project ever writes to that field (checked every assignment site), so
+	# it stayed permanently []. The stat NUMBERS above were always correct
+	# (get_effective_atk() etc. already sum momentum_bonuses, which
+	# equipment_runtime.gd's apply_equipment_to_unit() correctly populates
+	# at spawn) -- but the "Equipped Items" section of this popup showed
+	# empty no matter what the unit actually had on.
+	#
+	# Resolving from unit.equipped_item_ids here instead — the array
+	# battle_manager.gd's spawn_unit() actually keeps live, by reference,
+	# in sync with RunState (see unit_node.gd's field comment) — means this
+	# can never go stale again: there's nothing else to remember to update
+	# in lockstep. Same resolve-by-id pattern deployment_manager.gd and
+	# shop_manager.gd already use for their own equipped-item displays.
 	var items: Array = []
-	if "equipped_items" in unit and unit.equipped_items != null:
-		items = unit.equipped_items
+	if "equipped_item_ids" in unit:
+		for item_id in unit.equipped_item_ids:
+			if item_id == null or item_id == "":
+				continue
+			var item_data: Dictionary = ContentLoader.get_equipment(item_id)
+			if not item_data.is_empty():
+				items.append(item_data)
 
 	var popup_instance := UnitInfoPopup.new()
 	add_child(popup_instance)
@@ -1287,4 +1371,3 @@ func _open_items_popup(anchor_button: Button, unit, consumables: Array) -> void:
 	# to taste once you see it against your actual action bar layout.
 	_items_popup.position = Vector2(anchor_button.global_position.x, anchor_button.global_position.y - 200)
 	_items_popup.popup()
-		

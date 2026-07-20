@@ -138,9 +138,22 @@ func get_current_stage_type() -> String:
 # elsewhere (ContentLoader.get_stage_type(), current_run.stage_index).
 
 func get_upcoming_stage_index() -> int:
+	# BUGFIX: this returned stage_index + 1, but by the time DeploymentScene
+	# (and its Scout Ahead button) is showing, StageDirector.complete_stage()
+	# has ALREADY called advance_stage() for the stage that just ended --
+	# current_run.stage_index is already the next stage that "Continue" /
+	# enter_current_stage() will route to (it reads RunManager.
+	# get_current_stage_type(), which uses current_run.stage_index directly,
+	# with no +1). The extra "+ 1" here meant Scout Ahead was checking the
+	# type of, and generating a preview for, the stage AFTER the one you were
+	# actually about to play -- so an upcoming encounter with a combat stage
+	# sitting right after it would show as scoutable (wrongly), and an
+	# upcoming combat stage followed by an encounter would show as
+	# unscoutable (also wrongly). See also deployment_manager.gd's
+	# _update_scout_button().
 	if current_run == null:
 		return 0
-	return current_run.stage_index + 1
+	return current_run.stage_index
 
 
 func get_stage_type_for_index(stage_index: int) -> String:

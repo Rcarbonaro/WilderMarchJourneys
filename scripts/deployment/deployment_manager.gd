@@ -43,6 +43,13 @@ const UNIT_PREVIEW_SCENE_PATH := "res://scenes/deployment/DeploymentUnitPreview.
 # texture at runtime based on the run's current biome.
 
 @onready var roster_list: VBoxContainer     = $RosterScroll/RosterList
+# ADDED: 4 slots showing exactly which units are currently deployed, same
+# idea as DraftScene's SelectedPartyContainer. Add an HBoxContainer named
+# "DeployedPartyContainer" to DeploymentScene.tscn (a good spot is right
+# above RosterScroll, so it reads as "your team" before "your full roster
+# below it") -- _rebuild_deployed_party_slots() builds its 4 slot buttons at
+# runtime, the same way roster_list's rows are built.
+@onready var deployed_party_container: HBoxContainer = $DeployedPartyContainer
 @onready var selected_unit_label: Label     = $EquipPanel/SelectedUnitLabel
 @onready var slots_container: HBoxContainer = $EquipPanel/SlotsContainer
 @onready var inventory_list: VBoxContainer  = $InventoryScroll/InventoryList
@@ -178,6 +185,51 @@ func _rebuild_roster() -> void:
 		row.add_child(more_info_btn)
 
 		roster_list.add_child(row)
+
+	_rebuild_deployed_party_slots()
+
+
+# ADDED: the 4-slot "who's actually deploying" strip, mirroring DraftScene's
+# SelectedPartyContainer. Always shows exactly 4 slots -- filled ones show
+# the unit's name and can be clicked to remove that unit from the deployed
+# team (same effect as pressing their roster toggle button below); empty
+# slots are just an inert placeholder so the player can see at a glance how
+# many more picks they have left.
+func _rebuild_deployed_party_slots() -> void:
+	if deployed_party_container == null:
+		return
+	for child in deployed_party_container.get_children():
+		child.queue_free()
+
+	var roster := _get_full_roster()
+	for i in range(4):
+		var slot_btn := Button.new()
+		slot_btn.custom_minimum_size = Vector2(120, 40)
+
+		if i < deployed_instance_ids.size():
+			var instance_id: String = deployed_instance_ids[i]
+			var entry: Dictionary = {}
+			for candidate in roster:
+				if candidate.get("instance_id", "") == instance_id:
+					entry = candidate
+					break
+			var unit_data := _load_unit_data(entry.get("unit_id", "")) if not entry.is_empty() else null
+			var label: String = unit_data.display_name if unit_data != null else entry.get("unit_id", "?")
+			slot_btn.text = label
+			slot_btn.pressed.connect(func(): _on_deployed_slot_pressed(instance_id))
+		else:
+			slot_btn.text = "(empty)"
+			slot_btn.disabled = true
+
+		deployed_party_container.add_child(slot_btn)
+
+
+func _on_deployed_slot_pressed(instance_id: String) -> void:
+	# Clicking a filled deployed-party slot removes that unit from the
+	# deployed team -- identical effect to toggling it off in the roster
+	# list below, just reachable from the "your team" strip directly.
+	deployed_instance_ids.erase(instance_id)
+	_rebuild_roster()
 
 
 func _on_roster_toggle_pressed(instance_id: String) -> void:
@@ -360,13 +412,27 @@ func _rebuild_equip_slots() -> void:
 
 	for i in range(MAX_EQUIP_SLOTS):
 		var item_id = equipped[i]
+
+		# ADDED: wrap the existing slot button in a row with an "Info" button
+		# next to it, so the player can see what an equipped item actually
+		# does right here instead of having to unequip it first to find out.
+		var row := HBoxContainer.new()
+
 		var btn := Button.new()
 		if item_id == null or item_id == "":
 			btn.text = "Empty Slot %d" % (i + 1)
 		else:
 			btn.text = ContentLoader.get_equipment(item_id).get("name", item_id)
 		btn.pressed.connect(func(): _on_equip_slot_pressed(i))
-		slots_container.add_child(btn)
+		row.add_child(btn)
+
+		if item_id != null and item_id != "":
+			var info_btn := Button.new()
+			info_btn.text = "Info"
+			info_btn.pressed.connect(func(): _show_item_preview_popup(item_id))
+			row.add_child(info_btn)
+
+		slots_container.add_child(row)
 
 
 func _on_equip_slot_pressed(slot_index: int) -> void:
@@ -413,10 +479,22 @@ func _rebuild_inventory() -> void:
 		var item_data: Dictionary = ContentLoader.get_equipment(item_id)
 		var prefix := "[Selected] " if item_id == _selected_inventory_item_id else ""
 		var suffix := " (Consumable)" if item_data.get("type", "") == "consumable" else ""
+
+		# ADDED: an "Info" button next to every inventory row, so players can
+		# see what an item does right here before equipping/forging it.
+		var row := HBoxContainer.new()
+
 		var btn := Button.new()
 		btn.text = prefix + item_data.get("name", item_id) + suffix
 		btn.pressed.connect(func(): _on_inventory_item_pressed(item_id))
-		inventory_list.add_child(btn)
+		row.add_child(btn)
+
+		var info_btn := Button.new()
+		info_btn.text = "Info"
+		info_btn.pressed.connect(func(): _show_item_preview_popup(item_id))
+		row.add_child(info_btn)
+
+		inventory_list.add_child(row)
 
 
 func _on_inventory_item_pressed(item_id: String) -> void:
@@ -625,7 +703,13 @@ func _on_forge_pressed() -> void:
 func _update_scout_button() -> void:
 	var upcoming_stage = RunManager.get_upcoming_stage_index()
 	var upcoming_type = RunManager.get_stage_type_for_index(upcoming_stage)
-	var scoutable = upcoming_type in ["combat", "special_combat", "boss"]
+	# BUGFIX: "subboss" is a combat-shaped stage type -- it routes to
+	# BattleScene exactly like combat/special_combat/boss do (see stage_
+	# director.gd's SCENE_FOR_STAGE_TYPE) -- but was missing from this list,
+	# so subboss stages incorrectly showed Scout Ahead as unavailable.
+	# "encounter" is intentionally NOT in this list (see bug report: scouting
+	# should never be selectable for encounters).
+	var scoutable = upcoming_type in ["combat", "special_combat", "subboss", "boss"]
 	scout_button.disabled = not scoutable
 	scout_button.text = ("Scout Ahead (%d gold)" % RunManager.get_scout_cost()) if scoutable \
 		else "Scout Ahead (not available — next stage is a %s)" % upcoming_type

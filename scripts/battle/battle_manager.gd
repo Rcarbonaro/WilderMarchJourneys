@@ -809,17 +809,45 @@ func cancel_unit_move() -> void:
 	if not selected_unit.can_cancel_move:
 		return
 
-	# If a wall (or similar two-tap) targeting flow is in progress, back out
-	# of it first. Without this, its "Select wall starting/ending location"
-	# prompt was left on screen indefinitely — current_phase stayed stuck on
-	# WALL_SELECT_START/END with no path left to ever hide that label, until
-	# selecting another wall ability happened to overwrite the stale text.
-	if current_phase == TurnPhase.WALL_SELECT_START or current_phase == TurnPhase.WALL_SELECT_END:
+	# If a wall/leap/multi-target (any multi-tap) targeting flow is in
+	# progress, back out of it first.
+	#
+	# BUGFIX ("second movement" after canceling mid-aim): this used to only
+	# check WALL_SELECT_START/WALL_SELECT_END here -- LEAP_SELECT_TARGET,
+	# LEAP_SELECT_DESTINATION, and MULTI_TARGET_SELECT were never reset. The
+	# position/has_moved reset below always ran regardless of phase, but
+	# current_phase (and selected_ability/leap_target_cell/
+	# multi_target_selected) were left exactly as they were for those three
+	# phases. So after canceling out of e.g. a Leap's target-picking step,
+	# on_tile_tapped() kept routing every subsequent tap to
+	# _try_select_leap_target()/_try_select_leap_destination()/
+	# _try_multi_target_tap() instead of normal movement — using the now-
+	# stale selected_ability/leap_target_cell. Depending on where the player
+	# tapped next, this could silently re-execute a stale targeted ability,
+	# soft-lock input entirely, or (the reported symptom) eventually fall
+	# through to cancel_ability_selection() a second time, which — since
+	# has_moved was already false from THIS function — re-showed a full,
+	# fresh movement range without the unit ever having been visibly moved
+	# again, letting the same turn's move be "spent" more than once.
+	# Clearing all multi-step targeting state here for every one of these
+	# phases (not just wall) closes all of those paths at once.
+	var mid_multistep_targeting: bool = (
+		current_phase == TurnPhase.WALL_SELECT_START or
+		current_phase == TurnPhase.WALL_SELECT_END or
+		current_phase == TurnPhase.LEAP_SELECT_TARGET or
+		current_phase == TurnPhase.LEAP_SELECT_DESTINATION or
+		current_phase == TurnPhase.MULTI_TARGET_SELECT
+	)
+	if mid_multistep_targeting:
 		wall_start_cell  = Vector2i(-1, -1)
+		leap_target_cell = Vector2i(-1, -1)
+		multi_target_selected.clear()
 		selected_ability = null
 		current_phase    = TurnPhase.PLAYER_TURN
 		if ui_manager and ui_manager.has_method("hide_targeting_prompt"):
 			ui_manager.hide_targeting_prompt()
+		if ui_manager and ui_manager.has_method("hide_confirm_targets_button"):
+			ui_manager.hide_confirm_targets_button()
 
 	var unit   = selected_unit
 	var origin = unit.pre_move_position

@@ -330,13 +330,21 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 		if not is_instance_valid(enemy):
 			return
 		if "ability_cooldowns" in enemy:
-			var cd_value = 0
-			if "base_cooldown" in chosen_ability:
-				cd_value = chosen_ability.base_cooldown
-			elif "cooldown_turns" in chosen_ability:
-				cd_value = chosen_ability.cooldown_turns
-			if cd_value > 0:
-				enemy.ability_cooldowns[chosen_ability.display_name] = cd_value
+			# BUGFIX: this used to read chosen_ability.base_cooldown /
+			# .cooldown_turns -- neither field exists on AbilityData (the real
+			# field is cooldown_rounds, see ability_data.gd), so
+			# "base_cooldown" in chosen_ability / "cooldown_turns" in
+			# chosen_ability were ALWAYS false and cd_value stayed 0 forever.
+			# The cooldown was silently never actually being set, which is why
+			# enemies could spam any ability every single turn. Also keyed by
+			# ability.id now instead of display_name, matching every other
+			# cooldown read/write in the project (player-side casts in
+			# ability_executor.gd, the UI cooldown badge in ui_manager.gd, and
+			# the round-end countdown in battle_manager.gd all key by .id --
+			# two abilities sharing a display_name would have silently shared
+			# one cooldown slot under the old key).
+			if chosen_ability.cooldown_rounds > 0:
+				enemy.ability_cooldowns[chosen_ability.id] = chosen_ability.cooldown_rounds
 
 		await get_tree().create_timer(0.5).timeout
 
@@ -372,7 +380,7 @@ func _choose_enemy_ability(unit) -> AbilityData:
 	# Filter out abilities that are still on cooldown.
 	var filtered_abilities: Array = []
 	for ability in usable_abilities:
-		var current_cd = unit.ability_cooldowns.get(ability.display_name, 0) \
+		var current_cd = unit.ability_cooldowns.get(ability.id, 0) \
 						 if "ability_cooldowns" in unit else 0
 		if current_cd == 0:
 			filtered_abilities.append(ability)
