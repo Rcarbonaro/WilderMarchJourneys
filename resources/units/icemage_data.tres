@@ -4,9 +4,11 @@
 [ext_resource type="Resource" uid="uid://x6dtacfrfube" path="res://resources/stats/icemage_stats.tres" id="1_xrw3l"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="2_1yy2g"]
 [ext_resource type="Texture2D" uid="uid://bj57wjtw55gmr" path="res://sprites/icemage/icemage_sprite.png" id="2_5wnui"]
+[ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="3_3e1nk"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="3_rfjqb"]
 [ext_resource type="Texture2D" uid="uid://c30faqgl5lbfd" path="res://sprites/icemage/icemage_portrait2.png" id="3_xrw3l"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="4_2b2ht"]
+[ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_m27lf"]
 [ext_resource type="Resource" uid="uid://l5hef417he5m" path="res://resources/abilities/icemage_basic.tres" id="7_m27lf"]
 [ext_resource type="Resource" uid="uid://dg1nd6bcy6vj8" path="res://resources/abilities/iceshell.tres" id="8_yyaqh"]
 [ext_resource type="Resource" uid="uid://cjgpud8omqp8n" path="res://resources/abilities/shatter.tres" id="9_2mpwl"]
@@ -18,6 +20,7 @@ display_name = "Icemage"
 description = "An ice mage who focuses on bolstering defenses and small area damage."
 portrait = ExtResource("3_xrw3l")
 battle_sprite = ExtResource("2_5wnui")
+synergy_tags = Array[String](["arcane", "debuff"])
 stats_by_level = Array[ExtResource("4_2b2ht")]([ExtResource("1_xrw3l")])
 base_stats = ExtResource("1_xrw3l")
 starting_abilities = Array[ExtResource("3_rfjqb")]([ExtResource("7_m27lf"), ExtResource("8_yyaqh"), ExtResource("9_2mpwl")])

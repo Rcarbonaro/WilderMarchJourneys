@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://bojeyqpc82rcg"]
 
 [ext_resource type="Script" uid="uid://cfcorw371y3g2" path="res://scripts/managers/shop_manager.gd" id="1_j2r6p"]
+[ext_resource type="Texture2D" uid="uid://bx2bcfwnp3cx3" path="res://sprites/UI/deployment/shop background.png" id="2_sawuq"]
 
 [node name="ShopScene" type="Node2D" unique_id=2082842883]
 script = ExtResource("1_j2r6p")
@@ -33,7 +34,7 @@ offset_left = 741.0
 offset_top = 818.0
 offset_right = 1077.0
 offset_bottom = 1005.0
-text = "Continue"
+text = "Back"
 
 [node name="EquipPanel" type="VBoxContainer" parent="." unique_id=26446109]
 offset_left = 31.0
@@ -63,3 +64,10 @@ layout_mode = 2
 [node name="InventoryList" type="VBoxContainer" parent="EquipPanel/InventoryScroll" unique_id=532306017]
 custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=865063130]
+z_index = -10
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+texture = ExtResource("2_sawuq")

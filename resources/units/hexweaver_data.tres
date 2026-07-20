@@ -7,7 +7,9 @@
 [ext_resource type="Texture2D" uid="uid://brv6h4ku5qexq" path="res://sprites/hexweaver/hexweaver_portrait.png" id="3_b5vk1"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_iwngs"]
 [ext_resource type="Resource" uid="uid://dgtjf8s7uu7ux" path="res://resources/abilities/hexweaver_basic.tres" id="3_ps7qu"]
+[ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="3_vgvpt"]
 [ext_resource type="Resource" uid="uid://csxllnq6vcprm" path="res://resources/abilities/wither.tres" id="4_gnfme"]
+[ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_o521i"]
 [ext_resource type="Resource" uid="uid://cykmqjugvv0sn" path="res://resources/abilities/tether.tres" id="5_5cmow"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_b5vk1"]
 
@@ -18,6 +20,7 @@ display_name = "Hexweaver"
 description = "A witch who uses her magic to weaken foes."
 portrait = ExtResource("3_b5vk1")
 battle_sprite = ExtResource("2_oi2v6")
+synergy_tags = Array[String](["debuff"])
 stats_by_level = Array[ExtResource("3_iwngs")]([ExtResource("1_gnfme")])
 base_stats = ExtResource("1_gnfme")
 starting_abilities = Array[ExtResource("2_lmhne")]([ExtResource("3_ps7qu"), ExtResource("4_gnfme"), ExtResource("5_5cmow")])

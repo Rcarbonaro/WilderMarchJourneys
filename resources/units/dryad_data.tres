@@ -4,7 +4,9 @@
 [ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="2_57uqc"]
 [ext_resource type="Texture2D" uid="uid://cihqvd236arcr" path="res://sprites/dryad/Dryad_Portrait.png" id="2_pdaka"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="3_gaufl"]
+[ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="3_pftxv"]
 [ext_resource type="Texture2D" uid="uid://da7mpdinj6a44" path="res://sprites/dryad/dryad_sprite.png" id="3_s482d"]
+[ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_nhbic"]
 [ext_resource type="Resource" uid="uid://dhahkkqd0uqq8" path="res://resources/abilities/dryad_basic.tres" id="4_pdaka"]
 [ext_resource type="Resource" uid="uid://d1k2q6fywpued" path="res://resources/abilities/barkguard.tres" id="5_s482d"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_u3dep"]
@@ -19,6 +21,7 @@ display_name = "Dryad"
 description = "A dryad who is able to build personal armor to protect themselves from attacks, and create walls of thorns to block movement."
 portrait = ExtResource("2_pdaka")
 battle_sprite = ExtResource("3_s482d")
+synergy_tags = Array[String](["isolation", "hazard"])
 stats_by_level = Array[ExtResource("6_u3dep")]([ExtResource("1_5jdyn")])
 base_stats = ExtResource("1_5jdyn")
 starting_abilities = Array[ExtResource("3_gaufl")]([ExtResource("4_pdaka"), ExtResource("5_s482d"), ExtResource("10_u3dep"), ExtResource("6_57uqc")])

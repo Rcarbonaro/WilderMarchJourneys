@@ -42,6 +42,7 @@ SettingsManager="*uid://bggcwrapvtnq7"
 UiColors="*uid://cgab0ldv833ap"
 CursorManager="*uid://dh4lapp3pefh1"
 MagicParticlesOverlay="*uid://d3k2m8fq7r1yh"
+BiomeThemeManager="*uid://b71k6ex8hwk0w"
 
 [display]
 
@@ -57,6 +58,7 @@ enabled=PackedStringArray("res://addons/godot-ai-helper/plugin.cfg")
 [gui]
 
 theme/custom="uid://bqf3h8m1sx7k2"
+theme/custom_font="uid://du2or7ubo3ru8"
 
 [input]
 

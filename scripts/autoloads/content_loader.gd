@@ -305,3 +305,9 @@ func get_biome_slot(stage_index: int) -> int:
 	# Returns 0, 1, or 2 -- which of the run's 3 chosen biomes this stage
 	# belongs to. Stages 1-10 = biome_sequence[0], 11-20 = [1], 21-30 = [2].
 	return int(floor(float(stage_index - 1) / 10.0))
+
+func get_difficulty_summary(difficulty: String) -> Dictionary:
+	return {
+		"stat_multiplier": float(global_difficulty.get("difficulty_stat_multiplier", {}).get(difficulty, 1.0)),
+		"spawn_bonus":     global_difficulty.get("difficulty_spawn_bonus", {}).get(difficulty, {}),
+	}

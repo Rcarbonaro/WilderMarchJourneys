@@ -42,15 +42,15 @@ func _setup_hermit_isolation(effect: Dictionary, context: Dictionary) -> void:
 		CombatHooks.outgoing_damage_modifiers.append(callback)
 
 
-func _hermit_modify_damage(attacker, target, damage: int, is_crit: bool) -> int:
+func _hermit_modify_damage(attacker, target, result, is_crit, damage_type) -> int:
 	if _hermit_attacked_this_battle:
-		return damage
+		return result
 	if attacker == null or target == null or not is_instance_valid(attacker) or not attacker.is_player_unit:
-		return damage   # Only the player's FIRST attack counts -- ignore enemy attacks entirely.
+		return result   # Only the player's FIRST attack counts -- ignore enemy attacks entirely.
 	_hermit_attacked_this_battle = true
 	if _is_target_isolated(target):
-		return int(damage * 1.2)
-	return damage
+		return int(result * 1.2)
+	return result
 
 
 func _is_target_isolated(target) -> bool:

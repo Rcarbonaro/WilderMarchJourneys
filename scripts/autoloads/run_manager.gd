@@ -147,7 +147,7 @@ func get_stage_type_for_index(stage_index: int) -> String:
 	return ContentLoader.get_stage_type(stage_index)
 
 
-const SCOUT_COST := 15   # gold cost to scout ahead -- tune freely
+const SCOUT_COST := 1   # gold cost to scout ahead -- tune freely
 
 func get_scout_cost() -> int:
 	return SCOUT_COST
