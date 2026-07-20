@@ -52,6 +52,10 @@ const UNIT_PREVIEW_SCENE_PATH := "res://scenes/deployment/DeploymentUnitPreview.
 @onready var set_slot_a_button: Button      = $EquipPanel/ForgeRow/SetSlotAButton
 @onready var set_slot_b_button: Button      = $EquipPanel/ForgeRow/SetSlotBButton
 @onready var forge_button: Button           = $EquipPanel/ForgeRow/ForgeButton
+@onready var forge_preview_button: Button   = $EquipPanel/ForgeRow/ForgePreviewButton
+# Add a Button named "ForgePreviewButton" next to ForgeButton -- opens a
+# popup showing the resulting item's icon/stats/description before you
+# commit to forging.
 @onready var forge_status_label: Label      = $EquipPanel/ForgeRow/ForgeStatusLabel
 @onready var forge_preview_label: RichTextLabel = $EquipPanel/ForgeRow/ForgePreviewLabel
 # Add a RichTextLabel named "ForgePreviewLabel" under ForgeRow (enable BBCode)
@@ -63,7 +67,15 @@ const UNIT_PREVIEW_SCENE_PATH := "res://scenes/deployment/DeploymentUnitPreview.
 @onready var scout_button: Button           = $ScoutButton
 @onready var scout_panel: PanelContainer    = $ScoutPanel
 @onready var scout_text: RichTextLabel      = $ScoutPanel/ScoutMargin/ScoutVBox/ScoutText
-@onready var scout_close_button: Button     = $ScoutPanel/ScoutMargin/ScoutVBox/ScoutCloseButton
+@onready var scout_map_view: ScoutMapView   = $ScoutPanel/ScoutMargin/ScoutVBox/ScoutMapView
+@onready var scout_back_button: Button      = $ScoutPanel/ScoutMargin/ScoutVBox/ScoutCloseButton
+@onready var scout_enter_combat_button: Button = $ScoutPanel/ScoutMargin/ScoutVBox/ScoutEnterCombatButton
+# Add a Control named "ScoutMapView" (script: scout_map_view.gd) under
+# ScoutVBox -- shows the actual tile layout + where enemies/allies will
+# spawn. Also add a second Button named "ScoutEnterCombatButton" next to the
+# existing close button (renamed here from "Close" to "Back" via code --
+# feel free to also rename the NODE if you want, the path still works either
+# way since @onready keys off the node name, not its text).
 @onready var preview_layer: Node2D          = $PreviewLayer
 @onready var stage_label: Label             = $StageLabel
 # Add a Label named "StageLabel" near the top of DeploymentScene.tscn --
@@ -86,8 +98,12 @@ func _ready() -> void:
 	set_slot_a_button.pressed.connect(_on_set_slot_a_pressed)
 	set_slot_b_button.pressed.connect(_on_set_slot_b_pressed)
 	forge_button.pressed.connect(_on_forge_pressed)
+	forge_preview_button.pressed.connect(_on_forge_preview_pressed)
 	scout_button.pressed.connect(_on_scout_pressed)
-	scout_close_button.pressed.connect(func(): scout_panel.visible = false)
+	scout_back_button.text = "Back"
+	scout_back_button.pressed.connect(func(): scout_panel.visible = false)
+	scout_enter_combat_button.text = "Enter Combat"
+	scout_enter_combat_button.pressed.connect(_on_scout_enter_combat_pressed)
 	scout_panel.visible = false
 
 	if RunManager.current_run == null:
@@ -489,6 +505,88 @@ func _describe_item_for_preview(label: String, item_id: String) -> String:
 	return text
 
 
+# CHANGED (new): a dedicated popup button, separate from the inline
+# forge_preview_label text -- shows the resulting item's icon, stats, and
+# description in a bigger, standalone popup before you commit to forging.
+func _on_forge_preview_pressed() -> void:
+	if _forge_slot_a == "" or _forge_slot_b == "":
+		forge_status_label.text = "Set both Slot A and Slot B first to preview."
+		return
+
+	var subtype_a: String = ContentLoader.get_equipment(_forge_slot_a).get("subtype", "")
+	var subtype_b: String = ContentLoader.get_equipment(_forge_slot_b).get("subtype", "")
+	var recipe: Dictionary = ContentLoader.get_forging_recipe(subtype_a, subtype_b)
+
+	if recipe.is_empty():
+		forge_status_label.text = "No recipe matches '%s' + '%s'." % [subtype_a, subtype_b]
+		return
+
+	_show_item_preview_popup(recipe.get("output_equipment_id", ""))
+
+
+func _show_item_preview_popup(item_id: String) -> void:
+	var data: Dictionary = ContentLoader.get_equipment(item_id)
+
+	var popup := PopupPanel.new()
+	add_child(popup)
+
+	var margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 16)
+	popup.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	vbox.custom_minimum_size = Vector2(280, 0)
+	margin.add_child(vbox)
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 10)
+	vbox.add_child(header)
+
+	# Same icon-string-vs-Texture2D issue fixed in unit_info_popup.gd applies
+	# here too, since this also reads a raw equipment Dictionary --
+	# UnitInfoPopup._resolve_icon() is reused rather than duplicating that
+	# fix a second time.
+	var icon_rect := TextureRect.new()
+	icon_rect.custom_minimum_size = Vector2(48, 48)
+	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon_rect.texture = UnitInfoPopup.texture_or_black_box(
+		UnitInfoPopup._resolve_icon(data.get("icon")), Vector2i(48, 48))
+	header.add_child(icon_rect)
+
+	var name_label := Label.new()
+	name_label.text = data.get("name", item_id)
+	name_label.add_theme_font_size_override("font_size", 20)
+	header.add_child(name_label)
+
+	var effect_lines: Array[String] = []
+	for effect in data.get("effects", []):
+		var described: String = UnitInfoPopup._describe_effect(effect)
+		if described != "":
+			effect_lines.append(described)
+	if not effect_lines.is_empty():
+		var stats_label := Label.new()
+		stats_label.text = ", ".join(effect_lines)
+		stats_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+		vbox.add_child(stats_label)
+
+	var description: String = data.get("description", "")
+	if description != "":
+		var desc_label := Label.new()
+		desc_label.text = description
+		desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+		vbox.add_child(desc_label)
+
+	var close_btn := Button.new()
+	close_btn.text = "Close"
+	close_btn.pressed.connect(func(): popup.queue_free())
+	vbox.add_child(close_btn)
+
+	popup.popup_centered(Vector2(320, 220))
+
+
 func _on_forge_pressed() -> void:
 	if _forge_slot_a == "" or _forge_slot_b == "":
 		forge_status_label.text = "Set both Slot A and Slot B first."
@@ -543,55 +641,28 @@ func _on_scout_pressed() -> void:
 	var upcoming_stage = RunManager.get_upcoming_stage_index()
 	var content = StageDirector.get_or_generate_stage_content(upcoming_stage)
 	scout_text.text = _format_scout_report(content)
+	if scout_map_view != null:
+		scout_map_view.setup(content)
 	scout_panel.visible = true
 
 
+func _on_scout_enter_combat_pressed() -> void:
+	# Skips back to the main DeploymentScene screen entirely -- the player
+	# already reviewed the map/enemies here, so this jumps straight into the
+	# stage StageDirector already advanced to.
+	scout_panel.visible = false
+	StageDirector.enter_current_stage()
+
+
 func _format_scout_report(content: Dictionary) -> String:
+	# CHANGED: the ASCII map is gone -- ScoutMapView (a Control with its own
+	# _draw()) now renders the actual layout visually instead. This text just
+	# covers stage type/biome/enemy list.
 	var report = "[b]Stage Type:[/b] %s\n[b]Biome:[/b] %s\n\n" % [content["stage_type"], content["biome"]]
 	report += "[b]Enemies (%d):[/b]\n" % content["enemies"].size()
 	for enemy in content["enemies"]:
 		report += "- %s (%s tier)\n" % [enemy.display_name, enemy.tier]
-	report += "\n[b]Map Preview:[/b]\n[code]" + _build_ascii_map(content) + "[/code]\n"
-	report += "\nLegend: A=your squad, E=enemy, #=wall, ~=slows movement, .=blocks sight, *=both, (blank)=clear"
 	return report
-
-
-func _build_ascii_map(content: Dictionary) -> String:
-	var tile_map: Dictionary = content["tile_map"]
-	var ally_cells: Array = content["ally_cells"]
-	var enemy_cells: Array = content["enemy_cells"]
-
-	var max_x = 0
-	var max_y = 0
-	for cell in tile_map.keys():
-		max_x = max(max_x, cell.x)
-		max_y = max(max_y, cell.y)
-
-	var lines: Array[String] = []
-	for y in range(max_y + 1):
-		var line = ""
-		for x in range(max_x + 1):
-			var cell = Vector2i(x, y)
-			if cell in ally_cells:
-				line += "A"
-			elif cell in enemy_cells:
-				line += "E"
-			elif tile_map.has(cell):
-				var tile: TileTypeData = tile_map[cell]
-				if tile.is_wall:
-					line += "#"
-				elif tile.movement_cost > 1 and tile.blocks_line_of_sight:
-					line += "*"
-				elif tile.movement_cost > 1:
-					line += "~"
-				elif tile.blocks_line_of_sight:
-					line += "."
-				else:
-					line += " "
-			else:
-				line += "?"
-		lines.append(line)
-	return "\n".join(lines)
 
 
 # ── CONTINUE ─────────────────────────────────────────────────────────────────

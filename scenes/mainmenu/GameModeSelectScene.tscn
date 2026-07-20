@@ -59,6 +59,6 @@ color = Color(0, 0, 0, 0.3529412)
 
 [node name="Sprite2D3" type="Sprite2D" parent="." unique_id=1195883113]
 z_index = -6
-position = Vector2(954, 534)
-scale = Vector2(1.1371158, 1.1892474)
+position = Vector2(960.5, 540)
+scale = Vector2(1.1353428, 1.1612904)
 texture = ExtResource("3_yx7ac")

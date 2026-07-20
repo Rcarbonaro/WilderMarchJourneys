@@ -4,9 +4,11 @@
 [ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="1_ig4kd"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_a02b7"]
 [ext_resource type="Texture2D" uid="uid://cihpaq4ei6mri" path="res://sprites/firemage/drow firemage_sprite.png" id="2_fiqcd"]
+[ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="3_7xlkj"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_pacf0"]
 [ext_resource type="Texture2D" uid="uid://cni4uxqu0wpby" path="res://sprites/firemage/drow firemage_portrait.png" id="3_yo7tp"]
 [ext_resource type="Resource" uid="uid://b4whqdrv4e4x1" path="res://resources/abilities/firemage_basic.tres" id="4_7nqrm"]
+[ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_jpof5"]
 [ext_resource type="Resource" uid="uid://bbki47ewle1jj" path="res://resources/abilities/fireball.tres" id="5_fiqcd"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_yo7tp"]
 [ext_resource type="Resource" uid="uid://bejqlpl63p8km" path="res://resources/abilities/firewall.tres" id="6_yo7tp"]
@@ -18,6 +20,7 @@ display_name = "Firemage"
 description = "A fire magic specialist who focuses on damage in large areas."
 portrait = ExtResource("3_yo7tp")
 battle_sprite = ExtResource("2_fiqcd")
+synergy_tags = Array[String](["arcane"])
 stats_by_level = Array[ExtResource("3_pacf0")]([ExtResource("1_ewcrh")])
 base_stats = ExtResource("1_ewcrh")
 starting_abilities = Array[ExtResource("2_a02b7")]([ExtResource("4_7nqrm"), ExtResource("5_fiqcd"), ExtResource("6_yo7tp")])

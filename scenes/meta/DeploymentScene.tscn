@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://bksrgi6ba4saq"]
 
 [ext_resource type="Script" uid="uid://2gi1qfdkqlkt" path="res://scripts/deployment/deployment_manager.gd" id="1_0c7r6"]
+[ext_resource type="Script" uid="uid://c2vdwg2f37gbc" path="res://scripts/deployment/scout_map_view.gd" id="2_l7df5"]
 
 [node name="DeploymentScene" type="Node2D" unique_id=1391455873]
 script = ExtResource("1_0c7r6")
@@ -8,18 +9,19 @@ preview_bounds = null
 min_preview_separation = null
 
 [node name="StageLabel" type="Label" parent="." unique_id=1917124124]
-offset_left = 662.0
-offset_right = 1404.0
-offset_bottom = 137.0
+offset_left = 945.0
+offset_top = 35.0
+offset_right = 1008.0
+offset_bottom = 72.0
 
 [node name="PreviewLayer" type="Node2D" parent="." unique_id=1948338457]
 position = Vector2(969, 400)
 
 [node name="RosterScroll" type="ScrollContainer" parent="." unique_id=829570540]
-offset_left = 6.0
-offset_top = 83.0
-offset_right = 797.0
-offset_bottom = 632.0
+offset_left = 12.0
+offset_top = 139.0
+offset_right = 806.0
+offset_bottom = 454.0
 
 [node name="RosterList" type="VBoxContainer" parent="RosterScroll" unique_id=406574603]
 layout_mode = 2
@@ -27,9 +29,10 @@ layout_mode = 2
 [node name="EquipPanel" type="Control" parent="." unique_id=276356741]
 layout_mode = 3
 anchors_preset = 0
-offset_top = 737.0
-offset_right = 701.0
-offset_bottom = 1070.0
+offset_left = 5.0
+offset_top = 575.0
+offset_right = 706.0
+offset_bottom = 826.0
 
 [node name="SelectedUnitLabel" type="Label" parent="EquipPanel" unique_id=2115706909]
 layout_mode = 0
@@ -39,8 +42,8 @@ offset_bottom = 23.0
 [node name="SlotsContainer" type="HBoxContainer" parent="EquipPanel" unique_id=1757267150]
 layout_mode = 0
 offset_top = 39.0
-offset_right = 164.0
-offset_bottom = 61.0
+offset_right = 202.0
+offset_bottom = 69.0
 
 [node name="ForgeRow" type="HBoxContainer" parent="EquipPanel" unique_id=1818521909]
 layout_mode = 0
@@ -74,6 +77,10 @@ layout_mode = 2
 [node name="ForgePreviewLabel" type="RichTextLabel" parent="EquipPanel/ForgeRow" unique_id=2137456618]
 layout_mode = 2
 
+[node name="ForgePreviewButton" type="Button" parent="EquipPanel/ForgeRow" unique_id=157983056]
+layout_mode = 2
+text = "Preview"
+
 [node name="Label" type="Label" parent="EquipPanel" unique_id=1693607309]
 layout_mode = 0
 offset_left = 96.0
@@ -83,33 +90,33 @@ offset_bottom = 164.0
 text = "Forge Advanced Equipment"
 
 [node name="InventoryScroll" type="ScrollContainer" parent="." unique_id=993765927]
-offset_left = 711.0
-offset_top = 83.0
-offset_right = 1228.0
-offset_bottom = 680.0
+offset_left = 796.0
+offset_top = 138.0
+offset_right = 1257.0
+offset_bottom = 684.0
 
 [node name="InventoryList" type="VBoxContainer" parent="InventoryScroll" unique_id=1241574980]
 layout_mode = 2
 
 [node name="ShopButton" type="Button" parent="." unique_id=1501529511]
-offset_left = 1277.0
-offset_top = 882.0
-offset_right = 1420.0
-offset_bottom = 982.0
+offset_left = 1176.0
+offset_top = 879.0
+offset_right = 1336.0
+offset_bottom = 979.0
 text = "Shop"
 
 [node name="ContinueButton" type="Button" parent="." unique_id=1073666761]
-offset_left = 1642.0
-offset_top = 902.0
-offset_right = 1772.0
-offset_bottom = 979.0
+offset_left = 827.0
+offset_top = 871.0
+offset_right = 1117.0
+offset_bottom = 986.0
 text = "Continue"
 
 [node name="ScoutButton" type="Button" parent="." unique_id=1050116355]
-offset_left = 722.0
-offset_top = 882.0
-offset_right = 877.0
-offset_bottom = 986.0
+offset_left = 1457.0
+offset_top = 741.0
+offset_right = 1612.0
+offset_bottom = 845.0
 
 [node name="ScoutPanel" type="PanelContainer" parent="." unique_id=1057363677]
 offset_left = 1457.0
@@ -124,6 +131,7 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="ScoutText" type="RichTextLabel" parent="ScoutPanel/ScoutMargin/ScoutVBox" unique_id=1699465534]
+visible = false
 layout_mode = 2
 fit_content = true
 
@@ -131,9 +139,21 @@ fit_content = true
 layout_mode = 2
 text = "Close"
 
+[node name="ScoutEnterCombatButton" type="Button" parent="ScoutPanel/ScoutMargin/ScoutVBox" unique_id=1999785376]
+layout_mode = 2
+
+[node name="ScoutMapView" type="Control" parent="ScoutPanel/ScoutMargin/ScoutVBox" unique_id=828811251]
+layout_mode = 2
+script = ExtResource("2_l7df5")
+
 [node name="BackGroundTexture" type="TextureRect" parent="." unique_id=634542175]
+z_index = -11
+custom_minimum_size = Vector2(1000, 1000)
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_right = 1920.0
+offset_bottom = 1080.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2

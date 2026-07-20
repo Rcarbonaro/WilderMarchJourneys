@@ -47,7 +47,7 @@ func _start_random_run(difficulty: String) -> void:   # CHANGED -- was _on_rando
 	print("Starting a new run in Random mode (difficulty: ", difficulty, ")...")
 	var config := ContentLoader.get_game_mode_config("random")
 
-	RunManager.start_new_run(difficulty)   # CHANGED -- was hardcoded "normal"
+	RunManager.start_new_run(difficulty)  
 	RunManager.current_run.draft_or_random_mode = "random"
 	RunManager.current_run.gold = int(config.get("starting_gold", 10))
 	for equipment_id in config.get("starting_equipment_ids", []):
@@ -99,3 +99,14 @@ func _on_test_pressed() -> void:
 	print("Opening Test Mode encounter picker...")
 	RunManager.is_test_mode = true
 	get_tree().change_scene_to_file(TEST_ENCOUNTER_SCENE_PATH)
+
+#Code to make difficulties actually work
+var _selected_difficulty: String = "normal"
+func _on_normal_pressed() -> void:
+	_selected_difficulty = "normal"
+	
+func _on_hard_pressed() -> void:
+	_selected_difficulty = "hard"
+
+func _on_nightmare_pressed() -> void:
+	_selected_difficulty = "nightmare"

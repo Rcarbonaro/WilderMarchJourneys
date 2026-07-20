@@ -223,9 +223,13 @@ func _ready() -> void:
 	if stats_grid != null:
 		_build_stat_rows()
 
-	# Start hidden — becomes visible when a unit is tapped or selected.
+	# Bar is visible from battle start -- EndTurnButton/GridToggleButton/
+# CancelMoveButton are always available even with no unit selected.
+# hide_unit_info() hides just the per-unit section (portrait, name,
+# stats) so it doesn't show blank/empty values before anything is tapped.
 	if bottom_bar:
-		bottom_bar.visible = false
+		bottom_bar.visible = true
+	hide_unit_info()
 	EventBus.subscribe(EventBus.ON_BOSS_PHASE_CHANGED, _on_boss_phase_changed)
 	
 	#Volume Sliders

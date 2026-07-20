@@ -1,24 +1,36 @@
 [gd_scene format=3 uid="uid://b04smw66d3km0"]
 
 [ext_resource type="Script" uid="uid://cycbaqo11pvoe" path="res://scripts/meta/tarot_pick_scene.gd" id="1_hf0j4"]
+[ext_resource type="Texture2D" uid="uid://boyq8upfsbt1o" path="res://sprites/UI/tarot/tarot_pick_background.png" id="2_m6ity"]
 
 [node name="TarotPickScene" type="Control" unique_id=339532502]
+z_index = 2
 layout_mode = 3
 anchors_preset = 0
 script = ExtResource("1_hf0j4")
 
 [node name="ChoiceContainer" type="HBoxContainer" parent="." unique_id=742197247]
+z_index = 1
 layout_mode = 0
-offset_left = 9.0
-offset_top = 147.0
-offset_right = 1906.0
-offset_bottom = 926.0
+offset_left = 694.0
+offset_top = 664.0
+offset_right = 1482.0
+offset_bottom = 1019.0
 
 [node name="Label" type="Label" parent="." unique_id=2087681382]
 layout_mode = 0
 offset_left = 25.0
 offset_top = 37.0
 offset_right = 1882.0
-offset_bottom = 87.0
+offset_bottom = 106.0
 text = "Select Tarot Card"
 horizontal_alignment = 1
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=686220780]
+layout_mode = 0
+offset_left = -9.0
+offset_top = -13.0
+offset_right = 1934.0
+offset_bottom = 1092.0
+mouse_filter = 2
+texture = ExtResource("2_m6ity")

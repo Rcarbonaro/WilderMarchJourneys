@@ -6,7 +6,9 @@
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_iklpa"]
 [ext_resource type="Texture2D" uid="uid://ngbdoj4tgiq4" path="res://sprites/plaguebringer/plaguebringer_portrait.png" id="3_112sh"]
 [ext_resource type="Resource" uid="uid://b406fvrri3tpy" path="res://resources/abilities/plaguebringer_basic.tres" id="3_ke88r"]
+[ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="3_ltbqf"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_t3yht"]
+[ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_sbhfo"]
 [ext_resource type="Resource" uid="uid://d2c88a0y67m3r" path="res://resources/abilities/miasmaburst.tres" id="4_ypgtm"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_112sh"]
 [ext_resource type="Resource" uid="uid://bcsrdfepw47tw" path="res://resources/abilities/poisoncloud.tres" id="5_temkm"]
@@ -18,6 +20,7 @@ display_name = "Plaguebringer"
 description = "A magic user who specialises in poisons."
 portrait = ExtResource("3_112sh")
 battle_sprite = ExtResource("2_4bakh")
+synergy_tags = Array[String](["debuff"])
 stats_by_level = Array[ExtResource("3_t3yht")]([ExtResource("1_ypgtm")])
 base_stats = ExtResource("1_ypgtm")
 starting_abilities = Array[ExtResource("2_iklpa")]([ExtResource("3_ke88r"), ExtResource("4_ypgtm"), ExtResource("5_temkm")])

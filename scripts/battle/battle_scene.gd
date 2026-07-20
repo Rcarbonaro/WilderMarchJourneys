@@ -56,6 +56,7 @@ func _ready() -> void:
 	# 2: set up biome
 	var biome: String = _get_current_biome() if not RunManager.is_test_mode else "forest"
 	setup_battle_background(biome)
+	BiomeThemeManager.apply_to_battle_ui(battle_ui, biome)
 
 	# ── MUSIC ──────────────────────────────────────────────────────────────
 	# Decide which track to play FIRST, then make exactly one AudioManager

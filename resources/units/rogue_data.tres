@@ -6,7 +6,9 @@
 [ext_resource type="Texture2D" uid="uid://xganwtw6651t" path="res://sprites/rogue/rogue_sprite.png" id="2_l4ka4"]
 [ext_resource type="Texture2D" uid="uid://b5w6fcikcs7c8" path="res://sprites/rogue/rogue_portrait.png" id="3_5debc"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_cnjr4"]
+[ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="3_waodb"]
 [ext_resource type="Resource" uid="uid://bdc6msrw685tm" path="res://resources/abilities/rogue_basic.tres" id="4_fikb3"]
+[ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_p5vjo"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_5debc"]
 [ext_resource type="Resource" uid="uid://bhefcss7mcg2g" path="res://resources/abilities/stealth.tres" id="5_l4ka4"]
 
@@ -17,6 +19,7 @@ display_name = "Rogue"
 description = "A quick fighter who relies on stealth. Excels at defeating vulnerable and isolated enemies."
 portrait = ExtResource("3_5debc")
 battle_sprite = ExtResource("2_l4ka4")
+synergy_tags = Array[String](["isolation"])
 stats_by_level = Array[ExtResource("3_cnjr4")]([ExtResource("1_5x8eh")])
 base_stats = ExtResource("1_5x8eh")
 starting_abilities = Array[ExtResource("2_0wd6k")]([ExtResource("4_fikb3"), ExtResource("5_l4ka4")])

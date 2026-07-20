@@ -47,7 +47,7 @@ const DEFEAT_BORDER     := Color(0.700, 0.220, 0.220)
 # Decorative font: ONLY for the Victory scene banner, the "Game Victory"
 # tutorial-complete screen, and the Defeat screen title. Everything else
 # should keep using the theme's default (basic) font.
-const FONT_BASIC_PATH := "res://sprites/UI/font/basicfont.ttf"
+const FONT_BASIC_PATH := "res://sprites/UI/font/basicfont.otf"
 const FONT_DECO_PATH  := "res://sprites/UI/font/decofont.ttf"
 
 static func decorative_font() -> Font:

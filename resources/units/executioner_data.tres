@@ -5,8 +5,10 @@
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_avfn6"]
 [ext_resource type="Texture2D" uid="uid://ccp5ypjlmdgaf" path="res://sprites/executioner/executioner sprite.png" id="2_y4ilv"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_e1ta7"]
+[ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="3_k3kok"]
 [ext_resource type="Texture2D" uid="uid://bb6wfu3e8odm8" path="res://sprites/executioner/executioner portrait.png" id="3_u3eig"]
 [ext_resource type="Resource" uid="uid://va5t7a8jrmkv" path="res://resources/abilities/executioner_basic.tres" id="4_1byq5"]
+[ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_wwh2h"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_u3eig"]
 [ext_resource type="Resource" uid="uid://dfpxvocy7yu3u" path="res://resources/abilities/execute.tres" id="5_vxs14"]
 
@@ -17,6 +19,7 @@ display_name = "Executioner"
 description = "A strong fighter who is particularly effective against weakened enemies."
 portrait = ExtResource("3_u3eig")
 battle_sprite = ExtResource("2_y4ilv")
+synergy_tags = Array[String](["debuff"])
 stats_by_level = Array[ExtResource("3_e1ta7")]([ExtResource("1_mnb5q")])
 base_stats = ExtResource("1_mnb5q")
 starting_abilities = Array[ExtResource("2_avfn6")]([ExtResource("4_1byq5"), ExtResource("5_vxs14")])

@@ -320,7 +320,7 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 			item_icon.custom_minimum_size = Vector2(ITEM_ICON_SIZE)
 			item_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 			item_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			item_icon.texture = texture_or_black_box(item_entry.get("icon"), ITEM_ICON_SIZE)
+			item_icon.texture = texture_or_black_box(_resolve_icon(item_entry.get("icon")), ITEM_ICON_SIZE)
 			item_row.add_child(item_icon)
 
 			var item_name_label := Label.new()
@@ -422,6 +422,21 @@ func _unhandled_input(event: InputEvent) -> void:
 			# Mark the input as handled so it doesn't also trigger whatever's
 			# underneath the popup (a draft card, a battle grid tile, etc.).
 			get_viewport().set_input_as_handled()
+
+
+static func _resolve_icon(icon_field) -> Texture2D:
+	# CHANGED (new): equipment JSON stores "icon" as a plain String path
+	# (e.g. "res://art/sprites/UI/hp_icon.png"), not a loaded Texture2D --
+	# unlike UnitData.portrait/battle_sprite, which already ARE real
+	# Texture2D resources. Anything reading a raw equipment Dictionary
+	# (like DeploymentScene's More Info / forge preview) needs this to avoid
+	# passing a String straight into texture_or_black_box(), which expects
+	# an actual Texture2D or null and crashes on a String.
+	if icon_field is Texture2D:
+		return icon_field
+	if icon_field is String and icon_field != "" and ResourceLoader.exists(icon_field):
+		return load(icon_field)
+	return null
 
 
 static func texture_or_black_box(tex: Texture2D, size: Vector2i) -> Texture2D:

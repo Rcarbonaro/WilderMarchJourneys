@@ -6,7 +6,9 @@
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_tep1p"]
 [ext_resource type="Texture2D" uid="uid://hbvu5nsl7vkx" path="res://sprites/divinator/divinator_portrait.png" id="3_4u8hy"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_gwwja"]
+[ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="3_gytna"]
 [ext_resource type="Resource" uid="uid://bwfq7c5swiq3b" path="res://resources/abilities/foresight.tres" id="4_8g4td"]
+[ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_fwh2e"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_4u8hy"]
 [ext_resource type="Resource" uid="uid://b7psv2wn3dndy" path="res://resources/abilities/weal.tres" id="5_5x0p8"]
 [ext_resource type="Resource" uid="uid://dss5dlp33c80p" path="res://resources/abilities/woe.tres" id="6_4u8hy"]
@@ -18,6 +20,7 @@ display_name = "Divinator"
 description = "A magic user who uses visions of the future to aid their allies and hinder their enemies."
 portrait = ExtResource("3_4u8hy")
 battle_sprite = ExtResource("2_5x0p8")
+synergy_tags = Array[String](["arcane", "critical"])
 stats_by_level = Array[ExtResource("3_gwwja")]([ExtResource("1_kgxn7")])
 base_stats = ExtResource("1_kgxn7")
 starting_abilities = Array[ExtResource("2_tep1p")]([ExtResource("4_8g4td"), ExtResource("5_5x0p8"), ExtResource("6_4u8hy")])
