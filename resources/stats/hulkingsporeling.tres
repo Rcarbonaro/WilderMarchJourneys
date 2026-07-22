@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1_gjisq")
 hp = 100
-atk = 25
+atk = 20
 matk = 15
 mdef = 10
 mov = 2

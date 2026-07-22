@@ -13,6 +13,6 @@ blocks_movement = true
 blocks_line_of_sight = true
 footprint = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, -1)])
 spawn_weight = 3.0
-min_distance_from_spawns = 3
+min_distance_from_spawns = 1
 biomes = Array[String](["forest"])
 metadata/_custom_type_script = "uid://cjx7n1a62jwb4"

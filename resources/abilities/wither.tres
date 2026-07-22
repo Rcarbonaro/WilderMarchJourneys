@@ -10,6 +10,7 @@
 script = ExtResource("2_xmtxh")
 id = "wither"
 display_name = "Wither"
+description = "Reduces all enemy stats and movement in a large square.."
 icon = ExtResource("3_rgtf4")
 effect_scene = ExtResource("3_pnyrv")
 mana_cost = 15

@@ -8,6 +8,7 @@
 script = ExtResource("1_j2wvg")
 id = "barkguard"
 display_name = "Barkguard"
+description = "Increases DEF and slightly increases MDEF and grants temporary health."
 icon = ExtResource("1_ds3te")
 duration_rounds = 2
 cleansable = false

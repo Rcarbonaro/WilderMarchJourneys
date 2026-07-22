@@ -30,7 +30,7 @@ const PLAYER_ZONE_COLUMNS: int = 3
 const ENEMY_ZONE_COLUMNS: int = 4
 # How many columns in from the RIGHT edge enemy spawns are allowed to use.
 
-const FEATURE_DENSITY: float = .5
+const FEATURE_DENSITY: float = 1
 # Roughly what fraction of the grid's cells end up with a scattered feature.
 
 const MAP_FEATURES_DIR := "res://resources/map_features/"
@@ -125,16 +125,35 @@ func generate_map(width: int, height: int, biome: String, party_size: int, enemy
 				var fp_cell: Vector2i = cell + offset
 				occupied[fp_cell] = true
 				tile_map[fp_cell] = _make_tile_for_feature(feature)
-			feature_placements.append({"cell": cell, "feature": feature})
 
-	_ensure_full_connectivity(tile_map, player_spawns, enemy_spawns, width, height)
+			feature_placements.append({
+				"cell": cell,
+				"feature": feature,
+				"sort_y": cell.y
+			})
 
-	last_result = {
-		"tile_map": tile_map,
-		"player_spawns": player_spawns,
-		"enemy_spawns": enemy_spawns,
-		"feature_placements": feature_placements,
-	}
+	# Sort features from top to bottom.
+	# A feature with a larger Y value is vertically lower on the map,
+	# so it should be drawn after features with a smaller Y value.
+			feature_placements.sort_custom(func(a, b):
+				return a["sort_y"] < b["sort_y"]
+			)
+
+			_ensure_full_connectivity(tile_map, player_spawns, enemy_spawns, width, height)
+
+			last_result = {
+				"tile_map": tile_map,
+				"player_spawns": player_spawns,
+				"enemy_spawns": enemy_spawns,
+				"feature_placements": feature_placements,
+			}
+
+			last_result = {
+				"tile_map": tile_map,
+				"player_spawns": player_spawns,
+				"enemy_spawns": enemy_spawns,
+				"feature_placements": feature_placements,
+			}
 	return last_result
 
 # ── SPAWN PLACEMENT ────────────────────────────────────────────────────────────

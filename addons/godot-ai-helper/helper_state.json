@@ -3,6 +3,70 @@
 	"head_text": "Here is some vital information about my project:\n1. It s a tactical turn-based roguelike\n2. Some planned features are:\nTurn‑based combat — grid movement, action economy, positioning rules, threat zones\n\nRoguelike progression — runs, meta‑progression, unlocks, difficulty scaling\n\nSynergy tags — class tags, ability tags, cross‑class interactions\n\nAI behavior — enemy archetypes, threat evaluation, focus rules, special behaviors\n\nProcedural generation — maps, encounters, enemy squads, loot tables",
 	"items": [
 		{
+			"path": "res://scenes/animations/sharpshooter/sharpshooter.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/stormblade/stormblade.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/wolf/wolf.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/encounter/EncounterScene.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/spellsword/spellsword.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/dryad/dryad.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/plaguebringer/plaguebringer.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/windmage/tornado.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/mainmenu/GameModeSelectScene.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/guardian/guardian.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/battle/BattleUI.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/ent/ent.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/battle/BattleGrid.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/animations/divinator/divinator.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/battle/BattleScene.tscn",
+			"type": "scene_tree"
+		},
+		{
+			"path": "res://scenes/ui/status_effect_box.tscn",
+			"type": "scene_tree"
+		},
+		{
 			"path": "res://scenes/meta/DeploymentScene.tscn",
 			"type": "scene_tree"
 		},
@@ -71,258 +135,6 @@
 			"type": "scene_tree"
 		},
 		{
-			"path": "res://scenes/ui/status_effect_box.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/battle/BattleScene.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/divinator/divinator.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/battle/BattleGrid.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/ent/ent.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/battle/BattleUI.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/guardian/guardian.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/mainmenu/GameModeSelectScene.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/windmage/tornado.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/plaguebringer/plaguebringer.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/dryad/dryad.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/spellsword/spellsword.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/encounter/EncounterScene.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/wolf/wolf.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/stormblade/stormblade.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scenes/animations/sharpshooter/sharpshooter.tscn",
-			"type": "scene_tree"
-		},
-		{
-			"path": "res://scripts/battle/input_handler.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/mainmenu/main_menu.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/synergy_system.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/managers/shop_manager.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/unit_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/ui/unit_info_popup.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/map_feature_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/wave_entry_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/ability_executor.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/engines/encounter_engine.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/deployment/deployment_unit_preview.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/meta/tarot_pick_scene.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/highlight_manager.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/hazard_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/encounter/encounter_scene.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/battle_scene.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://mainmenu_animation.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/utils/unit_roster_utils.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/autoloads/cursor_manager.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/deployment/scout_map_view.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/meta_state.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/conditional_stat_bonus.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/autoloads/combat_hooks.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/map_asset_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/unit_node.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/status_effect_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/autoloads/content_loader.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/autoloads/combat_feedback.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/autoloads/custom_tarot_handlers.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scenes/mainmenu/background_mainmenu.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/interrupt_system.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/run_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/advanced_equipment_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/autoloads/event_bus.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/boss_phase_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/enemy_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/state/meta_state.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/autoloads/equipment_runtime.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/ai_system.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/battle_grid.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/battle_manager.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/special_effect_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/synergy_buff_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/tarot_card_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/autoloads/popup_manager.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/interrupt_ability_data.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/run_state.gd",
-			"type": "script"
-		},
-		{
 			"path": "res://scripts/autoloads/game_state.gd",
 			"type": "script"
 		},
@@ -359,71 +171,43 @@
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/deployment/deployment_manager.gd",
+			"path": "res://scripts/data/run_state.gd",
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/data/equipment_data.gd",
+			"path": "res://scripts/data/interrupt_ability_data.gd",
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/engines/map_generator.gd",
+			"path": "res://scripts/autoloads/popup_manager.gd",
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/data/ability_data.gd",
+			"path": "res://scripts/data/tarot_card_data.gd",
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/data/biome_map_config.gd",
+			"path": "res://scripts/battle/synergy_buff_data.gd",
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/mainmenu/game_mode_select.gd",
+			"path": "res://scripts/data/special_effect_data.gd",
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/battle/reinforcement_spawner.gd",
+			"path": "res://scripts/battle/battle_manager.gd",
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/data/stats_data.gd",
+			"path": "res://scripts/battle/battle_grid.gd",
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/battle/boss_phase_controller.gd",
+			"path": "res://scripts/battle/ai_system.gd",
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/data/on_kill_trigger.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/autoloads/custom_equipment_handlers.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/aura_manager.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/battle/pathfinding_system.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/autoloads/effect_system.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/engines/shop_engine.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/engines/stage_director.gd",
-			"type": "script"
-		},
-		{
-			"path": "res://scripts/data/reinforcement_wave_data.gd",
+			"path": "res://scripts/autoloads/run_manager.gd",
 			"type": "script"
 		},
 		{
@@ -431,7 +215,223 @@
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/autoloads/run_manager.gd",
+			"path": "res://scripts/data/reinforcement_wave_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/engines/stage_director.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/engines/shop_engine.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/autoloads/effect_system.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/pathfinding_system.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/aura_manager.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/autoloads/custom_equipment_handlers.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/on_kill_trigger.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/boss_phase_controller.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/stats_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/reinforcement_spawner.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/mainmenu/game_mode_select.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/biome_map_config.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/ability_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/engines/map_generator.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/equipment_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/deployment/deployment_manager.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/autoloads/cursor_manager.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/utils/unit_roster_utils.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://mainmenu_animation.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/battle_scene.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/encounter/encounter_scene.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/hazard_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/highlight_manager.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/meta/tarot_pick_scene.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/deployment/deployment_unit_preview.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/engines/encounter_engine.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/ability_executor.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/wave_entry_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/map_feature_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/ui/unit_info_popup.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/unit_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/managers/shop_manager.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/synergy_system.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/mainmenu/main_menu.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/input_handler.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/autoloads/equipment_runtime.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/state/meta_state.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/enemy_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/boss_phase_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/autoloads/event_bus.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/advanced_equipment_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/run_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/interrupt_system.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scenes/mainmenu/background_mainmenu.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/autoloads/custom_tarot_handlers.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/autoloads/combat_feedback.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/autoloads/content_loader.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/status_effect_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/unit_node.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/map_asset_data.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/autoloads/combat_hooks.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/conditional_stat_bonus.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/data/meta_state.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/deployment/scout_map_view.gd",
 			"type": "script"
 		}
 	],

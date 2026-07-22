@@ -8,7 +8,8 @@
 [resource]
 script = ExtResource("2_mx4nk")
 id = "zephyr_strike"
-display_name = "Zephy Strike"
+display_name = "Zephyr Strike"
+description = "Lunge forward with a powerful burst of wind, striking enemies from a distance up to 3 times, then return to original space."
 icon = ExtResource("2_xmw2x")
 effect_scene = ExtResource("2_6j38w")
 attack_animation_name = "windcharge"

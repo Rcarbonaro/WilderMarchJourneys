@@ -28,7 +28,21 @@ extends Control
 const TAROT_PICK_SCENE_PATH := "res://scenes/meta/TarotPickScene.tscn"
 const BACK_SCENE_PATH := "res://scenes/mainmenu/GameModeSelectScene.tscn"
 
-const CARD_SIZE := Vector2(170, 300)
+const CARD_SIZE := Vector2(170, 360)
+# BUGFIX: this was 300 -- portrait (150) + battle sprite (60) alone already
+# use 210 of that, leaving only 90px for the name label, cost label, the
+# Description button, AND all 4 of the VBoxContainer's separation gaps
+# combined. Any unit whose display_name wraps to 2 lines (or a theme whose
+# default Button padding is a few px taller than assumed) pushed real
+# content past 300px. Since `card` is a plain Button -- not a Container --
+# it never reports vbox's actual minimum size up to the GridContainer, so
+# the grid kept every cell locked at exactly CARD_SIZE regardless of
+# overflow. The Description button (last child in the vbox) then simply
+# rendered past its own card's bottom edge, underneath the NEXT ROW of
+# cards drawn after it -- which is why it looked "covered" rather than
+# just clipped. 360 gives a comfortable ~60px of slack over the worst
+# realistic case (2-line name + a slightly taller default button) so this
+# can't silently reoccur from a longer unit name down the line.
 const PORTRAIT_SIZE := Vector2i(90, 150)
 const BATTLE_SPRITE_SIZE := Vector2i(60, 60)
 

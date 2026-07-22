@@ -3,9 +3,11 @@
 [ext_resource type="Resource" uid="uid://dgq8d1mpkv8tq" path="res://resources/stats/ent.tres" id="1_7qgsm"]
 [ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="2_cg23b"]
 [ext_resource type="Texture2D" uid="uid://bsk7v788s8hya" path="res://sprites/ent/ent_sprite.png" id="2_snmq7"]
+[ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="3_1gdtu"]
 [ext_resource type="Texture2D" uid="uid://b3yw8muee777d" path="res://sprites/ent/ent_portrait.png" id="3_lqift"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="3_r02jj"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="3_snmq7"]
+[ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_l5ggl"]
 [ext_resource type="Resource" uid="uid://6fsue6q216de" path="res://resources/abilities/Ent_BasicAttack.tres" id="5_cg23b"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="5_lqift"]
 
@@ -13,7 +15,7 @@
 script = ExtResource("2_cg23b")
 id = "ent"
 display_name = "ent"
-description = "A slow but powerful tree creature, able to both take and deal high amounts of damage."
+description = "A slow but powerful tree creature, able to both take and deal high amounts of damage. Corrupted by a stange magic."
 portrait = ExtResource("3_lqift")
 battle_sprite = ExtResource("2_snmq7")
 stats_by_level = Array[ExtResource("5_lqift")]([ExtResource("1_7qgsm")])

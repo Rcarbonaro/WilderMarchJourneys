@@ -11,42 +11,36 @@
         {
           "id": "apologize",
           "text": "Apologize for being unable to help",
-          "conditions": [
-            { "type": "resource_missing", "resource": "gold", "amount": 3 },
-            { "type": "resource_missing", "resource": "lesser_healing_potion", "amount": 1 }
-          ],
+          "conditions": [],
           "effects": [],
           "next_node_id": "end_apologize"
         },
         {
           "id": "offer_supplies",
           "text": "Offer supplies to help nurse the bird to health",
-          "cost": { "type": "gold", "amount": 3 },
-          "conditions": [
-            { "type": "resource_at_least", "resource": "gold", "amount": 3 }
-          ],
+          "cost": { "type": "gold", "amount": 2 },
+          "conditions": [],
           "effects": [
-            { "type": "add_unit", "unit_id": "dryad" }
+            { "type": "add_unit", "unit_id": "dryad" },
+            { "type": "add_equipment", "equipment_id": "mantle" }
           ],
           "next_node_id": "end_supplies"
         },
         {
           "id": "offer_potion",
           "text": "Offer a potion to heal the bird",
-          "cost": { "type": "potion_healing", "amount": 1 },
-          "conditions": [
-            { "type": "resource_at_least", "resource": "potion_healing", "amount": 1 }
-          ],
+          "cost": { "type": "equipment", "equipment_id": "lesser_healing_potion" },
+          "conditions": [],
           "effects": [
             { "type": "add_unit", "unit_id": "dryad" },
-            { "type": "add_item", "item_id": "skill_scroll" }
+            { "type": "add_equipment", "equipment_id": "mantle" }
           ],
           "next_node_id": "end_potion"
         }
       ]
     },
     { "id": "end_apologize", "text": "The woman lowers her head sadly. You continue on your way.", "choices": [] },
-    { "id": "end_supplies", "text": "With your help, the bird recovers. Grateful, the Dryad joins your party!", "choices": [] },
-    { "id": "end_potion", "text": "The potion heals the bird instantly. The Dryad joins you and grants a Skill Scroll!", "choices": [] }
+    { "id": "end_supplies", "text": "With your help, the bird recovers. Grateful, the Dryad joins your party, and hands you a Mantle in thanks!", "choices": [] },
+    { "id": "end_potion", "text": "The potion heals the bird instantly. The Dryad joins you and grants a Mantle!", "choices": [] }
   ]
 }

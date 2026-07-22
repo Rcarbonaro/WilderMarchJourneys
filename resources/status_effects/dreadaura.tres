@@ -7,9 +7,10 @@
 script = ExtResource("1_gi6th")
 id = "dreadauradebuff"
 display_name = "Dread Aura"
+description = "Reduces enemy ATK, crit chance, and MOV."
 icon = ExtResource("1_rf21t")
 duration_rounds = 2
 atk_modifier = -2
-mov_modifier = -2
+mov_modifier = -1
 crit_chance_modifier = -20.0
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

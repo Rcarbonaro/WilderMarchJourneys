@@ -7,6 +7,7 @@
 script = ExtResource("1_ll6wk")
 id = "decayingauradebuff"
 display_name = "Decaying Aura"
+description = "Reduces ATK and MATK per stack."
 icon = ExtResource("1_yysbm")
 duration_rounds = 3
 can_stack = true

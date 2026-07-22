@@ -7,6 +7,7 @@
 script = ExtResource("1_dapnt")
 id = "miasma"
 display_name = "Miasma"
+description = "Reduces ATK and MATK."
 icon = ExtResource("1_w0gxq")
 duration_rounds = 2
 atk_modifier = -2

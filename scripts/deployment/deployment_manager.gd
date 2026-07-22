@@ -35,6 +35,16 @@ const UNIT_PREVIEW_SCENE_PATH := "res://scenes/deployment/DeploymentUnitPreview.
 # background art. (0,0) to (500,160) by default just gives a starting box;
 # reposition/resize freely, nothing else needs to change.
 
+# ── PANEL TABS (show/hide Forge / Roster / Item Inventory) ─────────────────
+# All three shown by default. To make any of them HIDDEN by default instead,
+# just flip its default here to `false` -- e.g.
+#     @export var roster_visible_by_default: bool = false
+# These are @export, so you can also flip them per-scene-instance from the
+# Inspector without touching code at all, if you'd rather.
+@export var roster_visible_by_default: bool = true
+@export var forge_visible_by_default: bool = true
+@export var inventory_visible_by_default: bool = true
+
 @onready var background_texture: TextureRect = $BackgroundTexture
 # Add a TextureRect named "BackgroundTexture" as a direct child of
 # DeploymentScene's root, FIRST in the child order (so everything else draws
@@ -43,6 +53,10 @@ const UNIT_PREVIEW_SCENE_PATH := "res://scenes/deployment/DeploymentUnitPreview.
 # texture at runtime based on the run's current biome.
 
 @onready var roster_list: VBoxContainer     = $RosterScroll/RosterList
+@onready var roster_scroll: ScrollContainer = $RosterScroll
+@onready var equip_panel: Control           = $EquipPanel
+@onready var inventory_scroll: ScrollContainer = $InventoryScroll
+@onready var inventory_list: VBoxContainer  = $InventoryScroll/InventoryList
 # ADDED: 4 slots showing exactly which units are currently deployed, same
 # idea as DraftScene's SelectedPartyContainer. Add an HBoxContainer named
 # "DeployedPartyContainer" to DeploymentScene.tscn (a good spot is right
@@ -50,14 +64,44 @@ const UNIT_PREVIEW_SCENE_PATH := "res://scenes/deployment/DeploymentUnitPreview.
 # below it") -- _rebuild_deployed_party_slots() builds its 4 slot buttons at
 # runtime, the same way roster_list's rows are built.
 @onready var deployed_party_container: HBoxContainer = $DeployedPartyContainer
-@onready var selected_unit_label: Label     = $EquipPanel/SelectedUnitLabel
-@onready var slots_container: HBoxContainer = $EquipPanel/SlotsContainer
-@onready var inventory_list: VBoxContainer  = $InventoryScroll/InventoryList
 
-@onready var forge_slot_a_label: Label      = $EquipPanel/ForgeRow/ForgeSlotALabel
-@onready var forge_slot_b_label: Label      = $EquipPanel/ForgeRow/ForgeSlotBLabel
-@onready var set_slot_a_button: Button      = $EquipPanel/ForgeRow/SetSlotAButton
-@onready var set_slot_b_button: Button      = $EquipPanel/ForgeRow/SetSlotBButton
+# ADDED: 3 toggle buttons for the panel-tabs feature above. Add an
+# HBoxContainer named "PanelTabs" to DeploymentScene.tscn (a good spot is
+# right below StageLabel, above everything else) containing 3 Buttons named
+# "RosterTabButton", "ForgeTabButton", and "InventoryTabButton" -- text
+# doesn't matter, _ready() below overwrites it to reflect shown/hidden state.
+@onready var roster_tab_button: Button      = $PanelTabs/RosterTabButton
+@onready var forge_tab_button: Button       = $PanelTabs/ForgeTabButton
+@onready var inventory_tab_button: Button   = $PanelTabs/InventoryTabButton
+
+# REMOVED (this round): SelectedUnitLabel / SlotsContainer / the
+# InventoryScrollContent wrapper node they briefly lived in are GONE now --
+# equip-slot management moved again, this time inline into roster_list
+# itself (see _append_equip_management_section()), appearing right below
+# whichever unit's "Manage Equipment" you just pressed instead of living in
+# a separate static section under a different tab. InventoryScroll is back
+# to directly containing InventoryList, same as it was originally. If you
+# still have the InventoryScrollContent/SelectedUnitLabel/SlotsContainer
+# nodes sitting in your scene from last round, they're just unused now --
+# safe to delete, nothing references those paths anymore.
+
+@onready var forge_slot_a_button: Button    = $EquipPanel/ForgeRow/ForgeSlotAButton
+@onready var forge_slot_b_button: Button    = $EquipPanel/ForgeRow/ForgeSlotBButton
+# CHANGED: these were Labels (ForgeSlotALabel/ForgeSlotBLabel). Combine (see
+# _combine_item_into_forge) now REMOVES an item from equipment_inventory the
+# moment it's placed into a forge slot -- otherwise the same physical item
+# could be placed into BOTH slot A and slot B while only one copy actually
+# existed, and _on_forge_pressed()'s erase(_forge_slot_a) /
+# erase(_forge_slot_b) would silently only remove it once, letting a single
+# item forge as if it were two. Since the item now genuinely leaves the bag
+# while it's "in the forge," these need to be clickable so a slot can be
+# cleared (returning its item to inventory) if you change your mind --
+# a plain Label can't emit a click. In the editor: change ForgeSlotALabel's
+# and ForgeSlotBLabel's TYPE to Button (right-click the node > Change Type),
+# and rename them to ForgeSlotAButton/ForgeSlotBButton to match. The old
+# SetSlotAButton/SetSlotBButton nodes are no longer used at all -- Combine
+# auto-picks whichever of slot A/B is open now instead of you manually
+# choosing -- safe to delete them from the scene.
 @onready var forge_button: Button           = $EquipPanel/ForgeRow/ForgeButton
 @onready var forge_preview_button: Button   = $EquipPanel/ForgeRow/ForgePreviewButton
 # Add a Button named "ForgePreviewButton" next to ForgeButton -- opens a
@@ -91,19 +135,34 @@ const UNIT_PREVIEW_SCENE_PATH := "res://scenes/deployment/DeploymentUnitPreview.
 # near the center of the screen behind your UI panels -- every wandering
 # unit gets parented under it, so moving/resizing IT moves the whole group.
 
-var deployed_instance_ids: Array[String] = []   # instance_id of every unit currently on the 4-person team
+var deployed_instance_ids: Array[String] = ["", "", "", ""]
+# CHANGED: fixed at exactly 4 entries now, one per slot, "" meaning "empty" --
+# used to be a dynamically-sized Array that only ever held real instance_ids
+# (no placeholder for "empty"), which meant removing a unit via .erase()
+# shifted every later unit up by one index. That was harmless when a slot's
+# position was purely cosmetic, but now that clicking an empty slot needs to
+# fill THAT specific slot (see _on_deployed_slot_pressed), slot identity has
+# to survive removal -- "" is used instead of null because this is a typed
+# Array[String], which can't hold null.
 
 var _selected_party_index: int = -1             # index into _get_full_roster(), or -1
-var _selected_inventory_item_id: String = ""    # picked-up equipment item_id, or ""
+# REMOVED: _selected_inventory_item_id. Used to track a "picked up" item
+# waiting for a destination click (an equip slot, or a forge Set button).
+# Clicking an item now opens a popup with explicit actions instead (see
+# _on_inventory_item_pressed), so there's no in-between "selected" state to
+# track anymore.
 var _forge_slot_a: String = ""                  # picked BASIC equipment item_id for forging, or ""
 var _forge_slot_b: String = ""
 
 
 func _ready() -> void:
+	if not _validate_required_nodes():
+		return
+
 	shop_button.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/meta/ShopScene.tscn"))
 	continue_button.pressed.connect(_on_continue_pressed)
-	set_slot_a_button.pressed.connect(_on_set_slot_a_pressed)
-	set_slot_b_button.pressed.connect(_on_set_slot_b_pressed)
+	forge_slot_a_button.pressed.connect(func(): _clear_forge_slot(true))
+	forge_slot_b_button.pressed.connect(func(): _clear_forge_slot(false))
 	forge_button.pressed.connect(_on_forge_pressed)
 	forge_preview_button.pressed.connect(_on_forge_preview_pressed)
 	scout_button.pressed.connect(_on_scout_pressed)
@@ -113,21 +172,86 @@ func _ready() -> void:
 	scout_enter_combat_button.pressed.connect(_on_scout_enter_combat_pressed)
 	scout_panel.visible = false
 
+	roster_tab_button.pressed.connect(func(): _toggle_panel(roster_scroll, roster_tab_button, "Roster"))
+	forge_tab_button.pressed.connect(func(): _toggle_panel(equip_panel, forge_tab_button, "Forge"))
+	inventory_tab_button.pressed.connect(func(): _toggle_panel(inventory_scroll, inventory_tab_button, "Inventory"))
+	roster_scroll.visible    = roster_visible_by_default
+	equip_panel.visible      = forge_visible_by_default
+	inventory_scroll.visible = inventory_visible_by_default
+	_update_tab_button_text(roster_tab_button, "Roster", roster_scroll.visible)
+	_update_tab_button_text(forge_tab_button, "Forge", equip_panel.visible)
+	_update_tab_button_text(inventory_tab_button, "Inventory", inventory_scroll.visible)
+
 	if RunManager.current_run == null:
 		printerr("❌ DeploymentScene: no active run found.")
 		return
 
-	for entry in RunManager.current_run.party:
+	for i in range(min(RunManager.current_run.party.size(), 4)):
+		var entry = RunManager.current_run.party[i]
 		if entry != null and entry.has("instance_id"):
-			deployed_instance_ids.append(entry["instance_id"])
+			deployed_instance_ids[i] = entry["instance_id"]
 
 	_rebuild_roster()
-	_rebuild_equip_slots()
 	_rebuild_inventory()
 	_update_scout_button()
 	_update_stage_label()
 	_setup_deployment_background()
 	_spawn_unit_previews()
+
+
+func _toggle_panel(panel: Control, button: Button, label: String) -> void:
+	panel.visible = not panel.visible
+	_update_tab_button_text(button, label, panel.visible)
+
+
+func _update_tab_button_text(button: Button, label: String, is_visible: bool) -> void:
+	button.text = ("Hide %s" if is_visible else "Show %s") % label
+
+
+# ADDED: this scene has accumulated a lot of "add a node named X here"
+# instructions across several rounds of changes, and a single wrong/missing
+# node used to fail as a generic, hard-to-place "Cannot call method
+# 'get_children' on a null value" once _ready() reached whatever function
+# needed it. This checks every required node up front and prints exactly
+# which one is missing/misnamed, so a scene mismatch is obvious immediately
+# instead of crashing deep inside some later rebuild function. See the
+# README's node tree listing for exactly what each of these should look
+# like.
+func _validate_required_nodes() -> bool:
+	var required := {
+		"BackgroundTexture": background_texture,
+		"RosterScroll/RosterList": roster_list,
+		"RosterScroll": roster_scroll,
+		"EquipPanel": equip_panel,
+		"InventoryScroll": inventory_scroll,
+		"InventoryScroll/InventoryList": inventory_list,
+		"DeployedPartyContainer": deployed_party_container,
+		"PanelTabs/RosterTabButton": roster_tab_button,
+		"PanelTabs/ForgeTabButton": forge_tab_button,
+		"PanelTabs/InventoryTabButton": inventory_tab_button,
+		"EquipPanel/ForgeRow/ForgeSlotAButton": forge_slot_a_button,
+		"EquipPanel/ForgeRow/ForgeSlotBButton": forge_slot_b_button,
+		"EquipPanel/ForgeRow/ForgeButton": forge_button,
+		"EquipPanel/ForgeRow/ForgePreviewButton": forge_preview_button,
+		"EquipPanel/ForgeRow/ForgeStatusLabel": forge_status_label,
+		"EquipPanel/ForgeRow/ForgePreviewLabel": forge_preview_label,
+		"ShopButton": shop_button,
+		"ContinueButton": continue_button,
+		"ScoutButton": scout_button,
+		"ScoutPanel": scout_panel,
+		"ScoutPanel/ScoutMargin/ScoutVBox/ScoutText": scout_text,
+		"ScoutPanel/ScoutMargin/ScoutVBox/ScoutMapView": scout_map_view,
+		"ScoutPanel/ScoutMargin/ScoutVBox/ScoutCloseButton": scout_back_button,
+		"ScoutPanel/ScoutMargin/ScoutVBox/ScoutEnterCombatButton": scout_enter_combat_button,
+		"PreviewLayer": preview_layer,
+		"StageLabel": stage_label,
+	}
+	var all_ok := true
+	for path in required:
+		if required[path] == null:
+			printerr("❌ DeploymentScene: missing node at '%s' -- check it exists with this exact name/path. See the README's node tree." % path)
+			all_ok = false
+	return all_ok
 
 
 # ── ROSTER / TEAM SELECTION ───────────────────────────────────────────────────
@@ -186,7 +310,81 @@ func _rebuild_roster() -> void:
 
 		roster_list.add_child(row)
 
+	# ADDED: if a unit is currently selected via "Manage Equipment", their
+	# equipped items (with Unequip/Info buttons) appear right here, below
+	# the full roster list -- built fresh every time since roster_list's
+	# children are always fully cleared and rebuilt anyway (see the top of
+	# this function).
+	_append_equip_management_section()
+
 	_rebuild_deployed_party_slots()
+
+
+# ADDED: shows the currently-selected unit's 3 equipped items, each with an
+# Unequip button (returns it to the inventory bag) and an Info button (same
+# read-only preview popup used everywhere else). Shows nothing at all if no
+# unit is currently selected for equip management.
+func _append_equip_management_section() -> void:
+	var entry := _get_selected_entry()
+	if entry.is_empty():
+		return
+
+	var unit_data := _load_unit_data(entry.get("unit_id", ""))
+	var label: String = unit_data.display_name if unit_data != null else entry.get("unit_id", "?")
+
+	roster_list.add_child(HSeparator.new())
+
+	var header := Label.new()
+	header.text = "Equipping: " + label
+	header.add_theme_font_size_override("font_size", 16)
+	roster_list.add_child(header)
+
+	var equipped: Array = entry.get("equipped_item_ids", [])
+	while equipped.size() < MAX_EQUIP_SLOTS:
+		equipped.append(null)
+
+	for i in range(MAX_EQUIP_SLOTS):
+		var item_id = equipped[i]
+		var row := HBoxContainer.new()
+
+		var slot_label := Label.new()
+		if item_id == null or item_id == "":
+			slot_label.text = "Slot %d: (empty)" % (i + 1)
+		else:
+			slot_label.text = "Slot %d: %s" % [i + 1, ContentLoader.get_equipment(item_id).get("name", item_id)]
+		row.add_child(slot_label)
+
+		if item_id != null and item_id != "":
+			var unequip_btn := Button.new()
+			unequip_btn.text = "Unequip"
+			unequip_btn.pressed.connect(func(): _on_unequip_pressed(i))
+			row.add_child(unequip_btn)
+
+			var info_btn := Button.new()
+			info_btn.text = "Info"
+			info_btn.pressed.connect(func(): _show_item_preview_popup(item_id))
+			row.add_child(info_btn)
+
+		roster_list.add_child(row)
+
+
+func _on_unequip_pressed(slot_index: int) -> void:
+	var entry := _get_selected_entry()
+	if entry.is_empty():
+		return
+
+	var equipped: Array = entry.get("equipped_item_ids", [])
+	while equipped.size() < MAX_EQUIP_SLOTS:
+		equipped.append(null)
+	if equipped[slot_index] == null or equipped[slot_index] == "":
+		return
+
+	RunManager.current_run.equipment_inventory.append(equipped[slot_index])
+	equipped[slot_index] = null
+	entry["equipped_item_ids"] = equipped
+	RunManager.save_run()
+	_rebuild_roster()
+	_rebuild_inventory()
 
 
 # ADDED: the 4-slot "who's actually deploying" strip, mirroring DraftScene's
@@ -201,13 +399,25 @@ func _rebuild_deployed_party_slots() -> void:
 	for child in deployed_party_container.get_children():
 		child.queue_free()
 
+	var portrait_size := Vector2i(48, 48)
 	var roster := _get_full_roster()
 	for i in range(4):
+		# ADDED: each slot is now a small vertical stack -- portrait on top,
+		# the existing name/click button underneath -- instead of just the
+		# bare button.
+		var slot_column := VBoxContainer.new()
+		slot_column.alignment = BoxContainer.ALIGNMENT_CENTER
+
+		var portrait_rect := TextureRect.new()
+		portrait_rect.custom_minimum_size = Vector2(portrait_size)
+		portrait_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		portrait_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+
 		var slot_btn := Button.new()
 		slot_btn.custom_minimum_size = Vector2(120, 40)
 
-		if i < deployed_instance_ids.size():
-			var instance_id: String = deployed_instance_ids[i]
+		var instance_id: String = deployed_instance_ids[i]
+		if instance_id != "":
 			var entry: Dictionary = {}
 			for candidate in roster:
 				if candidate.get("instance_id", "") == instance_id:
@@ -216,37 +426,111 @@ func _rebuild_deployed_party_slots() -> void:
 			var unit_data := _load_unit_data(entry.get("unit_id", "")) if not entry.is_empty() else null
 			var label: String = unit_data.display_name if unit_data != null else entry.get("unit_id", "?")
 			slot_btn.text = label
-			slot_btn.pressed.connect(func(): _on_deployed_slot_pressed(instance_id))
+			slot_btn.pressed.connect(func(): _on_deployed_slot_pressed(i))
+			# Same fallback-to-black-box pattern used everywhere else a
+			# portrait/icon might be missing (see unit_info_popup.gd).
+			portrait_rect.texture = UnitInfoPopup.texture_or_black_box(
+				unit_data.portrait if unit_data != null else null, portrait_size)
 		else:
-			slot_btn.text = "(empty)"
-			slot_btn.disabled = true
+			# CHANGED: empty slots are no longer dead/disabled -- tapping one
+			# now opens a picker of currently-undeployed units to fill THIS
+			# specific slot with (see _on_deployed_slot_pressed /
+			# _show_deploy_picker_for_slot).
+			slot_btn.text = "+ Deploy"
+			slot_btn.pressed.connect(func(): _on_deployed_slot_pressed(i))
+			portrait_rect.visible = false   # nothing to show a portrait of yet
 
-		deployed_party_container.add_child(slot_btn)
+		slot_column.add_child(portrait_rect)
+		slot_column.add_child(slot_btn)
+		deployed_party_container.add_child(slot_column)
 
 
-func _on_deployed_slot_pressed(instance_id: String) -> void:
-	# Clicking a filled deployed-party slot removes that unit from the
-	# deployed team -- identical effect to toggling it off in the roster
-	# list below, just reachable from the "your team" strip directly.
-	deployed_instance_ids.erase(instance_id)
-	_rebuild_roster()
+func _on_deployed_slot_pressed(slot_index: int) -> void:
+	if deployed_instance_ids[slot_index] != "":
+		# Filled -- clicking removes just this unit from just this slot,
+		# leaving the OTHER 3 slots exactly as they were (no shifting).
+		deployed_instance_ids[slot_index] = ""
+		_rebuild_roster()
+	else:
+		# Empty -- show which units can fill this slot.
+		_show_deploy_picker_for_slot(slot_index)
+
+
+func _show_deploy_picker_for_slot(slot_index: int) -> void:
+	var popup := PopupPanel.new()
+	add_child(popup)
+
+	var margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 16)
+	popup.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 6)
+	margin.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "Deploy to this slot:"
+	title.add_theme_font_size_override("font_size", 16)
+	vbox.add_child(title)
+
+	# Only units not CURRENTLY occupying any of the 4 slots are offered --
+	# a unit deployed in another slot has to be removed from there first
+	# (clicking their slot) before they can show up here.
+	var any_available := false
+	for entry in _get_full_roster():
+		var instance_id: String = entry.get("instance_id", "")
+		if instance_id in deployed_instance_ids:
+			continue
+		any_available = true
+		var unit_data := _load_unit_data(entry.get("unit_id", ""))
+		var label: String = unit_data.display_name if unit_data != null else entry.get("unit_id", "?")
+
+		var pick_btn := Button.new()
+		pick_btn.text = label + " (Lv " + str(entry.get("level", 1)) + ")"
+		pick_btn.pressed.connect(func():
+			deployed_instance_ids[slot_index] = instance_id
+			popup.queue_free()
+			_rebuild_roster()
+		)
+		vbox.add_child(pick_btn)
+
+	if not any_available:
+		var empty_label := Label.new()
+		empty_label.text = "(every other unit is already deployed)"
+		vbox.add_child(empty_label)
+
+	var close_btn := Button.new()
+	close_btn.text = "Cancel"
+	close_btn.pressed.connect(func(): popup.queue_free())
+	vbox.add_child(close_btn)
+
+	popup.popup_centered(Vector2(260, 300))
 
 
 func _on_roster_toggle_pressed(instance_id: String) -> void:
 	if instance_id in deployed_instance_ids:
-		deployed_instance_ids.erase(instance_id)
+		deployed_instance_ids[deployed_instance_ids.find(instance_id)] = ""
 	else:
-		if deployed_instance_ids.size() >= 4:
+		var empty_slot: int = deployed_instance_ids.find("")
+		if empty_slot == -1:
 			print("⛔ You can only deploy up to 4 units. Deselect one first.")
 			return
-		deployed_instance_ids.append(instance_id)
+		deployed_instance_ids[empty_slot] = instance_id
 	_rebuild_roster()
+
+
+func _deployed_count() -> int:
+	var count := 0
+	for id in deployed_instance_ids:
+		if id != "":
+			count += 1
+	return count
 
 
 func _on_roster_entry_pressed(index: int) -> void:
 	_selected_party_index = index
 	_rebuild_roster()
-	_rebuild_equip_slots()
 
 
 func _get_selected_entry() -> Dictionary:
@@ -392,80 +676,8 @@ func _pick_non_overlapping_spawn_pos(placed_positions: Array[Vector2]) -> Vector
 	return candidate
 
 
-# ── EQUIPMENT SLOTS ────────────────────────────────────────────────────────────
-
-func _rebuild_equip_slots() -> void:
-	for child in slots_container.get_children():
-		child.queue_free()
-
-	var entry := _get_selected_entry()
-	if entry.is_empty():
-		selected_unit_label.text = "Select a unit above to manage its equipment."
-		return
-
-	var unit_data := _load_unit_data(entry.get("unit_id", ""))
-	selected_unit_label.text = "Equipping: " + (unit_data.display_name if unit_data != null else entry.get("unit_id", "?"))
-
-	var equipped: Array = entry.get("equipped_item_ids", [])
-	while equipped.size() < MAX_EQUIP_SLOTS:
-		equipped.append(null)
-
-	for i in range(MAX_EQUIP_SLOTS):
-		var item_id = equipped[i]
-
-		# ADDED: wrap the existing slot button in a row with an "Info" button
-		# next to it, so the player can see what an equipped item actually
-		# does right here instead of having to unequip it first to find out.
-		var row := HBoxContainer.new()
-
-		var btn := Button.new()
-		if item_id == null or item_id == "":
-			btn.text = "Empty Slot %d" % (i + 1)
-		else:
-			btn.text = ContentLoader.get_equipment(item_id).get("name", item_id)
-		btn.pressed.connect(func(): _on_equip_slot_pressed(i))
-		row.add_child(btn)
-
-		if item_id != null and item_id != "":
-			var info_btn := Button.new()
-			info_btn.text = "Info"
-			info_btn.pressed.connect(func(): _show_item_preview_popup(item_id))
-			row.add_child(info_btn)
-
-		slots_container.add_child(row)
-
-
-func _on_equip_slot_pressed(slot_index: int) -> void:
-	var entry := _get_selected_entry()
-	if entry.is_empty():
-		return
-
-	var equipped: Array = entry.get("equipped_item_ids", [])
-	while equipped.size() < MAX_EQUIP_SLOTS:
-		equipped.append(null)
-
-	if _selected_inventory_item_id != "":
-		# Equipping: put the picked-up inventory item into this slot,
-		# returning whatever was already there back to the inventory.
-		var old_item = equipped[slot_index]
-		equipped[slot_index] = _selected_inventory_item_id
-		RunManager.current_run.equipment_inventory.erase(_selected_inventory_item_id)
-		if old_item != null and old_item != "":
-			RunManager.current_run.equipment_inventory.append(old_item)
-		_selected_inventory_item_id = ""
-	else:
-		# No item picked up -- treat this as "unequip": send it back to the bag.
-		if equipped[slot_index] != null and equipped[slot_index] != "":
-			RunManager.current_run.equipment_inventory.append(equipped[slot_index])
-			equipped[slot_index] = null
-
-	entry["equipped_item_ids"] = equipped
-	RunManager.save_run()
-	_rebuild_equip_slots()
-	_rebuild_inventory()
-
-
 # ── INVENTORY ──────────────────────────────────────────────────────────────────
+
 
 func _rebuild_inventory() -> void:
 	for child in inventory_list.get_children():
@@ -477,7 +689,6 @@ func _rebuild_inventory() -> void:
 		# advanced gear (that's what battle_scene.gd's Items popup reads
 		# from), so they need to go through this same equip flow too.
 		var item_data: Dictionary = ContentLoader.get_equipment(item_id)
-		var prefix := "[Selected] " if item_id == _selected_inventory_item_id else ""
 		var suffix := " (Consumable)" if item_data.get("type", "") == "consumable" else ""
 
 		# ADDED: an "Info" button next to every inventory row, so players can
@@ -485,7 +696,7 @@ func _rebuild_inventory() -> void:
 		var row := HBoxContainer.new()
 
 		var btn := Button.new()
-		btn.text = prefix + item_data.get("name", item_id) + suffix
+		btn.text = item_data.get("name", item_id) + suffix
 		btn.pressed.connect(func(): _on_inventory_item_pressed(item_id))
 		row.add_child(btn)
 
@@ -497,11 +708,138 @@ func _rebuild_inventory() -> void:
 		inventory_list.add_child(row)
 
 
+# CHANGED: clicking an item used to "pick it up" (a lingering selection you'd
+# then click a destination -- an equip slot or a forge Set button -- to
+# resolve), shown with a "[Selected] " prefix. Replaced with a popup offering
+# the 2 actions directly: Equip (pick which unit) or Combine (send it to an
+# open forge slot). No more in-between state to track.
 func _on_inventory_item_pressed(item_id: String) -> void:
-	# Clicking the same item again deselects it; clicking a different one
-	# switches the selection. Then click an equip slot or a forge Set button.
-	_selected_inventory_item_id = "" if _selected_inventory_item_id == item_id else item_id
+	var data: Dictionary = ContentLoader.get_equipment(item_id)
+
+	var popup := PopupPanel.new()
+	add_child(popup)
+
+	var margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 16)
+	popup.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	margin.add_child(vbox)
+
+	var title := Label.new()
+	title.text = data.get("name", item_id)
+	title.add_theme_font_size_override("font_size", 18)
+	vbox.add_child(title)
+
+	var equip_btn := Button.new()
+	equip_btn.text = "Equip"
+	equip_btn.pressed.connect(func():
+		popup.queue_free()
+		_show_equip_unit_picker(item_id)
+	)
+	vbox.add_child(equip_btn)
+
+	var combine_btn := Button.new()
+	combine_btn.text = "Combine"
+	combine_btn.pressed.connect(func():
+		popup.queue_free()
+		_combine_item_into_forge(item_id)
+	)
+	vbox.add_child(combine_btn)
+
+	var cancel_btn := Button.new()
+	cancel_btn.text = "Cancel"
+	cancel_btn.pressed.connect(func(): popup.queue_free())
+	vbox.add_child(cancel_btn)
+
+	popup.popup_centered(Vector2(220, 200))
+
+
+# ADDED: the unit list shown after pressing "Equip" in the popup above.
+# Equips to the first open slot on whichever unit you pick; if that unit has
+# no open slot, shows a message instead of guessing which of their 3 items
+# to bump.
+func _show_equip_unit_picker(item_id: String) -> void:
+	var popup := PopupPanel.new()
+	add_child(popup)
+
+	var margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 16)
+	popup.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 6)
+	margin.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "Equip " + ContentLoader.get_equipment(item_id).get("name", item_id) + " to:"
+	title.add_theme_font_size_override("font_size", 16)
+	vbox.add_child(title)
+
+	for entry in _get_full_roster():
+		var unit_data := _load_unit_data(entry.get("unit_id", ""))
+		var label: String = unit_data.display_name if unit_data != null else entry.get("unit_id", "?")
+		var instance_id: String = entry.get("instance_id", "")
+
+		var unit_btn := Button.new()
+		unit_btn.text = label + " (Lv " + str(entry.get("level", 1)) + ")"
+		unit_btn.pressed.connect(func():
+			popup.queue_free()
+			_equip_item_to_unit(item_id, instance_id)
+		)
+		vbox.add_child(unit_btn)
+
+	var cancel_btn := Button.new()
+	cancel_btn.text = "Cancel"
+	cancel_btn.pressed.connect(func(): popup.queue_free())
+	vbox.add_child(cancel_btn)
+
+	popup.popup_centered(Vector2(260, 320))
+
+
+func _equip_item_to_unit(item_id: String, instance_id: String) -> void:
+	var target_entry: Dictionary = {}
+	for entry in _get_full_roster():
+		if entry.get("instance_id", "") == instance_id:
+			target_entry = entry
+			break
+	if target_entry.is_empty():
+		return
+
+	var equipped: Array = target_entry.get("equipped_item_ids", [])
+	while equipped.size() < MAX_EQUIP_SLOTS:
+		equipped.append(null)
+
+	var empty_slot := -1
+	for i in range(MAX_EQUIP_SLOTS):
+		if equipped[i] == null or equipped[i] == "":
+			empty_slot = i
+			break
+
+	if empty_slot == -1:
+		_show_message_popup("No Equip Slot Available")
+		return
+
+	equipped[empty_slot] = item_id
+	RunManager.current_run.equipment_inventory.erase(item_id)
+	target_entry["equipped_item_ids"] = equipped
+	RunManager.save_run()
+	_rebuild_roster()
 	_rebuild_inventory()
+
+
+# ADDED: a small reusable "OK" message popup, used for the "No Equip Slot
+# Available" / "No Forge Slot Available" feedback.
+func _show_message_popup(message: String) -> void:
+	var popup := AcceptDialog.new()
+	popup.dialog_text = message
+	add_child(popup)
+	popup.popup_centered()
+	popup.confirmed.connect(func(): popup.queue_free())
+	popup.canceled.connect(func(): popup.queue_free())
 
 
 # ── FORGING ────────────────────────────────────────────────────────────────────
@@ -510,26 +848,59 @@ func _on_inventory_item_pressed(item_id: String) -> void:
 # and combat already use, so forged items work immediately, unlike the old
 # BasicEquipmentData-based forge this replaces.
 
-func _on_set_slot_a_pressed() -> void:
-	if _is_basic_item(_selected_inventory_item_id):
-		_forge_slot_a = _selected_inventory_item_id
-		forge_slot_a_label.text = "A: " + ContentLoader.get_equipment(_forge_slot_a).get("name", _forge_slot_a)
-		_selected_inventory_item_id = ""
-		_rebuild_inventory()
-		_update_forge_preview()
+func _combine_item_into_forge(item_id: String) -> void:
+	if not _is_basic_item(item_id):
+		_show_message_popup("Only basic equipment can be combined for forging.")
+		return
+
+	# Make the Forge panel visible if it was hidden, since you're about to
+	# see feedback (the item landing in a slot, or the status label) appear
+	# inside it.
+	if not equip_panel.visible:
+		equip_panel.visible = true
+		_update_tab_button_text(forge_tab_button, "Forge", true)
+
+	if _forge_slot_a == "":
+		_forge_slot_a = item_id
+		forge_slot_a_button.text = "A: " + ContentLoader.get_equipment(item_id).get("name", item_id)
+	elif _forge_slot_b == "":
+		_forge_slot_b = item_id
+		forge_slot_b_button.text = "B: " + ContentLoader.get_equipment(item_id).get("name", item_id)
 	else:
-		forge_status_label.text = "Select a BASIC equipment item from inventory first."
+		_show_message_popup("No Forge Slot Available")
+		return
+
+	# BUGFIX (found while adding this): the item now actually leaves the bag
+	# the moment it's placed into a forge slot. Previously, "setting" a slot
+	# only recorded the item_id in _forge_slot_a/_forge_slot_b and left the
+	# item sitting in equipment_inventory untouched -- so the SAME physical
+	# item could be placed into BOTH slot A and slot B (since it was still
+	# visible/selectable in the inventory list after being "set" once), and
+	# _on_forge_pressed()'s erase(_forge_slot_a) / erase(_forge_slot_b) would
+	# silently only remove the one real copy, letting a single item forge as
+	# if it were two. Removing it here (and returning it via _clear_forge_slot
+	# if the slot gets cleared before forging) closes that.
+	RunManager.current_run.equipment_inventory.erase(item_id)
+	_rebuild_inventory()
+	_update_forge_preview()
 
 
-func _on_set_slot_b_pressed() -> void:
-	if _is_basic_item(_selected_inventory_item_id):
-		_forge_slot_b = _selected_inventory_item_id
-		forge_slot_b_label.text = "B: " + ContentLoader.get_equipment(_forge_slot_b).get("name", _forge_slot_b)
-		_selected_inventory_item_id = ""
-		_rebuild_inventory()
-		_update_forge_preview()
+# ADDED: lets a forge slot be cleared (returning its item to the bag) before
+# you commit to forging -- needed now that Combine can auto-fill a slot in
+# one click, so a wrong pick isn't a dead end.
+func _clear_forge_slot(is_slot_a: bool) -> void:
+	var item_id: String = _forge_slot_a if is_slot_a else _forge_slot_b
+	if item_id == "":
+		return
+	RunManager.current_run.equipment_inventory.append(item_id)
+	if is_slot_a:
+		_forge_slot_a = ""
+		forge_slot_a_button.text = "A: (empty)"
 	else:
-		forge_status_label.text = "Select a BASIC equipment item from inventory first."
+		_forge_slot_b = ""
+		forge_slot_b_button.text = "B: (empty)"
+	_rebuild_inventory()
+	_update_forge_preview()
 
 
 func _is_basic_item(item_id: String) -> bool:
@@ -683,14 +1054,17 @@ func _on_forge_pressed() -> void:
 		return
 
 	var output_id: String = recipe.get("output_equipment_id", "")
-	RunManager.current_run.equipment_inventory.erase(_forge_slot_a)
-	RunManager.current_run.equipment_inventory.erase(_forge_slot_b)
+	# CHANGED: items are removed from equipment_inventory the moment they're
+	# placed into a forge slot now (see _combine_item_into_forge), not here --
+	# erasing them again here would either no-op harmlessly, or -- if you'd
+	# picked up a SEPARATE copy of the same item_id in the meantime -- erase
+	# the wrong copy. Just add the output.
 	RunManager.current_run.equipment_inventory.append(output_id)
 
 	_forge_slot_a = ""
 	_forge_slot_b = ""
-	forge_slot_a_label.text = "A: (empty)"
-	forge_slot_b_label.text = "B: (empty)"
+	forge_slot_a_button.text = "A: (empty)"
+	forge_slot_b_button.text = "B: (empty)"
 	forge_status_label.text = "Forged: " + ContentLoader.get_equipment(output_id).get("name", output_id) + "!"
 	_update_forge_preview()
 	RunManager.save_run()
@@ -752,7 +1126,7 @@ func _format_scout_report(content: Dictionary) -> String:
 # ── CONTINUE ─────────────────────────────────────────────────────────────────
 
 func _on_continue_pressed() -> void:
-	if deployed_instance_ids.is_empty():
+	if _deployed_count() == 0:
 		print("⛔ Select at least 1 unit to deploy before continuing.")
 		return
 
