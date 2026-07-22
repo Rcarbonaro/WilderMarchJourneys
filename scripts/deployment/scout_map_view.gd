@@ -18,6 +18,12 @@ class_name ScoutMapView
 
 const CELL_SIZE := 18.0
 const GAP := 1.0
+const WALL_GRAY := Color(0.35, 0.35, 0.38)
+# Used for BOTH wall tiles and blocking map features below -- these used to
+# be two different colors (gray for wall tiles, red for blocking features),
+# which read as two different kinds of obstacle when they're actually the
+# same idea (something you can't walk through). One shared constant now, so
+# they can't drift apart again by editing one and forgetting the other.
 
 var _tile_map: Dictionary = {}
 var _ally_cells: Array = []
@@ -72,7 +78,7 @@ func _draw() -> void:
 			if _tile_map.has(cell):
 				var tile: TileTypeData = _tile_map[cell]
 				if tile.is_wall:
-					color = Color(0.35, 0.35, 0.38)          # wall
+					color = WALL_GRAY                        # wall
 				elif tile.movement_cost > 1 and tile.blocks_line_of_sight:
 					color = Color(0.45, 0.32, 0.2)           # slows + blocks sight
 				elif tile.movement_cost > 1:
@@ -104,10 +110,10 @@ func _draw_marker(cell: Vector2i, color: Color) -> void:
 
 
 func _draw_blocking_feature(placement: Dictionary) -> void:
-	# Same red tint battle_grid.gd's _spawn_feature_visual() uses as its
-	# placeholder for category == "blocking", so a scouted map "looks like"
-	# what you'll actually see once you're in the real fight.
-	const BLOCKING_COLOR := Color(0.8, 0.2, 0.2)
+	# CHANGED: this used to be its own red constant -- now uses the same
+	# WALL_GRAY as actual wall tiles above, so every kind of "can't walk
+	# here" obstacle reads as one consistent color on the scouted map
+	# instead of wall tiles being gray and blocking features being red.
 	var anchor_cell: Vector2i = placement.get("cell", Vector2i.ZERO)
 	var feature: MapFeatureData = placement.get("feature")
 	if feature == null:
@@ -125,5 +131,4 @@ func _draw_blocking_feature(placement: Dictionary) -> void:
 		# as "an obstacle sitting on this tile" without hiding the terrain
 		# color underneath it.
 		var inset := CELL_SIZE * 0.15
-		draw_rect(Rect2(pos + Vector2(inset, inset), Vector2(CELL_SIZE - inset * 2, CELL_SIZE - inset * 2)), BLOCKING_COLOR)
-		
+		draw_rect(Rect2(pos + Vector2(inset, inset), Vector2(CELL_SIZE - inset * 2, CELL_SIZE - inset * 2)), WALL_GRAY)
