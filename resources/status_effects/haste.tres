@@ -6,6 +6,7 @@
 script = ExtResource("1_g30i8")
 id = "haste"
 display_name = "Haste"
+description = "Increased movement speed."
 duration_rounds = 2
 expires_at = "end_of_player_round"
 mov_modifier = 3

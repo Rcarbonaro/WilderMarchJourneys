@@ -387,8 +387,8 @@ scale = Vector2(0.8, 0.8)
 script = ExtResource("1_65bim")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1298568116]
-position = Vector2(1.25, -13.75)
-scale = Vector2(0.46, 0.465)
+position = Vector2(-1.2500005, 4.7683716e-07)
+scale = Vector2(0.41122395, 0.39642242)
 sprite_frames = SubResource("SpriteFrames_grxbi")
 animation = &"die"
 autoplay = "idle"

@@ -9,7 +9,7 @@
 [resource]
 script = ExtResource("2_4lcoe")
 id = "sharpshooter"
-display_name = "Sharpshooter"
+display_name = "Snipe"
 description = "A long-ranged physical attack."
 icon = ExtResource("3_65yb4")
 effect_scene = ExtResource("2_vvd0j")

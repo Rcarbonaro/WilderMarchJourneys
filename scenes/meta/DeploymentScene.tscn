@@ -1,31 +1,64 @@
 [gd_scene format=3 uid="uid://bksrgi6ba4saq"]
 
 [ext_resource type="Script" uid="uid://2gi1qfdkqlkt" path="res://scripts/deployment/deployment_manager.gd" id="1_0c7r6"]
+[ext_resource type="Texture2D" uid="uid://d3rec5bosxsbt" path="res://assets/backgrounds/forestfloor1.png" id="2_cq43t"]
 [ext_resource type="Script" uid="uid://c2vdwg2f37gbc" path="res://scripts/deployment/scout_map_view.gd" id="2_l7df5"]
+[ext_resource type="Texture2D" uid="uid://b5nxvfqvfwyrp" path="res://sprites/map_assets/tree1.png" id="4_iwjah"]
+[ext_resource type="Texture2D" uid="uid://don0s8xp0uhiy" path="res://sprites/map_assets/tree2.png" id="5_8fpev"]
+[ext_resource type="Texture2D" uid="uid://cp1q7w5i2muf1" path="res://sprites/map_assets/tree3.png" id="6_bxee8"]
+[ext_resource type="Texture2D" uid="uid://dfa3c8jcs6q27" path="res://sprites/map_assets/tree4.png" id="7_241an"]
+[ext_resource type="Texture2D" uid="uid://dhfgj155jb78y" path="res://sprites/map_assets/tree5.png" id="8_s270e"]
+[ext_resource type="Texture2D" uid="uid://8ffuovlarova" path="res://sprites/map_assets/tree6.png" id="9_ptjc7"]
+[ext_resource type="Texture2D" uid="uid://cdekis3q3b8go" path="res://sprites/map_assets/tree7.png" id="10_k55qy"]
+[ext_resource type="Texture2D" uid="uid://bhwma3r20mjyv" path="res://sprites/map_assets/tree9.png" id="11_tyqtq"]
+[ext_resource type="Texture2D" uid="uid://hxod8nld1tyv" path="res://sprites/map_assets/tree10.png" id="12_h0kok"]
 
 [node name="DeploymentScene" type="Node2D" unique_id=1391455873]
 script = ExtResource("1_0c7r6")
 
+[node name="BackgroundTexture" type="TextureRect" parent="." unique_id=634542175]
+z_index = -11
+custom_minimum_size = Vector2(1000, 1000)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 1920.0
+offset_bottom = 1080.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_cq43t")
+
+[node name="PanelTabs" type="HBoxContainer" parent="." unique_id=1732531169]
+offset_right = 116.0
+offset_bottom = 40.0
+
+[node name="RosterTabButton" type="Button" parent="PanelTabs" unique_id=699128986]
+layout_mode = 2
+
+[node name="ForgeTabButton" type="Button" parent="PanelTabs" unique_id=1607339608]
+layout_mode = 2
+
+[node name="InventoryTabButton" type="Button" parent="PanelTabs" unique_id=1468892800]
+layout_mode = 2
+
 [node name="StageLabel" type="Label" parent="." unique_id=1917124124]
-offset_left = 945.0
+offset_left = 796.0
 offset_top = 35.0
-offset_right = 1008.0
+offset_right = 1045.0
 offset_bottom = 72.0
 
-[node name="PreviewLayer" type="Node2D" parent="." unique_id=1948338457]
-position = Vector2(969, 400)
-
 [node name="DeployedPartyContainer" type="HBoxContainer" parent="." unique_id=1089983725]
-offset_left = 11.0
-offset_top = 422.0
-offset_right = 438.0
-offset_bottom = 516.0
+offset_left = 771.0
+offset_top = 785.0
+offset_right = 1198.0
+offset_bottom = 879.0
 
 [node name="RosterScroll" type="ScrollContainer" parent="." unique_id=829570540]
-offset_left = 12.0
-offset_top = 139.0
-offset_right = 806.0
-offset_bottom = 454.0
+offset_left = 531.0
+offset_top = 176.0
+offset_right = 1325.0
+offset_bottom = 491.0
 
 [node name="RosterList" type="VBoxContainer" parent="RosterScroll" unique_id=406574603]
 layout_mode = 2
@@ -33,21 +66,10 @@ layout_mode = 2
 [node name="EquipPanel" type="Control" parent="." unique_id=276356741]
 layout_mode = 3
 anchors_preset = 0
-offset_left = 5.0
-offset_top = 575.0
-offset_right = 706.0
-offset_bottom = 826.0
-
-[node name="SelectedUnitLabel" type="Label" parent="EquipPanel" unique_id=2115706909]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 23.0
-
-[node name="SlotsContainer" type="HBoxContainer" parent="EquipPanel" unique_id=1757267150]
-layout_mode = 0
-offset_top = 39.0
-offset_right = 202.0
-offset_bottom = 69.0
+offset_left = 8.0
+offset_top = 754.0
+offset_right = 709.0
+offset_bottom = 1005.0
 
 [node name="ForgeRow" type="HBoxContainer" parent="EquipPanel" unique_id=1818521909]
 layout_mode = 0
@@ -55,19 +77,11 @@ offset_top = 171.0
 offset_right = 393.0
 offset_bottom = 229.0
 
-[node name="ForgeSlotALabel" type="Label" parent="EquipPanel/ForgeRow" unique_id=156430300]
-layout_mode = 2
-text = "A: (empty)"
-
-[node name="SetSlotAButton" type="Button" parent="EquipPanel/ForgeRow" unique_id=444542429]
+[node name="ForgeSlotAButton" type="Button" parent="EquipPanel/ForgeRow" unique_id=444542429]
 layout_mode = 2
 text = "Set Slot A"
 
-[node name="ForgeSlotBLabel" type="Label" parent="EquipPanel/ForgeRow" unique_id=15243161]
-layout_mode = 2
-text = "B: (empty)"
-
-[node name="SetSlotBButton" type="Button" parent="EquipPanel/ForgeRow" unique_id=1359118948]
+[node name="ForgeSlotBButton" type="Button" parent="EquipPanel/ForgeRow" unique_id=1359118948]
 layout_mode = 2
 text = "Set Slot B"
 
@@ -75,15 +89,15 @@ text = "Set Slot B"
 layout_mode = 2
 text = "Forge"
 
-[node name="ForgeStatusLabel" type="Label" parent="EquipPanel/ForgeRow" unique_id=1897158691]
+[node name="ForgePreviewButton" type="Button" parent="EquipPanel/ForgeRow" unique_id=157983056]
+layout_mode = 2
+text = "Preview"
+
+[node name="ForgeStatusLabel" type="Label" parent="EquipPanel/ForgeRow" unique_id=1206023315]
 layout_mode = 2
 
 [node name="ForgePreviewLabel" type="RichTextLabel" parent="EquipPanel/ForgeRow" unique_id=2137456618]
 layout_mode = 2
-
-[node name="ForgePreviewButton" type="Button" parent="EquipPanel/ForgeRow" unique_id=157983056]
-layout_mode = 2
-text = "Preview"
 
 [node name="Label" type="Label" parent="EquipPanel" unique_id=1693607309]
 layout_mode = 0
@@ -94,26 +108,26 @@ offset_bottom = 164.0
 text = "Forge Advanced Equipment"
 
 [node name="InventoryScroll" type="ScrollContainer" parent="." unique_id=993765927]
-offset_left = 796.0
-offset_top = 138.0
-offset_right = 1257.0
-offset_bottom = 684.0
+offset_left = 12.0
+offset_top = 176.0
+offset_right = 674.0
+offset_bottom = 722.0
 
 [node name="InventoryList" type="VBoxContainer" parent="InventoryScroll" unique_id=1241574980]
 layout_mode = 2
 
 [node name="ShopButton" type="Button" parent="." unique_id=1501529511]
-offset_left = 1176.0
-offset_top = 879.0
-offset_right = 1336.0
-offset_bottom = 979.0
+offset_left = 1172.0
+offset_top = 922.0
+offset_right = 1332.0
+offset_bottom = 1022.0
 text = "Shop"
 
 [node name="ContinueButton" type="Button" parent="." unique_id=1073666761]
 offset_left = 827.0
-offset_top = 871.0
+offset_top = 917.0
 offset_right = 1117.0
-offset_bottom = 986.0
+offset_bottom = 1032.0
 text = "Continue"
 
 [node name="ScoutButton" type="Button" parent="." unique_id=1050116355]
@@ -139,6 +153,10 @@ visible = false
 layout_mode = 2
 fit_content = true
 
+[node name="ScoutMapView" type="Control" parent="ScoutPanel/ScoutMargin/ScoutVBox" unique_id=828811251]
+layout_mode = 2
+script = ExtResource("2_l7df5")
+
 [node name="ScoutCloseButton" type="Button" parent="ScoutPanel/ScoutMargin/ScoutVBox" unique_id=1380070234]
 layout_mode = 2
 text = "Close"
@@ -146,18 +164,154 @@ text = "Close"
 [node name="ScoutEnterCombatButton" type="Button" parent="ScoutPanel/ScoutMargin/ScoutVBox" unique_id=1999785376]
 layout_mode = 2
 
-[node name="ScoutMapView" type="Control" parent="ScoutPanel/ScoutMargin/ScoutVBox" unique_id=828811251]
-layout_mode = 2
-script = ExtResource("2_l7df5")
+[node name="PreviewLayer" type="Node2D" parent="." unique_id=1948338457]
+z_index = -1
+position = Vector2(969, 400)
 
-[node name="BackGroundTexture" type="TextureRect" parent="." unique_id=634542175]
-z_index = -11
-custom_minimum_size = Vector2(1000, 1000)
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_right = 1920.0
-offset_bottom = 1080.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
+[node name="Tree1" type="Sprite2D" parent="." unique_id=1918994371]
+z_index = -3
+position = Vector2(43, 1009)
+texture = ExtResource("4_iwjah")
+
+[node name="Tree2" type="Sprite2D" parent="." unique_id=1194116205]
+z_index = -1
+position = Vector2(140, 1025)
+texture = ExtResource("4_iwjah")
+
+[node name="Tree3" type="Sprite2D" parent="." unique_id=1982567947]
+z_index = -1
+position = Vector2(237, 1088)
+texture = ExtResource("4_iwjah")
+
+[node name="Tree4" type="Sprite2D" parent="." unique_id=1552007861]
+z_index = -1
+position = Vector2(355, 1039)
+texture = ExtResource("4_iwjah")
+
+[node name="Tree5" type="Sprite2D" parent="." unique_id=1400620217]
+position = Vector2(461, 1079)
+texture = ExtResource("5_8fpev")
+
+[node name="Tree6" type="Sprite2D" parent="." unique_id=1950921497]
+position = Vector2(581, 1058)
+texture = ExtResource("6_bxee8")
+
+[node name="Tree7" type="Sprite2D" parent="." unique_id=1437533996]
+position = Vector2(1942, 968)
+texture = ExtResource("7_241an")
+
+[node name="Tree8" type="Sprite2D" parent="." unique_id=2049466225]
+position = Vector2(1776, 1032)
+texture = ExtResource("8_s270e")
+
+[node name="Tree9" type="Sprite2D" parent="." unique_id=1376723872]
+position = Vector2(1644, 1048)
+texture = ExtResource("9_ptjc7")
+
+[node name="Tree10" type="Sprite2D" parent="." unique_id=1186246085]
+position = Vector2(1866, 1039)
+texture = ExtResource("9_ptjc7")
+
+[node name="Tree11" type="Sprite2D" parent="." unique_id=860127173]
+z_index = -1
+position = Vector2(1399, 1034)
+texture = ExtResource("10_k55qy")
+
+[node name="Tree12" type="Sprite2D" parent="." unique_id=1692056717]
+position = Vector2(715, 1072)
+texture = ExtResource("10_k55qy")
+
+[node name="Tree13" type="Sprite2D" parent="." unique_id=1173546107]
+z_index = -2
+position = Vector2(1861, 20)
+texture = ExtResource("10_k55qy")
+
+[node name="Tree14" type="Sprite2D" parent="." unique_id=1348803165]
+z_index = -2
+position = Vector2(1726, 59)
+texture = ExtResource("10_k55qy")
+
+[node name="Tree15" type="Sprite2D" parent="." unique_id=105472238]
+z_index = -2
+position = Vector2(1596, 12)
+texture = ExtResource("4_iwjah")
+
+[node name="Tree16" type="Sprite2D" parent="." unique_id=2136830125]
+z_index = -1
+position = Vector2(1414, 52)
+texture = ExtResource("5_8fpev")
+
+[node name="Tree17" type="Sprite2D" parent="." unique_id=23223237]
+z_index = -2
+position = Vector2(1178, 67)
+texture = ExtResource("5_8fpev")
+
+[node name="Tree18" type="Sprite2D" parent="." unique_id=103439290]
+z_index = -2
+position = Vector2(1292, 13)
+texture = ExtResource("5_8fpev")
+
+[node name="Tree19" type="Sprite2D" parent="." unique_id=952074092]
+z_index = -2
+position = Vector2(621, 78)
+texture = ExtResource("11_tyqtq")
+
+[node name="Tree20" type="Sprite2D" parent="." unique_id=18793547]
+z_index = -2
+position = Vector2(1391, 827)
+texture = ExtResource("12_h0kok")
+
+[node name="Tree21" type="Sprite2D" parent="." unique_id=134571518]
+z_index = -1
+position = Vector2(296, 161)
+texture = ExtResource("4_iwjah")
+
+[node name="Tree22" type="Sprite2D" parent="." unique_id=1050945687]
+z_index = -1
+position = Vector2(104, 150)
+texture = ExtResource("4_iwjah")
+
+[node name="Tree23" type="Sprite2D" parent="." unique_id=1410724542]
+z_index = -1
+position = Vector2(78, 422)
+texture = ExtResource("5_8fpev")
+
+[node name="Tree24" type="Sprite2D" parent="." unique_id=1566633178]
+z_index = -1
+position = Vector2(213, -18)
+texture = ExtResource("4_iwjah")
+
+[node name="Tree25" type="Sprite2D" parent="." unique_id=1186168607]
+z_index = -1
+position = Vector2(-5, 36)
+texture = ExtResource("5_8fpev")
+
+[node name="Tree26" type="Sprite2D" parent="." unique_id=797175879]
+z_index = -2
+position = Vector2(1847, 887)
+texture = ExtResource("9_ptjc7")
+
+[node name="Tree27" type="Sprite2D" parent="." unique_id=1137691321]
+z_index = -2
+position = Vector2(1718, 918)
+texture = ExtResource("7_241an")
+
+[node name="Tree28" type="Sprite2D" parent="." unique_id=1418244283]
+z_index = -1
+position = Vector2(888, 161)
+texture = ExtResource("11_tyqtq")
+
+[node name="Tree29" type="Sprite2D" parent="." unique_id=410558513]
+z_index = -1
+position = Vector2(470, 166)
+texture = ExtResource("11_tyqtq")
+
+[node name="Tree30" type="Sprite2D" parent="." unique_id=814923368]
+z_index = -1
+position = Vector2(968, 28)
+texture = ExtResource("11_tyqtq")
+
+[node name="Tree31" type="Sprite2D" parent="." unique_id=1195816595]
+z_index = -3
+position = Vector2(43, 1009)
+texture = ExtResource("4_iwjah")

@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://ben4yqrl65gof" path="res://sprites/dryad/dryad_die.png" id="4_7hsoi"]
 [ext_resource type="Texture2D" uid="uid://ckq53im1i7db3" path="res://sprites/stormblade/stormblade_spell.png" id="4_snk8g"]
 [ext_resource type="Texture2D" uid="uid://blj8vd4s5pget" path="res://sprites/stormblade/stormblade_walk.png" id="5_snk8g"]
+[ext_resource type="Texture2D" uid="uid://bhbo00pdfbdiq" path="res://sprites/stormblade/stormblade_idle2.png" id="6_yhyw0"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_yhyw0"]
 atlas = ExtResource("3_taw53")
@@ -143,9 +144,21 @@ region = Rect2(512, 768, 256, 256)
 atlas = ExtResource("4_7hsoi")
 region = Rect2(0, 0, 256, 256)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_73cit"]
-atlas = ExtResource("3_taw53")
-region = Rect2(0, 0, 256, 250)
+[sub_resource type="AtlasTexture" id="AtlasTexture_keiis"]
+atlas = ExtResource("6_yhyw0")
+region = Rect2(0, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_d7jbq"]
+atlas = ExtResource("6_yhyw0")
+region = Rect2(256, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_b4jbq"]
+atlas = ExtResource("6_yhyw0")
+region = Rect2(512, 0, 256, 256)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ma2xo"]
+atlas = ExtResource("6_yhyw0")
+region = Rect2(768, 0, 256, 256)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_n7kty"]
 atlas = ExtResource("5_snk8g")
@@ -360,20 +373,37 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_u8kva")
+"texture": SubResource("AtlasTexture_keiis")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_u30kl")
+"texture": SubResource("AtlasTexture_d7jbq")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_j3606")
+"texture": SubResource("AtlasTexture_b4jbq")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_73cit")
+"texture": SubResource("AtlasTexture_ma2xo")
 }],
 "loop": true,
 "name": &"idle",
-"speed": 5.0
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_keiis")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_d7jbq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_b4jbq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ma2xo")
+}],
+"loop": true,
+"name": &"new_animation",
+"speed": 18.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -418,10 +448,9 @@ unit_data = ExtResource("2_v5wpe")
 position = Vector2(2, -3.999999)
 scale = Vector2(0.4, 0.403)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"cast"
+animation = &"idle"
 autoplay = "idle"
-frame = 12
-frame_progress = 1.0
+frame_progress = 0.72558254
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0

@@ -12,5 +12,5 @@ display_name = "Corrupted Fist"
 description = "Punch with a corrupted fist, dealing physical damage."
 icon = ExtResource("2_1lr8y")
 effect_scene = ExtResource("2_lb26a")
-base_damage_multiplier = 0.5
+base_damage_multiplier = 0.4
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

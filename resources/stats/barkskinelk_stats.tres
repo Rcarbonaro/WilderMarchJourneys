@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_defyd")
-hp = 120
+hp = 150
 atk = 22
 matk = 2
 def = 10

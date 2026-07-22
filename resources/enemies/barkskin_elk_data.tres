@@ -19,7 +19,7 @@
 [resource]
 script = ExtResource("10_ecm2g")
 id = "barkskinelk"
-display_name = "Barkskin Elk"
+display_name = "Barkhide Elk"
 description = "The former guardian of the forest, corrupted by unknown magic."
 portrait = ExtResource("9_m8bms")
 battle_sprite = ExtResource("2_21b2m")

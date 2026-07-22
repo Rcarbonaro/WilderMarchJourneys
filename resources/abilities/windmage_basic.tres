@@ -8,6 +8,7 @@
 script = ExtResource("2_8h26d")
 id = "windmagebasic"
 display_name = "Basic Attack"
+description = "Attack from a range with a wind blade, dealing damage and pushing the target back 1 space."
 icon = ExtResource("2_eh863")
 min_range = 1
 max_range = 4

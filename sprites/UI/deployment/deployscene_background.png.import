@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cycijucjilm0s"
-path="res://.godot/imported/dragoon idle.png-594ebde88de142435f6537b4af8a6271.ctex"
+uid="uid://uxydmpegssui"
+path="res://.godot/imported/deployscene_background.png-8e95f0d74b976b56b25e394d340fd3c9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/dragoon/dragoon idle.png"
-dest_files=["res://.godot/imported/dragoon idle.png-594ebde88de142435f6537b4af8a6271.ctex"]
+source_file="res://sprites/UI/deployment/deployscene_background.png"
+dest_files=["res://.godot/imported/deployscene_background.png-8e95f0d74b976b56b25e394d340fd3c9.ctex"]
 
 [params]
 
