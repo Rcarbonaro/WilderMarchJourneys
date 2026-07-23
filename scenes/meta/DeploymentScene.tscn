@@ -17,7 +17,7 @@
 script = ExtResource("1_0c7r6")
 
 [node name="BackgroundTexture" type="TextureRect" parent="." unique_id=634542175]
-z_index = -11
+z_index = -500
 custom_minimum_size = Vector2(1000, 1000)
 anchors_preset = 15
 anchor_right = 1.0

@@ -30,7 +30,7 @@ const PLAYER_ZONE_COLUMNS: int = 3
 const ENEMY_ZONE_COLUMNS: int = 4
 # How many columns in from the RIGHT edge enemy spawns are allowed to use.
 
-const FEATURE_DENSITY: float = 1
+const FEATURE_DENSITY: float = 2
 # Roughly what fraction of the grid's cells end up with a scattered feature.
 
 const MAP_FEATURES_DIR := "res://resources/map_features/"
@@ -132,28 +132,39 @@ func generate_map(width: int, height: int, biome: String, party_size: int, enemy
 				"sort_y": cell.y
 			})
 
+	# BUGFIX: sort_custom() / _ensure_full_connectivity() / last_result's
+	# assignment used to be indented ONE LEVEL TOO DEEP -- inside the while
+	# loop above (and the duplicate assignment right under it did nothing
+	# but repeat the exact same 4 keys a second time). That meant:
+	#   1. _ensure_full_connectivity() -- a full flood-fill over the whole
+	#      grid -- ran on EVERY feature placement attempt instead of once
+	#      after the loop finished. With FEATURE_DENSITY = 1, that's roughly
+	#      width*height flood-fills for a single map generation instead of 1.
+	#   2. Worse: if a biome's feature pool is EMPTY (the `if pool.is_empty():`
+	#      branch above, which has no `else`), NONE of this ever ran at all --
+	#      last_result never got reassigned for that call, so generate_map()
+	#      silently returned STALE data from whatever the PREVIOUS call had
+	#      produced (or an empty {} on the very first call ever). Any biome
+	#      with no configured MapFeatureData resources would have handed
+	#      battle_scene.gd completely wrong map data.
+	# Dedented all three below to run exactly once, after every code path
+	# above (empty pool or not) has finished, right before returning.
+
 	# Sort features from top to bottom.
 	# A feature with a larger Y value is vertically lower on the map,
 	# so it should be drawn after features with a smaller Y value.
-			feature_placements.sort_custom(func(a, b):
-				return a["sort_y"] < b["sort_y"]
-			)
+	feature_placements.sort_custom(func(a, b):
+		return a["sort_y"] < b["sort_y"]
+	)
 
-			_ensure_full_connectivity(tile_map, player_spawns, enemy_spawns, width, height)
+	_ensure_full_connectivity(tile_map, player_spawns, enemy_spawns, width, height)
 
-			last_result = {
-				"tile_map": tile_map,
-				"player_spawns": player_spawns,
-				"enemy_spawns": enemy_spawns,
-				"feature_placements": feature_placements,
-			}
-
-			last_result = {
-				"tile_map": tile_map,
-				"player_spawns": player_spawns,
-				"enemy_spawns": enemy_spawns,
-				"feature_placements": feature_placements,
-			}
+	last_result = {
+		"tile_map": tile_map,
+		"player_spawns": player_spawns,
+		"enemy_spawns": enemy_spawns,
+		"feature_placements": feature_placements,
+	}
 	return last_result
 
 # ── SPAWN PLACEMENT ────────────────────────────────────────────────────────────
