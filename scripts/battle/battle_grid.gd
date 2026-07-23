@@ -34,6 +34,10 @@ extends Node2D
 const GRID_WIDTH  = 19
 const GRID_HEIGHT = 9
 const TILE_SIZE   = 96   # pixels per tile — must match highlight_manager.gd
+const WIND_SWAY_SHADER := preload("res://shaders/wind_sway.gdshader")
+# ADDED: applied per-sprite (see _spawn_feature_visual()) to any MapFeatureData
+# with sways_in_wind = true -- a gentle wind sway for scattered map features
+# (trees, mushrooms, flowers). See that shader file for how it works.
 
 # ── TILE DATA ─────────────────────────────────────────────────────────────────
 
@@ -1292,6 +1296,26 @@ func _spawn_feature_visual(cell: Vector2i, feature: MapFeatureData, layer: Node2
 	var center_offset := Vector2(min_offset + max_offset) * 0.5 * TILE_SIZE
 
 	sprite.position = grid_to_world(cell) + center_offset + feature.visual_offset
+
+	# CHANGED: wind sway now moves every feature IN UNISON -- same phase for
+	# every sprite -- so it reads as one coherent gust sweeping across the
+	# whole map rather than each feature swaying independently. Each sprite
+	# still gets its OWN ShaderMaterial instance (not one shared resource)
+	# since sway_strength/sway_speed can differ per feature type -- it's
+	# specifically phase_offset that's no longer randomized.
+	if feature.sways_in_wind:
+		var sway_mat := ShaderMaterial.new()
+		sway_mat.shader = WIND_SWAY_SHADER
+		sway_mat.set_shader_parameter("sway_strength", feature.sway_strength)
+		sway_mat.set_shader_parameter("sway_speed", feature.sway_speed)
+		# phase_offset intentionally left at the shader's default (0.0) for
+		# every sprite -- that's what makes them all sway together. If you
+		# ever want a "wind sweeping across the map" ripple instead of
+		# perfectly instantaneous unison, set it from world position, e.g.:
+		#     sway_mat.set_shader_parameter("phase_offset", sprite.position.x * 0.01)
+		# which delays the sway slightly further right on the map -- flip
+		# the sign to sweep the other direction.
+		sprite.material = sway_mat
 
 	layer.add_child(sprite)
 

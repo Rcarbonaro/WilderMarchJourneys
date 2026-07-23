@@ -10,4 +10,5 @@ display_name = "Mushroom"
 texture = ExtResource("2_51bwd")
 spawn_weight = 0.3
 biomes = Array[String](["forest"])
+sways_in_wind = false
 metadata/_custom_type_script = "uid://cjx7n1a62jwb4"

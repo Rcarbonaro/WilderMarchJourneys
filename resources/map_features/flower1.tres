@@ -10,4 +10,5 @@ display_name = "Flower"
 texture = ExtResource("2_we50m")
 spawn_weight = 0.3
 biomes = Array[String](["forest"])
+sway_strength = 6.0
 metadata/_custom_type_script = "uid://cjx7n1a62jwb4"

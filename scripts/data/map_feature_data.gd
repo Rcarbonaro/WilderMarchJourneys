@@ -62,3 +62,22 @@ extends Resource
 # Pure cosmetic nudge in pixels, independent of footprint/blocking -- use
 # this for fine art alignment (e.g. a tree trunk that should sit a few
 # pixels lower than tile-center), NOT for changing which tiles are blocked.
+
+# ── WIND SWAY ──────────────────────────────────────────────────────────────
+# ADDED: battle_grid.gd's _spawn_feature_visual() applies res://shaders/
+# wind_sway.gdshader to this feature's sprite when sways_in_wind is true.
+# Defaults to on, since trees/mushrooms/flowers all read naturally as
+# swaying -- turn it off per-feature for anything rigid you add later
+# (a boulder, a fence post, a wall).
+@export var sways_in_wind: bool = true
+
+@export var sway_strength: float = 4.0
+# Pixels of horizontal offset AT THE VERY TOP of the sprite -- the shader
+# fades this to zero at the base, so the feature still reads as rooted in
+# place. Bigger/heavier-looking features (a large tree) probably want a
+# smaller number than something delicate (a flower, a patch of grass).
+
+@export var sway_speed: float = 1.0
+# Higher = faster swaying. 1.0 is a gentle breeze; try 2.0-3.0 for
+# something like tall grass that reacts to every gust, or 0.4-0.6 for a
+# big, heavy tree that sways slowly.
