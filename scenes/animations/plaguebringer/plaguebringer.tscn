@@ -3,8 +3,7 @@
 [ext_resource type="Script" uid="uid://01w1tymoafld" path="res://scripts/battle/unit_node.gd" id="1_jm5b8"]
 [ext_resource type="Resource" uid="uid://bwnaicxo5cl5n" path="res://resources/units/windmage_data.tres" id="2_fu0xh"]
 [ext_resource type="Texture2D" uid="uid://dgr8l50qxuiji" path="res://sprites/plaguebringer/plaguebringer_cast.png" id="3_d403m"]
-[ext_resource type="Texture2D" uid="uid://bbqmdev1iuf7q" path="res://sprites/Wind Mage/windmage_dead.png" id="4_jcgny"]
-[ext_resource type="Texture2D" uid="uid://cayx8nwsj2joy" path="res://sprites/Wind Mage/windmage_hurt.png" id="5_dibus"]
+[ext_resource type="Texture2D" uid="uid://b0s2a8ybs1bvg" path="res://sprites/plaguebringer/plaguebringer_die.png" id="4_yb57p"]
 [ext_resource type="Texture2D" uid="uid://btofbw1umehsb" path="res://sprites/plaguebringer/plaguebringer_idle.png" id="6_d403m"]
 [ext_resource type="Texture2D" uid="uid://eq5qv1w33der" path="res://sprites/plaguebringer/plaguebringer_walk.png" id="7_2kki4"]
 
@@ -68,33 +67,37 @@ region = Rect2(678, 328, 197, 263)
 atlas = ExtResource("3_d403m")
 region = Rect2(66, 591, 197, 263)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_kcdqy"]
-atlas = ExtResource("4_jcgny")
-region = Rect2(20, 0, 226, 308)
+[sub_resource type="AtlasTexture" id="AtlasTexture_d403m"]
+atlas = ExtResource("4_yb57p")
+region = Rect2(228, 4, 228, 219)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_fbht4"]
-atlas = ExtResource("4_jcgny")
-region = Rect2(246, 0, 226, 308)
+[sub_resource type="AtlasTexture" id="AtlasTexture_832s0"]
+atlas = ExtResource("4_yb57p")
+region = Rect2(456, 4, 228, 219)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_eckoe"]
-atlas = ExtResource("4_jcgny")
-region = Rect2(246, 308, 226, 308)
+[sub_resource type="AtlasTexture" id="AtlasTexture_kw2c1"]
+atlas = ExtResource("4_yb57p")
+region = Rect2(0, 234, 228, 219)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_ccqw5"]
-atlas = ExtResource("4_jcgny")
-region = Rect2(924, 0, 226, 308)
+[sub_resource type="AtlasTexture" id="AtlasTexture_dwrg2"]
+atlas = ExtResource("4_yb57p")
+region = Rect2(684, 4, 228, 219)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_nkhqp"]
-atlas = ExtResource("5_dibus")
-region = Rect2(20, 0, 233, 309)
+[sub_resource type="AtlasTexture" id="AtlasTexture_p45s5"]
+atlas = ExtResource("4_yb57p")
+region = Rect2(228, 234, 228, 219)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_p2t0q"]
-atlas = ExtResource("5_dibus")
-region = Rect2(253, 0, 233, 309)
+[sub_resource type="AtlasTexture" id="AtlasTexture_mo0nc"]
+atlas = ExtResource("4_yb57p")
+region = Rect2(456, 234, 228, 219)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_rmh0y"]
-atlas = ExtResource("5_dibus")
-region = Rect2(486, 0, 233, 309)
+[sub_resource type="AtlasTexture" id="AtlasTexture_7eh4e"]
+atlas = ExtResource("4_yb57p")
+region = Rect2(228, 4, 228, 219)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_iujk5"]
+atlas = ExtResource("4_yb57p")
+region = Rect2(456, 4, 228, 219)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_hdggh"]
 atlas = ExtResource("6_d403m")
@@ -291,37 +294,40 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_kcdqy")
+"texture": SubResource("AtlasTexture_d403m")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_fbht4")
+"texture": SubResource("AtlasTexture_832s0")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_eckoe")
+"texture": SubResource("AtlasTexture_kw2c1")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_ccqw5")
+"texture": SubResource("AtlasTexture_dwrg2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_p45s5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mo0nc")
 }],
 "loop": false,
 "name": &"die",
-"speed": 11.0
+"speed": 12.0
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_nkhqp")
+"texture": SubResource("AtlasTexture_7eh4e")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_p2t0q")
+"texture": SubResource("AtlasTexture_iujk5")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_rmh0y")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_nkhqp")
+"texture": SubResource("AtlasTexture_7eh4e")
 }],
 "loop": false,
 "name": &"hurt",
-"speed": 12.0
+"speed": 6.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -413,9 +419,9 @@ unit_data = ExtResource("2_fu0xh")
 position = Vector2(12.499997, -5.403702)
 scale = Vector2(0.4416244, 0.41518095)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"attack"
+animation = &"hurt"
 autoplay = "idle"
-frame = 12
+frame = 2
 frame_progress = 1.0
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]

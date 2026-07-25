@@ -30,7 +30,7 @@ const PLAYER_ZONE_COLUMNS: int = 3
 const ENEMY_ZONE_COLUMNS: int = 4
 # How many columns in from the RIGHT edge enemy spawns are allowed to use.
 
-const FEATURE_DENSITY: float = 2
+const FEATURE_DENSITY: float = 1
 # Roughly what fraction of the grid's cells end up with a scattered feature.
 
 const MAP_FEATURES_DIR := "res://resources/map_features/"

@@ -24,4 +24,5 @@ synergy_tags = Array[String](["debuff"])
 stats_by_level = Array[ExtResource("3_iwngs")]([ExtResource("1_gnfme")])
 base_stats = ExtResource("1_gnfme")
 starting_abilities = Array[ExtResource("2_lmhne")]([ExtResource("3_ps7qu"), ExtResource("4_gnfme"), ExtResource("5_5cmow")])
+sway_in_unison = false
 metadata/_custom_type_script = "uid://utmj7y8m802a"

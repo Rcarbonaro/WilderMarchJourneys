@@ -22,6 +22,10 @@ extends Node2D
 var _encounter_id: String = ""
 var _placeholder_bg: ImageTexture = null
 
+const REWARD_GLITTER_BLUE := Color(0.3, 0.6, 1.0)
+# Used for the reward popup shown whenever a dialogue choice grants the
+# player an item or a unit -- see _on_choice_pressed below.
+
 
 func _ready() -> void:
 	if RunManager.current_run == null:
@@ -103,7 +107,24 @@ func _display_node(node: Dictionary) -> void:
 
 
 func _on_choice_pressed(choice_id: String) -> void:
+	# ADDED: grab the choice's OWN effects list before choose() runs, so we
+	# can tell afterward whether it actually granted an item or a unit and
+	# show a reward popup for it. DialogueEngine.choose()'s own return value
+	# doesn't include the effects list, only next_node_id/combat info.
+	var granted_effects := _get_choice_effects(choice_id)
+
 	var result: Dictionary = DialogueEngine.choose(choice_id)
+
+	# ADDED: pop up a glittering reward popup for anything this choice just
+	# granted the player. A single choice can grant more than one thing
+	# (e.g. gold AND an item) -- every add_equipment/add_unit entry gets its
+	# own popup, shown one after another.
+	for effect in granted_effects:
+		match effect.get("type", ""):
+			"add_equipment":
+				_show_encounter_item_reward(effect.get("equipment_id", ""))
+			"add_unit":
+				_show_encounter_unit_reward(effect.get("unit_id", ""))
 
 	if result.get("leads_to_combat", false):
 		# KNOWN GAP -- see the README. Nothing in this backend currently
@@ -132,3 +153,73 @@ func _on_choice_pressed(choice_id: String) -> void:
 func _on_encounter_finished() -> void:
 	EncounterEngine.complete_encounter(RunManager.current_run)
 	StageDirector.complete_stage()
+
+
+# ADDED: finds the effects list for a specific choice_id on the CURRENT
+# dialogue node, straight from DialogueEngine.get_visible_choices() (the
+# same source _display_node() already uses to build the choice buttons).
+func _get_choice_effects(choice_id: String) -> Array:
+	for choice in DialogueEngine.get_visible_choices():
+		if choice.get("id", "") == choice_id:
+			return choice.get("effects", [])
+	return []
+
+
+# ADDED: item/consumable reward popup -- icon + description, Close only
+# (matches the spec: items don't get a "More Information" button here).
+func _show_encounter_item_reward(equipment_id: String) -> void:
+	if equipment_id == "" or equipment_id.begins_with("$"):
+		return   # Templated id ("$event_payload...") -- nothing concrete to show.
+	var data: Dictionary = ContentLoader.get_equipment(equipment_id)
+	var icon: Texture2D = UnitInfoPopup.texture_or_black_box(
+		UnitInfoPopup._resolve_icon(data.get("icon")), Vector2i(96, 96))
+
+	var popup := RewardPopup.new()
+	add_child(popup)
+	popup.setup(icon, data.get("description", ""), REWARD_GLITTER_BLUE, [
+		{"text": "Close", "callback": Callable()},
+	])
+
+
+# ADDED: unit reward popup -- portrait + description, Close + More Info
+# (More Info opens the same full UnitInfoPopup character sheet used
+# everywhere else in the project).
+func _show_encounter_unit_reward(unit_id: String) -> void:
+	if unit_id == "" or unit_id.begins_with("$"):
+		return
+	var path := "res://resources/units/" + unit_id + "_data.tres"
+	if not ResourceLoader.exists(path):
+		return
+	var unit_data: UnitData = load(path) as UnitData
+	if unit_data == null:
+		return
+
+	var popup := RewardPopup.new()
+	add_child(popup)
+	popup.setup(unit_data.portrait, unit_data.description, REWARD_GLITTER_BLUE, [
+		{"text": "Close", "callback": Callable()},
+		{"text": "More Information", "callback": func(): _show_encounter_unit_info_popup(unit_data)},
+	])
+
+
+func _show_encounter_unit_info_popup(unit_data: UnitData) -> void:
+	# Same level-1 base-numbers convention the Draft screen and shop's
+	# "More Info" already use -- a unit gained here isn't leveled/equipped
+	# yet either.
+	if unit_data.stats_by_level.is_empty():
+		return
+	var stats: StatsData = unit_data.stats_by_level[0]
+	var stat_lines: Array[String] = [
+		"HP: %d" % stats.hp,
+		"Mana: %d" % stats.mana,
+		"ATK: %d" % stats.atk,
+		"MATK: %d" % stats.matk,
+		"DEF: %d" % stats.def,
+		"MDEF: %d" % stats.mdef,
+		"Crit %%: %.0f%%" % stats.crit_chance,
+		"Crit DMG: %.0f%%" % stats.crit_damage,
+		"MOV: %d" % stats.mov,
+	]
+	var popup_instance := UnitInfoPopup.new()
+	add_child(popup_instance)
+	popup_instance.setup(unit_data, stat_lines, [])

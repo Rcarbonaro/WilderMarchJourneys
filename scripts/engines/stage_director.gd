@@ -57,6 +57,13 @@ const DEPLOYMENT_SCENE_PATH := "res://scenes/meta/DeploymentScene.tscn"
 var _stage_content_cache: Dictionary = {}   # stage_index (int) -> content Dictionary
 var _cache_run_id: String = ""              # guards against a NEW run reusing a previous run's cache
 
+var last_stage_gold_reward: int = 0
+# Set by _apply_reward_rules() below -- how much gold the reward rules for
+# the stage that JUST ended actually granted the player (0 if none did).
+# DeploymentScene reads this once, right after landing there (see
+# deployment_manager.gd's _ready()), to show a blue "Obtained X gold"
+# popup, then resets it back to 0 so it can't fire again on its own.
+
 
 func get_or_generate_stage_content(stage_index: int) -> Dictionary:
 	var run_state := RunManager.current_run
@@ -170,9 +177,14 @@ func _apply_reward_rules() -> void:
 	# match wins." Any rule whose conditions pass against the JUST-FINISHED
 	# stage has its effects applied; multiple rules can fire on the same stage.
 	var run_state := RunManager.current_run
+	# ADDED: measuring gold before/after (rather than reading each rule's own
+	# "amount") also picks up any other gold-changing side effects a rule's
+	# effects might trigger, so the popup always matches what the player's
+	# gold total actually did.
+	var gold_before: int = run_state.gold
 	var context := {"run_state": run_state, "source": "stage_reward_rule"}
 	for rule_id in ContentLoader.reward_rules:
 		var rule: Dictionary = ContentLoader.reward_rules[rule_id]
 		if EffectSystem.evaluate_conditions(rule.get("conditions", []), context):
 			EffectSystem.apply_effects(rule.get("effects", []), context)
-			
+	last_stage_gold_reward = run_state.gold - gold_before

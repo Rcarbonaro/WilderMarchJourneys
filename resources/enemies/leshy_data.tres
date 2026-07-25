@@ -10,6 +10,7 @@
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="4_0wd04"]
 [ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_bcykh"]
 [ext_resource type="Resource" uid="uid://ofamf1d87qd0" path="res://resources/abilities/leshy_basic.tres" id="5_pkp5g"]
+[ext_resource type="Resource" uid="uid://dq7nk76exnyiw" path="res://resources/abilities/poisonburst.tres" id="10_x1mc2"]
 
 [resource]
 script = ExtResource("1_np7oy")
@@ -21,5 +22,5 @@ battle_sprite = ExtResource("2_juy1n")
 stats_by_level = Array[ExtResource("4_0wd04")]([ExtResource("1_0wd04")])
 tier = "elite"
 base_stats = ExtResource("1_0wd04")
-starting_abilities = Array[ExtResource("3_vvgxq")]([ExtResource("5_pkp5g")])
+starting_abilities = Array[ExtResource("3_vvgxq")]([ExtResource("5_pkp5g"), ExtResource("10_x1mc2")])
 metadata/_custom_type_script = "uid://utmj7y8m802a"

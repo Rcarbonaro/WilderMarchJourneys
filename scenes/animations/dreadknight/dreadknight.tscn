@@ -447,7 +447,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"walk",
-"speed": 7.0
+"speed": 8.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -472,10 +472,9 @@ unit_data = ExtResource("2_jb2ni")
 position = Vector2(6.9261227, 2.0103025)
 scale = Vector2(0.43692285, 0.4688573)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"die"
+animation = &"walk"
 autoplay = "idle"
-frame = 5
-frame_progress = 1.0
+frame_progress = 0.82834876
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0

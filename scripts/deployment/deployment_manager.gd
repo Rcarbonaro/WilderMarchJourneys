@@ -22,6 +22,15 @@ extends Node2D
 
 const MAX_EQUIP_SLOTS := 3
 
+const FORGE_GLITTER_GOLD := Color(1.0, 0.85, 0.25)
+# Used for the popup shown right after forging finishes (see
+# _show_forge_result_popup below) -- thicker/denser than the shop's blue
+# purchase glitter, since forging is meant to read as a bigger deal.
+
+const REWARD_GLITTER_BLUE := Color(0.3, 0.6, 1.0)
+# Used for the "Obtained X gold" popup below -- same blue as the shop's
+# purchase popup and the encounter reward popups.
+
 # ── AMBIENT BACKGROUND PREVIEW ────────────────────────────────────────────────
 # Every owned unit (party + bench) gets a small, grid-free stand-in that
 # wanders and occasionally "practices" an attack animation behind the UI.
@@ -191,6 +200,14 @@ func _ready() -> void:
 	_update_stage_label()
 	_setup_deployment_background()
 	_spawn_unit_previews()
+
+	# ADDED: if the stage that was just completed granted gold (see
+	# stage_director.gd's _apply_reward_rules()), show it now, once, then
+	# clear the flag so landing back on this screen later doesn't show it
+	# again.
+	if StageDirector.last_stage_gold_reward > 0:
+		_show_gold_reward_popup(StageDirector.last_stage_gold_reward)
+		StageDirector.last_stage_gold_reward = 0
 
 
 func _toggle_panel(panel: Control, button: Button, label: String) -> void:
@@ -489,12 +506,23 @@ func _show_deployed_slot_action_popup(slot_index: int) -> void:
 	)
 	vbox.add_child(manage_btn)
 
+	# ADDED: same full character-sheet popup the roster's own "More Info"
+	# button opens (see _on_more_info_pressed), just reached from the
+	# deployed-party strip instead of the roster list.
+	var more_info_btn := Button.new()
+	more_info_btn.text = "More Information"
+	more_info_btn.pressed.connect(func():
+		popup.queue_free()
+		_show_full_unit_info_popup_for_instance(instance_id)
+	)
+	vbox.add_child(more_info_btn)
+
 	var cancel_btn := Button.new()
 	cancel_btn.text = "Cancel"
 	cancel_btn.pressed.connect(func(): popup.queue_free())
 	vbox.add_child(cancel_btn)
 
-	popup.popup_centered(Vector2(240, 200))
+	popup.popup_centered(Vector2(240, 240))
 
 
 # ADDED: lets a unit's equipment be unequipped, or an open slot filled,
@@ -795,6 +823,51 @@ func _on_more_info_pressed(index: int) -> void:
 	# (icon, name, effects, description) via ContentLoader.get_equipment(),
 	# same shape live battle passes in via unit.equipped_items -- so
 	# unit_info_popup.gd's new stat-line/description rendering works here too.
+	var equipped_entries: Array = []
+	for item_id in entry.get("equipped_item_ids", []):
+		if item_id == null or item_id == "":
+			continue
+		equipped_entries.append(ContentLoader.get_equipment(item_id))
+
+	var popup_instance := UnitInfoPopup.new()
+	add_child(popup_instance)
+	popup_instance.setup(unit_data, stat_lines, equipped_entries)
+
+
+# ADDED: identical to _on_more_info_pressed above, just looked up by
+# instance_id (what the deployed-party strip has on hand) instead of a
+# roster list index (what the roster list has on hand). Kept as a
+# separate function rather than reworking _on_more_info_pressed's
+# signature, since roster rows still only know their own index.
+func _show_full_unit_info_popup_for_instance(instance_id: String) -> void:
+	var entry: Dictionary = {}
+	for candidate in _get_full_roster():
+		if candidate.get("instance_id", "") == instance_id:
+			entry = candidate
+			break
+	if entry.is_empty():
+		return
+
+	var unit_data := _load_unit_data(entry.get("unit_id", ""))
+	if unit_data == null or unit_data.stats_by_level.is_empty():
+		return
+
+	var level: int = int(entry.get("level", 1))
+	var stats_index: int = clamp(level - 1, 0, unit_data.stats_by_level.size() - 1)
+	var stats: StatsData = unit_data.stats_by_level[stats_index]
+
+	var stat_lines: Array[String] = [
+		"HP: %d" % stats.hp,
+		"Mana: %d" % stats.mana,
+		"ATK: %d" % stats.atk,
+		"MATK: %d" % stats.matk,
+		"DEF: %d" % stats.def,
+		"MDEF: %d" % stats.mdef,
+		"Crit %%: %.0f%%" % stats.crit_chance,
+		"Crit DMG: %.0f%%" % stats.crit_damage,
+		"MOV: %d" % stats.mov,
+	]
+
 	var equipped_entries: Array = []
 	for item_id in entry.get("equipped_item_ids", []):
 		if item_id == null or item_id == "":
@@ -1405,6 +1478,44 @@ func _on_forge_pressed() -> void:
 	_update_forge_preview()
 	RunManager.save_run()
 	_rebuild_inventory()
+	_show_forge_result_popup(output_id)   # ADDED
+
+
+# ADDED: gold-glitter popup shown right after forging finishes. "Equip"
+# reuses the exact same unit-picker flow as the regular inventory Equip
+# button (_show_equip_unit_picker), so equipping fresh off the forge works
+# identically to equipping anything else.
+func _show_forge_result_popup(item_id: String) -> void:
+	var data: Dictionary = ContentLoader.get_equipment(item_id)
+	var icon: Texture2D = UnitInfoPopup.texture_or_black_box(
+		UnitInfoPopup._resolve_icon(data.get("icon")), Vector2i(96, 96))
+
+	var popup := RewardPopup.new()
+	add_child(popup)
+	popup.setup(
+		icon,
+		data.get("description", ""),
+		FORGE_GLITTER_GOLD,
+		[
+			{"text": "Equip", "callback": func(): _show_equip_unit_picker(item_id)},
+			{"text": "Close", "callback": Callable()},
+		],
+		true   # thick_glitter -- forging reads as a bigger deal than a routine purchase
+	)
+
+
+# ADDED: blue-glitter, text-only popup ("no icon") shown once when landing
+# on DeploymentScene right after a stage that granted gold finished -- see
+# the _ready() check above and stage_director.gd's last_stage_gold_reward.
+func _show_gold_reward_popup(amount: int) -> void:
+	var popup := RewardPopup.new()
+	add_child(popup)
+	popup.setup(
+		null,   # no icon -- this is a plain text announcement
+		"Obtained %d gold" % amount,
+		REWARD_GLITTER_BLUE,
+		[{"text": "Close", "callback": Callable()}],
+	)
 
 
 # ── SCOUT AHEAD ────────────────────────────────────────────────────────────────

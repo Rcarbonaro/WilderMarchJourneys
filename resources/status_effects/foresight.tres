@@ -9,5 +9,5 @@ id = "foresight"
 display_name = "Foresight"
 description = "Increased critical hit chance"
 icon = ExtResource("1_1yecg")
-crit_chance_modifier = 15.0
+crit_chance_modifier = 20.0
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

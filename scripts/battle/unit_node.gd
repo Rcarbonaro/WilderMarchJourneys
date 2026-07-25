@@ -26,6 +26,12 @@
 
 extends Node2D
 
+const WIND_SWAY_SHADER := preload("res://shaders/wind_sway.gdshader")
+# ADDED: same shader used for map features (trees/mushrooms/flowers, see
+# battle_grid.gd/map_feature_data.gd) -- also handles a separate breathing
+# effect (see _apply_wind_sway() below). See that shader file's own header
+# comment for the full explanation of both.
+
 # ── DATA LINK ─────────────────────────────────────────────────────────────────
 
 @export var unit_data: UnitData
@@ -227,9 +233,60 @@ func setup(data: UnitData, unit_level: int, is_player: bool) -> void:
 	_apply_default_facing()
 	play_animation("idle")
 	_update_hp_label()
+	_apply_wind_sway()
 
 	# Compute occupied cells from the starting position and footprint.
 	_update_occupied_cells()
+
+
+# ADDED: applies res://shaders/wind_sway.gdshader to this unit's
+# AnimatedSprite2D for wind sway and/or breathing, whichever unit_data
+# opts into (both off by default). Skips entirely (no material at all) if
+# neither is enabled, so a unit with both off behaves exactly as before
+# this was added.
+func _apply_wind_sway() -> void:
+	if not unit_data.sways_in_wind and not unit_data.breathes:
+		return
+	if not has_node("AnimatedSprite2D"):
+		return
+
+	var sway_mat := ShaderMaterial.new()
+	sway_mat.shader = WIND_SWAY_SHADER
+
+	# "sways" is a separate on/off gate from sway_strength/etc -- needed so
+	# a unit with breathes = true but sways_in_wind = false gets ONLY the
+	# breathing effect, not sway_strength's shader-side default (4.0)
+	# applying anyway just because nothing overrode it.
+	sway_mat.set_shader_parameter("sways", unit_data.sways_in_wind)
+	if unit_data.sways_in_wind:
+		sway_mat.set_shader_parameter("sway_strength", unit_data.sway_strength)
+		sway_mat.set_shader_parameter("sway_speed", unit_data.sway_speed)
+		sway_mat.set_shader_parameter("sway_pivot", unit_data.sway_pivot)
+		# unit_data.sway_in_unison: true leaves phase_offset at the shader's
+		# default (0.0) -- same convention battle_grid.gd uses for map
+		# features -- so this unit sways in perfect sync with every OTHER
+		# unison-enabled unit and feature in the scene. false gives it its
+		# own randomized phase instead, so it sways independently of
+		# everyone else (useful for making a specific unit feel "off" from
+		# the group -- nervous, wounded, possessed, whatever the moment
+		# calls for).
+		if not unit_data.sway_in_unison:
+			sway_mat.set_shader_parameter("phase_offset", randf() * TAU)
+
+	sway_mat.set_shader_parameter("breathes", unit_data.breathes)
+	if unit_data.breathes:
+		sway_mat.set_shader_parameter("breathing_speed", unit_data.breathing_speed)
+		sway_mat.set_shader_parameter("breathing_strength", unit_data.breathing_strength)
+		sway_mat.set_shader_parameter("breathing_center", unit_data.breathing_center)
+		sway_mat.set_shader_parameter("breathing_width", unit_data.breathing_width)
+		# ALWAYS randomized, regardless of sway_in_unison -- breathing is
+		# never a "wind" effect, so it never syncs across units even when
+		# their wind sway does. Without this, every breathing unit would
+		# inhale/exhale in perfect lockstep, which reads as uncanny rather
+		# than alive.
+		sway_mat.set_shader_parameter("breathing_phase", randf() * TAU)
+
+	$AnimatedSprite2D.material = sway_mat
 
 # ── MULTI-TILE HELPERS ────────────────────────────────────────────────────────
 
@@ -375,6 +432,7 @@ func _flash_on_hit(damage_type: String, is_crit: bool) -> void:
 		"ice", "frost":      flash = Color(0.30, 0.80, 1.00)
 		"lightning":         flash = Color(1.0, 1.00, 0.20)
 		"poison", "nature":  flash = Color(0.25, 0.90, 0.20)
+		"curse":             flash = Color(0.55, 0.15, 0.65)
 		"magic", "arcane":   flash = Color(0.70, 0.30, 1.00)
 		"holy", "light":     flash = Color(1.0, 0.95, 0.50)
 		_:                   flash = Color(1.0, 0.85, 0.85)  # physical: warm white
@@ -557,7 +615,12 @@ func restore_mana(amount: int) -> void:
 	
 # ── COMBAT ────────────────────────────────────────────────────────────────────
 
-func take_damage(amount: int, damage_type: String, is_crit: bool = false, apply_shake: bool = true, attacker = null) -> int:
+func take_damage(amount: int, damage_type: String, is_crit: bool = false, apply_shake: bool = true, attacker = null, is_dot: bool = false) -> int:
+	# is_dot: set true ONLY by _apply_dot_tick() below. Tells CombatFeedback
+	# to colour the floating damage number by damage_type (poison/fire/curse)
+	# instead of the normal "% of max HP" colour tiers — see
+	# combat_feedback.gd's spawn_damage_number(). Every other existing caller
+	# leaves this at its default of false and behaves exactly as before.
 	if is_phase_transitioning:
 		return 0   # Fully invulnerable during a boss retreat/summon sequence.
 
@@ -591,7 +654,7 @@ func take_damage(amount: int, damage_type: String, is_crit: bool = false, apply_
 	_update_hp_label()
 
 	_flash_on_hit(damage_type, is_crit)
-	CombatFeedback.show_hit(self, actual, is_crit, damage_type, apply_shake)
+	CombatFeedback.show_hit(self, actual, is_crit, damage_type, apply_shake, is_dot)
 
 	if crossed_segment:
 		var depleted_index: int = current_segment_index
@@ -1209,15 +1272,20 @@ func cleanse_statuses() -> int:
 	update_visuals()
 	_refresh_status_glow()
 func tick_statuses_end_of_round(team_that_just_ended: String) -> void:
+	# NOTE: DOT damage is no longer processed here. It used to be hardcoded
+	# to fire only when team_that_just_ended == "enemy" — which meant it only
+	# ever ticked on ENEMY units (since this function is called once for
+	# player units and once for enemy units each round, always with the same
+	# "enemy" argument value at the point this game's turn cycle calls it —
+	# see battle_manager.gd). Player units' DOT never actually ticked at all.
+	# DOT now has its own dedicated tick_dot() function below, called from 4
+	# separate points in battle_manager.gd's turn-transition code — one for
+	# each value of StatusEffectData.dot_tick_timing — so it correctly fires
+	# for BOTH player and enemy units, at whichever of the 4 moments each
+	# individual status is configured for.
 	var to_remove = []
 	for s in active_statuses:
 		var data: StatusEffectData = s["data"]
-
-		# ── DAMAGE OVER TIME ────────────────────────────────────────────────
-		if data.has_dot and team_that_just_ended == "enemy":
-			_apply_dot_tick(s)
-			if not is_instance_valid(self):
-				return   # The DoT tick killed this unit — stop processing.
 
 		if data.is_permanent:
 			continue   # Permanent statuses never count down toward expiry.
@@ -1244,6 +1312,42 @@ func tick_statuses_end_of_round(team_that_just_ended: String) -> void:
 	if not to_remove.is_empty():
 		update_visuals()
 		_refresh_status_glow()
+
+func tick_dot(timing_phase: String) -> void:
+	# Called from battle_manager.gd at exactly 4 points in the turn cycle —
+	# once each for "start_of_player_turn", "end_of_player_turn",
+	# "start_of_enemy_turn", and "end_of_enemy_turn" — matching the 4 values
+	# of StatusEffectData.dot_tick_timing. Any active status on THIS unit
+	# whose has_dot is checked AND whose dot_tick_timing matches the phase
+	# being called right now gets its tick applied.
+	#
+	# A single unit can be carrying several different DOTs at once, each
+	# configured to tick at a different phase — this loop only fires the
+	# ones matching the CURRENT phase, so e.g. a Poison set to
+	# "end_of_enemy_turn" and a Curse set to "start_of_player_turn" on the
+	# same unit will each fire only at their own correct moment.
+	#
+	# effects_to_play collects ONE entry per dot_damage_type that actually
+	# ticked this call — if two different DOT statuses share the same
+	# dot_damage_type (e.g. two separate Poison sources), only the FIRST one
+	# encountered contributes its dot_effect_scene here, so the placeholder/
+	# custom hit-VFX for that type only plays once, not once per source.
+	var effects_to_play: Dictionary = {}   # dot_damage_type (String) -> PackedScene or null
+	for s in active_statuses:
+		var data: StatusEffectData = s["data"]
+		if data.has_dot and data.dot_tick_timing == timing_phase:
+			_apply_dot_tick(s)
+			if not is_instance_valid(self):
+				return   # The DoT tick killed this unit — stop processing.
+			if not effects_to_play.has(data.dot_damage_type):
+				effects_to_play[data.dot_damage_type] = data.dot_effect_scene
+
+	# Hand off to CombatFeedback to actually spawn the visuals, centred on
+	# this unit, in the fixed poison → fire → curse order (see
+	# play_dot_hit_effects() there).
+	if not effects_to_play.is_empty():
+		CombatFeedback.play_dot_hit_effects(self, effects_to_play)
+
 
 func _apply_dot_tick(status_entry: Dictionary) -> void:
 	# Deals one tick of damage-over-time damage based on the status's
@@ -1273,9 +1377,24 @@ func _apply_dot_tick(status_entry: Dictionary) -> void:
 				per_tick_damage = max(1, int(get_stats().matk * data.dot_damage_percent))
 
 	var total_damage = per_tick_damage * max(1, stacks)
-	var dmg_type = "true" if data.dot_damage_mode == "flat" else data.dot_damage_mode
+
+	# dot_damage_type (e.g. "poison"/"fire"/"curse") — NOT dot_damage_mode —
+	# is what gets passed as the damage_type. dot_damage_mode only controls
+	# the FORMULA used above; dot_damage_type is the DOT's visual/elemental
+	# identity, and is what the hit-flash, impact particles, AND the floating
+	# damage-number colour all key off. (Previously this passed
+	# dot_damage_mode's calculation string here instead, which meant e.g. a
+	# Poison DOT using the "magical" formula would flash/particle as generic
+	# "magical" purple instead of poison green — that mismatch is fixed here.)
 	print("☣️ DoT '", data.display_name, "' ticks for ", total_damage, " on ", unit_data.display_name)
-	take_damage(total_damage, dmg_type)
+
+	# is_crit is left at its default (false) — DOT never crits, by design.
+	# apply_shake is passed as false, same reasoning CombatFeedback already
+	# uses for hazard ticks: a DOT fires every round like clockwork, and a
+	# screen-shake every single round would get old fast. is_dot = true tells
+	# CombatFeedback to colour the number by dot_damage_type instead of the
+	# usual "% of max HP" tiers.
+	take_damage(total_damage, data.dot_damage_type, false, false, caster, true)
 
 # ── TAUNT HELPERS ─────────────────────────────────────────────────────────────
 

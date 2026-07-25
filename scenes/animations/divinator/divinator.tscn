@@ -143,6 +143,22 @@ region = Rect2(480, 296, 233, 241)
 atlas = ExtResource("5_nxe8t")
 region = Rect2(713, 778, 233, 241)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_6ywtr"]
+atlas = ExtResource("5_nxe8t")
+region = Rect2(84, 59, 155, 197)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nxe8t"]
+atlas = ExtResource("5_nxe8t")
+region = Rect2(84, 297, 155, 197)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_b5vtx"]
+atlas = ExtResource("5_nxe8t")
+region = Rect2(792, 59, 155, 197)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_t7thu"]
+atlas = ExtResource("5_nxe8t")
+region = Rect2(792, 297, 155, 197)
+
 [sub_resource type="AtlasTexture" id="AtlasTexture_di8so"]
 atlas = ExtResource("6_b5vtx")
 region = Rect2(0, 256, 256, 256)
@@ -394,6 +410,23 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_6ywtr")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nxe8t")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_b5vtx")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_t7thu")
+}],
+"loop": true,
+"name": &"new_animation",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_di8so")
 }, {
 "duration": 1.0,
@@ -423,10 +456,9 @@ unit_data = ExtResource("2_i4nte")
 position = Vector2(3.9999998, 8)
 scale = Vector2(0.40767327, 0.3838632)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"die"
+animation = &"idle"
 autoplay = "idle"
-frame = 5
-frame_progress = 1.0
+frame_progress = 0.21285084
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0

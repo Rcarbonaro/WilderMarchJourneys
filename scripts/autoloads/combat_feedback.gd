@@ -29,6 +29,31 @@ extends Node
 @export var dmg_pct_orange:      float = 0.25   # >= 25% max HP → orange
 @export var dmg_pct_red:         float = 0.50   # >= 50% max HP → deep red
 
+## Floating damage-number colours for DOT ticks, keyed by the DOT's
+## dot_damage_type string (set per-status on StatusEffectData). Only used
+## when show_hit()/spawn_damage_number() are called with is_dot = true —
+## normal hits keep using the % of max HP colour tiers above.
+##
+## TO ADD A NEW DOT TYPE (e.g. "bleed") LATER: add one line here mapping the
+## new type name to a Color, then set that same string in dot_damage_type on
+## whichever StatusEffectData resource(s) should use it. Nothing else needs
+## to change — this is the one central place DOT colours are defined.
+## A dot_damage_type with no matching entry here falls back to plain white
+## rather than causing an error.
+##
+## This is a plain (non-@export) Dictionary rather than an exported one
+## because Godot 4.6's Inspector doesn't have a clean built-in editor for a
+## String → Color dictionary — editing the values directly here is the
+## simplest and most reliable place to change them.
+var dot_damage_colors: Dictionary = {
+	"poison": Color(0.10, 0.45, 0.12),   # dark green
+	"fire":   Color(1.00, 0.45, 0.05),   # red/orange — deliberately distinct
+										   # from the crit colour below (bright,
+										   # saturated red) so a Fire DOT tick
+										   # is never confused with a crit.
+	"curse":  Color(0.45, 0.08, 0.55),   # dark purple
+}
+
 
 # ── INTERNAL STATE ─────────────────────────────────────────────────────────────
 var _camera:           Camera2D     = null
@@ -60,13 +85,17 @@ func register_camera(cam: Camera2D) -> void:
 	_camera = cam
 
 
-func show_hit(unit, amount: int, is_crit: bool, damage_type: String, apply_shake: bool = true) -> void:
+func show_hit(unit, amount: int, is_crit: bool, damage_type: String, apply_shake: bool = true, is_dot: bool = false) -> void:
 		## Master entry point. Call from unit_node.gd's take_damage() once the
 	## final damage value is known. Fires all effects in one call.
 	## 'apply_shake' defaults to true so every existing caller (normal
 	## attacks) behaves exactly as before — hazard damage is the one case
 	## that passes false, since a hazard ticking every "enter"/turn is much
 	## more frequent than a real hit and the constant rumble gets annoying.
+	## 'is_dot' defaults to false so every existing caller keeps using the
+	## normal % of max HP damage-number colour tiers; only DOT ticks (see
+	## unit_node.gd's _apply_dot_tick()) pass true, which colours the number
+	## by damage_type via dot_damage_colors instead.
 	if not is_instance_valid(unit):
 		return
 
@@ -75,7 +104,7 @@ func show_hit(unit, amount: int, is_crit: bool, damage_type: String, apply_shake
 		max_hp = max(1, unit.get_stats().hp)
 
 	# ── Floating number ───────────────────────────────────────────────────────
-	spawn_damage_number(unit.global_position, amount, is_crit, max_hp)
+	spawn_damage_number(unit.global_position, amount, is_crit, max_hp, damage_type, is_dot)
 
 	# ── Impact particles ──────────────────────────────────────────────────────
 	spawn_impact_particles(unit.global_position, damage_type, is_crit)
@@ -166,8 +195,12 @@ func play_sfx(stream: AudioStream) -> void:
 
 
 func spawn_damage_number(world_pos: Vector2, amount: int,
-						  is_crit: bool, max_hp: int) -> void:
+						  is_crit: bool, max_hp: int,
+						  damage_type: String = "", is_dot: bool = false) -> void:
 	## Spawns a floating label above the hit unit that floats up and fades out.
+	## damage_type/is_dot are both optional so every pre-existing call site
+	## (there weren't any others, but just in case something calls this
+	## directly rather than through show_hit) keeps working unchanged.
 	var label := Label.new()
 	_fx_layer.add_child(label)
 
@@ -178,14 +211,23 @@ func spawn_damage_number(world_pos: Vector2, amount: int,
 	var font_size: int = 32 if is_crit else 22
 	label.add_theme_font_size_override("font_size", font_size)
 
-	# ── Colour based on damage as % of max HP ────────────────────────────────
-	var pct: float = float(amount) / float(max_hp)
+	# ── Colour ────────────────────────────────────────────────────────────────
+	# DOT ticks (is_dot = true) use a fixed colour looked up by damage_type
+	# from dot_damage_colors above, instead of the usual "% of max HP" tiers
+	# — DOT is never a crit (is_crit is always false for a DOT tick, enforced
+	# in unit_node.gd's _apply_dot_tick), so this branch and the crit branch
+	# below never overlap.
 	var color: Color
-	if   is_crit:              color = Color(1.00, 0.15, 0.15)   # crit: bright red
-	elif pct >= dmg_pct_red:   color = Color(0.95, 0.20, 0.20)   # heavy: deep red
-	elif pct >= dmg_pct_orange:color = Color(1.00, 0.55, 0.10)   # moderate: orange
-	elif pct >= dmg_pct_yellow:color = Color(1.00, 0.95, 0.20)   # light: yellow
-	else:                      color = Color(1.00, 1.00, 1.00)   # tiny: white
+	if is_dot and dot_damage_colors.has(damage_type):
+		color = dot_damage_colors[damage_type]
+	else:
+		# ── Colour based on damage as % of max HP (normal hits) ────────────────
+		var pct: float = float(amount) / float(max_hp)
+		if   is_crit:              color = Color(1.00, 0.15, 0.15)   # crit: bright red
+		elif pct >= dmg_pct_red:   color = Color(0.95, 0.20, 0.20)   # heavy: deep red
+		elif pct >= dmg_pct_orange:color = Color(1.00, 0.55, 0.10)   # moderate: orange
+		elif pct >= dmg_pct_yellow:color = Color(1.00, 0.95, 0.20)   # light: yellow
+		else:                      color = Color(1.00, 1.00, 1.00)   # tiny: white
 	label.add_theme_color_override("font_color", color)
 
 	# ── Black outline so numbers are readable over any background ─────────────
@@ -238,6 +280,8 @@ func spawn_impact_particles(world_pos: Vector2,
 			p.color = Color(0.95, 0.95, 0.20)   # yellow
 		"poison", "nature":
 			p.color = Color(0.30, 0.90, 0.25)   # green
+		"curse":
+			p.color = Color(0.45, 0.08, 0.55)   # dark purple — matches dot_damage_colors
 		"magic", "arcane":
 			p.color = Color(0.65, 0.40, 1.00)   # purple
 		"dark", "shadow":
@@ -250,6 +294,143 @@ func spawn_impact_particles(world_pos: Vector2,
 	p.emitting = true
 
 	# Auto-cleanup after the burst finishes.
+	get_tree().create_timer(p.lifetime + 0.2).timeout.connect(
+		func():
+			if is_instance_valid(p):
+				p.queue_free()
+	)
+
+
+func play_dot_hit_effects(unit, effects_by_type: Dictionary) -> void:
+	## Called once per DOT-tick batch from unit_node.gd's tick_dot() — NOT
+	## once per individual status — so multiple DOTs of the SAME type ticking
+	## together only show their effect once, and multiple DIFFERENT types
+	## always appear in a fixed, readable order rather than in whatever order
+	## active_statuses happens to store them.
+	##
+	## effects_by_type: Dictionary of dot_damage_type (String) -> PackedScene
+	## (or null for "use the built-in placeholder for this type").
+	if not is_instance_valid(unit) or effects_by_type.is_empty():
+		return
+
+	# Fixed display order for the 3 built-in types. Anything else (a future
+	# custom dot_damage_type) plays afterward, in whatever order it appears
+	# in the dictionary (Godot dictionaries preserve insertion order).
+	var priority_order: Array = ["poison", "fire", "curse"]
+	for dot_type in priority_order:
+		if effects_by_type.has(dot_type):
+			_play_single_dot_effect(unit, dot_type, effects_by_type[dot_type])
+	for dot_type in effects_by_type:
+		if not priority_order.has(dot_type):
+			_play_single_dot_effect(unit, dot_type, effects_by_type[dot_type])
+
+
+func _play_single_dot_effect(unit, dot_type: String, custom_scene: PackedScene) -> void:
+	## Instances custom_scene (if the status designer assigned one) centred on
+	## the unit, or falls back to a built-in placeholder particle burst keyed
+	## by dot_type. Add a new match arm below (and a matching entry to
+	## dot_damage_colors above, if it should also affect the damage number)
+	## to give a brand new DOT type its own placeholder look.
+	if not is_instance_valid(unit):
+		return
+
+	if custom_scene != null:
+		var fx := custom_scene.instantiate()
+		_fx_layer.add_child(fx)
+		if fx is Node2D or fx is Control:
+			fx.position = _to_screen(unit.global_position)
+		return
+
+	match dot_type:
+		"poison":
+			_spawn_poison_bubbles(unit.global_position)
+		"fire":
+			_spawn_fire_burst(unit.global_position)
+		"curse":
+			_spawn_curse_burst(unit.global_position)
+		_:
+			pass   # Unknown type, no custom scene assigned — nothing to show yet.
+
+
+func _spawn_poison_bubbles(world_pos: Vector2) -> void:
+	## Placeholder for Poison DOT ticks: slow-rising purple "bubbles".
+	## Deliberately purple rather than the green used elsewhere for poison
+	## (damage number / flash / impact particles) — this is a separate,
+	## explicitly-requested placeholder look for the over-the-unit DOT effect.
+	var p := CPUParticles2D.new()
+	_fx_layer.add_child(p)
+	p.position               = _to_screen(world_pos)
+	p.emitting               = false
+	p.one_shot               = true
+	p.explosiveness          = 0.4          # bubbles drift out over time, not all at once
+	p.amount                 = 10
+	p.lifetime               = 0.9          # slower and longer-lived than a normal impact hit
+	p.direction              = Vector2(0.0, -1.0)
+	p.spread                 = 40.0         # narrow upward drift, like rising bubbles
+	p.gravity                = Vector2(0.0, -25.0)   # gentle upward drift instead of falling
+	p.initial_velocity_min   = 15.0
+	p.initial_velocity_max   = 45.0
+	p.scale_amount_min       = 3.0
+	p.scale_amount_max       = 6.0
+	p.color                  = Color(0.55, 0.15, 0.75)   # purple bubbles
+
+	p.emitting = true
+	get_tree().create_timer(p.lifetime + 0.2).timeout.connect(
+		func():
+			if is_instance_valid(p):
+				p.queue_free()
+	)
+
+
+func _spawn_fire_burst(world_pos: Vector2) -> void:
+	## Placeholder for Fire DOT ticks: a quick fiery orange/red flare-up,
+	## similar in feel to spawn_impact_particles()'s "fire" arm.
+	var p := CPUParticles2D.new()
+	_fx_layer.add_child(p)
+	p.position               = _to_screen(world_pos)
+	p.emitting               = false
+	p.one_shot               = true
+	p.explosiveness          = 0.85
+	p.amount                 = 14
+	p.lifetime               = 0.5
+	p.direction              = Vector2(0.0, -1.0)
+	p.spread                 = 150.0
+	p.gravity                = Vector2(0.0, -60.0)   # licks upward like flame
+	p.initial_velocity_min   = 40.0
+	p.initial_velocity_max   = 120.0
+	p.scale_amount_min       = 3.0
+	p.scale_amount_max       = 5.5
+	p.color                  = Color(1.00, 0.45, 0.05)   # matches dot_damage_colors["fire"]
+
+	p.emitting = true
+	get_tree().create_timer(p.lifetime + 0.2).timeout.connect(
+		func():
+			if is_instance_valid(p):
+				p.queue_free()
+	)
+
+
+func _spawn_curse_burst(world_pos: Vector2) -> void:
+	## Placeholder for Curse DOT ticks: sharp black particles shooting
+	## outward in every direction, a harsher/faster burst than the other two.
+	var p := CPUParticles2D.new()
+	_fx_layer.add_child(p)
+	p.position               = _to_screen(world_pos)
+	p.emitting               = false
+	p.one_shot               = true
+	p.explosiveness          = 1.0          # all particles fire at once — sharp, not a trickle
+	p.amount                 = 16
+	p.lifetime               = 0.4
+	p.direction              = Vector2(0.0, -1.0)
+	p.spread                 = 180.0        # shoots out in every direction
+	p.gravity                = Vector2(0.0, 40.0)
+	p.initial_velocity_min   = 90.0
+	p.initial_velocity_max   = 220.0        # fastest of the three — feels like it's "shooting out"
+	p.scale_amount_min       = 2.0
+	p.scale_amount_max       = 4.0
+	p.color                  = Color(0.05, 0.05, 0.05)   # black
+
+	p.emitting = true
 	get_tree().create_timer(p.lifetime + 0.2).timeout.connect(
 		func():
 			if is_instance_valid(p):

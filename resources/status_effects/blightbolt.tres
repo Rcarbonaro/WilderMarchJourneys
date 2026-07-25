@@ -11,4 +11,6 @@ description = "Takes 5% more damage for 1 round."
 icon = ExtResource("1_6j08b")
 damage_taken_modifier = 0.05
 visual_classification = "debuff"
+has_dot = true
+dot_damage_mode = "magical"
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

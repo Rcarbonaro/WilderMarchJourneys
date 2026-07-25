@@ -131,10 +131,6 @@ region = Rect2(768, 512, 256, 256)
 atlas = ExtResource("6_uacoc")
 region = Rect2(512, 512, 256, 256)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_y054o"]
-atlas = ExtResource("6_uacoc")
-region = Rect2(768, 768, 256, 256)
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_cslsd"]
 atlas = ExtResource("6_uacoc")
 region = Rect2(512, 768, 256, 256)
@@ -329,9 +325,6 @@ animations = [{
 "texture": SubResource("AtlasTexture_tkl8f")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_y054o")
-}, {
-"duration": 1.0,
 "texture": SubResource("AtlasTexture_cslsd")
 }, {
 "duration": 1.0,
@@ -375,8 +368,9 @@ unit_data = ExtResource("2_xt2nj")
 position = Vector2(-3.7798424, -6.2122912)
 scale = Vector2(0.46265748, 0.4514665)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"attack_up"
+animation = &"idle"
 autoplay = "idle"
+frame_progress = 0.59208983
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0

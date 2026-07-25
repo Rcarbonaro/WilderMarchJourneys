@@ -348,7 +348,7 @@ func _spawn_test_enemies(encounter_index: int) -> void:
 			if bear_data             != null: spawn_unit(bear_data,             Vector2i(14, 3), false, 1)
 			if bear_data             != null: spawn_unit(bear_data,             Vector2i(14, 2), false, 1)
 			if wolf_data             != null: spawn_unit(wolf_data,             Vector2i(13, 3), false, 1)
-			if wolf_data             != null: spawn_unit(wolf_data,             Vector2i(13, 3), false, 1)
+			if wolf_data             != null: spawn_unit(wolf_data,             Vector2i(13, 2), false, 1)
 			if sylvaris_data         != null: spawn_unit(sylvaris_data,         Vector2i(15, 2), false, 1)
 			if sylvaris_data         != null: spawn_unit(sylvaris_data,         Vector2i(13, 1), false, 1)
 			if hulkingsporeling_data != null: spawn_unit(hulkingsporeling_data, Vector2i(17, 6), false, 1)
@@ -1380,6 +1380,7 @@ func end_player_turn() -> void:
 	for unit in player_units:
 		if is_instance_valid(unit):
 			grid.apply_hazard_to_unit(unit, unit.grid_position, "end_of_turn")
+			unit.tick_dot("end_of_player_turn")
 
 	# ── TICK AURAS (end of player round) ──────────────────────────────────────
 	# This applies aura damage and status effects to all enemies currently inside
@@ -1400,6 +1401,7 @@ func end_player_turn() -> void:
 	for unit in enemy_units:
 		if is_instance_valid(unit):
 			grid.apply_hazard_to_unit(unit, unit.grid_position, "start_of_turn")
+			unit.tick_dot("start_of_enemy_turn")
 
 	# ── TICK PLAYER STATUSES AND RESET TURN FLAGS ─────────────────────────────
 	# Count down player status durations and reset movement/action flags so
@@ -1441,6 +1443,7 @@ func _on_enemy_turn_complete() -> void:
 	for unit in enemy_units:
 		if is_instance_valid(unit):
 			grid.apply_hazard_to_unit(unit, unit.grid_position, "end_of_turn")
+			unit.tick_dot("end_of_enemy_turn")
 			
 
 	# ── TICK HAZARDS ──────────────────────────────────────────────────────────
@@ -1458,6 +1461,7 @@ func _on_enemy_turn_complete() -> void:
 	for unit in player_units:
 		if is_instance_valid(unit):
 			grid.apply_hazard_to_unit(unit, unit.grid_position, "start_of_turn")
+			unit.tick_dot("start_of_player_turn")
 			unit.tick_statuses_end_of_round("player")
 
 	# ── TICK SHIELDS / THORNS / GUARDIANS (moved from end_player_turn) ────────

@@ -31,6 +31,11 @@ const MAX_EQUIP_SLOTS := 3
 # UI-level constraint matching the original 3-slots-per-unit design. Raise
 # it here if you want more/fewer slots; nothing else needs to change.
 
+const REWARD_GLITTER_BLUE := Color(0.3, 0.6, 1.0)
+# Used for the "you bought something" popup shown right after a purchase
+# succeeds (see _show_purchase_reward_popup below) -- both units and items
+# bought from the shop get this same blue glitter.
+
 @onready var gold_label: Label = $GoldLabel
 @onready var slot_container: HBoxContainer = $HBoxContainer
 @onready var refresh_button: Button = $RefreshButton
@@ -271,11 +276,51 @@ func _load_unit_data(unit_id: String) -> UnitData:
 
 
 func _on_buy_pressed(shop_entry_id: String) -> void:
+	# Looked up BEFORE purchase runs -- ContentLoader's shop entry data is
+	# static content, not run state, so it's safe to read either before or
+	# after ShopEngine.purchase() mutates RunManager.current_run.
+	var entry: Dictionary = ContentLoader.get_shop_entry(shop_entry_id)
+
 	var success := ShopEngine.purchase(shop_entry_id, RunManager.current_run)
 	if not success:
 		print("⛔ Purchase failed (not enough gold, or entry already sold).")
+		RunManager.save_run()
+		_refresh_display()
+		return
+
 	RunManager.save_run()
 	_refresh_display()
+
+	# ADDED: show the "here's what you got" popup with glitter now that the
+	# purchase actually succeeded.
+	_show_purchase_reward_popup(entry.get("item_type", ""), entry.get("item_id", ""))
+
+
+# ADDED: shows a small glittering popup for whatever was just bought -- a
+# unit gets its portrait + description + a "More Information" button that
+# opens the full UnitInfoPopup character sheet; an item/consumable just
+# gets its icon + description (per the spec, items don't get a second
+# button here).
+func _show_purchase_reward_popup(item_type: String, item_id: String) -> void:
+	var popup := RewardPopup.new()
+	add_child(popup)
+
+	if item_type == "unit":
+		var unit_data := _load_unit_data(item_id)
+		if unit_data == null:
+			popup.queue_free()
+			return
+		popup.setup(unit_data.portrait, unit_data.description, REWARD_GLITTER_BLUE, [
+			{"text": "Close", "callback": Callable()},
+			{"text": "More Information", "callback": func(): _show_shop_unit_info_popup(item_id)},
+		])
+	else:
+		var data: Dictionary = ContentLoader.get_equipment(item_id)
+		var icon: Texture2D = UnitInfoPopup.texture_or_black_box(
+			UnitInfoPopup._resolve_icon(data.get("icon")), Vector2i(96, 96))
+		popup.setup(icon, data.get("description", ""), REWARD_GLITTER_BLUE, [
+			{"text": "Close", "callback": Callable()},
+		])
 
 
 func _on_refresh_pressed() -> void:

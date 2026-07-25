@@ -230,28 +230,102 @@ func classifies_as_debuff() -> bool:
 # The "taunt source" (who gets attacked) is recorded as the unit that APPLIED
 # this status — tracked at runtime in unit_node.active_statuses, not here.
 
-# ── DAMAGE OVER TIME (END OF ENEMY ROUND) ─────────────────────────────────────
-# Deals repeated damage to the AFFECTED unit at the end of every enemy round,
-# for as long as this status remains active. This is separate from the
-# trigger_timing/trigger_damage_multiplier fields above (which fire on a single
-# tile-enter or turn-start/end event) — this DoT fires every round, reliably,
-# regardless of movement.
+# ── DAMAGE OVER TIME (DOT) ─────────────────────────────────────────────────────
+# Deals repeated damage to the AFFECTED unit once per round, for as long as
+# this status remains active. This is separate from the trigger_timing/
+# trigger_damage_multiplier fields above (which fire on a single tile-enter or
+# turn-start/end event) — this DoT fires every round, reliably, regardless of
+# movement. Works identically for statuses applied to player units OR enemy
+# units — whichever unit is carrying this status is the one who takes the tick
+# damage.
+#
+# DOT damage NEVER crits (this is a deliberate design decision — DOT is meant
+# to be a small, steady, predictable drain rather than another source of
+# crit-fishing burst damage). If you want DOT to be able to crit in the
+# future, that would need a dedicated change to _apply_dot_tick() in
+# unit_node.gd — it currently always calls take_damage() with is_crit left at
+# its default of false.
 
 @export var has_dot: bool = false
-# Check this box to enable repeating end-of-round damage.
+# Check this box to enable repeating damage-over-time ticks.
 
 @export_enum("flat", "physical", "magical") var dot_damage_mode: String = "physical"
-# "flat"      — a fixed amount of true damage each round, ignoring all defence.
+# Controls HOW the per-tick damage number is CALCULATED (the formula):
+# "flat"      — a fixed amount of true damage each tick, ignoring all defence.
 # "physical"  — uses (caster.ATK - target.DEF) * dot_damage_percent, normal formula.
 # "magical"   — uses (caster.MATK - target.MDEF) * dot_damage_percent, normal formula.
+# This is completely independent from dot_damage_type below — e.g. you can
+# have a "Fire" DOT that calculates its damage using the "magical" formula, or
+# a "Poison" DOT that uses "flat" damage. One controls the number, the other
+# controls the identity/visuals.
 
 @export var dot_flat_amount: int = 5
-# Used only when dot_damage_mode == "flat". The exact damage dealt each round.
-
+# Used only when dot_damage_mode == "flat". The exact damage dealt each tick.
 @export var dot_damage_percent: float = 0.4
 # Used only when dot_damage_mode is "physical" or "magical".
 # This is the SAME multiplier role as an ability's base_damage_multiplier.
 # e.g. 0.4 = the DoT tick deals 40% of what a normal hit using that stat would.
+
+@export var dot_damage_type: String = "poison"
+# Controls the DOT's ELEMENTAL IDENTITY — this is what decides the floating
+# damage-number colour, the hit-flash colour, and the impact-particle colour.
+# Built-in recognized values: "poison", "fire", "curse".
+#   poison → dark green damage number
+#   fire   → red/orange damage number (deliberately distinct from crit red)
+#   curse  → dark purple damage number
+# This is a plain text field (not a fixed dropdown list) specifically so you
+# can add brand new DOT types later (e.g. "bleed") without editing this
+# script or any enum — see combat_feedback.gd's dot_damage_colors dictionary
+# for the one central place that maps a dot_damage_type string to a colour.
+# If a value here has no matching entry in that dictionary, the damage number
+# falls back to plain white rather than crashing.
+#
+# This is also passed straight through to unit_node.gd's take_damage() as its
+# damage_type argument, so it also drives the existing hit-flash colour
+# (_flash_on_hit) and impact-particle colour (CombatFeedback.
+# spawn_impact_particles) — both already have match arms for "poison" and
+# "fire"; "curse" has been added to both as part of this change.
+
+@export_enum("start_of_player_turn", "end_of_player_turn",
+			 "start_of_enemy_turn", "end_of_enemy_turn") var dot_tick_timing: String = "end_of_enemy_turn"
+# WHEN this DOT deals its damage each round. Each status picks its own
+# timing independently — e.g. Poison could tick at "end_of_enemy_turn" while
+# Curse ticks at "start_of_player_turn" on the very same unit, and both will
+# fire correctly at their own separate moments.
+#
+# "start_of_player_turn" — ticks the instant the player's turn begins.
+# "end_of_player_turn"   — ticks the instant the player's turn ends.
+# "start_of_enemy_turn"  — ticks the instant the enemy's turn begins.
+# "end_of_enemy_turn"    — ticks the instant the enemy's turn ends. (default —
+#                          this matches where the OLD hardcoded DOT tick used
+#                          to fire, for enemy units only; the fix in this
+#                          update also makes it correctly fire on PLAYER units
+#                          with this same setting, which was broken before.)
+#
+# This only controls the TICK, not how long the DOT lasts — duration is still
+# governed by duration_rounds above, same as every other status. A DOT with
+# duration_rounds = 3 will tick exactly 3 times, once per round, at whichever
+# of the four moments above you choose here.
+
+@export var dot_effect_scene: PackedScene = null
+# Optional VFX scene instanced over the unit's centre every time THIS status
+# actually deals a DOT tick (see unit_node.gd's tick_dot() and
+# combat_feedback.gd's play_dot_hit_effects()). Leave empty (null) to use a
+# built-in placeholder particle burst instead, chosen by dot_damage_type:
+#   "poison" → purple bubbles
+#   "fire"   → fire-like orange/red burst
+#   "curse"  → black particles shooting outward
+# Any other dot_damage_type with no custom scene here simply shows nothing
+# until you either assign a scene or add a new placeholder match arm in
+# combat_feedback.gd's _play_single_dot_effect().
+#
+# If a unit has several DOTs of the SAME dot_damage_type ticking in the same
+# batch (e.g. two different Poison sources), only ONE effect plays for that
+# type — whichever status's dot_effect_scene (or lack thereof) is encountered
+# FIRST in the unit's active_statuses list wins for that tick. If the unit
+# has DIFFERENT types ticking together, all of them play, always in the
+# fixed order poison → fire → curse (any other custom type plays after
+# those three, in whatever order it was found).
 
 
 func is_hidden() -> bool:

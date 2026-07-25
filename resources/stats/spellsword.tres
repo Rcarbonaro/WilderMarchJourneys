@@ -4,8 +4,8 @@
 
 [resource]
 script = ExtResource("1_xodko")
-hp = 19
-atk = 20
+hp = 21
+atk = 24
 matk = 5
 def = 7
 mdef = 10

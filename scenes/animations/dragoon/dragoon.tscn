@@ -3,8 +3,7 @@
 [ext_resource type="Script" uid="uid://01w1tymoafld" path="res://scripts/battle/unit_node.gd" id="1_w1b11"]
 [ext_resource type="Resource" uid="uid://bwnaicxo5cl5n" path="res://resources/units/windmage_data.tres" id="2_8tl0x"]
 [ext_resource type="Texture2D" uid="uid://00r6m82jd5ep" path="res://sprites/dragoon/dragoon2_attack.png" id="3_av3sa"]
-[ext_resource type="Texture2D" uid="uid://bbqmdev1iuf7q" path="res://sprites/Wind Mage/windmage_dead.png" id="4_y7v1o"]
-[ext_resource type="Texture2D" uid="uid://cayx8nwsj2joy" path="res://sprites/Wind Mage/windmage_hurt.png" id="5_hsps0"]
+[ext_resource type="Texture2D" uid="uid://ba801t3rbn53e" path="res://sprites/dragoon/dragoon_hurtdie.png" id="4_qg8av"]
 [ext_resource type="Texture2D" uid="uid://cjlv1c15kjpab" path="res://sprites/dragoon/dragoon2_idle.png" id="6_nwtg2"]
 [ext_resource type="Texture2D" uid="uid://dqa8e1p1n0lja" path="res://sprites/dragoon/dragoon2_walk.png" id="7_pv6na"]
 
@@ -52,33 +51,33 @@ region = Rect2(688, 192, 344, 192)
 atlas = ExtResource("3_av3sa")
 region = Rect2(0, 384, 344, 192)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_kcdqy"]
-atlas = ExtResource("4_y7v1o")
-region = Rect2(20, 0, 226, 308)
+[sub_resource type="AtlasTexture" id="AtlasTexture_nadxj"]
+atlas = ExtResource("4_qg8av")
+region = Rect2(344, 0, 344, 192)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_fbht4"]
-atlas = ExtResource("4_y7v1o")
-region = Rect2(246, 0, 226, 308)
+[sub_resource type="AtlasTexture" id="AtlasTexture_6rs7k"]
+atlas = ExtResource("4_qg8av")
+region = Rect2(0, 0, 344, 192)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_eckoe"]
-atlas = ExtResource("4_y7v1o")
-region = Rect2(246, 308, 226, 308)
+[sub_resource type="AtlasTexture" id="AtlasTexture_ovbfd"]
+atlas = ExtResource("4_qg8av")
+region = Rect2(688, 0, 344, 192)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_ccqw5"]
-atlas = ExtResource("4_y7v1o")
-region = Rect2(924, 0, 226, 308)
+[sub_resource type="AtlasTexture" id="AtlasTexture_ndx8m"]
+atlas = ExtResource("4_qg8av")
+region = Rect2(688, 192, 344, 192)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_nkhqp"]
-atlas = ExtResource("5_hsps0")
-region = Rect2(20, 0, 233, 309)
+[sub_resource type="AtlasTexture" id="AtlasTexture_53ews"]
+atlas = ExtResource("4_qg8av")
+region = Rect2(344, 192, 344, 192)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_p2t0q"]
-atlas = ExtResource("5_hsps0")
-region = Rect2(253, 0, 233, 309)
+[sub_resource type="AtlasTexture" id="AtlasTexture_53wso"]
+atlas = ExtResource("4_qg8av")
+region = Rect2(344, 0, 344, 192)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_rmh0y"]
-atlas = ExtResource("5_hsps0")
-region = Rect2(486, 0, 233, 309)
+[sub_resource type="AtlasTexture" id="AtlasTexture_u4sra"]
+atlas = ExtResource("4_qg8av")
+region = Rect2(0, 0, 344, 192)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_h6wp4"]
 atlas = ExtResource("6_nwtg2")
@@ -360,16 +359,19 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_kcdqy")
+"texture": SubResource("AtlasTexture_nadxj")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_fbht4")
+"texture": SubResource("AtlasTexture_6rs7k")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_eckoe")
+"texture": SubResource("AtlasTexture_ovbfd")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_ccqw5")
+"texture": SubResource("AtlasTexture_ndx8m")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_53ews")
 }],
 "loop": false,
 "name": &"die",
@@ -377,16 +379,13 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_nkhqp")
+"texture": SubResource("AtlasTexture_53wso")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_p2t0q")
+"texture": SubResource("AtlasTexture_u4sra")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_rmh0y")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_nkhqp")
+"texture": SubResource("AtlasTexture_53wso")
 }],
 "loop": false,
 "name": &"hurt",
@@ -591,9 +590,9 @@ unit_data = ExtResource("2_8tl0x")
 position = Vector2(-5.598718, 4.2235293)
 scale = Vector2(0.4976669, 0.42941174)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"leap_finish"
+animation = &"attack"
 autoplay = "idle"
-frame = 4
+frame = 8
 frame_progress = 1.0
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]

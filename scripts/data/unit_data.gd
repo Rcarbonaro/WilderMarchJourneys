@@ -108,3 +108,75 @@ var has_arcana_charge: bool = false
 
 @export var hurt_sfx:  AudioStream = null
 @export var death_sfx: AudioStream = null
+
+# ── WIND SWAY ──────────────────────────────────────────────────────────────
+# ADDED. unit_node.gd's setup() applies res://shaders/wind_sway.gdshader
+# (the same shader map features use — see map_feature_data.gd) to this
+# unit's AnimatedSprite2D when sways_in_wind is true.
+
+@export var sways_in_wind: bool = false
+# Off by default (unlike MapFeatureData, which defaults ON) -- character
+# sway reads as a much more noticeable effect than a tree wobbling, so it's
+# opt-in per unit. Turn on for whichever units you want to experiment with.
+
+@export var sway_strength: float = 3.0
+# Pixels of horizontal offset AT THE VERY TOP of the sprite (above
+# sway_pivot), fading to zero at/below it. Worth starting smaller than
+# you'd use for a tree -- a character reads as "wrong" faster than foliage
+# does.
+
+@export var sway_speed: float = 1.0
+# Higher = faster swaying.
+
+@export_range(0.0, 1.0) var sway_pivot: float = 0.5
+# UV.y (0 = top of the sprite frame, 1 = bottom) at and below which there's
+# ZERO sway -- this is the actual fix for "the whole unit moves" rather
+# than just its top. An animated character's sprite sheet is almost always
+# padded with transparent space around the character (so every animation
+# frame shares one uniform size without the character visibly shifting
+# between frames) -- if this were left at 1.0 (map features' default,
+# anchoring at the very bottom of the FRAME), that padding gets counted as
+# part of the character's height, and the real, visible portion of the
+# sprite ends up sitting in the middle of the sway curve instead of at its
+# anchored extreme. 0.5 is a reasonable starting guess (upper body sways,
+# waist-down doesn't) -- raise it if the character still looks like it's
+# leaning as a whole, lower it if even the head barely moves.
+
+@export var sway_in_unison: bool = true
+# true  -- this unit shares the exact same sway phase as every OTHER
+#          unison-enabled unit AND every map feature with sways_in_wind on
+#          (map_feature_data.gd) -- everything sways together as one
+#          coherent gust passing through the whole scene.
+# false -- this unit gets its own randomized phase instead, swaying
+#          independently of everyone else -- useful for making a specific
+#          unit feel deliberately "off" from the group (nervous, wounded,
+#          possessed, whatever fits) rather than moving with everything else.
+
+# ── BREATHING ────────────────────────────────────────────────────────────────
+# ADDED. A separate, independent effect from wind sway above -- a small
+# vertical bob concentrated around the chest, on its own clock. Always
+# individually randomized per unit (see unit_node.gd) regardless of
+# sway_in_unison -- real breathing doesn't sync between separate people the
+# way wind affects everything at once, so this never respects the "unison"
+# setting even when both effects are on for the same unit.
+
+@export var breathes: bool = false
+# Off by default. Independent of sways_in_wind -- a unit can breathe
+# without swaying in the wind, sway without breathing, both, or neither.
+
+@export var breathing_speed: float = 0.5
+# Higher = faster/more anxious-looking breathing. 0.5 is a slow, calm
+# resting rate; try something like 1.5-2.0 for a winded/exhausted unit.
+
+@export var breathing_strength: float = 1.5
+# Pixels of vertical offset at the peak of the breath (at breathing_center).
+
+@export_range(0.0, 1.0) var breathing_center: float = 0.3
+# UV.y of the "chest" -- the center of the affected band. Same padded-frame
+# caveat as sway_pivot above applies here -- 0.3 is a guess assuming a
+# roughly head-at-the-top layout; nudge it to match your actual sprite.
+
+@export_range(0.01, 1.0) var breathing_width: float = 0.15
+# How tall the affected band is, centered on breathing_center. Smaller =
+# tighter/more localized to just the chest; bigger = a softer, wider bob
+# that blends into the shoulders/waist.

@@ -25,4 +25,5 @@ synergy_tags = Array[String](["isolation", "hazard"])
 stats_by_level = Array[ExtResource("6_u3dep")]([ExtResource("1_5jdyn")])
 base_stats = ExtResource("1_5jdyn")
 starting_abilities = Array[ExtResource("3_gaufl")]([ExtResource("4_pdaka"), ExtResource("5_s482d"), ExtResource("10_u3dep"), ExtResource("6_57uqc")])
+sways_in_wind = true
 metadata/_custom_type_script = "uid://utmj7y8m802a"
