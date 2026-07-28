@@ -1,6 +1,6 @@
 {
   "id": "lesser_mana_potion", "name": "Lesser Mana Potion", "type": "consumable",
   "description": "Restore 20 mana",
-  "icon": "res://art/sprites/UI/skill icons/mana potion.png",
+  "icon": "res://sprites/UI/skill icons/mana potion.png",
   "effect_type": "restore_mana_flat", "mana_amount": 20
 }

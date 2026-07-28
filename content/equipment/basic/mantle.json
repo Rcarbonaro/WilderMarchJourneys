@@ -2,6 +2,7 @@
   "id": "mantle",
   "name": "Mantle",
   "description": "A warded cloak. +1 MDEF.",
+  "icon": "res://sprites/UI/skill icons/mantle.png",
   "type": "basic",
   "subtype": "mantle",
   "tags": ["forgeable", "magic"],

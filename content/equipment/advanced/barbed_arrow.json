@@ -2,6 +2,7 @@
   "id": "barbed_arrow",
   "name": "Barbed Arrow",
   "description": "+3 ATK, +3 MATK, +20% critical chance. Increase critical damage by 40%.",
+  "icon": "res://sprites/UI/skill icons/arrow.png",
   "type": "advanced",
   "subtype": "blade_monocle",
   "tags": ["ranged"],

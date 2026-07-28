@@ -355,7 +355,7 @@ func _soul_jar_on_unit_died(dead_unit, unit) -> void:
 	var dist = abs(dead_unit.grid_position.x - unit.grid_position.x) + \
 			   abs(dead_unit.grid_position.y - unit.grid_position.y)
 	if dist <= 5:
-		unit.restore_mana(int(ceil(unit.get_stats().mana * 0.05)))
+		unit.restore_mana(int(ceil(unit.get_stats().mana * 0.25)))
 
 # ==============================================================================
 # 14. ORACLE'S LENS (Spellbook + Monocle)
@@ -681,10 +681,25 @@ func _equip_guardian_mantle(unit) -> void:
 
 
 func _guardian_mantle_modify_damage(attacker, target, damage: int, is_crit: bool, damage_type: String, unit) -> int:
-	if target == unit or damage_type != "magical" or not is_instance_valid(target):
+	# BUGFIX: this used to check is_instance_valid(target) but never
+	# is_instance_valid(unit) -- 'unit' is the wearer, bound in via
+	# .bind(unit) when this was registered. Equipment is only ever
+	# unsubscribed by remove_equipment_from_unit(), which is never called
+	# when a unit simply dies in battle (only on an explicit un-equip) --
+	# so if the wearer dies, this callback stays registered in
+	# CombatHooks.outgoing_damage_modifiers forever. The next time ANY
+	# ally takes magic damage, this fires again and crashes trying to
+	# read a property (is_player_unit) off the wearer's freed instance.
+	if not is_instance_valid(unit) or not is_instance_valid(target):
+		return damage
+	if target == unit or damage_type != "magical":
 		return damage
 	if target.is_player_unit != unit.is_player_unit or unit.grid_ref == null:
 		return damage
+	# A dead wearer (even one not yet freed) can't intercept anything.
+	if unit.current_hp <= 0:
+		return damage
+
 	var dist = max(abs(target.grid_position.x - unit.grid_position.x),
 					abs(target.grid_position.y - unit.grid_position.y))
 	if dist > 1:

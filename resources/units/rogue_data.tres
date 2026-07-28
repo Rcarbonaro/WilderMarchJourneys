@@ -7,10 +7,68 @@
 [ext_resource type="Texture2D" uid="uid://b5w6fcikcs7c8" path="res://sprites/rogue/rogue_portrait.png" id="3_5debc"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_cnjr4"]
 [ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="3_waodb"]
+[ext_resource type="Script" uid="uid://db25p1ynn7f8s" path="res://scripts/data/bark_line_data.gd" id="4_ak4yr"]
 [ext_resource type="Resource" uid="uid://bdc6msrw685tm" path="res://resources/abilities/rogue_basic.tres" id="4_fikb3"]
 [ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_p5vjo"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_5debc"]
 [ext_resource type="Resource" uid="uid://bhefcss7mcg2g" path="res://resources/abilities/stealth.tres" id="5_l4ka4"]
+[ext_resource type="Script" uid="uid://df8avravfldch" path="res://scripts/data/dialogue_bark_data.gd" id="5_nrgfd"]
+
+[sub_resource type="Resource" id="Resource_omisk"]
+script = ExtResource("4_ak4yr")
+text = "Just leave it to me!"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_uqekb"]
+script = ExtResource("5_nrgfd")
+lines = Array[ExtResource("4_ak4yr")]([SubResource("Resource_omisk")])
+metadata/_custom_type_script = "uid://df8avravfldch"
+
+[sub_resource type="Resource" id="Resource_x0blg"]
+script = ExtResource("4_ak4yr")
+text = "Gotta stick and move!"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_31s1h"]
+script = ExtResource("4_ak4yr")
+text = "Stick to the shadows..."
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_ak4yr"]
+script = ExtResource("4_ak4yr")
+text = "I'll stick to the shadows... But still be the spotlight!"
+weight = 0.2
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_nrgfd"]
+script = ExtResource("4_ak4yr")
+text = "Wanna bet to see who can take out the most baddies?"
+weight = 0.75
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_cks75"]
+script = ExtResource("4_ak4yr")
+text = "Hey, we'll get through this, friend!"
+weight = 0.5
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_q7pb7"]
+script = ExtResource("4_ak4yr")
+text = "There's nothing here we can't handle!"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_vc62f"]
+script = ExtResource("4_ak4yr")
+text = "Hey, you know that gets a bit annoying, right?"
+weight = 0.01
+emotion = "angry"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_enwc1"]
+script = ExtResource("5_nrgfd")
+lines = Array[ExtResource("4_ak4yr")]([SubResource("Resource_x0blg"), SubResource("Resource_31s1h"), SubResource("Resource_ak4yr"), SubResource("Resource_nrgfd"), SubResource("Resource_cks75"), SubResource("Resource_q7pb7"), SubResource("Resource_vc62f")])
+deployment_barks = SubResource("Resource_uqekb")
+metadata/_custom_type_script = "uid://df8avravfldch"
 
 [resource]
 script = ExtResource("1_6usi5")
@@ -23,4 +81,5 @@ synergy_tags = Array[String](["isolation"])
 stats_by_level = Array[ExtResource("3_cnjr4")]([ExtResource("1_5x8eh")])
 base_stats = ExtResource("1_5x8eh")
 starting_abilities = Array[ExtResource("2_0wd6k")]([ExtResource("4_fikb3"), ExtResource("5_l4ka4")])
+deployment_barks = SubResource("Resource_enwc1")
 metadata/_custom_type_script = "uid://utmj7y8m802a"

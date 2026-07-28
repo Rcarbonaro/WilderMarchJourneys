@@ -2,6 +2,7 @@
   "id": "spellforged_blade",
   "name": "Spellforged Blade",
   "description": "+2 ATK, +2 MATK, +10 mana. Increase damage dealt by 10% for every 20 missing mana.",
+  "icon": "res://sprites/UI/skill icons/spellforged blade.png",
   "type": "advanced",
   "subtype": "blade_spellbook",
   "tags": ["melee", "magic"],

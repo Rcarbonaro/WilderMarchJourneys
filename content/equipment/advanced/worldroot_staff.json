@@ -2,6 +2,7 @@
   "id": "worldroot_staff",
   "name": "Worldroot Staff",
   "description": "+4 MATK. Spells cast by the wielder have a 50% chance to cost no mana.",
+  "icon": "res://sprites/UI/skill icons/worldroot staff.png",
   "type": "advanced",
   "subtype": "staff_staff",
   "tags": ["magic"],

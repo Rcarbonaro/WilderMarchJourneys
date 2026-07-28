@@ -2,6 +2,7 @@
   "id": "archmages_bulwark",
   "name": "Archmage's Bulwark",
   "description": "+2 MATK, +2 MDEF, +1 DEF. Whenever you spend mana, gain temporary HP equal to 25% of the mana spent (rounded up) for 1 round.",
+  "icon": "res://sprites/UI/skill icons/archmage bulwark.png",
   "type": "advanced",
   "subtype": "armor_staff",
   "tags": ["magic", "tank"],

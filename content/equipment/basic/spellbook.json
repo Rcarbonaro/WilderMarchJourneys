@@ -2,6 +2,7 @@
   "id": "spellbook",
   "name": "Spellbook",
   "description": "A tome of minor incantations. +10% mana, +5% critical chance.",
+  "icon": "res://sprites/UI/skill icons/spellbook.png",
   "type": "basic",
   "subtype": "spellbook",
   "tags": ["forgeable", "magic"],

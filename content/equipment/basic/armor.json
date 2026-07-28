@@ -2,6 +2,7 @@
   "id": "armor",
   "name": "Armor",
   "description": "Sturdy plating. +1 DEF, +1 MDEF.",
+  "icon": "res://sprites/UI/skill icons/plate armor.png",
   "type": "basic",
   "subtype": "armor",
   "tags": ["forgeable"],

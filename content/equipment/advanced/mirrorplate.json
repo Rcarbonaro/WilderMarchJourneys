@@ -2,6 +2,7 @@
   "id": "mirrorplate",
   "name": "Mirrorplate",
   "description": "+3 DEF, +15% critical chance. On being hit, a chance equal to this unit's crit chance to reflect 10% of damage taken back as a critical hit. Cannot be lethal.",
+  "icon": "res://sprites/UI/skill icons/mirrorshield.png",
   "type": "advanced",
   "subtype": "armor_monocle",
   "tags": ["tank"],

@@ -9,9 +9,46 @@
 [ext_resource type="Texture2D" uid="uid://cni4uxqu0wpby" path="res://sprites/firemage/drow firemage_portrait.png" id="3_yo7tp"]
 [ext_resource type="Resource" uid="uid://b4whqdrv4e4x1" path="res://resources/abilities/firemage_basic.tres" id="4_7nqrm"]
 [ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_jpof5"]
+[ext_resource type="Script" uid="uid://db25p1ynn7f8s" path="res://scripts/data/bark_line_data.gd" id="4_nrcp8"]
+[ext_resource type="Script" uid="uid://df8avravfldch" path="res://scripts/data/dialogue_bark_data.gd" id="5_0x7j7"]
 [ext_resource type="Resource" uid="uid://bbki47ewle1jj" path="res://resources/abilities/fireball.tres" id="5_fiqcd"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_yo7tp"]
 [ext_resource type="Resource" uid="uid://bejqlpl63p8km" path="res://resources/abilities/firewall.tres" id="6_yo7tp"]
+
+[sub_resource type="Resource" id="Resource_3bux3"]
+script = ExtResource("4_nrcp8")
+text = "I bet you're pretty impressed by my skills, huh?"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_pj5bq"]
+script = ExtResource("4_nrcp8")
+text = "Keep your distance, my fire can be pretty dangerous"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_tuina"]
+script = ExtResource("4_nrcp8")
+text = "I'll burn your enemies to a crisp!"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_3dgxs"]
+script = ExtResource("4_nrcp8")
+text = "Just keep your distance from my fireball, okay?"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_t7326"]
+script = ExtResource("4_nrcp8")
+text = "You don't have to worry about anything with me around!"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_hf7ye"]
+script = ExtResource("4_nrcp8")
+text = "Just line 'em up and watch 'em burn!"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_ebboa"]
+script = ExtResource("5_0x7j7")
+lines = Array[ExtResource("4_nrcp8")]([SubResource("Resource_3bux3"), SubResource("Resource_pj5bq"), SubResource("Resource_tuina"), SubResource("Resource_3dgxs"), SubResource("Resource_t7326"), SubResource("Resource_hf7ye")])
+metadata/_custom_type_script = "uid://df8avravfldch"
 
 [resource]
 script = ExtResource("1_ig4kd")
@@ -24,4 +61,5 @@ synergy_tags = Array[String](["arcane"])
 stats_by_level = Array[ExtResource("3_pacf0")]([ExtResource("1_ewcrh")])
 base_stats = ExtResource("1_ewcrh")
 starting_abilities = Array[ExtResource("2_a02b7")]([ExtResource("4_7nqrm"), ExtResource("5_fiqcd"), ExtResource("6_yo7tp")])
+deployment_barks = SubResource("Resource_ebboa")
 metadata/_custom_type_script = "uid://utmj7y8m802a"

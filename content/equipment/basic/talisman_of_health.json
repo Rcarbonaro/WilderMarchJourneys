@@ -2,6 +2,7 @@
   "id": "talisman_of_health",
   "name": "Talisman of Health",
   "description": "A protective charm. +5 HP.",
+  "icon": "res://sprites/UI/skill icons/talisman.png",
   "type": "basic",
   "subtype": "talisman",
   "tags": ["forgeable"],

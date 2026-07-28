@@ -8,10 +8,42 @@
 [ext_resource type="Resource" uid="uid://b406fvrri3tpy" path="res://resources/abilities/plaguebringer_basic.tres" id="3_ke88r"]
 [ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="3_ltbqf"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_t3yht"]
+[ext_resource type="Script" uid="uid://db25p1ynn7f8s" path="res://scripts/data/bark_line_data.gd" id="4_gbtmd"]
 [ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_sbhfo"]
 [ext_resource type="Resource" uid="uid://d2c88a0y67m3r" path="res://resources/abilities/miasmaburst.tres" id="4_ypgtm"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_112sh"]
+[ext_resource type="Script" uid="uid://df8avravfldch" path="res://scripts/data/dialogue_bark_data.gd" id="5_ju12r"]
 [ext_resource type="Resource" uid="uid://bcsrdfepw47tw" path="res://resources/abilities/poisoncloud.tres" id="5_temkm"]
+
+[sub_resource type="Resource" id="Resource_b35x5"]
+script = ExtResource("4_gbtmd")
+text = "I developed something for just this occasion"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_ywc1t"]
+script = ExtResource("4_gbtmd")
+text = "Yes... Let's see here..."
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_5e3te"]
+script = ExtResource("4_gbtmd")
+text = "Oh do I have a surprise for them..."
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_oaykf"]
+script = ExtResource("4_gbtmd")
+text = "Yes, I've prepared for just this occasion..."
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_c2fao"]
+script = ExtResource("4_gbtmd")
+text = "Let's do this"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_21qnp"]
+script = ExtResource("5_ju12r")
+lines = Array[ExtResource("4_gbtmd")]([SubResource("Resource_b35x5"), SubResource("Resource_ywc1t"), SubResource("Resource_5e3te"), SubResource("Resource_oaykf"), SubResource("Resource_c2fao")])
+metadata/_custom_type_script = "uid://df8avravfldch"
 
 [resource]
 script = ExtResource("1_h1x5s")
@@ -24,4 +56,5 @@ synergy_tags = Array[String](["debuff"])
 stats_by_level = Array[ExtResource("3_t3yht")]([ExtResource("1_ypgtm")])
 base_stats = ExtResource("1_ypgtm")
 starting_abilities = Array[ExtResource("2_iklpa")]([ExtResource("3_ke88r"), ExtResource("4_ypgtm"), ExtResource("5_temkm")])
+deployment_barks = SubResource("Resource_21qnp")
 metadata/_custom_type_script = "uid://utmj7y8m802a"

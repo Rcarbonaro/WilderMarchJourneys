@@ -17,10 +17,10 @@ offset_right = 178.0
 offset_bottom = 143.0
 
 [node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1352691112]
-offset_left = 614.0
-offset_top = 153.0
-offset_right = 1823.0
-offset_bottom = 707.0
+offset_left = 414.0
+offset_top = 156.0
+offset_right = 1623.0
+offset_bottom = 622.0
 
 [node name="RefreshButton" type="Button" parent="." unique_id=177932080]
 offset_left = 13.0

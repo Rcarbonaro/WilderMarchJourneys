@@ -2,6 +2,7 @@
   "id": "veilstaff",
   "name": "Veilstaff",
   "description": "+2 MATK, +3 MDEF. Whenever you take magic damage, restore mana equal to 50% of the attacker's MATK (rounded up).",
+  "icon": "res://sprites/UI/skill icons/veilstaff.png",
   "type": "advanced",
   "subtype": "staff_mantle",
   "tags": ["magic"],

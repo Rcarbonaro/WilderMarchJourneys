@@ -8,9 +8,48 @@
 [ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="3_k3kok"]
 [ext_resource type="Texture2D" uid="uid://bb6wfu3e8odm8" path="res://sprites/executioner/executioner portrait.png" id="3_u3eig"]
 [ext_resource type="Resource" uid="uid://va5t7a8jrmkv" path="res://resources/abilities/executioner_basic.tres" id="4_1byq5"]
+[ext_resource type="Script" uid="uid://db25p1ynn7f8s" path="res://scripts/data/bark_line_data.gd" id="4_80ekv"]
 [ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_wwh2h"]
+[ext_resource type="Script" uid="uid://df8avravfldch" path="res://scripts/data/dialogue_bark_data.gd" id="5_gy3ve"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_u3eig"]
 [ext_resource type="Resource" uid="uid://dfpxvocy7yu3u" path="res://resources/abilities/execute.tres" id="5_vxs14"]
+
+[sub_resource type="Resource" id="Resource_fh7ki"]
+script = ExtResource("4_80ekv")
+text = "You point, I kill"
+emotion = "angry"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_i33qm"]
+script = ExtResource("4_80ekv")
+text = "What is it?"
+emotion = "sad"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_uod6r"]
+script = ExtResource("4_80ekv")
+text = "Why this constant bother?"
+weight = 0.25
+emotion = "angry"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_4bxrq"]
+script = ExtResource("4_80ekv")
+text = "Hmph."
+emotion = "angry"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_vtniv"]
+script = ExtResource("4_80ekv")
+text = "What is your plan for this threat?"
+weight = 0.75
+emotion = "angry"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_q7yc2"]
+script = ExtResource("5_gy3ve")
+lines = Array[ExtResource("4_80ekv")]([SubResource("Resource_fh7ki"), SubResource("Resource_i33qm"), SubResource("Resource_uod6r"), SubResource("Resource_4bxrq"), SubResource("Resource_vtniv")])
+metadata/_custom_type_script = "uid://df8avravfldch"
 
 [resource]
 script = ExtResource("1_quapp")
@@ -23,4 +62,5 @@ synergy_tags = Array[String](["debuff"])
 stats_by_level = Array[ExtResource("3_e1ta7")]([ExtResource("1_mnb5q")])
 base_stats = ExtResource("1_mnb5q")
 starting_abilities = Array[ExtResource("2_avfn6")]([ExtResource("4_1byq5"), ExtResource("5_vxs14")])
+deployment_barks = SubResource("Resource_q7yc2")
 metadata/_custom_type_script = "uid://utmj7y8m802a"

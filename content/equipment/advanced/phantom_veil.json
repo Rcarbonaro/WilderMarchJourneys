@@ -2,6 +2,7 @@
   "id": "phantom_veil",
   "name": "Phantom Veil",
   "description": "+2 MDEF, +15% critical chance. Whenever you land a critical hit, the target deals 20% less damage for 1 round.",
+  "icon": "res://sprites/UI/skill icons/phantom veil.png",
   "type": "advanced",
   "subtype": "mantle_monocle",
   "tags": ["utility"],

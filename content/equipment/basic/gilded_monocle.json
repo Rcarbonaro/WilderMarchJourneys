@@ -2,6 +2,7 @@
   "id": "gilded_monocle",
   "name": "Gilded Monocle",
   "description": "A keen eye for weak points. +10% critical chance.",
+  "icon": "res://sprites/UI/skill icons/monocle.png",
   "type": "basic",
   "subtype": "monocle",
   "tags": ["forgeable"],

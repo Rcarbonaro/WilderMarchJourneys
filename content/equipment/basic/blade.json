@@ -1,7 +1,8 @@
 {
   "id": "blade",
   "name": "Blade",
-  "description": "A simple sharpened blade. +2 ATK, +2 MATK.",
+  "description": "A simple sharpened blade. +2 ATK.",
+  "icon": "res://sprites/UI/skill icons/blade.png",
   "type": "basic",
   "subtype": "blade",
   "tags": ["forgeable", "melee"],

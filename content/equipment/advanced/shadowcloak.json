@@ -2,6 +2,7 @@
   "id": "shadowcloak",
   "name": "Shadowcloak",
   "description": "+2 ATK, +2 MDEF. After defeating an enemy, gain +33% damage dealt and +1 MOV for 1 round.",
+  "icon": "res://sprites/UI/skill icons/shadowcloak.png",
   "type": "advanced",
   "subtype": "blade_mantle",
   "tags": ["melee"],

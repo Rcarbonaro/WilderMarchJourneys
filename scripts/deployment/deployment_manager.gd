@@ -272,14 +272,50 @@ func _update_stage_label() -> void:
 		return
 	var stage_index: int = RunManager.current_run.stage_index
 	var stage_type: String = RunManager.get_current_stage_type()
-	# String.capitalize() turns "special_combat" into "Special Combat" for free.
-	stage_label.text = "Stage %d of 30 — %s" % [stage_index, stage_type.capitalize()]
+	# BUGFIX: only these four titles are ever shown to the player now.
+	# Anything that isn't explicitly "encounter", "subboss", or "boss"
+	# (e.g. "special_combat") displays as "Combat" by default -- it used
+	# to just String.capitalize() the raw stage_type, which surfaced
+	# internal names like "Special Combat" directly.
+	var display_title: String
+	match stage_type:
+		"encounter":
+			display_title = "Encounters"
+		"subboss":
+			display_title = "Subboss"
+		"boss":
+			display_title = "Boss"
+		_:
+			display_title = "Combat"
+	stage_label.text = "Stage %d of 30 — %s" % [stage_index, display_title]
 
 
 func _get_full_roster() -> Array:
+	# BUGFIX: this used to blindly concatenate party + bench with no
+	# deduplication. If the same instance_id ever ends up listed in BOTH
+	# arrays -- which can happen from stale/older save data, or any other
+	# code path that adds to one without removing from the other -- every
+	# caller of this function sees that character twice: the roster list
+	# shows two rows for what's really one character, the deploy picker
+	# could offer both "copies" for a slot, and _on_continue_pressed()
+	# (which builds the final party actually sent into battle) would carry
+	# BOTH entries straight into RunManager.current_run.party. Since the
+	# two entries can have different equipped_item_ids on them, that's
+	# exactly how you'd end up with the same character twice in combat,
+	# only one of them wearing their gear.
+	#
+	# Dedupe by instance_id here, once, so every caller downstream is safe.
+	# party is appended first, so if a character is genuinely both
+	# deployed AND somehow still in bench, the party copy (the one that
+	# matters) wins.
 	var roster: Array = []
-	roster.append_array(RunManager.current_run.party)
-	roster.append_array(RunManager.current_run.bench)
+	var seen_ids: Dictionary = {}
+	for entry in RunManager.current_run.party + RunManager.current_run.bench:
+		var instance_id: String = entry.get("instance_id", "")
+		if instance_id != "" and seen_ids.has(instance_id):
+			continue
+		seen_ids[instance_id] = true
+		roster.append(entry)
 	return roster
 
 
@@ -1564,9 +1600,35 @@ func _format_scout_report(content: Dictionary) -> String:
 	# _draw()) now renders the actual layout visually instead. This text just
 	# covers stage type/biome/enemy list.
 	var report = "[b]Stage Type:[/b] %s\n[b]Biome:[/b] %s\n\n" % [content["stage_type"], content["biome"]]
-	report += "[b]Enemies (%d):[/b]\n" % content["enemies"].size()
-	for enemy in content["enemies"]:
+
+	# BUGFIX: this used to only count/list the INITIAL roster -- any boss's
+	# mid-fight reinforcement wave (boss_phase_data.summon_wave) was never
+	# included, so "how many enemies will spawn" was under-reported for
+	# boss stages. Unlike a random ability-triggered summon, a boss's
+	# summon_wave is fixed data on the boss itself (not randomized), so we
+	# CAN know about it ahead of time and show it here.
+	var initial_enemies: Array = content["enemies"]
+	var reinforcement_lines: Array[String] = []
+	var reinforcement_total: int = 0
+
+	for enemy in initial_enemies:
+		if "boss_phases" in enemy:
+			for phase in enemy.boss_phases:
+				if phase.summon_wave != null:
+					for entry in phase.summon_wave.entries:
+						if entry.unit_data != null:
+							reinforcement_lines.append(
+								"- %s x%d (mid-fight reinforcement)" % [entry.unit_data.display_name, entry.count]
+							)
+							reinforcement_total += entry.count
+
+	report += "[b]Enemies (%d total):[/b]\n" % (initial_enemies.size() + reinforcement_total)
+	for enemy in initial_enemies:
 		report += "- %s (%s tier)\n" % [enemy.display_name, enemy.tier]
+
+	if not reinforcement_lines.is_empty():
+		report += "\n[b]Reinforcements:[/b]\n" + "\n".join(reinforcement_lines) + "\n"
+
 	return report
 
 

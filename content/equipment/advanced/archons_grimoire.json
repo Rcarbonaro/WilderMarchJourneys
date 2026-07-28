@@ -2,6 +2,7 @@
   "id": "archons_grimoire",
   "name": "Archon's Grimoire",
   "description": "+3 MATK, +20 mana. The first spell or ability used each battle costs no mana.",
+  "icon": "res://sprites/UI/skill icons/archons grimoire.png",
   "type": "advanced",
   "subtype": "staff_spellbook",
   "tags": ["magic"],

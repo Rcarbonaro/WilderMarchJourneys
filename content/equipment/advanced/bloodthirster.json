@@ -2,6 +2,7 @@
   "id": "bloodthirster",
   "name": "Bloodthirster",
   "description": "+5 ATK, +5 MATK. Each round this unit attacks, gain an additional +1 ATK/+1 MATK, up to +4. Resets to +0 if the unit doesn't attack that round.",
+  "icon": "res://sprites/UI/skill icons/bloodthirster.png",
   "type": "advanced",
   "subtype": "blade_blade",
   "tags": ["melee"],

@@ -2,6 +2,7 @@
   "id": "starcall_prism",
   "name": "Starcall Prism",
   "description": "+2 MATK, +15% critical chance. When casting a spell or ability, there is a chance equal to your critical chance to immediately cast it again on the same target or area at no cost. Can only occur once per round.",
+  "icon": "res://sprites/UI/skill icons/starcall prism.png",
   "type": "advanced",
   "subtype": "staff_monocle",
   "tags": ["magic"],

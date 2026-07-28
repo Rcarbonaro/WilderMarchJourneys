@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dif2di02wceos"
-path="res://.godot/imported/archons codex.png-523322c7670f2395f9476cde58a8680c.ctex"
+uid="uid://dsg4pvt1lib00"
+path="res://.godot/imported/warden cloak.png-6592d3a6d79b4dc3642ba3ecceff9134.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/UI/skill icons/archons codex.png"
-dest_files=["res://.godot/imported/archons codex.png-523322c7670f2395f9476cde58a8680c.ctex"]
+source_file="res://sprites/UI/skill icons/warden cloak.png"
+dest_files=["res://.godot/imported/warden cloak.png-6592d3a6d79b4dc3642ba3ecceff9134.ctex"]
 
 [params]
 

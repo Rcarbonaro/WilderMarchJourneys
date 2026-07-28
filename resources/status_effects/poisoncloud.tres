@@ -14,4 +14,5 @@ can_stack = true
 atk_modifier = -1
 has_dot = true
 dot_damage_mode = "magical"
+dot_damage_percent = 1.0
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

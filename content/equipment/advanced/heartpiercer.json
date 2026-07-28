@@ -2,6 +2,7 @@
   "id": "heartpiercer",
   "name": "Heartpiercer",
   "description": "+2 ATK, +2 MATK, +5 HP. ATK (and MATK) increases by 1 for every 10 HP missing.",
+  "icon": "res://sprites/UI/skill icons/heartpiercer.png",
   "type": "advanced",
   "subtype": "blade_talisman",
   "tags": ["melee"],

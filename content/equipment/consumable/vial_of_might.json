@@ -1,6 +1,6 @@
 {
   "id": "stat_potion_atk", "name": "Vial of Might", "type": "consumable",
   "description": "Increast ATK by 3 for 3 turns.",
-  "icon": "res://art/sprites/UI/skill icons/stat potionn.png",
+  "icon": "res://sprites/UI/skill icons/stat potion.png",
   "effect_type": "stat_buff", "buff_stat": "atk", "buff_amount": 3, "buff_duration_rounds": 3
 }

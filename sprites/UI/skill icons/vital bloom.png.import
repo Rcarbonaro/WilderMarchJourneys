@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bnnhlapoiq08j"
-path="res://.godot/imported/vanguard's edge.png-23d7dc3d51ce5de86726571bfbb1ff55.ctex"
+uid="uid://b2hxxdjhiuia1"
+path="res://.godot/imported/vital bloom.png-90330f0f813c063718247ca4fb9e61a2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/UI/skill icons/vanguard's edge.png"
-dest_files=["res://.godot/imported/vanguard's edge.png-23d7dc3d51ce5de86726571bfbb1ff55.ctex"]
+source_file="res://sprites/UI/skill icons/vital bloom.png"
+dest_files=["res://.godot/imported/vital bloom.png-90330f0f813c063718247ca4fb9e61a2.ctex"]
 
 [params]
 

@@ -2,6 +2,7 @@
   "id": "crystal_sight",
   "name": "Crystal Sight",
   "description": "+20% critical chance. Critical hits ignore 25% of the enemy's effective DEF.",
+  "icon": "res://sprites/UI/skill icons/crystal sight.png",
   "type": "advanced",
   "subtype": "monocle_monocle",
   "tags": [],

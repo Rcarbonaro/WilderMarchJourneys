@@ -180,3 +180,6 @@ var has_arcana_charge: bool = false
 # How tall the affected band is, centered on breathing_center. Smaller =
 # tighter/more localized to just the chest; bigger = a softer, wider bob
 # that blends into the shoulders/waist.
+
+
+@export var deployment_barks: DialogueBarkData

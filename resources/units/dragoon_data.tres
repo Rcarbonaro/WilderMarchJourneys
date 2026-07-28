@@ -8,10 +8,50 @@
 [ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="3_gwi71"]
 [ext_resource type="Texture2D" uid="uid://c0vv35b1yln6s" path="res://sprites/dragoon/dragoon_portrait.png" id="3_qc3qx"]
 [ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_3rfpu"]
+[ext_resource type="Script" uid="uid://db25p1ynn7f8s" path="res://scripts/data/bark_line_data.gd" id="4_4cjf7"]
 [ext_resource type="Resource" uid="uid://c6oreioskft08" path="res://resources/abilities/dragoon_basic.tres" id="4_nicbd"]
 [ext_resource type="Resource" uid="uid://bw3q0dan042jh" path="res://resources/abilities/lunge.tres" id="5_0nwkx"]
+[ext_resource type="Script" uid="uid://df8avravfldch" path="res://scripts/data/dialogue_bark_data.gd" id="5_flrj2"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_qc3qx"]
 [ext_resource type="Resource" uid="uid://dfy4g0j5jc4fh" path="res://resources/abilities/leap.tres" id="9_0hbrn"]
+
+[sub_resource type="Resource" id="Resource_tr70s"]
+script = ExtResource("4_4cjf7")
+text = "At your command"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_yqfk0"]
+script = ExtResource("4_4cjf7")
+text = "Yes?"
+weight = 0.2
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_8pqph"]
+script = ExtResource("4_4cjf7")
+text = "My scales could use a good scrubbing..."
+weight = 0.5
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_ew60y"]
+script = ExtResource("4_4cjf7")
+text = "We will route the enemy!"
+emotion = "angry"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_5g0tf"]
+script = ExtResource("4_4cjf7")
+text = "Your enemies will taste my lance"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_q3ocu"]
+script = ExtResource("4_4cjf7")
+text = "My lance shall pierce the sky!"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_66c2e"]
+script = ExtResource("5_flrj2")
+lines = Array[ExtResource("4_4cjf7")]([SubResource("Resource_tr70s"), SubResource("Resource_yqfk0"), SubResource("Resource_8pqph"), SubResource("Resource_ew60y"), SubResource("Resource_5g0tf"), SubResource("Resource_q3ocu")])
+metadata/_custom_type_script = "uid://df8avravfldch"
 
 [resource]
 script = ExtResource("1_nda02")
@@ -24,4 +64,5 @@ synergy_tags = Array[String](["isolation"])
 stats_by_level = Array[ExtResource("3_4euss")]([ExtResource("1_4euss")])
 base_stats = ExtResource("1_4euss")
 starting_abilities = Array[ExtResource("2_nda02")]([ExtResource("4_nicbd"), ExtResource("5_0nwkx"), ExtResource("9_0hbrn")])
+deployment_barks = SubResource("Resource_66c2e")
 metadata/_custom_type_script = "uid://utmj7y8m802a"

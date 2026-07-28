@@ -2,6 +2,7 @@
   "id": "heavy_plate",
   "name": "Heavy Plate",
   "description": "+5 DEF, +5 MDEF. Increases nearby ally DEF/MDEF by +2.",
+  "icon": "res://sprites/UI/skill icons/heavyplate.png",
   "type": "advanced",
   "subtype": "armor_armor",
   "tags": ["tank"],

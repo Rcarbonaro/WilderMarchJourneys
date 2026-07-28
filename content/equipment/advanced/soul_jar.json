@@ -1,11 +1,14 @@
 {
   "id": "soul_jar",
   "name": "Soul Jar",
-  "description": "When an enemy within 4 squares is defeated, gain 25% (rounded up) of maximum mana, up to maximum.",
+  "description": "+20 max mana. When an enemy within 4 squares is defeated, gain 25% (rounded up) of maximum mana, up to maximum.",
+  "icon": "res://sprites/UI/skill icons/souljar.png",
   "type": "advanced",
   "subtype": "spellbook_spellbook",
   "tags": ["magic"],
   "effects": [
-    { "type": "custom", "custom_id": "soul_jar" }
+    { "type": "custom", "custom_id": "soul_jar" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "mana",        "amount": 20, "value_mode": "percent", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "crit_chance", "amount": 5,  "value_mode": "flat",    "scope": "permanent" }
   ]
 }

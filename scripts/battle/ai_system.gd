@@ -210,14 +210,41 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 
 	# Final fallback: if STILL nothing in range (even after a taunt fallback),
 	# just move as close as possible to whichever target we ended up on.
+	#
+	# BUGFIX: this used to rank candidate cells by raw Manhattan (straight-
+	# line) distance to the target. Near a wall, a dead-end tile hugging
+	# the wall can look "closest" in straight-line terms even though it's
+	# actually a dead end -- causing the enemy to walk up to the wall and
+	# just stand there instead of routing around it. Ranking by REAL path
+	# distance instead (a second Dijkstra flood-fill seeded from the
+	# target, so every reachable cell's distance already accounts for
+	# walls/units in the way) fixes that: the enemy now picks whichever
+	# reachable cell is genuinely closest to the target by an actual
+	# walkable route.
 	if not can_attack_from_somewhere:
+		var target_path_dist: Dictionary = pathfinder.get_reachable_cells(
+			target_player.grid_position, 9999, enemy
+		)
 		best_move_dist = 999999
 		for cell in available_move_cells.keys():
-			var dist_to_target = (abs(cell.x - target_player.grid_position.x)
-								+ abs(cell.y - target_player.grid_position.y))
+			var dist_to_target = target_path_dist.get(cell, 999999)
 			if dist_to_target < best_move_dist:
 				best_move_dist = dist_to_target
 				best_move_cell = cell
+
+		# BUGFIX: the get_reachable_cells() call just above (seeded from the
+		# TARGET's position, to rank candidates by real distance) overwrites
+		# the pathfinder's shared _last_came_from/_last_start breadcrumb
+		# trail -- the same trail reconstruct_path_to() below needs, which
+		# must be seeded from the ENEMY's position instead. Without this,
+		# reconstruct_path_to() was walking backward from best_move_cell
+		# using breadcrumbs that led back toward the target, not the enemy,
+		# producing a nonsense path -- visually the enemy would snap
+		# straight to its destination, then "walk" backward along that
+		# bad path. Re-running get_reachable_cells() from the enemy's own
+		# position restores the correct breadcrumb trail before we ask for
+		# a path.
+		pathfinder.get_reachable_cells(enemy.grid_position, movement_range, enemy)
 
 	# 5. Execute movement — walk the enemy tile-by-tile to the chosen cell.
 	if best_move_cell != enemy.grid_position:
@@ -402,3 +429,4 @@ func _choose_enemy_ability(unit) -> AbilityData:
 	fallback.scaling_stat = "atk"
 	fallback.damage_type  = "physical"
 	return fallback
+	

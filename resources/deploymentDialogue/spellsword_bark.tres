@@ -1,0 +1,61 @@
+[gd_resource type="Resource" script_class="DialogueBarkData" format=3 uid="uid://b08sv4n51fwtp"]
+
+[ext_resource type="Script" uid="uid://db25p1ynn7f8s" path="res://scripts/data/bark_line_data.gd" id="1_v6hi7"]
+[ext_resource type="Script" uid="uid://df8avravfldch" path="res://scripts/data/dialogue_bark_data.gd" id="2_jafv2"]
+
+[sub_resource type="Resource" id="Resource_v6hi7"]
+script = ExtResource("1_v6hi7")
+text = "We've got this."
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_jafv2"]
+script = ExtResource("2_jafv2")
+lines = Array[ExtResource("1_v6hi7")]([SubResource("Resource_v6hi7")])
+metadata/_custom_type_script = "uid://df8avravfldch"
+
+[sub_resource type="Resource" id="Resource_whc1m"]
+script = ExtResource("1_v6hi7")
+text = "With a careful approach, we'll pull through"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_0704n"]
+script = ExtResource("1_v6hi7")
+text = "Guide my blade"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_faaxu"]
+script = ExtResource("1_v6hi7")
+text = "Watch the eye..."
+weight = 0.001
+emotion = "angry"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_1fpa1"]
+script = ExtResource("1_v6hi7")
+text = "We must keep looking to the future"
+weight = 0.5
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_qsffl"]
+script = ExtResource("1_v6hi7")
+text = "Despite everything, we must keep a clear mind and keep moving..."
+weight = 0.8
+emotion = "sad"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_ro25j"]
+script = ExtResource("1_v6hi7")
+text = "We must get word to the Rodescians..."
+emotion = "sad"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_a1006"]
+script = ExtResource("1_v6hi7")
+text = "With my blade, I will help carve the path to a brighter tomorrow!"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[resource]
+script = ExtResource("2_jafv2")
+lines = Array[ExtResource("1_v6hi7")]([SubResource("Resource_whc1m"), SubResource("Resource_0704n"), SubResource("Resource_faaxu"), SubResource("Resource_1fpa1"), SubResource("Resource_qsffl"), SubResource("Resource_ro25j"), SubResource("Resource_a1006")])
+deployment_barks = SubResource("Resource_jafv2")
+metadata/_custom_type_script = "uid://df8avravfldch"

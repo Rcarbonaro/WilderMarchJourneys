@@ -8,12 +8,58 @@
 [ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="3_plmff"]
 [ext_resource type="Texture2D" uid="uid://figdo51glpud" path="res://sprites/stormblade/stormblade_portrait.png" id="3_slqco"]
 [ext_resource type="Resource" uid="uid://ckxyxawivmesh" path="res://resources/abilities/stormblade_basic.tres" id="4_ln10n"]
+[ext_resource type="Script" uid="uid://db25p1ynn7f8s" path="res://scripts/data/bark_line_data.gd" id="4_tpqif"]
 [ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_umlsa"]
 [ext_resource type="Resource" uid="uid://c7qq67wfberbo" path="res://resources/abilities/overcharged.tres" id="5_ln10n"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_slqco"]
+[ext_resource type="Script" uid="uid://df8avravfldch" path="res://scripts/data/dialogue_bark_data.gd" id="5_y40d7"]
 [ext_resource type="Resource" uid="uid://bt0e0hav823uj" path="res://resources/abilities/thunderburst.tres" id="6_8cs0s"]
 [ext_resource type="Resource" uid="uid://dwemv11n4o6kt" path="res://resources/abilities/chainlightning.tres" id="10_slqco"]
 [ext_resource type="Resource" uid="uid://6u5rocm76its" path="res://resources/abilities/tempeststrike.tres" id="11_q3vbu"]
+
+[sub_resource type="Resource" id="Resource_kkd55"]
+script = ExtResource("4_tpqif")
+text = "Just... Focus..."
+weight = 0.4
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_wvnqc"]
+script = ExtResource("4_tpqif")
+text = "Footwork is vital to victory!"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_tpqif"]
+script = ExtResource("4_tpqif")
+text = "Gotta always be mindful of your positioning"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_y40d7"]
+script = ExtResource("4_tpqif")
+text = "My lightning crackles in anticipation!"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_fdsvf"]
+script = ExtResource("4_tpqif")
+text = "Wanna race?"
+weight = 0.9
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_icl66"]
+script = ExtResource("4_tpqif")
+text = "They always said I struggled to stay focused..."
+weight = 0.2
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_osnhu"]
+script = ExtResource("4_tpqif")
+text = "Hey, quit poking me!"
+weight = 0.01
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_0oj42"]
+script = ExtResource("5_y40d7")
+lines = Array[ExtResource("4_tpqif")]([SubResource("Resource_kkd55"), SubResource("Resource_wvnqc"), SubResource("Resource_tpqif"), SubResource("Resource_y40d7"), SubResource("Resource_fdsvf"), SubResource("Resource_icl66"), SubResource("Resource_osnhu")])
+metadata/_custom_type_script = "uid://df8avravfldch"
 
 [resource]
 script = ExtResource("1_ge75a")
@@ -33,4 +79,5 @@ breathes = true
 breathing_speed = 1.0
 breathing_strength = 10.0
 breathing_center = 0.367
+deployment_barks = SubResource("Resource_0oj42")
 metadata/_custom_type_script = "uid://utmj7y8m802a"

@@ -2,6 +2,7 @@
   "id": "stoneheart_mail",
   "name": "Stoneheart Mail",
   "description": "+1 DEF, +1 MDEF, +5 HP. The first time the wearer drops below 25% HP, gain temporary HP equal to 50% of max HP for 2 rounds.",
+  "icon": "res://sprites/UI/skill icons/stoneheart mail.png",
   "type": "advanced",
   "subtype": "armor_talisman",
   "tags": ["tank"],

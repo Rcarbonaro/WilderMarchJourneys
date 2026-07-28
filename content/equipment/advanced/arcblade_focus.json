@@ -2,6 +2,7 @@
   "id": "arcblade_focus",
   "name": "Arcblade Focus",
   "description": "+2 ATK, +3 MATK. After casting a spell, your next basic attack deals 50% more damage. After using a basic attack, your next spell deals 25% more damage.",
+  "icon": "res://sprites/UI/skill icons/arcblade focus.png",
   "type": "advanced",
   "subtype": "blade_staff",
   "tags": ["melee", "magic"],

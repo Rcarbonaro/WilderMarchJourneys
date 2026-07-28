@@ -13,9 +13,17 @@
 # and one child named "AnimatedSprite2D" (no frames assigned in the editor --
 # setup() below fills them in at runtime from the unit's real battle scene).
 # Save it as res://scenes/deployment/DeploymentUnitPreview.tscn.
+#
+# ADDED: tap-to-bark. Tapping this unit during deployment shows a random
+# line from its UnitData.deployment_barks in a cartoony speech bubble (see
+# speech_bubble.gd). Purely cosmetic, same spirit as the idle "practicing"
+# animation above -- no gameplay effect either.
 
 class_name DeploymentUnitPreview
 extends Node2D
+
+const SpeechBubble = preload("res://scripts/ui/speech_bubble.gd")
+# ADDED -- the popup used by _say_random_bark() below.
 
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 
@@ -39,12 +47,39 @@ var _ability_anim_names: Array[String] = []
 # reaction/death animations look wrong playing on an idle standing unit.
 const EXCLUDED_ANIMATIONS := ["hurt", "die"]
 
+# ── TAP-TO-BARK (ADDED) ──────────────────────────────────────────────────────
+
+var _unit_data: UnitData = null
+# ADDED -- setup() previously only used its unit_data argument locally and
+# never kept it around. We need it later (whenever the player taps this
+# unit) to look up its deployment_barks resource, so it's stored here.
+
+@export var tap_hitbox_size: Vector2 = Vector2(90, 130)
+# ADDED -- rough click/tap target size centered on this unit, used only for
+# the tap-to-bark check below. Doesn't need to match the sprite's exact
+# pixel bounds, just close enough to feel right for tapping a standing
+# character. Tweak per-instance in the Inspector if a particular unit's
+# art is notably bigger/smaller than this default.
+
+@export var bark_bubble_offset: Vector2 = Vector2(0, -140)
+# ADDED -- where the speech bubble appears relative to this unit's position
+# (above its head). Raise the magnitude (more negative Y) if bubbles
+# overlap a tall unit's sprite.
+
+# NOTE: this assumes DeploymentScene's camera doesn't pan/zoom (global_position
+# lines up with screen/viewport coordinates), matching how this project's own
+# UI tooltips already position themselves (see ui_manager.gd's
+# _show_ability_tooltip, which does the same thing). If DeploymentScene ever
+# gets a moving/zooming camera, swap this for an Area2D + CollisionShape2D
+# with a connected input_event signal instead.
+
 
 func setup(unit_data: UnitData, spawn_pos: Vector2, wander_bounds: Rect2) -> void:
 	# CHANGED: units now just stand at one random spot instead of wandering --
 	# bounds is kept only to pick that one spawn point, not for movement.
 	bounds = wander_bounds
 	position = spawn_pos
+	_unit_data = unit_data   # ADDED -- see the field comment above.
 	_load_sprite_frames(unit_data)
 	_collect_ability_animation_names(unit_data)
 	_enter_idle()
@@ -127,3 +162,38 @@ func _play_safe(anim_name: String) -> void:
 		sprite.play(anim_name)
 	elif sprite.sprite_frames.has_animation("idle"):
 		sprite.play("idle")
+
+
+# ── TAP-TO-BARK (ADDED) ──────────────────────────────────────────────────────
+
+func _unhandled_input(event: InputEvent) -> void:
+	var tap_position: Vector2 = Vector2.ZERO
+	var was_tapped: bool = false
+
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		tap_position = event.position
+		was_tapped = true
+	elif event is InputEventScreenTouch and event.pressed:
+		tap_position = event.position
+		was_tapped = true
+
+	if not was_tapped:
+		return
+
+	var hitbox := Rect2(global_position - tap_hitbox_size / 2.0, tap_hitbox_size)
+	if hitbox.has_point(tap_position):
+		_say_random_bark()
+
+
+func _say_random_bark() -> void:
+	if _unit_data == null or _unit_data.deployment_barks == null:
+		return   # This unit has no barks assigned -- nothing to say.
+
+	var line: BarkLineData = _unit_data.deployment_barks.get_random_line()
+	if line == null:
+		return
+
+	var bubble: SpeechBubble = SpeechBubble.new()
+	add_child(bubble)
+	bubble.position = bark_bubble_offset
+	bubble.show_line(line)

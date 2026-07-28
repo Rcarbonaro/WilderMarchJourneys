@@ -2,6 +2,7 @@
   "id": "vanguards_edge",
   "name": "Vanguard's Edge",
   "description": "+2 ATK, +2 MATK, +2 DEF, +2 MDEF. When attacking an enemy with lower DEF, add 33% (rounded up) of that difference as bonus damage.",
+  "icon": "res://sprites/UI/skill icons/vanguard edge.png",
   "type": "advanced",
   "subtype": "blade_armor",
   "tags": ["melee"],

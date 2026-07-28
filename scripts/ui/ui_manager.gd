@@ -106,7 +106,7 @@ var _status_tooltip:          PanelContainer = null
 var _ability_tooltip:   PanelContainer = null
 var _last_status_fingerprint: String         = ""
 
-const STATUS_ICON_SIZE:  float = 50.0
+const STATUS_ICON_SIZE:  float = 35.0
 const MISSING_ICON_COLOR: Color = Color(0, 0, 0, 1)
 
 # Bug 7: stat-row coloring when a buff/debuff is currently changing a stat.
@@ -1199,7 +1199,7 @@ func show_game_victory_popup() -> void:
 	box.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "Congratulations, you have completed the WilderMarch demo!"
+	subtitle.text = "Congratulations, you have completed the WilderMarch demo!\nIf you enjoyed it, be sure to join the Discord and Wishlist on Steam when Available!"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.add_theme_font_size_override("font_size", 20)
 	box.add_child(subtitle)

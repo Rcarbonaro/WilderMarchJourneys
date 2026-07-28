@@ -7,11 +7,57 @@
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_dlrt0"]
 [ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="3_uarnf"]
 [ext_resource type="Texture2D" uid="uid://do7hnlhrc8g05" path="res://sprites/stonewarden/stonewarden_portrait.png" id="3_yv6xt"]
+[ext_resource type="Script" uid="uid://db25p1ynn7f8s" path="res://scripts/data/bark_line_data.gd" id="4_78jg6"]
 [ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_flsux"]
 [ext_resource type="Resource" uid="uid://naav1rvovg1e" path="res://resources/abilities/stonewarden_basic.tres" id="4_wia46"]
 [ext_resource type="Resource" uid="uid://b17unu8jwcih0" path="res://resources/abilities/stonespikearmor.tres" id="5_fci0h"]
+[ext_resource type="Script" uid="uid://df8avravfldch" path="res://scripts/data/dialogue_bark_data.gd" id="5_u6i8r"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_yv6xt"]
 [ext_resource type="Resource" uid="uid://yhyh5timeu7g" path="res://resources/abilities/earthquake.tres" id="6_wia46"]
+
+[sub_resource type="Resource" id="Resource_nr2fw"]
+script = ExtResource("4_78jg6")
+text = "Just keep tha frail ones behind me, eh?"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_esrk3"]
+script = ExtResource("4_78jg6")
+text = "I can be yer shield, friend"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_qsatr"]
+script = ExtResource("4_78jg6")
+text = "Ya can be sure they ain't gettin' past me"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_yulai"]
+script = ExtResource("4_78jg6")
+text = "Bet ya can't lift my hammer, heh"
+weight = 0.4
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_8tl00"]
+script = ExtResource("4_78jg6")
+text = "A dwarf's beard is not just fer decoration, ya know"
+weight = 0.1
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_6fr1n"]
+script = ExtResource("4_78jg6")
+text = "Careful of the beard, mate"
+weight = 0.1
+emotion = "sad"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_6cbao"]
+script = ExtResource("4_78jg6")
+text = "I'll watch yer back"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_8x0e3"]
+script = ExtResource("5_u6i8r")
+lines = Array[ExtResource("4_78jg6")]([SubResource("Resource_nr2fw"), SubResource("Resource_esrk3"), SubResource("Resource_qsatr"), SubResource("Resource_yulai"), SubResource("Resource_8tl00"), SubResource("Resource_6fr1n"), SubResource("Resource_6cbao")])
+metadata/_custom_type_script = "uid://df8avravfldch"
 
 [resource]
 script = ExtResource("1_fasg0")
@@ -24,4 +70,5 @@ synergy_tags = Array[String](["arcane"])
 stats_by_level = Array[ExtResource("3_dlrt0")]([ExtResource("1_tfom6")])
 base_stats = ExtResource("1_tfom6")
 starting_abilities = Array[ExtResource("2_u8ji8")]([ExtResource("4_wia46"), ExtResource("5_fci0h"), ExtResource("6_wia46")])
+deployment_barks = SubResource("Resource_8x0e3")
 metadata/_custom_type_script = "uid://utmj7y8m802a"

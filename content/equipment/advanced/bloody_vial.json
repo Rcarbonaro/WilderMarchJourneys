@@ -2,6 +2,7 @@
   "id": "bloody_vial",
   "name": "Bloody Vial",
   "description": "Upon dealing a critical hit, gain temporary HP equal to 25% of ATK (rounded down).",
+  "icon": "res://sprites/UI/skill icons/blood talisman.png",
   "type": "advanced",
   "subtype": "monocle_talisman",
   "tags": ["support"],

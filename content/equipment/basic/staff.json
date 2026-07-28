@@ -2,6 +2,7 @@
   "id": "staff",
   "name": "Staff",
   "description": "A focusing rod for magic. +2 MATK.",
+  "icon": "res://sprites/UI/skill icons/staff.png",
   "type": "basic",
   "subtype": "staff",
   "tags": ["forgeable", "magic"],

@@ -2,6 +2,7 @@
   "id": "lifebinders_staff",
   "name": "Lifebinder's Staff",
   "description": "+2 MATK, +6 HP. Whenever you spend mana to target an ally with a spell, that ally gains 5 temporary HP for 1 round.",
+  "icon": "res://sprites/UI/skill icons/lifebinder staff.png",
   "type": "advanced",
   "subtype": "staff_talisman",
   "tags": ["support", "magic"],

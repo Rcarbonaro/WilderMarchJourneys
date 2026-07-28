@@ -10,8 +10,50 @@
 [ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="3_vgvpt"]
 [ext_resource type="Resource" uid="uid://csxllnq6vcprm" path="res://resources/abilities/wither.tres" id="4_gnfme"]
 [ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_o521i"]
+[ext_resource type="Script" uid="uid://db25p1ynn7f8s" path="res://scripts/data/bark_line_data.gd" id="4_tiqm1"]
 [ext_resource type="Resource" uid="uid://cykmqjugvv0sn" path="res://resources/abilities/tether.tres" id="5_5cmow"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_b5vk1"]
+[ext_resource type="Script" uid="uid://df8avravfldch" path="res://scripts/data/dialogue_bark_data.gd" id="5_er8ly"]
+
+[sub_resource type="Resource" id="Resource_mso7v"]
+script = ExtResource("4_tiqm1")
+text = "The veil stirs..."
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_3itce"]
+script = ExtResource("4_tiqm1")
+text = "Let's brew some trouble!"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_04uni"]
+script = ExtResource("4_tiqm1")
+text = "Oh, this will be fun..."
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_e6hjv"]
+script = ExtResource("4_tiqm1")
+text = "Their fates are sealed"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_5q1e7"]
+script = ExtResource("4_tiqm1")
+text = "A hex for every occasion"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_7do6i"]
+script = ExtResource("4_tiqm1")
+text = "Line by line, write their doom!"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_rwa3v"]
+script = ExtResource("4_tiqm1")
+text = "Stirring up something wicked"
+metadata/_custom_type_script = "uid://db25p1ynn7f8s"
+
+[sub_resource type="Resource" id="Resource_h833v"]
+script = ExtResource("5_er8ly")
+lines = Array[ExtResource("4_tiqm1")]([SubResource("Resource_mso7v"), SubResource("Resource_3itce"), SubResource("Resource_04uni"), SubResource("Resource_e6hjv"), SubResource("Resource_5q1e7"), SubResource("Resource_7do6i"), SubResource("Resource_rwa3v")])
+metadata/_custom_type_script = "uid://df8avravfldch"
 
 [resource]
 script = ExtResource("1_ygf8m")
@@ -25,4 +67,5 @@ stats_by_level = Array[ExtResource("3_iwngs")]([ExtResource("1_gnfme")])
 base_stats = ExtResource("1_gnfme")
 starting_abilities = Array[ExtResource("2_lmhne")]([ExtResource("3_ps7qu"), ExtResource("4_gnfme"), ExtResource("5_5cmow")])
 sway_in_unison = false
+deployment_barks = SubResource("Resource_h833v")
 metadata/_custom_type_script = "uid://utmj7y8m802a"
