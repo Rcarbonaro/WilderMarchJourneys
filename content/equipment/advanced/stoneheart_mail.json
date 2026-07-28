@@ -1,15 +1,15 @@
 {
   "id": "stoneheart_mail",
   "name": "Stoneheart Mail",
-  "description": "+1 DEF, +1 MDEF, +5 HP. The first time the wearer drops below 25% HP, gain temporary HP equal to 50% of max HP for 2 rounds.",
+  "description": "+3 DEF, +3 MDEF, +8 HP. The first time the wearer drops below 25% HP, gain temporary HP equal to 50% of max HP for 2 rounds.",
   "icon": "res://sprites/UI/skill icons/stoneheart mail.png",
   "type": "advanced",
   "subtype": "armor_talisman",
   "tags": ["tank"],
   "effects": [
-    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "def",  "amount": 1, "value_mode": "flat", "scope": "permanent" },
-    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "mdef", "amount": 1, "value_mode": "flat", "scope": "permanent" },
-    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "hp",   "amount": 5, "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "def",  "amount": 3, "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "mdef", "amount": 3, "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "hp",   "amount": 8, "value_mode": "flat", "scope": "permanent" },
     { "type": "custom", "custom_id": "stoneheart_mail" }
   ]
 }

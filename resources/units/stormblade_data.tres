@@ -14,7 +14,6 @@
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_slqco"]
 [ext_resource type="Script" uid="uid://df8avravfldch" path="res://scripts/data/dialogue_bark_data.gd" id="5_y40d7"]
 [ext_resource type="Resource" uid="uid://bt0e0hav823uj" path="res://resources/abilities/thunderburst.tres" id="6_8cs0s"]
-[ext_resource type="Resource" uid="uid://dwemv11n4o6kt" path="res://resources/abilities/chainlightning.tres" id="10_slqco"]
 [ext_resource type="Resource" uid="uid://6u5rocm76its" path="res://resources/abilities/tempeststrike.tres" id="11_q3vbu"]
 
 [sub_resource type="Resource" id="Resource_kkd55"]
@@ -71,7 +70,7 @@ battle_sprite = ExtResource("2_8cs0s")
 synergy_tags = Array[String](["critical", "arcane"])
 stats_by_level = Array[ExtResource("3_n4jxu")]([ExtResource("1_127on")])
 base_stats = ExtResource("1_127on")
-starting_abilities = Array[ExtResource("2_8l2hl")]([ExtResource("4_ln10n"), ExtResource("5_ln10n"), ExtResource("6_8cs0s"), ExtResource("11_q3vbu"), ExtResource("10_slqco")])
+starting_abilities = Array[ExtResource("2_8l2hl")]([ExtResource("4_ln10n"), ExtResource("5_ln10n"), ExtResource("6_8cs0s"), ExtResource("11_q3vbu")])
 sway_strength = 10.0
 sway_speed = 5.0
 sway_in_unison = false

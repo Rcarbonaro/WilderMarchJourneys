@@ -9,6 +9,7 @@ id = "sylvarissnare"
 display_name = "Sylvaris' Snare"
 icon = ExtResource("1_j8uua")
 can_stack = true
+max_stacks = 2
 def_modifier = -5
 mov_modifier = -1
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

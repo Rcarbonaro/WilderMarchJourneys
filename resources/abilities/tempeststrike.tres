@@ -21,4 +21,5 @@ chain_simultaneous = true
 chain_bounce_scene_first = ExtResource("2_flaly")
 chain_bounce_scene_secondary = ExtResource("2_flaly")
 multi_target_simultaneous = true
+post_attack_move_squares = 1
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"
