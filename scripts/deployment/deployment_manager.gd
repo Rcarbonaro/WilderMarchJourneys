@@ -162,7 +162,7 @@ func _ready() -> void:
 	if not _validate_required_nodes():
 		return
 
-	shop_button.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/meta/ShopScene.tscn"))
+	shop_button.pressed.connect(func(): SceneTransitions.change_scene("res://scenes/meta/ShopScene.tscn"))
 	continue_button.pressed.connect(_on_continue_pressed)
 	forge_slot_a_button.pressed.connect(func(): _on_forge_slot_pressed(true))
 	forge_slot_b_button.pressed.connect(func(): _on_forge_slot_pressed(false))
@@ -840,19 +840,30 @@ func _on_more_info_pressed(index: int) -> void:
 		return
 	var stats: StatsData = unit_data.stats_by_level[stats_index]
 
-	# Base stats at this unit's current level -- NOT live battle numbers
-	# (there's no live battle here), same idea as how the Draft screen shows
-	# level-1 base numbers.
+	# BUGFIX (task 4): this used to show 'stats' directly — the unit's RAW
+	# base numbers for their level, completely ignoring any equipped items.
+	# equipped_item_ids was already being read a few lines below to build the
+	# icon/description list, it just was never used to adjust the NUMBERS.
+	# EquipmentRuntime.compute_preview_stat_bonuses() runs the exact same
+	# flat-bonus math the live battle spawn path uses (apply_equipment_to_unit()
+	# in equipment_runtime.gd), just without needing a live UnitNode.
+	var equipped_ids: Array = entry.get("equipped_item_ids", [])
+	var bonus: Dictionary = EquipmentRuntime.compute_preview_stat_bonuses(stats, equipped_ids)
+
+	# Base stats at this unit's current level, PLUS equipment bonuses --
+	# there's no live battle here, so these are the best "effective stats"
+	# preview available, same idea as how the Draft screen shows level-1
+	# base numbers (now equipment-adjusted too).
 	var stat_lines: Array[String] = [
-		"HP: %d" % stats.hp,
-		"Mana: %d" % stats.mana,
-		"ATK: %d" % stats.atk,
-		"MATK: %d" % stats.matk,
-		"DEF: %d" % stats.def,
-		"MDEF: %d" % stats.mdef,
-		"Crit %%: %.0f%%" % stats.crit_chance,
-		"Crit DMG: %.0f%%" % stats.crit_damage,
-		"MOV: %d" % stats.mov,
+		"HP: %d" % (stats.hp + bonus.get("hp", 0)),
+		"Mana: %d" % (stats.mana + bonus.get("mana", 0)),
+		"ATK: %d" % (stats.atk + bonus.get("atk", 0)),
+		"MATK: %d" % (stats.matk + bonus.get("matk", 0)),
+		"DEF: %d" % (stats.def + bonus.get("def", 0)),
+		"MDEF: %d" % (stats.mdef + bonus.get("mdef", 0)),
+		"Crit %%: %.0f%%" % (stats.crit_chance + bonus.get("crit_chance", 0.0)),
+		"Crit DMG: %.0f%%" % (stats.crit_damage + bonus.get("crit_damage", 0.0)),
+		"MOV: %d" % (stats.mov + bonus.get("mov", 0)),
 	]
 
 	# CHANGED: pulls each equipped item's FULL raw equipment Dictionary
@@ -860,7 +871,7 @@ func _on_more_info_pressed(index: int) -> void:
 	# same shape live battle passes in via unit.equipped_items -- so
 	# unit_info_popup.gd's new stat-line/description rendering works here too.
 	var equipped_entries: Array = []
-	for item_id in entry.get("equipped_item_ids", []):
+	for item_id in equipped_ids:
 		if item_id == null or item_id == "":
 			continue
 		equipped_entries.append(ContentLoader.get_equipment(item_id))
@@ -892,20 +903,24 @@ func _show_full_unit_info_popup_for_instance(instance_id: String) -> void:
 	var stats_index: int = clamp(level - 1, 0, unit_data.stats_by_level.size() - 1)
 	var stats: StatsData = unit_data.stats_by_level[stats_index]
 
+	# BUGFIX (task 4): see the identical fix + comment in _on_more_info_pressed() above.
+	var equipped_ids: Array = entry.get("equipped_item_ids", [])
+	var bonus: Dictionary = EquipmentRuntime.compute_preview_stat_bonuses(stats, equipped_ids)
+
 	var stat_lines: Array[String] = [
-		"HP: %d" % stats.hp,
-		"Mana: %d" % stats.mana,
-		"ATK: %d" % stats.atk,
-		"MATK: %d" % stats.matk,
-		"DEF: %d" % stats.def,
-		"MDEF: %d" % stats.mdef,
-		"Crit %%: %.0f%%" % stats.crit_chance,
-		"Crit DMG: %.0f%%" % stats.crit_damage,
-		"MOV: %d" % stats.mov,
+		"HP: %d" % (stats.hp + bonus.get("hp", 0)),
+		"Mana: %d" % (stats.mana + bonus.get("mana", 0)),
+		"ATK: %d" % (stats.atk + bonus.get("atk", 0)),
+		"MATK: %d" % (stats.matk + bonus.get("matk", 0)),
+		"DEF: %d" % (stats.def + bonus.get("def", 0)),
+		"MDEF: %d" % (stats.mdef + bonus.get("mdef", 0)),
+		"Crit %%: %.0f%%" % (stats.crit_chance + bonus.get("crit_chance", 0.0)),
+		"Crit DMG: %.0f%%" % (stats.crit_damage + bonus.get("crit_damage", 0.0)),
+		"MOV: %d" % (stats.mov + bonus.get("mov", 0)),
 	]
 
 	var equipped_entries: Array = []
-	for item_id in entry.get("equipped_item_ids", []):
+	for item_id in equipped_ids:
 		if item_id == null or item_id == "":
 			continue
 		equipped_entries.append(ContentLoader.get_equipment(item_id))

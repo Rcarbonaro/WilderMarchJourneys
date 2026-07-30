@@ -112,6 +112,13 @@ var aura_manager: Node = null
 # All calls to aura_manager are guarded with "if aura_manager != null" so the
 # game won't crash if you forget to add the node to the scene tree.
 
+# ── PLAGUE SYSTEM (task 11) ───────────────────────────────────────────────────
+# A plain helper object (not a scene node — nothing to add in the editor for
+# this one). See res://scripts/battle/plague_system.gd for the full mechanic,
+# and res://scripts/data/plague_data.gd for every tunable number. Register
+# any PlagueData resources you want active this battle in _ready() below.
+var plague_system: PlagueSystem = null
+
 # ── STARTUP ───────────────────────────────────────────────────────────────────
 
 func _ready() -> void:
@@ -169,6 +176,22 @@ func _ready() -> void:
 
 	_spawn_stage_enemies()
 	_spawn_player_party_from_run()
+
+	# ── PLAGUE SYSTEM (task 11) ────────────────────────────────────────────────
+	# Register every PlagueData resource that should be active this battle.
+	# EXAMPLE_PLAGUEBRINGER_PLAGUE_PATH is a placeholder path — see the
+	# walkthrough doc for creating the actual .tres resources (a PlagueData
+	# plus its plague_status/mutation_pool StatusEffectData resources) the
+	# very first time you set this up. Comment this block out (or just leave
+	# the .tres unassigned/missing) if no plague content exists yet — an
+	# empty _registered_plagues list makes every PlagueSystem call a no-op.
+	plague_system = PlagueSystem.new(self)
+	const EXAMPLE_PLAGUEBRINGER_PLAGUE_PATH := "res://resources/statuses/plaguebringer_plague.tres"
+	if ResourceLoader.exists(EXAMPLE_PLAGUEBRINGER_PLAGUE_PATH):
+		plague_system.register_plague(load(EXAMPLE_PLAGUEBRINGER_PLAGUE_PATH))
+	# To add the brief's "affects players instead" mirror version once you've
+	# built it, just add one more line here:
+	#   plague_system.register_plague(load("res://resources/statuses/player_plague.tres"))
 
 	# Reset the HP-cost-consumed counter for this fresh battle (safety measure
 	# in case the scene/executor is reused without a full reload).
@@ -286,10 +309,25 @@ func _spawn_stage_enemies() -> void:
 
 		var working_copy: UnitData = enemy_data.duplicate(true)
 		var level: int = 1
-		if level - 1 < working_copy.stats_by_level.size():
-			working_copy.stats_by_level[level - 1] = ScalingEngine.apply_scaling(
-				enemy_data.stats_by_level[level - 1], RunManager.current_run, enemy_data.tier
+		# FIX (ADDED): this used to only scale stats when
+		# "level - 1 < working_copy.stats_by_level.size()" held -- true in
+		# practice today since 'level' is hardcoded to 1 above, but that
+		# check silently skipped scaling entirely for any enemy whose
+		# stats_by_level was completely empty (size 0), spawning it with
+		# whatever unscaled/blank stats it had instead. Clamping the index
+		# (the same fix applied to unit_node.gd's setup()/get_stats() for
+		# the player-side level-up crash) means scaling always applies to
+		# whatever the highest authored entry is, and is the safer pattern
+		# to have in place if 'level' here is ever driven by something
+		# other than a hardcoded 1 later (e.g. scaling an elite's level
+		# with the stage).
+		if not working_copy.stats_by_level.is_empty():
+			var stats_index: int = clamp(level - 1, 0, working_copy.stats_by_level.size() - 1)
+			working_copy.stats_by_level[stats_index] = ScalingEngine.apply_scaling(
+				enemy_data.stats_by_level[stats_index], RunManager.current_run, enemy_data.tier
 			)
+		else:
+			push_warning("BattleManager: enemy '" + str(enemy_data.id) + "' has an empty stats_by_level array -- spawning unscaled; this enemy needs a StatsData entry authored.")
 
 		spawn_unit(working_copy, enemy_spawns[spawn_index], false, level)
 		spawn_index += 1
@@ -416,6 +454,11 @@ func spawn_unit(unit_data: UnitData, cell: Vector2i, is_player: bool, level: int
 
 	unit.grid_position = cell
 	unit.position      = grid.grid_to_world(cell)
+	# Seeds turn_start_position for the unit's very first turn (round 1),
+	# before end_player_turn()/_on_enemy_turn_complete()'s per-round reset
+	# loops below have ever run for it. Those loops take over updating this
+	# every turn after this.
+	unit.turn_start_position = cell
 	print("📍 ", unit_data.display_name, " placed at cell=", cell,
 		  " world_pos=", unit.position, " visible=", unit.visible,
 		  " valid_cell=", grid.is_valid_cell(cell))
@@ -473,6 +516,15 @@ func _on_unit_died(unit) -> void:
 		and "ends_battle_on_death" in unit.unit_data
 		and unit.unit_data.ends_battle_on_death)
 
+	# Task 11: spread plague + a mutation to nearby same-team allies, BEFORE
+	# this unit is erased from player_units/enemy_units below (it doesn't
+	# need to be in that list for plague_system to work — it only ever looks
+	# at OTHER units — but grid_position must still be valid, which it is:
+	# unit_node.gd's die() never clears grid_position, only unregisters the
+	# unit from the grid's cell lookup).
+	if plague_system != null:
+		plague_system.on_unit_died(unit)
+
 	player_units.erase(unit)
 	enemy_units.erase(unit)
 
@@ -501,6 +553,12 @@ func _battle_victory() -> void:
 	print("Player Victory!")
 	current_phase  = TurnPhase.GAME_OVER
 	is_battle_over = true
+	# Belt-and-suspenders alongside the is_battle_over guards added to
+	# end_player_turn()/_on_enemy_turn_complete() above (task 6 fix): disables
+	# "End Turn" immediately so a stray tap during the ~2s banner below can't
+	# even reach battle_manager in the first place.
+	if ui_manager and ui_manager.has_method("set_game_over_input_locked"):
+		ui_manager.set_game_over_input_locked(true)
 	if ui_manager and ui_manager.has_method("show_battle_result_banner"):
 		await ui_manager.show_battle_result_banner(true)   # ADDED
 	battle_ended.emit("victory")
@@ -510,6 +568,8 @@ func _battle_defeat() -> void:
 	print("Player Defeat!")
 	current_phase  = TurnPhase.GAME_OVER
 	is_battle_over = true
+	if ui_manager and ui_manager.has_method("set_game_over_input_locked"):
+		ui_manager.set_game_over_input_locked(true)
 	if ui_manager and ui_manager.has_method("show_battle_result_banner"):
 		await ui_manager.show_battle_result_banner(false)   # ADDED
 	battle_ended.emit("defeat")
@@ -626,7 +686,14 @@ func on_tile_tapped(cell: Vector2i) -> void:
 
 		# Tapping the unit's own tile: skip movement, show ability choices.
 		if cell == selected_unit.grid_position:
-			selected_unit.pre_move_position = selected_unit.grid_position
+			# BUGFIX (movement-cancel glitch): this used to also do
+			# `selected_unit.pre_move_position = selected_unit.grid_position`
+			# here — which, if the unit had ALREADY moved earlier this same
+			# turn, clobbered the correct original tile with wherever the
+			# unit currently stands. turn_start_position (see unit_node.gd)
+			# is now set exactly once at the start of the unit's turn by
+			# BattleManager itself, so there is nothing to (re-)save here —
+			# just set the flags needed to allow canceling.
 			selected_unit.has_moved         = true
 			selected_unit.can_cancel_move   = true
 			highlight.clear_highlights()
@@ -640,7 +707,13 @@ func on_tile_tapped(cell: Vector2i) -> void:
 		# own tile or an ability button first. Still fully cancelable back to
 		# movement (can_cancel_move = true, same as the own-tile branch).
 		elif is_instance_valid(grid.get_unit_at(cell)) and not grid.get_unit_at(cell).is_player_unit:
-			selected_unit.pre_move_position = selected_unit.grid_position
+			# BUGFIX (movement-cancel glitch): see the identical comment on
+			# the own-tile branch above. This was THE most common way to
+			# trigger the reported bug: move a unit, tap an enemy to peek at
+			# them, tap back to your unit, then Cancel Move — it landed you
+			# on the tile you'd just moved to instead of undoing the move,
+			# because this line used to stomp the saved original tile with
+			# your current one.
 			selected_unit.has_moved         = true
 			selected_unit.can_cancel_move   = true
 			highlight.clear_highlights()
@@ -652,7 +725,14 @@ func on_tile_tapped(cell: Vector2i) -> void:
 			current_phase = TurnPhase.ANIMATION
 
 			var moving_unit = selected_unit
-			moving_unit.pre_move_position = moving_unit.grid_position
+			# turn_start_position is already correct from the start of this
+			# unit's turn (see spawn_unit()/end_player_turn()/
+			# _on_enemy_turn_complete() for where it gets set) — it is
+			# intentionally NOT touched here, even though this is a real
+			# move, so that Cancel Move always returns to the tile the unit
+			# was on at the START of the turn, not wherever it happened to
+			# be standing right before this particular move (relevant if the
+			# unit already moved once, canceled, and is now moving again).
 
 			# Reconstruct the actual tile-by-tile walking route from the unit's
 			# current position to 'cell', using the SAME search that already
@@ -791,19 +871,16 @@ func _show_abilities_for(unit) -> void:
 
 func cancel_unit_move() -> void:
 	# Called when the player presses "Cancel Move".
-	# Teleports the selected unit back to their pre-move position.
+	# Teleports the selected unit back to turn_start_position — the tile it
+	# was on at the very START of its current turn (see unit_node.gd's
+	# turn_start_position for exactly where/when that gets set).
 	#
-	# BUGFIX: can_cancel_move/pre_move_position used to only get set after an
-	# ACTUAL move finished (see the reachable_cells branch below), so a unit
-	# that skipped straight to ability selection without moving — by tapping
-	# their own tile, or now also by tapping an enemy (see on_tile_tapped's
-	# STATE C branches above) — could never cancel back out of ability
-	# selection into movement choice. Both of those branches now set
-	# pre_move_position to the unit's CURRENT cell and can_cancel_move = true
-	# even when nothing actually moved, so snap_to(origin) below is a no-op
-	# teleport-to-self in that case, and the important part — has_moved being
-	# reset to false and select_unit() recomputing reachable_cells — runs
-	# exactly the same either way.
+	# This works correctly even for a unit that hasn't actually moved yet —
+	# tapping their own tile, or tapping an enemy (see on_tile_tapped's
+	# STATE C branches above), sets can_cancel_move = true to let them back
+	# out of ability selection into movement choice, and in that case
+	# turn_start_position already equals the unit's current position, so
+	# snap_to(origin) below is a harmless no-op teleport-to-self.
 	if selected_unit == null or not is_instance_valid(selected_unit):
 		return
 	if not selected_unit.can_cancel_move:
@@ -850,7 +927,7 @@ func cancel_unit_move() -> void:
 			ui_manager.hide_confirm_targets_button()
 
 	var unit   = selected_unit
-	var origin = unit.pre_move_position
+	var origin = unit.turn_start_position
 	if origin == Vector2i(-1, -1):
 		return
 
@@ -865,7 +942,12 @@ func cancel_unit_move() -> void:
 	unit.snap_to_allow_overlap(origin)
 	unit.has_moved         = false
 	unit.can_cancel_move   = false
-	unit.pre_move_position = Vector2i(-1, -1)
+	# NOTE: turn_start_position is intentionally NOT cleared here (it used to
+	# be reset to Vector2i(-1,-1) when this was pre_move_position). It needs
+	# to stay valid for the REST of this unit's turn — if the player moves
+	# the unit again after this cancel and then cancels a second time, it
+	# must still return to the same original tile, not fail because the
+	# sentinel got wiped out by the first cancel.
 	unit.play_animation("idle")
 
 	# If this unit is an aura caster, snap the aura visuals back too (instant,
@@ -882,7 +964,7 @@ func cancel_unit_move() -> void:
 	
 func cancel_ability_selection() -> void:
 	# Cancels whatever ability/attack/wall targeting is currently in progress
-	# WITHOUT touching movement — can_cancel_move and pre_move_position are
+	# WITHOUT touching movement — can_cancel_move and turn_start_position are
 	# left exactly as they were, so the unit stays put and "Cancel Move" (if
 	# the player wants THAT instead) still works afterward.
 	var mid_multistep_targeting: bool = (
@@ -1253,6 +1335,17 @@ func _finish_ability(unit) -> void:
 		return
 
 	current_phase = TurnPhase.PLAYER_TURN
+
+	# Task 11: "ends its turn within N tiles of another [unit]" check — this
+	# is the natural "a player unit's turn just ended" checkpoint (ability
+	# fully resolved, including any post-attack movement). See
+	# _check_plague_spread_for() below for the enemy-side equivalent (called
+	# from ai_system.gd), and end_player_turn()'s per-unit loop for the
+	# safety-net sweep covering units that only moved without using an
+	# ability this turn.
+	if plague_system != null:
+		plague_system.on_unit_turn_ended(unit)
+
 	_check_end_player_turn()
 
 
@@ -1351,6 +1444,22 @@ func _check_for_occupancy_conflicts() -> bool:
 
 func end_player_turn() -> void:
 	# Called by the "End Turn" button, or automatically when all units have acted.
+	#
+	# BUGFIX ("Enemy Turn"/"Player Turn" popups overwriting the Victory
+	# popup): the "End Turn" button is never disabled or hidden (see
+	# ui_manager.gd's hide_unit_info() comment on that), so if the player's
+	# last action was the killing blow, _battle_victory() sets is_battle_over
+	# = true and starts awaiting the ~2s Victory banner — but a stray tap on
+	# "End Turn" during that window used to run this ENTIRE function anyway:
+	# ticking end-of-turn hazards/auras, then showing an "Enemy's Turn"
+	# banner that tears down and replaces the Victory banner (both reuse the
+	# same _announcement_instance slot — see show_turn_announcement()/
+	# show_battle_result_banner() in ui_manager.gd), followed by an actual AI
+	# turn and then a "Player's Turn" banner on top of THAT. Bailing out here
+	# the instant the battle is over closes the whole chain at the source.
+	# See the mirrored guard in _on_enemy_turn_complete() below.
+	if is_battle_over or current_phase == TurnPhase.GAME_OVER:
+		return
 	if _check_for_occupancy_conflicts():
 		if ui_manager and ui_manager.has_method("show_big_warning_popup"):
 			ui_manager.show_big_warning_popup("Two units cannot occupy the same space")
@@ -1408,11 +1517,33 @@ func end_player_turn() -> void:
 	# every player unit can act again on the next player turn.
 	for unit in player_units:
 		if is_instance_valid(unit):
+			# Task 11 safety-net: catches any plagued player unit that moved
+			# but never actually used an ability this turn (_finish_ability()
+			# above only fires for units that DID act) — on_unit_turn_ended()
+			# internally no-ops if this exact unit was already checked this
+			# round via _finish_ability(). IMPORTANT: this must run BEFORE
+			# plague_system.clear_round_tracking() below, or that dedup check
+			# would always miss (the tracking dict would already be empty).
+			if plague_system != null:
+				plague_system.on_unit_turn_ended(unit)
 			unit.has_moved       = false
 			unit.has_acted       = false
 			unit.can_cancel_move = false
 			unit.has_used_item_this_turn  = false 
+			# Snapshot each unit's position now — this IS "the start of its
+			# next turn" from a movement standpoint, since no player unit
+			# moves again until their own next turn actually begins. See
+			# turn_start_position's declaration in unit_node.gd and the
+			# movement-cancel bugfix in on_tile_tapped()/cancel_unit_move()
+			# above (task 2).
+			unit.turn_start_position = unit.grid_position
 			CombatHooks.run_round_tick(unit)
+
+	# Task 11: NOW it's safe to reset PlagueSystem's per-round "already
+	# checked" tracking (the sweep above needed it intact) — clears it so
+	# every unit can trigger a fresh turn-end spread check on their next turn.
+	if plague_system != null:
+		plague_system.clear_round_tracking()
 
 	# Count down enemy ability cooldowns so they become available again over time.
 	for unit in enemy_units:
@@ -1420,14 +1551,27 @@ func end_player_turn() -> void:
 			for key in unit.ability_cooldowns:
 				unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
 
-# ── SHOW "ENEMY'S TURN" ANNOUNCEMENT ──────────────────────────────────────
-	if ui_manager and ui_manager.has_method("show_turn_announcement"):
-		await ui_manager.show_turn_announcement(false)
-
+	# BUGFIX: this used to ALSO show "Enemy's Turn" here (await
+	# ui_manager.show_turn_announcement(false)) before calling
+	# _announce_then_start_enemy_turn() below — which shows the exact same
+	# announcement AGAIN as its very first step. That meant every single
+	# transition flashed "Enemy's Turn" twice in a row (4+ seconds of banner
+	# before the AI ever did anything), and doubled the odds of colliding
+	# with a Victory banner mid-sequence. _announce_then_start_enemy_turn()
+	# is the sole place that shows it now.
 	_announce_then_start_enemy_turn()
 
 
 func _on_enemy_turn_complete() -> void:
+	# BUGFIX ("Enemy Turn"/"Player Turn" popups overwriting the Victory
+	# popup): mirrors the guard in end_player_turn() above. The enemy AI's
+	# last action this turn may have been the blow that ended the battle
+	# (killing the last player unit for a Defeat, or triggering a boss-kill
+	# Victory mid-turn). Without this, the code below would still tick
+	# end-of-turn hazards/statuses and then show a "Player's Turn" banner
+	# that stomps whichever Victory/Defeat banner is already showing.
+	if is_battle_over or current_phase == TurnPhase.GAME_OVER:
+		return
 	print("--- PLAYER TURN (Round ", round_number + 1, ") ---")
 
 	# Catch any HP-cost abilities the AI used during its turn (enemy abilities
@@ -1480,9 +1624,20 @@ func _on_enemy_turn_complete() -> void:
 			unit.has_moved       = false
 			unit.has_acted       = false
 			unit.can_cancel_move = false
+			# See the identical player-side comment in end_player_turn() above
+			# (task 2 movement-cancel fix) — this is "the start of this
+			# enemy's next turn" from a movement standpoint.
+			unit.turn_start_position = unit.grid_position
 			CombatHooks.run_round_tick(unit)
 			for key in unit.ability_cooldowns:
 				unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
+
+	# Task 11: clears PlagueSystem's per-round tracking for the enemy entries
+	# added during the turn that just ended (the player-side entries were
+	# already cleared in end_player_turn() above, before the enemy turn even
+	# started, right after that function's own safety-net sweep used them).
+	if plague_system != null:
+		plague_system.clear_round_tracking()
 
 	# Count down player cooldowns too.
 	for unit in player_units:
@@ -1491,18 +1646,23 @@ func _on_enemy_turn_complete() -> void:
 			for key in unit.ability_cooldowns:
 				unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
 
-	# ── SHOW "PLAYER'S TURN" ANNOUNCEMENT ─────────────────────────────────────
-	if ui_manager and ui_manager.has_method("show_turn_announcement"):
-		await ui_manager.show_turn_announcement(true)
-
+	# BUGFIX: this used to ALSO show "Player's Turn" here (await
+	# ui_manager.show_turn_announcement(true)) and then run round_number += 1,
+	# current_phase = PLAYER_TURN, _refresh_synergies(), and the ability-bar
+	# refresh — and THEN call _announce_then_start_player_turn(), which shows
+	# the exact same "Player's Turn" banner a second time and does ALL of
+	# that same bookkeeping a second time right after. Same double-flash bug
+	# as end_player_turn() above; _announce_then_start_player_turn() is the
+	# sole place that does any of this now.
 	_announce_then_start_player_turn()
 
-	# Re-apply synergy bonuses at the start of each new player round.
-	_refresh_synergies()
 
-	# Refresh the ability bar if a unit is still selected from the previous turn.
-	if selected_unit != null and is_instance_valid(selected_unit):
-		_show_abilities_for(selected_unit)
+func check_plague_spread_for(unit) -> void:
+	# Task 11 — public entry point ai_system.gd calls right after each
+	# individual enemy finishes their own turn (see _process_next_enemy() in
+	# ai_system.gd). Mirrors the player-side call in _finish_ability() above.
+	if plague_system != null:
+		plague_system.on_unit_turn_ended(unit)
 
 
 func _check_end_player_turn() -> void:

@@ -183,3 +183,23 @@ var has_arcana_charge: bool = false
 
 
 @export var deployment_barks: DialogueBarkData
+
+# ── LEVEL-UP CONFIGURATION (ADDED) ────────────────────────────────────────────
+# Controls what happens when this specific unit levels up (buying a
+# duplicate copy from the shop) -- see level_up_engine.gd for the full
+# rules engine that reads these. Both arrays can be left EMPTY, in which
+# case this unit uses the project-wide defaults: every stat equally likely,
+# +1 for most stats, +5 mana (skipped entirely if this unit has no mana),
+# +2% crit chance, +2% crit damage, and an equal chance of 2, 3, or 4 stats
+# increasing per level.
+
+@export var level_up_stat_rules: Array[StatLevelUpRule] = []
+# Add one entry per stat you want to customize for THIS unit -- its
+# likelihood of being chosen, the color of its "+X" popup/sparkles, and/or
+# its own possible amounts (e.g. "this unit's mana always jumps by 5, 6, 7,
+# or 8"). Any stat with no entry here falls back to the project defaults.
+
+@export var level_up_stat_count_options: Array[LevelUpCountOption] = []
+# How many stats increase per level-up for THIS unit (e.g. always exactly
+# 3, or weighted toward bigger jumps). Leave empty for the project default
+# (equal chance of 2, 3, or 4).

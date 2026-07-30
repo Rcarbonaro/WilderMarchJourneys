@@ -13,6 +13,9 @@
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_5debc"]
 [ext_resource type="Resource" uid="uid://bhefcss7mcg2g" path="res://resources/abilities/stealth.tres" id="5_l4ka4"]
 [ext_resource type="Script" uid="uid://df8avravfldch" path="res://scripts/data/dialogue_bark_data.gd" id="5_nrgfd"]
+[ext_resource type="Script" uid="uid://b7m0h8v4gtmho" path="res://scripts/data/level_up_count_option.gd" id="7_uqekb"]
+[ext_resource type="Script" uid="uid://d07hb58lwi16g" path="res://scripts/data/level_up_stat_rule.gd" id="8_x0blg"]
+[ext_resource type="Script" uid="uid://duuiwm0fwryh1" path="res://scripts/data/level_up_amount_option.gd" id="9_31s1h"]
 
 [sub_resource type="Resource" id="Resource_omisk"]
 script = ExtResource("4_ak4yr")
@@ -70,6 +73,42 @@ lines = Array[ExtResource("4_ak4yr")]([SubResource("Resource_x0blg"), SubResourc
 deployment_barks = SubResource("Resource_uqekb")
 metadata/_custom_type_script = "uid://df8avravfldch"
 
+[sub_resource type="Resource" id="Resource_15mru"]
+script = ExtResource("7_uqekb")
+count = 2
+weight = 0.5
+metadata/_custom_type_script = "uid://b7m0h8v4gtmho"
+
+[sub_resource type="Resource" id="Resource_jwkrt"]
+script = ExtResource("7_uqekb")
+weight = 0.35
+metadata/_custom_type_script = "uid://b7m0h8v4gtmho"
+
+[sub_resource type="Resource" id="Resource_aulo6"]
+script = ExtResource("7_uqekb")
+count = 4
+weight = 0.15
+metadata/_custom_type_script = "uid://b7m0h8v4gtmho"
+
+[sub_resource type="Resource" id="Resource_gb6u2"]
+script = ExtResource("8_x0blg")
+metadata/_custom_type_script = "uid://d07hb58lwi16g"
+
+[sub_resource type="Resource" id="Resource_3vvft"]
+script = ExtResource("8_x0blg")
+stat = "crit_chance"
+metadata/_custom_type_script = "uid://d07hb58lwi16g"
+
+[sub_resource type="Resource" id="Resource_txmxc"]
+script = ExtResource("8_x0blg")
+stat = "crit_damage"
+metadata/_custom_type_script = "uid://d07hb58lwi16g"
+
+[sub_resource type="Resource" id="Resource_1kubs"]
+script = ExtResource("8_x0blg")
+stat = "hp"
+metadata/_custom_type_script = "uid://d07hb58lwi16g"
+
 [resource]
 script = ExtResource("1_6usi5")
 id = "rogue"
@@ -82,4 +121,6 @@ stats_by_level = Array[ExtResource("3_cnjr4")]([ExtResource("1_5x8eh")])
 base_stats = ExtResource("1_5x8eh")
 starting_abilities = Array[ExtResource("2_0wd6k")]([ExtResource("4_fikb3"), ExtResource("5_l4ka4")])
 deployment_barks = SubResource("Resource_enwc1")
+level_up_stat_rules = Array[ExtResource("8_x0blg")]([SubResource("Resource_gb6u2"), SubResource("Resource_3vvft"), SubResource("Resource_txmxc"), SubResource("Resource_1kubs")])
+level_up_stat_count_options = Array[ExtResource("7_uqekb")]([SubResource("Resource_15mru"), SubResource("Resource_jwkrt"), SubResource("Resource_aulo6")])
 metadata/_custom_type_script = "uid://utmj7y8m802a"

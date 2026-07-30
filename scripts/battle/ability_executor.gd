@@ -196,9 +196,16 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 				  caster.unit_data.display_name)
 
 		# Cooldown still applies even though we skip the rest of the pipeline.
-		# Cooldown still applies even though we skip the rest of the pipeline.
 		if ability.cooldown_rounds > 0:
 			caster.ability_cooldowns[ability.id] = ability.cooldown_rounds
+		# BUGFIX: this early return used to skip run_after_ability_used()
+		# entirely, so any equipment hooked to that event (Archon's Grimoire,
+		# Worldroot Staff, Lifebinder's Staff, Whispercloak, Bloodthirster,
+		# Starcall Prism, Arcblade Focus) silently did nothing whenever the
+		# wearer's ability happened to be a "wall" shape. See the identical
+		# fix on the chain/multi_target/leap branches below.
+		if is_instance_valid(caster):
+			CombatHooks.run_after_ability_used(caster, ability, target_cells, origin_cell, self)
 		return
 
 	# ── STEP 2.6: CHAIN LIGHTNING ──────────────────────────────────────────────
@@ -206,6 +213,11 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 		await _execute_chain_lightning(caster, ability, target_cells)
 		if ability.cooldown_rounds > 0 and is_instance_valid(caster):
 			caster.ability_cooldowns[ability.id] = ability.cooldown_rounds
+		# BUGFIX: see the identical comment on the "wall" branch above — this
+		# was missing entirely, so equipment hooked to after_ability_used
+		# never triggered off a Chain Lightning-shaped spell.
+		if is_instance_valid(caster):
+			CombatHooks.run_after_ability_used(caster, ability, target_cells, origin_cell, self)
 		return
 
 	# ── STEP 2.7: MULTI-TARGET (Zephyr Strike-style) ───────────────────────────
@@ -213,6 +225,9 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 		await _execute_multi_target_strike(caster, ability, target_cells)
 		if ability.cooldown_rounds > 0 and is_instance_valid(caster):
 			caster.ability_cooldowns[ability.id] = ability.cooldown_rounds
+		# BUGFIX: see the identical comment on the "wall" branch above.
+		if is_instance_valid(caster):
+			CombatHooks.run_after_ability_used(caster, ability, target_cells, origin_cell, self)
 		return
 
 	# ── STEP 2.8: LEAP ──────────────────────────────────────────────────────────
@@ -223,6 +238,9 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 		await _execute_leap(caster, ability, target_cells, origin_cell)
 		if ability.cooldown_rounds > 0 and is_instance_valid(caster):
 			caster.ability_cooldowns[ability.id] = ability.cooldown_rounds
+		# BUGFIX: see the identical comment on the "wall" branch above.
+		if is_instance_valid(caster):
+			CombatHooks.run_after_ability_used(caster, ability, target_cells, origin_cell, self)
 		return
 
 	# ── STEP 3: COLLECT UNIQUE UNIT TARGETS AND APPLY EFFECTS ─────────────────

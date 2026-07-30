@@ -10,7 +10,7 @@
 script = ExtResource("2_q2xyi")
 id = "overcharge"
 display_name = "Overcharge"
-description = "Sacrifice 40% of max health to boost movement and MATK for 5 rounds."
+description = "Sacrifice 40% of max health to boost movement, MATK, and damage dealt. Can stack."
 icon = ExtResource("3_4n08o")
 effect_scene = ExtResource("3_kndp3")
 hp_cost_percent = 0.4

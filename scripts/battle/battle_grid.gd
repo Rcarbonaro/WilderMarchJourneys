@@ -788,10 +788,16 @@ func apply_hazard_to_unit(unit, cell: Vector2i, trigger: String) -> void:
 			raw_damage = max(1, int(caster_atk * hdata.damage_multiplier))
 
 		unit.take_damage(raw_damage, hdata.damage_type, false, false)
-		
+
 		# Apply optional status.
 		if hdata.applies_status != null:
-			unit.apply_status(hdata.applies_status)
+			# BUGFIX: this used to call apply_status(hdata.applies_status)
+			# with no caster at all, even though entry["caster"] (whoever
+			# placed the hazard) is right there. Any DOT-type status
+			# applied this way had no caster to snapshot ATK/MATK from —
+			# see unit_node.gd's apply_status() "DOT CASTER STAT
+			# SNAPSHOT" section.
+			unit.apply_status(hdata.applies_status, 1, entry["caster"])
 
 # ── WALL HAZARD PLACEMENT ─────────────────────────────────────────────────────
 

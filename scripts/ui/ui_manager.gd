@@ -49,6 +49,15 @@ extends CanvasLayer
 @export var hp_bar_pixel_width:   float = 150.0
 @export var mana_bar_pixel_width: float = 150.0
 
+# ── TEMP HP (SHIELD) OVERLAY ──────────────────────────────────────────────────
+# Task 7: visualizes grid.shield_map (see battle_grid.gd's apply_shield()/
+# get_shield()/absorb_shield_damage()) as a semi-transparent white segment
+# on top of the HP bar, plus a "+ X" label. Both nodes are created IN CODE
+# in _ready() below (see "TEMP HP OVERLAY — CREATED IN CODE" further down)
+# rather than requiring you to hand-add them to BattleUI.tscn.
+@export var temp_hp_overlay_color: Color = Color(1.0, 1.0, 1.0, 0.45)
+@export var temp_hp_label_color:   Color = Color(1.0, 1.0, 1.0, 1.0)
+
 @export var turn_announcement_duration: float = 2.0
 @export var player_turn_texture:        Texture2D   = null
 @export var enemy_turn_texture:         Texture2D   = null
@@ -71,6 +80,8 @@ var hp_bar_fill:         Control       = null
 var hp_label:            Label           = null
 var _hp_fill_texture:  TextureRect = null  
 var _mana_fill_texture: TextureRect = null  
+var hp_bar_temp_fill:    ColorRect       = null   # ADDED (task 7) — see _ready()
+var temp_hp_label:       Label           = null   # ADDED (task 7) — see _ready()
 var mana_bar_holder:     Control         = null
 var mana_bar_fill:       Control       = null
 var mana_label:          Label           = null
@@ -230,6 +241,35 @@ func _ready() -> void:
 		_hp_fill_texture.custom_minimum_size.x = hp_bar_pixel_width
 	if _mana_fill_texture:
 		_mana_fill_texture.custom_minimum_size.x = mana_bar_pixel_width
+
+	# ── TEMP HP OVERLAY — CREATED IN CODE ─────────────────────────────────────
+	# Task 7: a semi-transparent white bar showing temp HP (shield), overlaid
+	# on the normal HP bar, plus a "+ X" label — both created here rather than
+	# needing to be hand-added to BattleUI.tscn. Anchored inside hp_bar_bg so
+	# they line up with hp_bar_fill/_hp_fill_texture automatically. See
+	# _refresh_live_values() below for how these get positioned/sized every
+	# frame, and HOW TO ADJUST notes there for tweaking the look.
+	if hp_bar_bg:
+		hp_bar_temp_fill = ColorRect.new()
+		hp_bar_temp_fill.name = "HPBarTempFill"
+		hp_bar_temp_fill.color = temp_hp_overlay_color
+		hp_bar_temp_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		hp_bar_temp_fill.visible = false
+		hp_bar_temp_fill.position = Vector2.ZERO
+		hp_bar_temp_fill.size = Vector2(0, hp_bar_bg.size.y if hp_bar_bg.size.y > 0 else 20.0)
+		hp_bar_bg.add_child(hp_bar_temp_fill)
+		hp_bar_temp_fill.z_index = 5   # draws above HPBarFill/_hp_fill_texture
+
+		temp_hp_label = Label.new()
+		temp_hp_label.name = "TempHPLabel"
+		temp_hp_label.add_theme_color_override("font_color", temp_hp_label_color)
+		temp_hp_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+		temp_hp_label.add_theme_constant_override("outline_size", 3)
+		temp_hp_label.add_theme_font_size_override("font_size", 14)
+		temp_hp_label.visible = false
+		temp_hp_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		temp_hp_label.z_index = 6
+		hp_bar_bg.add_child(temp_hp_label)
 
 	# ── Populate the stats rows inside StatsGrid ──────────────────────────────
 	if stats_grid != null:
@@ -639,7 +679,51 @@ func _refresh_live_values() -> void:
 		# Only update the text label if it actually exists
 		if hp_label:
 			hp_label.text = "%d / %d" % [unit.current_hp, max_hp]
-		
+
+		# ── TEMP HP (SHIELD) OVERLAY ────────────────────────────────────────
+		# Task 7: reads grid.shield_map (via grid.get_shield()) and draws a
+		# semi-transparent overlay + "+ X" label, positioned right after the
+		# normal HP fill's current edge — i.e. it reads as "extra HP tacked
+		# onto your current health", not as replacing/hiding the real HP
+		# color. Both nodes stay hidden whenever temp_hp is 0.
+		#
+		# HOW TO ADJUST:
+		#   - Overlay color/opacity: temp_hp_overlay_color (exported above).
+		#   - Label color: temp_hp_label_color (exported above).
+		#   - To make the overlay OVERLAP the HP fill from x=0 instead of
+		#     extending past its right edge, change the position.x line
+		#     below to just `0.0` instead of `current_fill_px`.
+		#   - To CAP the overlay so it never visually exceeds the bar's own
+		#     width (currently it can bulge past 100% for a big shield),
+		#     clamp temp_fill_px so current_fill_px + temp_fill_px <=
+		#     hp_bar_pixel_width.
+		var temp_hp: int = 0
+		if grid and grid.has_method("get_shield"):
+			var shield_entry: Dictionary = grid.get_shield(unit)
+			temp_hp = shield_entry.get("amount", 0)
+
+		if hp_bar_temp_fill:
+			if temp_hp > 0:
+				var px_per_hp: float = hp_bar_pixel_width / float(max(1, max_hp))
+				var current_fill_px: float = hp_bar_pixel_width * pct
+				hp_bar_temp_fill.position.x = current_fill_px
+				hp_bar_temp_fill.size.x = px_per_hp * temp_hp
+				hp_bar_temp_fill.size.y = hp_bar_bg.size.y if hp_bar_bg and hp_bar_bg.size.y > 0 else hp_bar_temp_fill.size.y
+				hp_bar_temp_fill.visible = true
+			else:
+				hp_bar_temp_fill.visible = false
+
+		if temp_hp_label:
+			if temp_hp > 0:
+				temp_hp_label.text = "+ %d" % temp_hp
+				temp_hp_label.visible = true
+				if hp_bar_temp_fill:
+					temp_hp_label.position = Vector2(
+						hp_bar_temp_fill.position.x + hp_bar_temp_fill.size.x + 4.0, -2.0
+					)
+			else:
+				temp_hp_label.visible = false
+
 	# ── HP bar flash on damage ─────────────────────────────────────────────
 	if _prev_bar_hp >= 0 and unit.current_hp < _prev_bar_hp:
 		CombatFeedback.flash_bar(hp_bar_fill)
@@ -863,6 +947,24 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# PUBLIC API — GAME OVER INPUT LOCK (task 6 fix)
+# ══════════════════════════════════════════════════════════════════════════════
+
+func set_game_over_input_locked(locked: bool) -> void:
+	# Called by BattleManager the instant the battle ends (see
+	# _battle_victory()/_battle_defeat() in battle_manager.gd) so a stray tap
+	# on "End Turn" (or Cancel Move) during the Victory/Defeat banner's ~2s
+	# window can't kick off a whole extra enemy-turn handoff on top of it —
+	# see the is_battle_over guards in end_player_turn()/
+	# _on_enemy_turn_complete() in battle_manager.gd for the belt-and-
+	# suspenders version of this same fix at the source.
+	if end_turn_button:
+		end_turn_button.disabled = locked
+	if locked and cancel_move_button:
+		cancel_move_button.visible = false
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # INTERNAL — BUTTON HANDLERS
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -1019,8 +1121,10 @@ func _close_pause_menu() -> void:
 
 func _on_menu_quit_pressed() -> void:
 	_close_pause_menu()
+	# "fade" — see the brief's example: main-menu transitions get their own
+	# distinct (calmer) style, separate from the default used elsewhere.
 	# Change this path to wherever your main menu scene lives.
-	get_tree().change_scene_to_file("res://scenes/mainmenu/main_menu.tscn")
+	SceneTransitions.change_scene("res://scenes/mainmenu/main_menu.tscn", "fade")
 
 
 func _on_menu_grid_toggle_pressed() -> void:
@@ -1180,43 +1284,12 @@ func show_battle_result_banner(is_victory: bool) -> void:
 	# that follows (StageDirector.complete_stage() / GameOverScreen) tears
 	# the whole banner down along with the rest of the scene anyway.
 
-func show_game_victory_popup() -> void:
-	var overlay := ColorRect.new()
-	overlay.color = Color(0, 0, 0, 0.75)
-	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	overlay.z_index = 300
-	add_child(overlay)
-
-	var box := VBoxContainer.new()
-	box.set_anchors_preset(Control.PRESET_CENTER)
-	box.alignment = BoxContainer.ALIGNMENT_CENTER
-
-	var title := Label.new()
-	title.text = "Game Victory!"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 48)
-	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2))
-	box.add_child(title)
-
-	var subtitle := Label.new()
-	subtitle.text = "Congratulations, you have completed the WilderMarch demo!\nIf you enjoyed it, be sure to join the Discord and Wishlist on Steam when Available!"
-	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	subtitle.add_theme_font_size_override("font_size", 20)
-	box.add_child(subtitle)
-
-	var spacer := Control.new()
-	spacer.custom_minimum_size = Vector2(0, 30)
-	box.add_child(spacer)
-
-	var button := Button.new()
-	button.text = "Return to Main Menu"
-	button.custom_minimum_size = Vector2(240, 50)
-	button.pressed.connect(func():
-		get_tree().change_scene_to_file("res://scenes/mainmenu/main_menu.tscn")
-	)
-	box.add_child(button)
-
-	overlay.add_child(box)
+# REMOVED (tasks 8 & 9): show_game_victory_popup() used to live here. It had
+# the off-center layout bug from task 8 (box.set_anchors_preset(PRESET_CENTER)
+# with no wrapping CenterContainer puts the box's TOP-LEFT corner at screen
+# center, not the box itself), and has been fully replaced by the new
+# animated EndingSequence scene (res://scripts/meta/ending_sequence.gd) per
+# task 9 — see battle_scene.gd's _on_battle_ended() for the new call site.
 
 
 # ── STAGE INTRO ANNOUNCEMENT ──────────────────────────────────────────────────

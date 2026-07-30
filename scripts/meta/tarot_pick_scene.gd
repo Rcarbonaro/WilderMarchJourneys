@@ -161,4 +161,6 @@ func _on_card_pressed(tarot_id: String) -> void:
 		{"run_state": RunManager.current_run, "source": "tarot_pick_screen"}
 	)
 	print("Tarot card chosen: ", tarot_id)
-	get_tree().change_scene_to_file(BATTLE_SCENE_PATH)
+	# "parchment_burn" — see the brief's example: entering a battle gets its
+	# own distinct transition style.
+	SceneTransitions.change_scene(BATTLE_SCENE_PATH, "parchment_burn")

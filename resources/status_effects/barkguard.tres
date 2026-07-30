@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://h1bwtk25nbyd"]
+[gd_resource type="Resource" format=3 uid="uid://h1bwtk25nbyd"]
 
 [ext_resource type="Texture2D" uid="uid://c2rp4gsg1cuv3" path="res://sprites/UI/skill icons/skill_icon_barkguard.png" id="1_ds3te"]
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_j2wvg"]

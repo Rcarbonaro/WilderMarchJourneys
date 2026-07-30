@@ -252,8 +252,15 @@ func classifies_as_debuff() -> bool:
 @export_enum("flat", "physical", "magical") var dot_damage_mode: String = "physical"
 # Controls HOW the per-tick damage number is CALCULATED (the formula):
 # "flat"      — a fixed amount of true damage each tick, ignoring all defence.
-# "physical"  — uses (caster.ATK - target.DEF) * dot_damage_percent, normal formula.
-# "magical"   — uses (caster.MATK - target.MDEF) * dot_damage_percent, normal formula.
+# "physical"  — caster.ATK * dot_damage_percent. Ignores the target's DEF
+#               entirely by design (a ticking DOT doesn't care how armored
+#               you are) — see _apply_dot_tick() in unit_node.gd.
+# "magical"   — caster.MATK * dot_damage_percent. Same deal, ignores MDEF.
+# For both "physical" and "magical", the caster's ATK/MATK used here is a
+# SNAPSHOT taken at the moment the status was (most recently) applied — see
+# apply_status()'s "DOT CASTER STAT SNAPSHOT" section in unit_node.gd — not
+# a live read of the caster's current stats, and never the affected unit's
+# own stats even if the caster has since died.
 # This is completely independent from dot_damage_type below — e.g. you can
 # have a "Fire" DOT that calculates its damage using the "magical" formula, or
 # a "Poison" DOT that uses "flat" damage. One controls the number, the other

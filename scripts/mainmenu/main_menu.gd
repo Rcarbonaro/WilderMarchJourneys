@@ -40,7 +40,10 @@ func _evaluate_continue_button_state() -> void:
 func _on_continue_pressed() -> void:
 	print("Resuming previous run...")
 	# The RunManager data already exists, so we just jump straight to the battle grid
-	_change_scene_to(BATTLE_SCENE_PATH)
+	# "parchment_burn" — see the brief's example: entering a battle gets its
+	# own distinct transition style from the default. Change this string (or
+	# drop it entirely to use SceneTransitions.default_style) to try another.
+	_change_scene_to(BATTLE_SCENE_PATH, "parchment_burn")
 
 func _on_new_game_pressed() -> void:
 	# "New Game" no longer builds a run by hand here -- it just opens the
@@ -48,7 +51,10 @@ func _on_new_game_pressed() -> void:
 	# actually calls RunManager.start_new_run(), once the player has either
 	# been randomly assigned a party (Random) or finished picking one (Draft).
 	print("Opening game mode selection...")
-	_change_scene_to(GAME_MODE_SELECT_SCENE_PATH)
+	# "fade" — see the brief's example: transitions in/out of the main menu
+	# get their own distinct (calmer) style. See game_mode_select.gd's
+	# MAIN_MENU_SCENE_PATH call site for the matching return trip.
+	_change_scene_to(GAME_MODE_SELECT_SCENE_PATH, "fade")
 
 func _on_achievements_pressed() -> void:
 	print("Opening Achievements panel...")
@@ -63,9 +69,14 @@ func _on_settings_pressed() -> void:
 	# _change_scene_to(SETTINGS_SCENE_PATH)
 
 # Helper wrapper function to safely execute scene handoffs
-func _change_scene_to(target_scene_path: String) -> void:
+func _change_scene_to(target_scene_path: String, style: String = "") -> void:
+	# BUGFIX/task 5: routed through SceneTransitions.change_scene() instead of
+	# a hard get_tree().change_scene_to_file() cut — see
+	# res://scripts/autoloads/scene_transitions.gd for the full style list and
+	# how to add more. Pass a style string from any caller above to override
+	# the default for that specific transition.
 	if ResourceLoader.exists(target_scene_path):
-		get_tree().change_scene_to_file(target_scene_path)
+		SceneTransitions.change_scene(target_scene_path, style)
 	else:
 		printerr("❌ Scene routing failed: Cannot locate target path: ", target_scene_path)
 func _on_quit_pressed() -> void:

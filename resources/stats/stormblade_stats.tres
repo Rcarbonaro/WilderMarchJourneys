@@ -6,7 +6,7 @@
 script = ExtResource("1_qu4ld")
 hp = 15
 atk = 6
-matk = 18
+matk = 19
 mdef = 7
 crit_chance = 20.0
 mana = 60

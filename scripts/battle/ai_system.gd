@@ -97,6 +97,16 @@ func _process_next_enemy(players: Array, grid: Node,
 	if is_instance_valid(enemy) and enemy.current_hp > 0 and not enemy.has_acted:
 		await _run_single_enemy(enemy, players, grid, pathfinder, executor)
 
+	# Task 11: "ends its turn within N tiles of another enemy" check — this
+	# individual enemy's own turn (move + ability) just fully resolved above,
+	# so this is the natural per-enemy "turn ended" checkpoint. Mirrors the
+	# player-side call in battle_manager.gd's _finish_ability(). Still called
+	# even if the enemy above was already dead/had already acted (e.g. killed
+	# by a reaction earlier this loop) — check_plague_spread_for() itself is
+	# a no-op for an invalid unit.
+	if is_instance_valid(enemy) and active_battle_manager != null and active_battle_manager.has_method("check_plague_spread_for"):
+		active_battle_manager.check_plague_spread_for(enemy)
+
 	current_enemy_index += 1
 	# Small delay between enemies so the player can follow what's happening.
 	await get_tree().create_timer(0.4).timeout

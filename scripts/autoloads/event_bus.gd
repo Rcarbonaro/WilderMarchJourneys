@@ -66,6 +66,17 @@ const ON_SHOP_PURCHASE      := "on_shop_purchase"
 # Published by shop_engine.gd itself -- no wiring needed, it's already in
 # this project's own code.
 
+const ON_UNIT_LEVELED_UP    := "on_unit_leveled_up"
+# ADDED. Published by shop_engine.gd's purchase() whenever buying a
+# duplicate unit results in a level-up instead of a new roster slot.
+# Payload: { "unit_entry": Dictionary (the RunState.party/bench entry that
+# just leveled up), "unit_id": String, "new_level": int,
+# "level_up_results": Array (see level_up_engine.gd's perform_level_up()
+# for the exact shape of each entry) }. shop_manager.gd subscribes to this
+# (indirectly, via ShopEngine.purchase()'s own return value) to show the
+# LevelUpPopup -- any OTHER system that cares about level-ups (achievements,
+# a future "unit shrine" screen, etc.) can subscribe here directly instead.
+
 # ---- INTERNAL SUBSCRIBER LIST -----------------------------------------------
 # Key: event name (String). Value: Array of Callables to run when it fires.
 var _subscribers: Dictionary = {}

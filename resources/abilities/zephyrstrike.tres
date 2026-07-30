@@ -18,6 +18,7 @@ min_range = 1
 max_range = 3
 aoe_shape = "multi_target"
 aoe_size = 3
+base_damage_multiplier = 1.1
 is_dash = true
 travel_animation_name = "zephyr_travel"
 impact_animation_name = "zephyr_attack"

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://bkmms5lwopy0e"]
+
+[ext_resource type="Texture2D" uid="uid://dge2o34isxty" path="res://sprites/UI/skill icons/skill_icons_poisongas.png" id="1_d0rda"]
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_gpkqn"]
+
+[resource]
+script = ExtResource("1_gpkqn")
+id = "plaguestatus"
+display_name = "White Plague"
+description = "Deals damage each turn. Death spreads a viral mutation."
+icon = ExtResource("1_d0rda")
+duration_rounds = 999
+is_permanent = true
+has_dot = true
+dot_damage_mode = "magical"
+dot_flat_amount = 0
+dot_damage_percent = 0.33
+metadata/_custom_type_script = "uid://gsbk18mmfnol"

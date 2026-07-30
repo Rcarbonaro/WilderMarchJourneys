@@ -129,12 +129,17 @@ func _on_battle_ended(result: String) -> void:
 		# StageDirector.complete_stage() can carry the run past stage 10
 		# normally.
 		if RunManager.current_run != null and RunManager.current_run.stage_index == 10:
-			if battle_ui and battle_ui.has_method("show_game_victory_popup"):
-				battle_ui.show_game_victory_popup()
+			# CHANGED (tasks 8 & 9): used to call battle_ui.show_game_victory_popup()
+			# (a static, off-center "Victory!" box — see ui_manager.gd for
+			# where that function used to live). Now hands off to the new
+			# animated EndingSequence scene instead — see
+			# res://scripts/meta/ending_sequence.gd's header comment for the
+			# one-time setup steps needed the first time you use this.
+			SceneTransitions.change_scene("res://scenes/meta/EndingSequence.tscn", "parchment_burn")
 			return
 		StageDirector.complete_stage()
 	elif result == "defeat":
-		get_tree().change_scene_to_file("res://scenes/meta/GameOverScreen.tscn")
+		SceneTransitions.change_scene("res://scenes/meta/GameOverScreen.tscn")
 
 
 # 🗺️ The Biome Resource Database

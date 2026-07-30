@@ -106,6 +106,50 @@ func apply_equipment_to_unit(unit, equipped_item_ids: Array) -> void:
 					push_warning("EquipmentRuntime: no custom handler for '" + custom_id + "' (item '" + item_id + "')")
 
 
+func compute_preview_stat_bonuses(base_stats: StatsData, equipped_item_ids: Array) -> Dictionary:
+	# Same math as apply_equipment_to_unit() above, but returns a plain summed
+	# Dictionary instead of writing into a live UnitNode's momentum_bonuses --
+	# for screens that need to PREVIEW a unit's effective stats before combat
+	# even exists (e.g. deployment_manager.gd's "More Information" popup,
+	# which only has base_stats + a list of equipped_item_ids to work with,
+	# no live UnitNode). Keep this in sync with apply_equipment_to_unit()
+	# above if the effect schema ever changes.
+	#
+	# Returns a Dictionary with keys "atk", "matk", "def", "mdef", "mov",
+	# "crit_chance", "crit_damage", "hp", "mana" -- the FLAT bonus amounts to
+	# add on top of base_stats' own numbers to get the unit's effective stats.
+	var totals := {"atk": 0, "matk": 0, "def": 0, "mdef": 0, "mov": 0,
+		"crit_chance": 0.0, "crit_damage": 0.0, "hp": 0, "mana": 0}
+
+	for item_id in equipped_item_ids:
+		if item_id == null or item_id == "":
+			continue
+		var item_data: Dictionary = ContentLoader.get_equipment(item_id)
+		if item_data.is_empty():
+			continue
+
+		for effect in item_data.get("effects", []):
+			if effect.get("type", "") != "add_stat" or effect.get("scope", "permanent") != "permanent":
+				continue
+			var stat: String = effect.get("stat", "")
+			var amount = effect.get("amount", 0)
+			var value_mode: String = effect.get("value_mode", "flat")
+
+			if value_mode == "percent" and (stat == "hp" or stat == "mana"):
+				var base_value: int = base_stats.hp if stat == "hp" else base_stats.mana
+				totals[stat] += int(base_value * (amount / 100.0))
+			elif value_mode == "percent" and (stat == "crit_chance" or stat == "crit_damage"):
+				# Matches _apply_percent_bonus() below — crit percentages are
+				# added directly, not scaled against a base_value.
+				totals[stat] += amount
+			elif value_mode == "percent":
+				pass   # Not supported for this stat — same restriction as apply_equipment_to_unit().
+			elif totals.has(stat):
+				totals[stat] += amount
+
+	return totals
+
+
 func remove_equipment_from_unit(unit, equipped_item_ids: Array) -> void:
 	# Call this when a unit leaves combat, so custom handlers can unsubscribe
 	# their CombatHooks callbacks cleanly instead of leaking them.

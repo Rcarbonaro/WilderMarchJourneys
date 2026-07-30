@@ -2,9 +2,7 @@
 #
 # SHOP ENGINE -- generates a randomized shop offer for the player between
 # stages, respecting spawn weights, tarot-driven drop-rate modifiers, and
-# price modifiers. THIS IS WHAT SHOULD REPLACE THE CURRENT shop_manager.gd
-# (which currently contains a misplaced copy of the combat ability_executor
-# code and does nothing shop-related at all).
+# price modifiers.
 #
 # HOW "resource" MATCHING WORKS (this is the answer to "how do I make sure
 # I'm affecting basic equipment drop rates"):
@@ -25,6 +23,14 @@
 #   So: { "type": "modify_drop_rate", "resource": "basic", "multiplier": 1.3 }
 #   boosts EVERY basic equipment item, with zero JSON content changes needed,
 #   because every basic equipment file already has "type": "basic".
+#
+# ── LEVEL-UP ON DUPLICATE PURCHASE (ADDED) ────────────────────────────────────
+# Buying a unit the player ALREADY owns no longer adds a second copy to the
+# roster -- instead, it levels up the existing copy (see level_up_engine.gd
+# for the actual stat-rolling rules). purchase() now returns a Dictionary
+# instead of a plain bool so shop_manager.gd can find out whether a level-up
+# happened, and show the right popup (LevelUpPopup vs. the normal "you
+# bought something" reward popup).
 
 extends Node
 
@@ -69,27 +75,72 @@ func _roll_offer(slot_count: int, run_state: RunState) -> Array:
 	return offer
 
 
-func purchase(shop_entry_id: String, run_state: RunState) -> bool:
+func purchase(shop_entry_id: String, run_state: RunState) -> Dictionary:
+	# Returns a Dictionary describing what happened, always including at
+	# least a "success" key:
+	#   { "success": false }   -- entry not found, or not enough gold, or
+	#                              (for a maxed-out duplicate) nothing left
+	#                              to sell.
+	#   { "success": true, "item_type": String, "item_id": String,
+	#     "was_duplicate": bool, "leveled_up": bool,
+	#     "unit_entry": Dictionary (only when leveled_up),
+	#     "new_level": int (only when leveled_up),
+	#     "level_up_results": Array (only when leveled_up -- see
+	#         level_up_engine.gd's perform_level_up() for its shape) }
+	#
+	# CHANGED: this used to return a plain bool. shop_manager.gd is this
+	# function's only caller in the project -- update both together if you
+	# add a second caller anywhere else.
 	var entry := ContentLoader.get_shop_entry(shop_entry_id)
 	if entry.is_empty():
-		return false
-	var price := _final_price(entry, run_state)
-	if run_state.gold < price:
-		return false
-	run_state.gold -= price
+		return {"success": false}
 
 	var item_type: String = entry.get("item_type", "equipment")
 	var item_id: String = entry.get("item_id", "")
-	# Checked BEFORE the purchase mutates state, so "The Wheel"-style
-	# duplicate-bonus triggers can tell a duplicate apart from a first copy.
-	var was_duplicate := item_type == "unit" and _player_already_owns_unit(item_id, run_state)
+
+	# ── DUPLICATE UNIT CHECK (must happen BEFORE spending gold) ───────────────
+	# If this is a unit the player already owns, this purchase is a level-up,
+	# not a new roster slot. A unit already at LEVEL_CAP has nothing left to
+	# sell -- block the purchase entirely rather than taking the player's
+	# gold for no effect. shop_manager.gd is expected to grey out / relabel
+	# a maxed unit's card so the player never even sees this fail in practice.
+	var was_duplicate: bool = item_type == "unit" and is_unit_owned(item_id, run_state)
+	var existing_entry: Dictionary = {}
+	if was_duplicate:
+		existing_entry = _find_owned_unit_entry(item_id, run_state)
+		if existing_entry.is_empty() or not LevelUpEngine.can_level_up(existing_entry):
+			return {"success": false}
+
+	var price := _final_price(entry, run_state)
+	if run_state.gold < price:
+		return {"success": false}
+	run_state.gold -= price
+
+	var result: Dictionary = {
+		"success": true,
+		"item_type": item_type,
+		"item_id": item_id,
+		"was_duplicate": was_duplicate,
+		"leveled_up": false,
+	}
 
 	var context := {"run_state": run_state, "source": "shop:" + shop_entry_id}
 	match item_type:
 		"equipment":
 			EffectSystem.apply_effect({"type": "add_equipment", "equipment_id": item_id}, context)
 		"unit":
-			EffectSystem.apply_effect({"type": "add_unit", "unit_id": item_id}, context)
+			if was_duplicate:
+				var level_up_results: Array = LevelUpEngine.perform_level_up(existing_entry, _load_unit_data(item_id))
+				result["leveled_up"] = true
+				result["unit_entry"] = existing_entry
+				result["new_level"] = int(existing_entry.get("level", 1))
+				result["level_up_results"] = level_up_results
+				EventBus.publish(EventBus.ON_UNIT_LEVELED_UP, {
+					"unit_entry": existing_entry, "unit_id": item_id,
+					"new_level": result["new_level"], "level_up_results": level_up_results,
+				})
+			else:
+				EffectSystem.apply_effect({"type": "add_unit", "unit_id": item_id}, context)
 		"consumable":
 			run_state.equipment_inventory.append(item_id)
 
@@ -103,7 +154,7 @@ func purchase(shop_entry_id: String, run_state: RunState) -> bool:
 		"is_unit_purchase": item_type == "unit",
 		"was_duplicate": was_duplicate,
 	})
-	return true
+	return result
 
 
 func _get_valid_entries(run_state: RunState) -> Array:
@@ -125,7 +176,7 @@ func _weighted_chance(entry: Dictionary, run_state: RunState) -> float:
 		var resource: String = modifier.get("resource", "")
 		var applies: bool = match_set.has(resource)
 		if resource == "owned_units" and entry.get("item_type", "") == "unit":
-			applies = _player_already_owns_unit(entry.get("item_id", ""), run_state)
+			applies = is_unit_owned(entry.get("item_id", ""), run_state)
 		if applies:
 			weight *= float(modifier.get("multiplier", 1.0))
 	return max(0.0, weight)
@@ -153,20 +204,31 @@ func _build_match_set(entry: Dictionary) -> Array:
 
 
 func _load_unit_synergy_tags(unit_id: String) -> Array:
-	# UnitData lives as a combat-side .tres Resource, not JSON content, so
-	# we load it directly using the same path convention battle_manager.gd
-	# already uses ("res://resources/units/<unit_id>_data.tres"). If your
-	# project's unit resources live somewhere else, update this one path.
-	var path := "res://resources/units/" + unit_id + "_data.tres"
-	if not ResourceLoader.exists(path):
-		return []
-	var unit_data = load(path)
+	var unit_data := _load_unit_data(unit_id)
 	if unit_data != null and "synergy_tags" in unit_data:
 		return unit_data.synergy_tags
 	return []
 
 
-func _player_already_owns_unit(unit_id: String, run_state: RunState) -> bool:
+func _load_unit_data(unit_id: String) -> UnitData:
+	# UnitData lives as a combat-side .tres Resource, not JSON content, so
+	# we load it directly using the same path convention battle_manager.gd
+	# already uses ("res://resources/units/<unit_id>_data.tres"). If your
+	# project's unit resources live somewhere else, update this one path.
+	# CHANGED: pulled out of _load_unit_synergy_tags() into its own function
+	# (still doing the exact same lookup) so purchase()'s level-up path can
+	# reuse it too, instead of duplicating this path-building logic a
+	# second time.
+	var path := "res://resources/units/" + unit_id + "_data.tres"
+	if not ResourceLoader.exists(path):
+		return null
+	return load(path) as UnitData
+
+
+func is_unit_owned(unit_id: String, run_state: RunState) -> bool:
+	# PUBLIC (was "_player_already_owns_unit", private) -- shop_manager.gd
+	# needs this too, to decide whether a shop card should say "Buy" or
+	# "Level Up" for a given unit. Behavior is unchanged, just exposed.
 	for entry in run_state.party:
 		if entry.get("unit_id", "") == unit_id:
 			return true
@@ -174,6 +236,23 @@ func _player_already_owns_unit(unit_id: String, run_state: RunState) -> bool:
 		if entry.get("unit_id", "") == unit_id:
 			return true
 	return false
+
+
+func _find_owned_unit_entry(unit_id: String, run_state: RunState) -> Dictionary:
+	# Returns the FIRST party/bench entry for this unit_id (party checked
+	# first), or an empty Dictionary if the player doesn't own one. Since
+	# Dictionaries are passed by reference in GDScript, the Dictionary this
+	# returns IS the actual entry living inside run_state.party/bench --
+	# mutating it (as LevelUpEngine.perform_level_up() does) mutates the
+	# real save data directly, same convention shop_manager.gd's equip
+	# panel already relies on.
+	for entry in run_state.party:
+		if entry.get("unit_id", "") == unit_id:
+			return entry
+	for entry in run_state.bench:
+		if entry.get("unit_id", "") == unit_id:
+			return entry
+	return {}
 
 # ---- PRICING -------------------------------------------------------------------
 
@@ -215,12 +294,8 @@ const UNIT_PRICE_BY_RARITY: Dictionary = {
 }
 
 func _get_unit_rarity_price(unit_id: String) -> int:
-	var path := "res://resources/units/" + unit_id + "_data.tres"
-	if not ResourceLoader.exists(path):
-		push_warning("ShopEngine: no UnitData found for '" + unit_id + "' at " + path +
-			" -- falling back to this shop entry's own base_price.")
-		return 0
-	var unit_data: UnitData = load(path) as UnitData
+	var unit_data := _load_unit_data(unit_id)
 	if unit_data == null:
+		push_warning("ShopEngine: no UnitData found for '" + unit_id + "' -- falling back to this shop entry's own base_price.")
 		return 0
 	return UNIT_PRICE_BY_RARITY.get(unit_data.rarity, 0)

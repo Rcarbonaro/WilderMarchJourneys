@@ -5,8 +5,8 @@
 # and does nothing shop-related. Attach to the ROOT node of ShopScene.tscn.
 #
 # Pure display layer -- all actual shop logic (odds, pricing, drop-rate
-# modifiers) lives in the ShopEngine autoload. This script only builds the
-# cards and reacts to button presses.
+# modifiers, level-up rolling) lives in the ShopEngine / LevelUpEngine
+# autoloads. This script only builds the cards and reacts to button presses.
 #
 # Expected node tree -- see the README for the full step-by-step walkthrough:
 #   ShopScene (Node2D)
@@ -22,6 +22,14 @@
 #       SlotsContainer (HBoxContainer) <- 3 equip-slot buttons, built at runtime
 #       InventoryScroll (ScrollContainer)
 #         InventoryList (VBoxContainer) <- one row per unequipped item, built at runtime
+#
+# ── LEVEL-UP ON DUPLICATE PURCHASE (ADDED) ────────────────────────────────────
+# A shop card offering a unit the player ALREADY owns now reads "Level Up"
+# instead of "Buy" (or "MAX LEVEL", disabled, once that unit has hit
+# LevelUpEngine.LEVEL_CAP) -- see _build_slot_panel(). Because _rebuild_slots()
+# already runs after every purchase (via _refresh_display()), buying one copy
+# of a unit instantly updates the label on every OTHER shop slot offering that
+# same unit too, with no extra wiring needed.
 
 extends Node2D
 
@@ -32,9 +40,10 @@ const MAX_EQUIP_SLOTS := 3
 # it here if you want more/fewer slots; nothing else needs to change.
 
 const REWARD_GLITTER_BLUE := Color(0.3, 0.6, 1.0)
-# Used for the "you bought something" popup shown right after a purchase
-# succeeds (see _show_purchase_reward_popup below) -- both units and items
-# bought from the shop get this same blue glitter.
+# Used for the "you bought something" popup shown right after buying a
+# BRAND NEW unit or an item (see _show_purchase_reward_popup below) --
+# leveling up an existing unit shows LevelUpPopup instead (see
+# _show_level_up_popup), which has its own per-stat colors.
 
 @onready var gold_label: Label = $GoldLabel
 @onready var slot_container: HBoxContainer = $HBoxContainer
@@ -94,6 +103,23 @@ func _build_slot_panel(offer_entry: Dictionary) -> Control:
 	var shop_entry_id: String = offer_entry.get("shop_entry_id", "")
 	var final_price: int = offer_entry.get("final_price", 0)
 	var entry: Dictionary = ContentLoader.get_shop_entry(shop_entry_id)
+	var item_type: String = entry.get("item_type", "")
+	var item_id: String = entry.get("item_id", "")
+
+	# ── OWNERSHIP CHECK (ADDED) ────────────────────────────────────────────
+	# A unit slot the player already owns a copy of becomes a level-up
+	# offer instead of a fresh purchase. Re-checked every time this panel
+	# is (re)built, so this always reflects the player's CURRENT roster --
+	# including the instant it changes because of a purchase made just now
+	# in this same shop visit.
+	var owned_entry: Dictionary = {}
+	var is_owned_unit: bool = false
+	var is_maxed: bool = false
+	if item_type == "unit":
+		is_owned_unit = ShopEngine.is_unit_owned(item_id, RunManager.current_run)
+		if is_owned_unit:
+			owned_entry = _find_owned_entry(item_id)
+			is_maxed = not owned_entry.is_empty() and not LevelUpEngine.can_level_up(owned_entry)
 
 	var panel := PanelContainer.new()
 	var vbox := VBoxContainer.new()
@@ -108,7 +134,12 @@ func _build_slot_panel(offer_entry: Dictionary) -> Control:
 
 	var name_label := Label.new()
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.text = _get_display_name(entry)
+	# ADDED: shows the unit's current level right on the shop card once
+	# it's owned, so "Level Up" reads as "level up FROM here" at a glance.
+	var display_name: String = _get_display_name(entry)
+	if is_owned_unit and not owned_entry.is_empty():
+		display_name += " (Lv %d)" % int(owned_entry.get("level", 1))
+	name_label.text = display_name
 	vbox.add_child(name_label)
 
 	var price_label := Label.new()
@@ -117,19 +148,44 @@ func _build_slot_panel(offer_entry: Dictionary) -> Control:
 	vbox.add_child(price_label)
 
 	var buy_button := Button.new()
-	buy_button.text = "Buy"
-	buy_button.pressed.connect(func(): _on_buy_pressed(shop_entry_id))
+	if is_maxed:
+		buy_button.text = "MAX LEVEL"
+		buy_button.disabled = true
+		# Nothing left to sell -- ShopEngine.purchase() would refuse this
+		# purchase anyway (see its "was_duplicate" guard), but disabling
+		# the button here means the player never sees a mysterious silent
+		# failure when tapping it.
+	elif is_owned_unit:
+		buy_button.text = "Level Up"
+		buy_button.pressed.connect(func(): _on_buy_pressed(shop_entry_id))
+	else:
+		buy_button.text = "Buy"
+		buy_button.pressed.connect(func(): _on_buy_pressed(shop_entry_id))
 	vbox.add_child(buy_button)
 
-	# ADDED: "More Info" on every card -- units, equipment, and consumables
-	# alike -- so the player can see what they'd actually be buying before
-	# spending gold on it.
+	# "More Info" on every card -- units, equipment, and consumables alike --
+	# so the player can see what they'd actually be buying before spending
+	# gold on it.
 	var more_info_button := Button.new()
 	more_info_button.text = "More Info"
 	more_info_button.pressed.connect(func(): _on_shop_more_info_pressed(entry))
 	vbox.add_child(more_info_button)
 
 	return panel
+
+
+func _find_owned_entry(unit_id: String) -> Dictionary:
+	# Same lookup ShopEngine._find_owned_unit_entry() does internally --
+	# duplicated here (rather than exposing ShopEngine's private helper)
+	# since this is purely a display concern: this UI-layer copy only
+	# needs to READ the entry's level, never mutate it.
+	for entry in RunManager.current_run.party:
+		if entry.get("unit_id", "") == unit_id:
+			return entry
+	for entry in RunManager.current_run.bench:
+		if entry.get("unit_id", "") == unit_id:
+			return entry
+	return {}
 
 
 # ── MORE INFORMATION POPUP ────────────────────────────────────────────────────
@@ -281,9 +337,12 @@ func _on_buy_pressed(shop_entry_id: String) -> void:
 	# after ShopEngine.purchase() mutates RunManager.current_run.
 	var entry: Dictionary = ContentLoader.get_shop_entry(shop_entry_id)
 
-	var success := ShopEngine.purchase(shop_entry_id, RunManager.current_run)
-	if not success:
-		print("⛔ Purchase failed (not enough gold, or entry already sold).")
+	# CHANGED: ShopEngine.purchase() now returns a Dictionary (was a plain
+	# bool) so this can tell a level-up apart from a brand-new unit/item --
+	# see shop_engine.gd's purchase() for the full shape.
+	var result: Dictionary = ShopEngine.purchase(shop_entry_id, RunManager.current_run)
+	if not result.get("success", false):
+		print("⛔ Purchase failed (not enough gold, entry already sold, or unit already at max level).")
 		RunManager.save_run()
 		_refresh_display()
 		return
@@ -291,16 +350,24 @@ func _on_buy_pressed(shop_entry_id: String) -> void:
 	RunManager.save_run()
 	_refresh_display()
 
-	# ADDED: show the "here's what you got" popup with glitter now that the
-	# purchase actually succeeded.
-	_show_purchase_reward_popup(entry.get("item_type", ""), entry.get("item_id", ""))
+	if result.get("leveled_up", false):
+		_show_level_up_popup(
+			result.get("item_id", ""),
+			int(result.get("new_level", 1)),
+			result.get("level_up_results", []),
+		)
+	else:
+		# Brand-new unit, or an equipment/consumable purchase -- the
+		# original "here's what you got" popup.
+		_show_purchase_reward_popup(entry.get("item_type", ""), entry.get("item_id", ""))
 
 
 # ADDED: shows a small glittering popup for whatever was just bought -- a
 # unit gets its portrait + description + a "More Information" button that
 # opens the full UnitInfoPopup character sheet; an item/consumable just
 # gets its icon + description (per the spec, items don't get a second
-# button here).
+# button here). Only used for a BRAND NEW unit or an item/consumable --
+# leveling up an existing unit shows _show_level_up_popup() instead.
 func _show_purchase_reward_popup(item_type: String, item_id: String) -> void:
 	var popup := RewardPopup.new()
 	add_child(popup)
@@ -323,6 +390,19 @@ func _show_purchase_reward_popup(item_type: String, item_id: String) -> void:
 		])
 
 
+func _show_level_up_popup(unit_id: String, new_level: int, level_up_results: Array) -> void:
+	# ADDED. Shown instead of _show_purchase_reward_popup() whenever a
+	# purchase turned out to be a level-up -- animated "+X" per stat, in
+	# that stat's own color, with matching sparkles, that all linger on
+	# screen until the player presses Continue. See level_up_popup.gd.
+	var unit_data := _load_unit_data(unit_id)
+	if unit_data == null:
+		return
+	var popup := LevelUpPopup.new()
+	add_child(popup)
+	popup.setup(unit_data, new_level, level_up_results)
+
+
 func _on_refresh_pressed() -> void:
 	var success := ShopEngine.refresh_shop(RunManager.current_run)
 	if not success:
@@ -332,7 +412,7 @@ func _on_refresh_pressed() -> void:
 
 
 func _on_continue_pressed() -> void:
-	get_tree().change_scene_to_file(StageDirector.DEPLOYMENT_SCENE_PATH)
+	SceneTransitions.change_scene(StageDirector.DEPLOYMENT_SCENE_PATH)
 
 
 # ══════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="PlagueData" format=3 uid="uid://casihc2rm5vea"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_qjn8b"]
+[ext_resource type="Resource" uid="uid://60uyxlb25wgm" path="res://resources/status_effects/mutation1.tres" id="2_st63q"]
+[ext_resource type="Resource" uid="uid://rvcjiabsyb1h" path="res://resources/status_effects/mutation2.tres" id="3_htnf3"]
+[ext_resource type="Resource" uid="uid://cece1o0gnu4ud" path="res://resources/status_effects/mutation3.tres" id="4_buwq7"]
+[ext_resource type="Resource" uid="uid://dbim28prfs2ed" path="res://resources/status_effects/mutation4.tres" id="5_iqwtf"]
+[ext_resource type="Resource" uid="uid://c6cyfr11r6j5a" path="res://resources/status_effects/mutation5.tres" id="6_djlt6"]
+[ext_resource type="Resource" uid="uid://d3l5i0ysnah2w" path="res://resources/status_effects/mutation6.tres" id="7_0m6eh"]
+[ext_resource type="Resource" uid="uid://bkpgld80e1ic1" path="res://resources/status_effects/mutation7.tres" id="8_lib55"]
+[ext_resource type="Resource" uid="uid://bkmms5lwopy0e" path="res://resources/status_effects/plaguestatus.tres" id="9_pac8d"]
+[ext_resource type="Script" uid="uid://d2yh2j8vm0suv" path="res://scripts/data/plague_data.gd" id="10_nvuyp"]
+
+[resource]
+script = ExtResource("10_nvuyp")
+plague_status = ExtResource("9_pac8d")
+mutation_pool = Array[ExtResource("1_qjn8b")]([ExtResource("2_st63q"), ExtResource("3_htnf3"), ExtResource("4_buwq7"), ExtResource("5_iqwtf"), ExtResource("6_djlt6"), ExtResource("7_0m6eh"), ExtResource("8_lib55")])
+mutation_weights = Array[float]([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+spread_range_on_turn_end = 4
+spread_range_on_death = 4
+metadata/_custom_type_script = "uid://d2yh2j8vm0suv"

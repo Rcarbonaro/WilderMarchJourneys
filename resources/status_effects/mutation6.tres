@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://d3l5i0ysnah2w"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_1y7vk"]
+
+[resource]
+script = ExtResource("1_1y7vk")
+id = "mutation6"
+display_name = "White Plague Mutation"
+is_permanent = true
+can_stack = true
+max_stacks = 10
+matk_modifier = -1
+mdef_modifier = -1
+has_dot = true
+dot_damage_mode = "flat"
+dot_flat_amount = 1
+dot_damage_percent = 0.0
+metadata/_custom_type_script = "uid://gsbk18mmfnol"

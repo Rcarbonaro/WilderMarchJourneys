@@ -131,8 +131,16 @@ var is_player_unit:   bool = true
 var has_acted:        bool = false
 var has_moved:        bool = false
 
-var pre_move_position: Vector2i = Vector2i(-1, -1)
-# Saved before moving so the player can cancel and snap back.
+var turn_start_position: Vector2i = Vector2i(-1, -1)
+# FIX (renamed from "pre_move_position"): this got reverted to the old
+# name/semantics in a previous pass since it was rebuilt from an older
+# snapshot of this file that predated the rename. Set once at the START
+# of this unit's turn (see battle_manager.gd's spawn_unit() for round 1,
+# and its end-of-turn reset loops for every round after) and used by
+# Cancel Move to snap the unit back to where it stood at turn start --
+# it stays valid for the WHOLE turn and is intentionally NOT cleared just
+# because the unit moved or canceled once, so a second cancel later in
+# the same turn still returns to the same original tile.
 
 var can_cancel_move: bool = false
 # True only between "unit finished moving" and "unit used an ability".
@@ -226,7 +234,7 @@ func setup(data: UnitData, unit_level: int, is_player: bool) -> void:
 	level          = unit_level
 	is_player_unit = is_player
 
-	var stats: StatsData = unit_data.stats_by_level[level - 1]
+	var stats: StatsData = _get_stats_for_current_level()
 	current_hp   = stats.hp
 	current_mana = stats.mana
 
@@ -481,7 +489,32 @@ func _set_facing_for_direction(target_pos: Vector2i) -> void:
 
 func get_stats() -> StatsData:
 	# Returns the raw stats data card for this unit's current level.
-	return unit_data.stats_by_level[level - 1]
+	return _get_stats_for_current_level()
+
+
+func _get_stats_for_current_level() -> StatsData:
+	# FIX (ADDED): unit_data.stats_by_level[level - 1] used to be indexed
+	# directly, with no bounds check. That was harmless as long as every
+	# unit's saved "level" stayed at 1 -- but now that the shop's level-up
+	# system (buying a duplicate unit) can raise "level" up to
+	# LevelUpEngine.LEVEL_CAP, a unit whose stats_by_level array hasn't
+	# been authored out that far (e.g. only a level-1 StatsData entry
+	# exists) would crash here with "Out of bounds get index" the moment
+	# it leveled up and got spawned into a battle.
+	#
+	# This clamps to the highest level actually authored on THIS unit's
+	# stats_by_level array, so an unfinished/partially-authored unit just
+	# keeps using its highest available entry (its level-1 stats, if
+	# that's all that's been filled in) instead of crashing. Once you
+	# author stats_by_level out to LevelUpEngine.LEVEL_CAP entries for a
+	# unit (Option B in the level-up system's README), this naturally
+	# starts using the real per-level numbers you've authored -- nothing
+	# else needs to change.
+	if unit_data.stats_by_level.is_empty():
+		push_warning("UnitNode: '" + str(unit_data.id) + "' has an empty stats_by_level array -- returning a blank StatsData so this doesn't crash, but this unit has no stats at all and needs a StatsData entry authored.")
+		return StatsData.new()
+	var index: int = clamp(level - 1, 0, unit_data.stats_by_level.size() - 1)
+	return unit_data.stats_by_level[index]
 
 
 func get_effective_atk() -> int:

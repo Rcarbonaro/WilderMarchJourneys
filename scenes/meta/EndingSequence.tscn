@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://0bxi42ud4513"]
+
+[ext_resource type="Script" uid="uid://beowvy1fn5ypi" path="res://scripts/meta/ending_sequence.gd" id="1_5ehkp"]
+[ext_resource type="Texture2D" uid="uid://dbw2xejdbw3o7" path="res://sprites/UI/mainmenu/WilderMarch_Title.png" id="2_wxgta"]
+
+[node name="EndingSequence" type="Control" unique_id=1022537962]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_5ehkp")
+logo_texture = ExtResource("2_wxgta")

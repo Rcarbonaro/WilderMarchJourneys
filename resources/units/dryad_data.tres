@@ -14,6 +14,9 @@
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_u3dep"]
 [ext_resource type="Resource" uid="uid://cqfrd830tckb2" path="res://resources/abilities/wallofthorns.tres" id="6_57uqc"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="6_u3dep"]
+[ext_resource type="Script" uid="uid://b7m0h8v4gtmho" path="res://scripts/data/level_up_count_option.gd" id="7_xvscn"]
+[ext_resource type="Script" uid="uid://d07hb58lwi16g" path="res://scripts/data/level_up_stat_rule.gd" id="8_ubr0g"]
+[ext_resource type="Script" uid="uid://duuiwm0fwryh1" path="res://scripts/data/level_up_amount_option.gd" id="9_ubr0g"]
 [ext_resource type="Resource" uid="uid://db46p6l7ny3jw" path="res://resources/abilities/briarfield.tres" id="10_u3dep"]
 
 [sub_resource type="Resource" id="Resource_xvscn"]
@@ -62,6 +65,56 @@ script = ExtResource("5_mpynb")
 lines = Array[ExtResource("4_4l0mm")]([SubResource("Resource_xvscn"), SubResource("Resource_ubr0g"), SubResource("Resource_1epn4"), SubResource("Resource_03c6c"), SubResource("Resource_7bqo7"), SubResource("Resource_vanrd"), SubResource("Resource_8s4lu")])
 metadata/_custom_type_script = "uid://df8avravfldch"
 
+[sub_resource type="Resource" id="Resource_8rvah"]
+script = ExtResource("7_xvscn")
+count = 2
+weight = 0.75
+metadata/_custom_type_script = "uid://b7m0h8v4gtmho"
+
+[sub_resource type="Resource" id="Resource_honjm"]
+script = ExtResource("7_xvscn")
+weight = 0.2
+metadata/_custom_type_script = "uid://b7m0h8v4gtmho"
+
+[sub_resource type="Resource" id="Resource_mmtk4"]
+script = ExtResource("7_xvscn")
+count = 4
+weight = 0.5
+metadata/_custom_type_script = "uid://b7m0h8v4gtmho"
+
+[sub_resource type="Resource" id="Resource_bxekh"]
+script = ExtResource("8_ubr0g")
+stat = "def"
+metadata/_custom_type_script = "uid://d07hb58lwi16g"
+
+[sub_resource type="Resource" id="Resource_k8aht"]
+script = ExtResource("8_ubr0g")
+stat = "mdef"
+metadata/_custom_type_script = "uid://d07hb58lwi16g"
+
+[sub_resource type="Resource" id="Resource_8b0id"]
+script = ExtResource("9_ubr0g")
+amount = 4.0
+weight = 0.75
+metadata/_custom_type_script = "uid://duuiwm0fwryh1"
+
+[sub_resource type="Resource" id="Resource_dwqpq"]
+script = ExtResource("9_ubr0g")
+amount = 6.0
+weight = 0.25
+metadata/_custom_type_script = "uid://duuiwm0fwryh1"
+
+[sub_resource type="Resource" id="Resource_406c0"]
+script = ExtResource("8_ubr0g")
+stat = "hp"
+likelihood_weight = 2.0
+amount_options = Array[ExtResource("9_ubr0g")]([SubResource("Resource_8b0id"), SubResource("Resource_dwqpq")])
+metadata/_custom_type_script = "uid://d07hb58lwi16g"
+
+[sub_resource type="Resource" id="Resource_70cn0"]
+script = ExtResource("6_u3dep")
+metadata/_custom_type_script = "uid://c3bdx4sniu017"
+
 [resource]
 script = ExtResource("2_57uqc")
 id = "dryad"
@@ -70,9 +123,11 @@ description = "A dryad who is able to build personal armor to protect themselves
 portrait = ExtResource("2_pdaka")
 battle_sprite = ExtResource("3_s482d")
 synergy_tags = Array[String](["isolation", "hazard"])
-stats_by_level = Array[ExtResource("6_u3dep")]([ExtResource("1_5jdyn")])
+stats_by_level = Array[ExtResource("6_u3dep")]([SubResource("Resource_70cn0")])
 base_stats = ExtResource("1_5jdyn")
 starting_abilities = Array[ExtResource("3_gaufl")]([ExtResource("4_pdaka"), ExtResource("5_s482d"), ExtResource("10_u3dep"), ExtResource("6_57uqc")])
 sways_in_wind = true
 deployment_barks = SubResource("Resource_mgbcm")
+level_up_stat_rules = Array[ExtResource("8_ubr0g")]([SubResource("Resource_bxekh"), SubResource("Resource_k8aht"), SubResource("Resource_406c0")])
+level_up_stat_count_options = Array[ExtResource("7_xvscn")]([SubResource("Resource_8rvah"), SubResource("Resource_honjm"), SubResource("Resource_mmtk4")])
 metadata/_custom_type_script = "uid://utmj7y8m802a"

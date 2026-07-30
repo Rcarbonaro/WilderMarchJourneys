@@ -531,9 +531,18 @@ func _equip_archons_grimoire(unit) -> void:
 func _archons_grimoire_after_ability(caster, ability, target_cells: Array, origin_cell: Vector2i, executor, unit) -> void:
 	if caster != unit or _archons_grimoire_used.get(unit, false):
 		return
+	# BUGFIX: this used to mark the charge "used" unconditionally, even when
+	# the ability that just resolved cost 0 mana (e.g. a basic attack) --
+	# which is very often a unit's very first action in a battle. That meant
+	# the "first ability free" charge got silently burned for zero benefit,
+	# and the very next REAL spell that turn (or any later turn) wouldn't
+	# get refunded at all. Now the charge is only consumed on the ability
+	# that actually benefited from it (one that had a real mana cost to
+	# refund) — so the first ability that costs mana this battle is the one
+	# that ends up free, no matter how many free basic attacks came first.
 	if ability.mana_cost > 0:
 		unit.restore_mana(ability.mana_cost)
-	_archons_grimoire_used[unit] = true
+		_archons_grimoire_used[unit] = true
 
 # ==============================================================================
 # 21. WORLDROOT STAFF (Staff + Staff)

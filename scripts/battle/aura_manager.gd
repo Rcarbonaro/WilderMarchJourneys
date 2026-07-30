@@ -141,7 +141,7 @@ func activate_aura(caster, aura_data: AuraData) -> void:
 			if unit == null or not is_instance_valid(unit):
 				continue
 			if _is_ally(caster, unit):
-				_apply_statuses_to(unit, aura_data)
+				_apply_statuses_to(unit, aura_data, caster)
 
 
 func remove_all_auras_for(caster) -> void:
@@ -211,7 +211,7 @@ func on_unit_moved(unit) -> void:
 
 		var caster = entry["caster"]
 		if _is_ally(caster, unit):
-			_apply_statuses_to(unit, data)
+			_apply_statuses_to(unit, data, caster)
 
 
 func on_enemy_unit_moved(unit) -> void:
@@ -257,7 +257,7 @@ func on_enemy_unit_moved(unit) -> void:
 				  " → ", unit.unit_data.display_name)
 
 		# Apply status effects immediately on entry.
-		_apply_statuses_to(unit, data)
+		_apply_statuses_to(unit, data, caster)
 
 
 func begin_caster_move(caster, new_cell: Vector2i, duration: float = VISUAL_MOVE_DURATION) -> void:
@@ -352,7 +352,7 @@ func on_caster_moved(caster) -> void:
 			if unit == null or not is_instance_valid(unit):
 				continue
 			if data.affects_team != "enemies" and _is_ally(caster, unit):
-				_apply_statuses_to(unit, data)
+				_apply_statuses_to(unit, data, caster)
 
 # ── PUBLIC API — CRIT OVERLOAD ────────────────────────────────────────────────
 
@@ -495,7 +495,7 @@ func tick_auras_end_of_player_round(player_units: Array, enemy_units: Array) -> 
 						  unit.unit_data.display_name)
 
 				# Apply status effects.
-				_apply_statuses_to(unit, data)
+				_apply_statuses_to(unit, data, caster)
 
 		# -- CLEAR THE HIT LIST FOR NEXT ROUND ─────────────────────────────────
 		entry["enemies_hit_this_round"].clear()
@@ -575,11 +575,19 @@ func _damage_type_string(data: AuraData) -> String:
 
 # ── PRIVATE — STATUS APPLICATION ──────────────────────────────────────────────
 
-func _apply_statuses_to(unit, data: AuraData) -> void:
+func _apply_statuses_to(unit, data: AuraData, caster = null) -> void:
 	# Applies every status in the aura's list to the given unit.
+	#
+	# BUGFIX: this used to call apply_status(status) with NO caster at all,
+	# even though every call site below already has a 'caster' variable in
+	# scope (the unit who owns/placed the aura). Any DOT-type status applied
+	# this way had no caster to snapshot stats from, so unit_node.gd's
+	# apply_status() would leave its damage snapshot at 0 — see the "DOT
+	# CASTER STAT SNAPSHOT" section there. Passing the aura's caster through
+	# fixes that.
 	for status in data.applies_statuses:
 		if status != null:
-			unit.apply_status(status)
+			unit.apply_status(status, 1, caster)
 
 # ── PRIVATE — VISUALS ─────────────────────────────────────────────────────────
 

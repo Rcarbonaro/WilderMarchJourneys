@@ -73,7 +73,7 @@ func _start_random_run(difficulty: String) -> void:   # CHANGED -- was _on_rando
 		})
 		print("Random party member added: ", unit_data.display_name)
 
-	get_tree().change_scene_to_file(TAROT_PICK_SCENE_PATH)
+	SceneTransitions.change_scene(TAROT_PICK_SCENE_PATH)   # default style — task 5
 
 
 func _on_draft_pressed() -> void:
@@ -88,17 +88,19 @@ func _start_draft_run(difficulty: String) -> void:   # CHANGED -- was _on_draft_
 	# "normal" only when it doesn't. Without this, Draft mode would silently
 	# always be "normal" regardless of what was picked here.
 	RunManager.start_new_run(difficulty)   # ADDED
-	get_tree().change_scene_to_file(DRAFT_SCENE_PATH)
+	SceneTransitions.change_scene(DRAFT_SCENE_PATH)   # default style — task 5
 
 
 func _on_back_pressed() -> void:
-	get_tree().change_scene_to_file(MAIN_MENU_SCENE_PATH)
+	# "fade" — see the brief's example: main-menu transitions get their
+	# own distinct (calmer) style, matching main_menu.gd's outbound trip.
+	SceneTransitions.change_scene(MAIN_MENU_SCENE_PATH, "fade")
 
 
 func _on_test_pressed() -> void:
 	print("Opening Test Mode encounter picker...")
 	RunManager.is_test_mode = true
-	get_tree().change_scene_to_file(TEST_ENCOUNTER_SCENE_PATH)
+	SceneTransitions.change_scene(TEST_ENCOUNTER_SCENE_PATH)   # default style — task 5
 
 #Code to make difficulties actually work
 var _selected_difficulty: String = "normal"

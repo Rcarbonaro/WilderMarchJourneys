@@ -160,7 +160,10 @@ func complete_stage() -> void:
 	# fresh ShopEngine.generate_shop() roll the next time ShopScene loads.
 	RunManager.current_run.shop_inventory.clear()
 
-	get_tree().change_scene_to_file(DEPLOYMENT_SCENE_PATH)
+	# Default style — the brief notes deployment entry "may have a different
+	# one"; change the second argument to any style name in
+	# scene_transitions.gd (e.g. "parchment_burn") to give it its own look.
+	SceneTransitions.change_scene(DEPLOYMENT_SCENE_PATH)
 
 
 func enter_current_stage() -> void:
@@ -169,7 +172,12 @@ func enter_current_stage() -> void:
 	if not ResourceLoader.exists(scene_path):
 		printerr("❌ StageDirector: no scene found at '", scene_path, "' for stage_type '", stage_type, "'.")
 		return
-	get_tree().change_scene_to_file(scene_path)
+	# Battle-flavored stages get "parchment_burn" (see the brief's example:
+	# entering a battle gets its own distinct transition); everything else
+	# (shop, encounter, etc.) uses the default style. See scene_transitions.gd
+	# for the full style list.
+	var style := "parchment_burn" if scene_path == "res://scenes/battle/BattleScene.tscn" else ""
+	SceneTransitions.change_scene(scene_path, style)
 
 
 func _apply_reward_rules() -> void:
