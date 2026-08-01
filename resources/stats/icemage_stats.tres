@@ -8,6 +8,6 @@ hp = 14
 atk = 3
 matk = 16
 def = 6
-mdef = 8
+mdef = 9
 mana = 60
 metadata/_custom_type_script = "uid://c3bdx4sniu017"

@@ -4,8 +4,8 @@
 
 [resource]
 script = ExtResource("1_nwjll")
-hp = 80
-atk = 27
+hp = 100
+atk = 25
 def = 14
 mdef = 10
 mov = 2

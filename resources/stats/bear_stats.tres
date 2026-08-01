@@ -4,8 +4,8 @@
 
 [resource]
 script = ExtResource("1_ex1mc")
-hp = 45
-atk = 20
+hp = 60
+atk = 21
 def = 12
 mdef = 3
 mov = 2
