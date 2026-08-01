@@ -87,9 +87,21 @@ script = ExtResource("8_ubr0g")
 stat = "def"
 metadata/_custom_type_script = "uid://d07hb58lwi16g"
 
+[sub_resource type="Resource" id="Resource_ix84v"]
+script = ExtResource("9_ubr0g")
+weight = 0.75
+metadata/_custom_type_script = "uid://duuiwm0fwryh1"
+
+[sub_resource type="Resource" id="Resource_t6h8r"]
+script = ExtResource("9_ubr0g")
+amount = 2.0
+weight = 0.25
+metadata/_custom_type_script = "uid://duuiwm0fwryh1"
+
 [sub_resource type="Resource" id="Resource_k8aht"]
 script = ExtResource("8_ubr0g")
 stat = "mdef"
+amount_options = Array[ExtResource("9_ubr0g")]([SubResource("Resource_ix84v"), SubResource("Resource_t6h8r")])
 metadata/_custom_type_script = "uid://d07hb58lwi16g"
 
 [sub_resource type="Resource" id="Resource_8b0id"]
@@ -111,6 +123,12 @@ likelihood_weight = 2.0
 amount_options = Array[ExtResource("9_ubr0g")]([SubResource("Resource_8b0id"), SubResource("Resource_dwqpq")])
 metadata/_custom_type_script = "uid://d07hb58lwi16g"
 
+[sub_resource type="Resource" id="Resource_72rel"]
+script = ExtResource("8_ubr0g")
+stat = "matk"
+likelihood_weight = 0.1
+metadata/_custom_type_script = "uid://d07hb58lwi16g"
+
 [sub_resource type="Resource" id="Resource_70cn0"]
 script = ExtResource("6_u3dep")
 metadata/_custom_type_script = "uid://c3bdx4sniu017"
@@ -128,6 +146,6 @@ base_stats = ExtResource("1_5jdyn")
 starting_abilities = Array[ExtResource("3_gaufl")]([ExtResource("4_pdaka"), ExtResource("5_s482d"), ExtResource("10_u3dep"), ExtResource("6_57uqc")])
 sways_in_wind = true
 deployment_barks = SubResource("Resource_mgbcm")
-level_up_stat_rules = Array[ExtResource("8_ubr0g")]([SubResource("Resource_bxekh"), SubResource("Resource_k8aht"), SubResource("Resource_406c0")])
+level_up_stat_rules = Array[ExtResource("8_ubr0g")]([SubResource("Resource_bxekh"), SubResource("Resource_k8aht"), SubResource("Resource_406c0"), SubResource("Resource_72rel")])
 level_up_stat_count_options = Array[ExtResource("7_xvscn")]([SubResource("Resource_8rvah"), SubResource("Resource_honjm"), SubResource("Resource_mmtk4")])
 metadata/_custom_type_script = "uid://utmj7y8m802a"

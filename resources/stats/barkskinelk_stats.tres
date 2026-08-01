@@ -4,11 +4,11 @@
 
 [resource]
 script = ExtResource("1_defyd")
-hp = 150
+hp = 160
 atk = 22
 matk = 2
-def = 10
-mdef = 11
+def = 12
+mdef = 13
 mov = 5
 crit_chance = 0.0
 mana = 4

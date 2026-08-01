@@ -86,7 +86,7 @@ extends Control
 var text_blocks: Array[String] = [
 	"The refugees are safe, for now…\nCongratulations on completing the Early Release WilderMarch Demo!",
 	"Hope you enjoyed this early WilderMarch Demo!\nThe full game is planned to have more characters, customizable skills, encounters, more items and more unique items\nMore enemies, more biomes, more bosses, and unique combats, \nAchievements, unlockables, meta customizability, and 2 variations of endless modes!",
-	"If you would like to financially support this project so we can hire a real artist,\nplease leave a tip, donate to our Kickstarter campaign, and/or join our Discord!",
+	"If you would like to follow this project,\nplease join our Discord!",
 	"We hope to see you when the full game releases!",
 ]
 

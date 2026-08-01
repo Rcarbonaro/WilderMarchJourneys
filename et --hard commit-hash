@@ -1,0 +1,87 @@
+[33md3e1fd2[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{0}: reset: moving to HEAD
+[33md3e1fd2[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{1}: reset: moving to HEAD
+[33md3e1fd2[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{2}: reset: moving to HEAD~2
+[33m9a2f9b4[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{3}: reset: moving to origin/main
+[33m9a2f9b4[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{4}: commit: Added level-ups
+[33m76a0b02[m HEAD@{5}: commit: minor updates
+[33md3e1fd2[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{6}: commit: Deployment comments added, and added icons for images
+[33m994f998[m HEAD@{7}: reset: moving to HEAD
+[33m994f998[m HEAD@{8}: commit: Fixed DOTs and added visual effects
+[33md06098d[m HEAD@{9}: commit: Added wind sway for map assets
+[33m7e48311[m HEAD@{10}: commit: Bugfixes
+[33m4b8722e[m HEAD@{11}: commit: Fixed dragoon difficulties and increases difficulty scaling
+[33m9f448cd[m HEAD@{12}: commit: Bugfixes
+[33m406ff59[m HEAD@{13}: commit: improved ui appearance
+[33mb4ded67[m HEAD@{14}: commit: Redid style; need a different font though
+[33m11f5fd1[m HEAD@{15}: commit: Added potion equipping to deployment scene
+[33m2c7e9e6[m HEAD@{16}: commit: Added deployment scenes, items, and forging
+[33m25635a2[m HEAD@{17}: commit: Added more items, units to shop
+[33m5b18365[m HEAD@{18}: commit: Added more items and potions (cannot use them properly)
+[33mfc65a87[m HEAD@{19}: commit: improved ui sounds
+[33m8488a23[m HEAD@{20}: commit: Added button hover and press SFX
+[33m3c4ae2a[m HEAD@{21}: commit: Added background music
+[33m5e27f98[m HEAD@{22}: commit: added forest boss fight
+[33m4ed46d3[m HEAD@{23}: commit: bugfixes, 2x speed
+[33m2201ae8[m HEAD@{24}: commit: Bugfixes
+[33md0fdbaf[m HEAD@{25}: commit: Status Effect improvements
+[33m77fff70[m HEAD@{26}: commit: Improved status effect visuals
+[33mc1822f1[m HEAD@{27}: commit: Added autoloads and prep for actual roguelike system; need to limit spawn space to actual map size
+[33ma476b69[m HEAD@{28}: commit: Fixed pathfinding with hazards
+[33m595f73c[m HEAD@{29}: commit: some fixes; having issues with statuses not expiring at proper time
+[33mb934a14[m HEAD@{30}: reset: moving to origin/main
+[33mb934a14[m HEAD@{31}: commit: manabar improvements
+[33mb4af43a[m HEAD@{32}: commit: Fixed bear animations
+[33m951e665[m HEAD@{33}: commit: More bugfixes, added dust particles when walking, fixed HP and mana bars
+[33me3a43e2[m HEAD@{34}: commit: Various bugfixes
+[33m898a0ff[m HEAD@{35}: commit: Various bugfixes
+[33mbdd6cc3[m HEAD@{36}: commit: bugfixes
+[33m295f2e9[m HEAD@{37}: reset: moving to origin/main
+[33m295f2e9[m HEAD@{38}: commit: UI Improvements
+[33m8935d57[m HEAD@{39}: commit: Added status effect icons
+[33m0ae1654[m HEAD@{40}: commit: Updated and improved in-battle UI
+[33m166d4a7[m HEAD@{41}: commit: UI updates
+[33m3e36967[m HEAD@{42}: commit: Made bottom status bar
+[33mdace8b1[m HEAD@{43}: reset: moving to origin
+[33mdace8b1[m HEAD@{44}: commit: tried and failed at a visual tether
+[33m43e384c[m HEAD@{45}: commit: added more animations
+[33m783f2ce[m HEAD@{46}: commit: added ability icons
+[33m4b4ca1a[m HEAD@{47}: commit: Various bugfixes
+[33m0592659[m HEAD@{48}: commit: Thornling animation fixes
+[33mbff33ee[m HEAD@{49}: commit: Thornling animation fixes
+[33m024fdc4[m HEAD@{50}: commit: added animated main menu background
+[33md80384d[m HEAD@{51}: commit: added bear and leshy
+[33mb9121b4[m HEAD@{52}: reset: moving to HEAD
+[33mb9121b4[m HEAD@{53}: commit: Added spellsword animations
+[33mb525b02[m HEAD@{54}: commit: Added spellsword animations
+[33m45ee063[m HEAD@{55}: commit: Added descriptions to abilities, units, and enemies
+[33m3f9d704[m HEAD@{56}: commit: Added description box
+[33m10930da[m HEAD@{57}: commit: minor bugfixes
+[33m66b43ec[m HEAD@{58}: commit: minor bugfix
+[33me8469f8[m HEAD@{59}: commit: Update hexweaver visuals
+[33m5548e9f[m HEAD@{60}: commit: Fixed hazards and other bugs
+[33m15d8d18[m HEAD@{61}: commit: Added sporeling, hulkingsporeling, and gave sprites and portraits to most characters
+[33m3fe508b[m HEAD@{62}: reset: moving to origin/main
+[33m3fe508b[m HEAD@{63}: commit: Added fire mage
+[33m7af5b45[m HEAD@{64}: commit: Add UI components to let players view enemiesmovement and attack range
+[33md3838c6[m HEAD@{65}: commit: fixes, added stormblade
+[33mfbc1ce9[m HEAD@{66}: commit: Fixed statuses not ending
+[33m1059434[m HEAD@{67}: commit: Added auras, made some fixes
+[33m83a147a[m HEAD@{68}: commit: Fixed some issues with spellsword arcana charges
+[33m40a78fe[m HEAD@{69}: commit: Added rogue and invisibility; fixed on-kill effects (hopefully)
+[33madeccca[m HEAD@{70}: commit: Added isolation functionality and updated windmage abilities
+[33m047b7f0[m HEAD@{71}: reset: moving to origin/main
+[33m047b7f0[m HEAD@{72}: reset: moving to origin/main
+[33m047b7f0[m HEAD@{73}: commit: added stonewarden, plaguebringer, divinator
+[33m911c333[m HEAD@{74}: reset: moving to origin/main
+[33m911c333[m HEAD@{75}: reset: moving to origin/main
+[33m911c333[m HEAD@{76}: commit: set up backgrounds stuff
+[33m9802249[m HEAD@{77}: commit: enemy ent and various fixes
+[33m662f8a3[m HEAD@{78}: commit: Fixed damage calculations, animations, projectiles, added enemy abilities
+[33mf3c9a86[m[33m ([m[1;33mtag: [m[1;33mmobile-v1.0[m[33m, [m[1;31morigin/mobile-version[m[33m, [m[1;32mmobile-version[m[33m)[m HEAD@{79}: commit: fixes
+[33m70af8b5[m HEAD@{80}: commit: enemy wolf animation
+[33m838b33b[m HEAD@{81}: commit: damage numbers
+[33m36a95b7[m HEAD@{82}: commit: Fixed actions and basic animation timing
+[33ma8061f0[m HEAD@{83}: commit: added magic
+[33ma9e7141[m HEAD@{84}: commit (merge): Merge branch 'main' of https://github.com/Rcarbonaro/WilderMarchJourneys
+[33m0fce753[m HEAD@{85}: Branch: renamed refs/heads/master to refs/heads/main
+[33m0fce753[m HEAD@{87}: commit (initial): initial

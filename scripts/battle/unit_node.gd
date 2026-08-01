@@ -1657,6 +1657,15 @@ func has_status(status_id: String) -> bool:
 			return true
 	return false
 
+func get_status_entry(status_id: String) -> Dictionary:
+	# Returns the full status entry dict ({data, stacks, remaining_rounds,
+	# source_caster, visual_phase}) for the given status id, or an empty
+	# Dictionary if the unit doesn't have it. Used by PlagueSystem to trace
+	# who originally cast a status, since has_status() only returns a bool.
+	for s in active_statuses:
+		if s["data"].id == status_id:
+			return s
+	return {}
 
 func get_buff_count() -> int:
 	var count = 0
