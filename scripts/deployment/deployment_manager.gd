@@ -138,6 +138,15 @@ const UNIT_PREVIEW_SCENE_PATH := "res://scenes/deployment/DeploymentUnitPreview.
 # near the center of the screen behind your UI panels -- every wandering
 # unit gets parented under it, so moving/resizing IT moves the whole group.
 
+@onready var camp_decorations_layer: Node2D = $CampDecorations if has_node("CampDecorations") else null
+# ADDED (Mini-Encounters/Camp). Add a plain Node2D named "CampDecorations"
+# to DeploymentScene.tscn, somewhere in your background layer (behind
+# PreviewLayer/your UI panels, same idea as PreviewLayer above) -- tents
+# (and later, other camp decorations) get parented under it. Position it
+# wherever in your background composition you want the camp to visually
+# sit. See _refresh_camp_decorations() below -- it no-ops harmlessly if you
+# haven't added this node yet, so nothing breaks before you do.
+
 var deployed_instance_ids: Array[String] = ["", "", "", ""]
 # CHANGED: fixed at exactly 4 entries now, one per slot, "" meaning "empty" --
 # used to be a dynamically-sized Array that only ever held real instance_ids
@@ -199,6 +208,7 @@ func _ready() -> void:
 	_update_scout_button()
 	_update_stage_label()
 	_setup_deployment_background()
+	_refresh_camp_decorations()   # ADDED (Mini-Encounters/Camp)
 	_spawn_unit_previews()
 
 	# ADDED: if the stage that was just completed granted gold (see
@@ -932,6 +942,85 @@ func _show_full_unit_info_popup_for_instance(instance_id: String) -> void:
 
 # ── BIOME BACKGROUND ───────────────────────────────────────────────────────────
 
+# ── CAMP DECORATIONS (ADDED, Mini-Encounters) ─────────────────────────────────
+# One tent per survivor ever recruited (see mini_encounter_scene.gd's Recruit
+# choice / effect_system.gd's _do_add_camp_recruit()), rebuilt fresh every
+# time this scene loads so it always matches the current run's actual count.
+
+@export var tent_size: Vector2 = Vector2(64, 48)
+# Width/height in pixels every tent -- real picture or gray placeholder --
+# gets scaled to. Edit this one value to resize every tent at once.
+
+@export var tent_pictures: Array[Texture2D] = []
+# Leave empty and every tent shows the gray "Tent Here" placeholder box.
+# Add one or more textures here and each tent independently picks randomly
+# between them (fine for the same texture to get picked more than once if
+# you've only added one or two).
+
+@export var tent_start_position: Vector2 = Vector2(40, 40)
+@export var tent_spacing: Vector2 = Vector2(80, 0)
+@export var tents_per_row: int = 6
+@export var tent_row_offset: Vector2 = Vector2(-320, 60)
+# Simple grid layout, all relative to CampDecorations' own position in the
+# scene: tent N sits at
+#   tent_start_position + tent_spacing * (N % tents_per_row)
+#     + tent_row_offset * (N / tents_per_row)
+# There's no "correct" starting values here without seeing your actual
+# background art -- treat these four as a rough starting layout and
+# reposition to match wherever your camp scene wants tents to sit.
+#
+# EXTENDING TO OTHER DECORATIONS (logs, crates, etc.): this same
+# "N recruits/units -> N decorations, random-texture-or-placeholder, simple
+# grid" shape is straightforward to copy for another decoration type -- add
+# a second @export Array[Texture2D] (e.g. crate_pictures), a second count
+# source (e.g. roster size instead of camp_recruit_count), and a second
+# small loop alongside _refresh_camp_decorations() below that adds its own
+# nodes to the same camp_decorations_layer (or a second layer, if you want
+# to be able to clear/reposition decoration types independently).
+
+func _refresh_camp_decorations() -> void:
+	if camp_decorations_layer == null or RunManager.current_run == null:
+		return
+	for child in camp_decorations_layer.get_children():
+		child.queue_free()
+
+	var tent_count: int = int(RunManager.current_run.runtime_effect_state.get("camp_recruit_count", 0))
+	for i in range(tent_count):
+		camp_decorations_layer.add_child(_make_tent_node(i))
+
+
+func _make_tent_node(index: int) -> Control:
+	var row: int = index / tents_per_row
+	var col: int = index % tents_per_row
+	var pos: Vector2 = tent_start_position + tent_spacing * col + tent_row_offset * row
+
+	if not tent_pictures.is_empty():
+		var sprite := TextureRect.new()
+		sprite.name = "Tent" + str(index)
+		sprite.texture = tent_pictures[randi() % tent_pictures.size()]
+		sprite.custom_minimum_size = tent_size
+		sprite.size = tent_size
+		sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		sprite.position = pos
+		return sprite
+
+	# Placeholder: flat gray box + centered "Tent Here" label.
+	var box := ColorRect.new()
+	box.name = "Tent" + str(index) + "Placeholder"
+	box.color = Color(0.5, 0.5, 0.5, 1.0)
+	box.size = tent_size
+	box.position = pos
+
+	var label := Label.new()
+	label.text = "Tent Here"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.size = tent_size
+	label.add_theme_font_size_override("font_size", 10)
+	box.add_child(label)
+	return box
+
+
 func _setup_deployment_background() -> void:
 	if RunManager.current_run == null or background_texture == null:
 		return
@@ -1095,6 +1184,18 @@ func _rebuild_inventory() -> void:
 func _on_inventory_item_pressed(item_id: String) -> void:
 	var data: Dictionary = ContentLoader.get_equipment(item_id)
 
+	# ── SKILL SCROLLS (ADDED) ────────────────────────────────────────────────
+	# A Skill Scroll is a "consumable" item (same JSON category as potions --
+	# see ContentLoader/equipment_runtime.gd) marked with
+	# "consumable_type": "skill_scroll" in its own JSON so it can be told
+	# apart here. Scrolls don't get equipped or combined like normal gear or
+	# potions -- using one opens the enhancement picker instead (pick a unit,
+	# then one of that unit's enhanceable abilities, then which of ITS
+	# eligible_enhancements to apply). See _show_scroll_unit_picker() below.
+	if data.get("consumable_type", "") == "skill_scroll":
+		_show_scroll_unit_picker(item_id)
+		return
+
 	var popup := PopupPanel.new()
 	add_child(popup)
 
@@ -1208,6 +1309,231 @@ func _equip_item_to_unit(item_id: String, instance_id: String) -> void:
 	RunManager.save_run()
 	_rebuild_roster()
 	_rebuild_inventory()
+
+
+# ── SKILL SCROLLS (ADDED) ──────────────────────────────────────────────────────
+# Three-step picker: unit -> ability -> enhancement. See ability_enhancement_
+# data.gd and unit_node.gd's build_enhanced_abilities() for how an applied
+# enhancement actually changes anything in battle.
+
+func _show_scroll_unit_picker(scroll_item_id: String) -> void:
+	var popup := PopupPanel.new()
+	add_child(popup)
+
+	var margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 16)
+	popup.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 6)
+	margin.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "Use " + ContentLoader.get_equipment(scroll_item_id).get("name", scroll_item_id) + " on:"
+	title.add_theme_font_size_override("font_size", 16)
+	vbox.add_child(title)
+
+	var any_eligible := false
+	for entry in _get_full_roster():
+		var unit_data := _load_unit_data(entry.get("unit_id", ""))
+		if unit_data == null:
+			continue
+		# Only offer units that actually have at least one enhanceable
+		# ability -- no point showing a unit whose every ability has an
+		# empty eligible_enhancements array.
+		var has_any_enhanceable := false
+		for ability in unit_data.starting_abilities:
+			if ability != null and not ability.eligible_enhancements.is_empty():
+				has_any_enhanceable = true
+				break
+		if not has_any_enhanceable:
+			continue
+		any_eligible = true
+
+		var label: String = unit_data.display_name
+		var instance_id: String = entry.get("instance_id", "")
+
+		var unit_btn := Button.new()
+		unit_btn.text = label + " (Lv " + str(entry.get("level", 1)) + ")"
+		unit_btn.pressed.connect(func():
+			popup.queue_free()
+			_show_scroll_ability_picker(scroll_item_id, instance_id)
+		)
+		vbox.add_child(unit_btn)
+
+	if not any_eligible:
+		var none_label := Label.new()
+		none_label.text = "No units have any enhanceable abilities yet."
+		none_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+		vbox.add_child(none_label)
+
+	var cancel_btn := Button.new()
+	cancel_btn.text = "Cancel"
+	cancel_btn.pressed.connect(func(): popup.queue_free())
+	vbox.add_child(cancel_btn)
+
+	popup.popup_centered(Vector2(280, 340))
+
+
+func _show_scroll_ability_picker(scroll_item_id: String, instance_id: String) -> void:
+	var entry: Dictionary = {}
+	for candidate in _get_full_roster():
+		if candidate.get("instance_id", "") == instance_id:
+			entry = candidate
+			break
+	if entry.is_empty():
+		return
+	var unit_data := _load_unit_data(entry.get("unit_id", ""))
+	if unit_data == null:
+		return
+
+	var popup := PopupPanel.new()
+	add_child(popup)
+
+	var margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 16)
+	popup.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 6)
+	margin.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "Enhance which ability?"
+	title.add_theme_font_size_override("font_size", 16)
+	vbox.add_child(title)
+
+	var applied: Dictionary = entry.get("ability_enhancements", {})
+
+	for ability in unit_data.starting_abilities:
+		if ability == null or ability.eligible_enhancements.is_empty():
+			continue
+
+		var applied_count: int = applied.get(ability.id, []).size()
+		var ability_btn := Button.new()
+		ability_btn.text = ability.display_name
+		if applied_count > 0:
+			ability_btn.text += "  (%d applied)" % applied_count
+		ability_btn.pressed.connect(func():
+			popup.queue_free()
+			_show_scroll_enhancement_picker(scroll_item_id, instance_id, ability)
+		)
+		vbox.add_child(ability_btn)
+
+	var back_btn := Button.new()
+	back_btn.text = "Back"
+	back_btn.pressed.connect(func():
+		popup.queue_free()
+		_show_scroll_unit_picker(scroll_item_id)
+	)
+	vbox.add_child(back_btn)
+
+	var cancel_btn := Button.new()
+	cancel_btn.text = "Cancel"
+	cancel_btn.pressed.connect(func(): popup.queue_free())
+	vbox.add_child(cancel_btn)
+
+	popup.popup_centered(Vector2(280, 340))
+
+
+func _show_scroll_enhancement_picker(scroll_item_id: String, instance_id: String, ability: AbilityData) -> void:
+	var entry: Dictionary = {}
+	for candidate in _get_full_roster():
+		if candidate.get("instance_id", "") == instance_id:
+			entry = candidate
+			break
+	if entry.is_empty():
+		return
+
+	var applied: Dictionary = entry.get("ability_enhancements", {})
+	var applied_for_ability: Array = applied.get(ability.id, [])
+
+	var popup := PopupPanel.new()
+	add_child(popup)
+
+	var margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 16)
+	popup.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 6)
+	margin.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "Apply which enhancement to " + ability.display_name + "?"
+	title.add_theme_font_size_override("font_size", 16)
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD
+	vbox.add_child(title)
+
+	# Multiple enhancements can stack on the same ability, including the SAME
+	# enhancement more than once (e.g. two "+15% damage" scrolls both landing
+	# on Fireball) -- per design, nothing here is a one-time-only pick.
+	for enhancement in ability.eligible_enhancements:
+		if enhancement == null:
+			continue
+		var times_applied: int = applied_for_ability.count(enhancement.id)
+
+		var ench_btn := Button.new()
+		ench_btn.text = enhancement.display_name
+		if times_applied > 0:
+			ench_btn.text += "  (x%d already)" % times_applied
+		ench_btn.tooltip_text = enhancement.description
+		ench_btn.pressed.connect(func():
+			popup.queue_free()
+			_apply_skill_scroll_enhancement(scroll_item_id, instance_id, ability.id, enhancement.id)
+		)
+		vbox.add_child(ench_btn)
+
+	var back_btn := Button.new()
+	back_btn.text = "Back"
+	back_btn.pressed.connect(func():
+		popup.queue_free()
+		_show_scroll_ability_picker(scroll_item_id, instance_id)
+	)
+	vbox.add_child(back_btn)
+
+	var cancel_btn := Button.new()
+	cancel_btn.text = "Cancel"
+	cancel_btn.pressed.connect(func(): popup.queue_free())
+	vbox.add_child(cancel_btn)
+
+	popup.popup_centered(Vector2(300, 360))
+
+
+func _apply_skill_scroll_enhancement(scroll_item_id: String, instance_id: String,
+									 ability_id: String, enhancement_id: String) -> void:
+	var entry: Dictionary = {}
+	for candidate in _get_full_roster():
+		if candidate.get("instance_id", "") == instance_id:
+			entry = candidate
+			break
+	if entry.is_empty():
+		return
+
+	if not RunManager.current_run.equipment_inventory.has(scroll_item_id):
+		push_warning("DeploymentManager: tried to use '" + scroll_item_id + "' but none left in inventory.")
+		return
+	RunManager.current_run.equipment_inventory.erase(scroll_item_id)   # consume exactly one copy
+
+	var applied: Dictionary = entry.get("ability_enhancements", {})
+	var applied_for_ability: Array = applied.get(ability_id, [])
+	applied_for_ability.append(enhancement_id)
+	applied[ability_id] = applied_for_ability
+	entry["ability_enhancements"] = applied
+	# NOTE: this only affects the party entry -- the actual enhanced
+	# AbilityData duplicate gets built at battle start, by
+	# unit_node.gd's build_enhanced_abilities() (see battle_manager.gd's
+	# spawn_unit()), which reads this exact "ability_enhancements" field.
+
+	RunManager.save_run()
+	_rebuild_roster()
+	_rebuild_inventory()
+
+	print("📜 Applied enhancement '", enhancement_id, "' to ability '", ability_id,
+		  "' on unit ", entry.get("unit_id", "?"))
 
 
 # ADDED: a small reusable "OK" message popup, used for the "No Equip Slot

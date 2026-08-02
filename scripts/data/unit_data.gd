@@ -14,6 +14,15 @@ extends Resource
 
 @export var description: String = ""
 
+@export var unique_mechanics: String = ""
+# ADDED. Optional -- leave blank ("") to skip this section entirely. Shown in
+# UnitInfoPopup directly below Description (see unit_info_popup.gd) whenever
+# it's non-empty. Use this for a plain-language explanation of a unit's named
+# passive/mechanic that doesn't read naturally as ability flavor text -- e.g.
+# the Spellsword's Arcana Charge: what it does, how it builds, what it
+# unlocks. Every other unit can just leave this blank; the section simply
+# won't render for them.
+
 @export var portrait: Texture2D
 
 @export var battle_sprite: Texture2D
@@ -25,6 +34,67 @@ extends Resource
 @export var class_name_label: String = ""
 
 @export var synergy_tags: Array[String] = []  # e.g. ["Overkill", "Critical"]
+
+# ── ROLE TAGS (ADDED) ─────────────────────────────────────────────────────────
+# Multi-select checkboxes in the Inspector -- click as many as apply. This is
+# a bitmask (not a single dropdown) because some units genuinely fall into
+# more than one bucket at once (e.g. a beefy skirmisher that also deals real
+# damage).
+#
+# USED BY: Random game mode's spawn guarantee (at least 1 tank + 1 primary
+# damage dealer every run -- see game_mode logic that builds the Random
+# roster). Anything else that wants to reason about "is this a tank" without
+# hardcoding specific unit ids can check this too.
+#
+# CHECKING IN CODE: a unit can match more than one role, so always check with
+# a bitwise AND against the named constants below -- never with `==`.
+#   if unit_data.unit_roles & UnitData.ROLE_TANK:
+#       ...
+# ...or use the has_role() helper just below, which does the same thing:
+#   if unit_data.has_role(UnitData.ROLE_TANK):
+#       ...
+
+@export_flags("Tank", "Support", "Skirmisher", "Sub Damage", "Primary Damage") var unit_roles: int = 0
+
+const ROLE_TANK           := 1   # bit 0 -- "Tank"
+const ROLE_SUPPORT        := 2   # bit 1 -- "Support"
+const ROLE_SKIRMISHER     := 4   # bit 2 -- "Skirmisher"
+const ROLE_SUB_DAMAGE     := 8   # bit 3 -- "Sub Damage"
+const ROLE_PRIMARY_DAMAGE := 16  # bit 4 -- "Primary Damage"
+
+func has_role(role_flag: int) -> bool:
+	# Convenience wrapper around the bitmask check above -- reads a little
+	# cleaner at call sites than repeating "& " everywhere.
+	return (unit_roles & role_flag) != 0
+
+# ── HEAVY / TANKY UNIT TRAITS (ADDED) ─────────────────────────────────────────
+# Deliberately SEPARATE from Role Tags above. Role Tags are about TEAM
+# COMPOSITION (who to bring to a fight); these are about actual BATTLEFIELD
+# BEHAVIOR (how hard THIS specific unit is to punt around or wear down with
+# hazards/DOT). A unit can have Tank checked above and none of these set, or
+# vice versa -- e.g. a support unit standing in a hazard field, or a
+# genuinely unstoppable boss, doesn't need to also carry the Tank team-comp
+# tag just to get these.
+
+@export var immune_to_displacement_and_cc: bool = false
+# When checked, this unit:
+#   - cannot be pushed/pulled/scattered by any player ability's displacement
+#     (see ability_executor.gd's _resolve_pending_displacements())
+#   - ignores negative mov_modifier from slows entirely -- positive mov BUFFS
+#     still apply normally (see unit_node.gd's get_effective_mov())
+#   - can never have a stun or root status applied to it AT ALL (full CC
+#     immunity, not just movement -- see unit_node.gd's apply_status())
+
+@export_range(0.0, 1.0, 0.05) var hazard_damage_reduction_percent: float = 0.0
+# 0.0 = no reduction, 1.0 = fully immune to hazard tile damage (spikes, fire
+# fields, etc). Set per-unit so individual "tanky" enemies can be rebalanced
+# independently instead of sharing one global number. See battle_grid.gd's
+# apply_hazard_to_unit().
+
+@export_range(0.0, 1.0, 0.05) var dot_damage_reduction_percent: float = 0.0
+# 0.0 = no reduction, 1.0 = fully immune to damage-over-time ticks (poison/
+# fire/curse). Same per-unit rebalancing reasoning as hazard resistance
+# above. See unit_node.gd's _apply_dot_tick().
 
 # Stats PER LEVEL (index 0 = level 1, index 4 = level 5)
 

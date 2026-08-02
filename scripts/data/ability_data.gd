@@ -141,6 +141,16 @@ extends Resource
 @export var hits: int = 1
 # Multi-hit abilities strike this many times.
 
+@export_range(0.0, 1.0, 0.05) var double_hit_chance: float = 0.0
+# ADDED. 0.0 = never. Chance for the FULL attack (damage and all its
+# on-hit effects) to resolve a second time against the same target(s),
+# separate from 'hits' above -- 'hits' is a guaranteed fixed count, this is
+# a probability roll per cast. Primarily here for Skill Scroll's "chance to
+# hit twice" enhancement (see ability_enhancement_data.gd), which adds to
+# this value rather than replacing it, but nothing stops you from setting
+# it directly on a hand-authored ability too. See ability_executor.gd's
+# damage-application loop for where this actually gets rolled.
+
 # ── EFFECTS ───────────────────────────────────────────────────────────────────
 
 @export var applies_statuses: Array[StatusEffectData] = []
@@ -331,6 +341,13 @@ extends Resource
 @export_enum("atk", "matk", "def", "mdef") var thorns_scaling_stat: String = "def"
 @export var thorns_duration_rounds: int = 2
 
+@export var applies_thorns_to_self: bool = false
+# ADDED. Same mechanic as applies_thorns above (reuses thorns_reflect_
+# percent/thorns_scaling_stat/thorns_duration_rounds), just applied to the
+# CASTER instead of the ability's target -- for Skill Scroll's "Apply
+# Thorns to self" enhancement. Independent of applies_thorns; an ability can
+# have either, both, or neither.
+
 # ── SHIELD / BARRIER ──────────────────────────────────────────────────────────
 # Applies a flat damage-absorbing barrier. Damage hits the barrier first,
 # and only the remaining damage (if any) touches HP.
@@ -347,6 +364,20 @@ extends Resource
 @export_enum("caster_def", "caster_mdef", "target_def", "target_mdef") var guardian_uses_defense: String = "caster_def"
 @export var guardian_duration_rounds: int = 1
 
+@export var applies_guardian_to_self: bool = false
+# ADDED, for Skill Scroll's "Apply Guardian to self" enhancement. NOTE: this
+# is deliberately a DIFFERENT mechanic from applies_guardian above, not just
+# "guardian with the roles swapped" -- Guardian fundamentally needs a
+# separate protector and protected unit (see battle_grid.gd's
+# apply_guardian(protected_unit, guardian_unit, ...)), and "protect
+# yourself, protected by yourself" isn't a meaningful redirect. Instead this
+# grants the CASTER a flat self damage-reduction ward, reusing
+# guardian_redirect_percent as the reduction fraction and
+# guardian_duration_rounds for how long it lasts (same
+# damage_taken_modifier status mechanism Heavy Plate uses -- see
+# ability_executor.gd for where this gets applied). Independent of
+# applies_guardian; an ability can have either, both, or neither.
+
 # ── ON-KILL EFFECTS ───────────────────────────────────────────────────────────
 # Something special happens when this unit lands a killing blow.
 
@@ -357,6 +388,10 @@ extends Resource
 @export var on_kill_reset_has_moved: bool = false
 @export var on_kill_reset_cooldowns: bool = false
 @export var on_kill_apply_status: StatusEffectData
+@export var on_kill_restore_mana_amount: int = 0
+# ADDED, for Skill Scroll's "Restore mana on kill" enhancement. 0 = no mana
+# restored. Flat amount, not a percent -- stacks additively same as every
+# other enhancement (two +10 scrolls = +20 total).
 
 # ── MOVEMENT AFTER ATTACK ─────────────────────────────────────────────────────
 # After the attack resolves, the caster can move some squares.
@@ -425,3 +460,16 @@ extends Resource
 # exactly as they do now and just gain particles on top. Does NOT affect
 # damage calculation -- that's still damage_type above. Leave "none" for
 # abilities that don't need this.
+
+# ── SKILL SCROLL ENHANCEMENTS (ADDED) ─────────────────────────────────────────
+
+@export var eligible_enhancements: Array[AbilityEnhancementData] = []
+# The pool of enhancements a Skill Scroll can unlock ON THIS ABILITY. Leave
+# empty for an ability that shouldn't be enhanceable at all -- it just won't
+# show up as an option in the scroll-application screen. Assign whichever
+# AbilityEnhancementData resources make sense for this specific ability
+# (e.g. a melee attack might offer "range", "double_hit_chance", and
+# "isolated_damage"; a support heal might only offer "shield_target" and
+# "add_buff"). See ability_enhancement_data.gd and unit_node.gd's
+# _build_enhanced_abilities() for how an applied enhancement actually gets
+# folded into a unit's copy of this ability at battle setup.

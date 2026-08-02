@@ -14,6 +14,8 @@
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_slqco"]
 [ext_resource type="Script" uid="uid://df8avravfldch" path="res://scripts/data/dialogue_bark_data.gd" id="5_y40d7"]
 [ext_resource type="Resource" uid="uid://bt0e0hav823uj" path="res://resources/abilities/thunderburst.tres" id="6_8cs0s"]
+[ext_resource type="Script" uid="uid://b7m0h8v4gtmho" path="res://scripts/data/level_up_count_option.gd" id="7_y40d7"]
+[ext_resource type="Script" uid="uid://d07hb58lwi16g" path="res://scripts/data/level_up_stat_rule.gd" id="8_kkd55"]
 [ext_resource type="Resource" uid="uid://6u5rocm76its" path="res://resources/abilities/tempeststrike.tres" id="11_q3vbu"]
 
 [sub_resource type="Resource" id="Resource_kkd55"]
@@ -68,6 +70,7 @@ description = "A nimble fighter who dances around the battlefield, sacrificing h
 portrait = ExtResource("3_slqco")
 battle_sprite = ExtResource("2_8cs0s")
 synergy_tags = Array[String](["critical", "arcane"])
+unit_roles = 20
 stats_by_level = Array[ExtResource("3_n4jxu")]([ExtResource("1_127on")])
 base_stats = ExtResource("1_127on")
 starting_abilities = Array[ExtResource("2_8l2hl")]([ExtResource("4_ln10n"), ExtResource("5_ln10n"), ExtResource("6_8cs0s"), ExtResource("11_q3vbu")])

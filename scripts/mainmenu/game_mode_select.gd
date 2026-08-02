@@ -30,6 +30,15 @@ func _ready() -> void:
 	test_button.pressed.connect(_on_test_pressed)
 	AudioManager.wire_all_buttons_in(self)
 
+	# ── MODE TOOLTIPS (ADDED) ─────────────────────────────────────────────────
+	random_button.mouse_entered.connect(func(): _show_mode_tooltip("random", random_button))
+	random_button.mouse_exited.connect(_hide_mode_tooltip)
+	draft_button.mouse_entered.connect(func(): _show_mode_tooltip("draft", draft_button))
+	draft_button.mouse_exited.connect(_hide_mode_tooltip)
+	test_button.mouse_entered.connect(func(): _show_mode_tooltip("test", test_button))
+	test_button.mouse_exited.connect(_hide_mode_tooltip)
+	# BackButton intentionally has no tooltip -- it's not a game mode.
+
 
 func _show_difficulty_popup(on_chosen: Callable) -> void:   # ADDED
 	var popup = load(DIFFICULTY_POPUP_SCENE_PATH).instantiate()
@@ -37,6 +46,55 @@ func _show_difficulty_popup(on_chosen: Callable) -> void:   # ADDED
 	popup.difficulty_chosen.connect(on_chosen)
 	# cancelled is intentionally not connected to anything -- the popup just
 	# frees itself and the player's back on this screen, nothing to undo yet.
+
+
+# ── MODE TOOLTIPS (ADDED) ─────────────────────────────────────────────────────
+# Small hover popup describing each mode. Mirrors ui_manager.gd's
+# _show_ability_tooltip()/_show_status_tooltip() pattern (same PanelContainer
+# + Label + "measure one frame, then clamp inside the viewport" approach) --
+# kept as its own small self-contained copy here rather than reaching into
+# UIManager, since this screen doesn't otherwise use it at all.
+
+const MODE_DESCRIPTIONS: Dictionary = {
+	"random": "True Roguelike Experience",
+	"draft":  "Allows you to select a specific team to play; does not grant progress or achievements",
+	"test":   "For testing specific mechanics (Developer tool)",
+}
+
+var _mode_tooltip: PanelContainer = null
+
+func _show_mode_tooltip(mode_key: String, anchor_btn: Control) -> void:
+	_hide_mode_tooltip()
+
+	_mode_tooltip              = PanelContainer.new()
+	_mode_tooltip.z_index      = 100
+	_mode_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_mode_tooltip)
+
+	var desc := Label.new()
+	desc.text                = MODE_DESCRIPTIONS.get(mode_key, "")
+	desc.custom_minimum_size = Vector2(220, 0)
+	desc.autowrap_mode       = TextServer.AUTOWRAP_WORD
+	desc.add_theme_font_size_override("font_size", 13)
+	_mode_tooltip.add_child(desc)
+
+	# Position above the button, clamped inside the viewport -- same approach
+	# as ui_manager.gd's _show_ability_tooltip().
+	await get_tree().process_frame   # wait one frame so the tooltip measures itself
+	if not is_instance_valid(_mode_tooltip):
+		return
+	var vp:  Vector2 = get_viewport().get_visible_rect().size
+	var pos: Vector2 = anchor_btn.global_position
+	pos.y -= _mode_tooltip.size.y + 8.0   # 8px gap above the button
+	pos.x  = clamp(pos.x, 4.0, vp.x - _mode_tooltip.size.x - 4.0)
+	pos.y  = clamp(pos.y, 4.0, vp.y - _mode_tooltip.size.y - 4.0)
+	_mode_tooltip.position = pos
+
+
+func _hide_mode_tooltip() -> void:
+	if is_instance_valid(_mode_tooltip):
+		_mode_tooltip.queue_free()
+	_mode_tooltip = null
 
 
 func _on_random_pressed() -> void:

@@ -129,10 +129,6 @@ stat = "matk"
 likelihood_weight = 0.1
 metadata/_custom_type_script = "uid://d07hb58lwi16g"
 
-[sub_resource type="Resource" id="Resource_70cn0"]
-script = ExtResource("6_u3dep")
-metadata/_custom_type_script = "uid://c3bdx4sniu017"
-
 [resource]
 script = ExtResource("2_57uqc")
 id = "dryad"
@@ -141,7 +137,8 @@ description = "A dryad who is able to build personal armor to protect themselves
 portrait = ExtResource("2_pdaka")
 battle_sprite = ExtResource("3_s482d")
 synergy_tags = Array[String](["isolation", "hazard"])
-stats_by_level = Array[ExtResource("6_u3dep")]([SubResource("Resource_70cn0")])
+unit_roles = 1
+stats_by_level = Array[ExtResource("6_u3dep")]([ExtResource("1_5jdyn")])
 base_stats = ExtResource("1_5jdyn")
 starting_abilities = Array[ExtResource("3_gaufl")]([ExtResource("4_pdaka"), ExtResource("5_s482d"), ExtResource("10_u3dep"), ExtResource("6_57uqc")])
 sways_in_wind = true

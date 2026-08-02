@@ -23,14 +23,16 @@
 # unit.setup(...) inside battle_manager.gd's spawn_unit() -- see the
 # checklist at the bottom of combat_hooks.gd.
 #
-# CONFIRMED CORRECT -- no changes made to this file. Traced it fully against
-# unit_node.gd's get_effective_atk()/get_effective_max_hp()/etc.: they sum
-# every key in momentum_bonuses using the same {"atk":.., "def":..} shape
-# apply_equipment_to_unit() writes here, so equipment stat bonuses were
-# always live/correct. The actual "unit_info_popup not up to date" bug was
-# entirely in ui_manager.gd, which was reading a different (and never
-# populated) unit.equipped_items field instead of resolving from
-# unit.equipped_item_ids -- fixed there instead of here.
+# STACKING FIX (this pass): apply_equipment_to_unit() used to write one
+# momentum_bonuses key PER ITEM ID, and percent crit_chance/crit_damage went
+# into a key based on the stat name alone -- both meant two sources that
+# happened to share a key (two copies of the same item, or two different
+# items both granting the same percent stat) silently overwrote each other
+# instead of stacking. Fixed by summing every equipped item's contribution
+# into one shared total up front, then writing that ONE combined key
+# ("equip_total_flat"). See the big comment inside apply_equipment_to_unit()
+# below for the full explanation. remove_equipment_from_unit() and
+# compute_preview_stat_bonuses() updated to match.
 #
 # One minor note while I had this file open, NOT part of any reported bug:
 # remove_equipment_from_unit() below is fully correct but is never actually
@@ -44,6 +46,25 @@
 extends Node
 
 func apply_equipment_to_unit(unit, equipped_item_ids: Array) -> void:
+	# ── STACKING FIX (ADDED) ────────────────────────────────────────────────
+	# This used to write ONE momentum_bonuses key PER ITEM ID ("equip_" +
+	# item_id), and percent crit_chance/crit_damage bonuses went into a key
+	# based on the STAT NAME ALONE ("equip_percent_" + stat). Both collided
+	# silently instead of stacking:
+	#   - Two copies of the SAME item both wrote "equip_<same id>" -- the
+	#     second equip just overwrote the first with an identical value, so
+	#     wearing two of one item never actually doubled its bonus.
+	#   - TWO DIFFERENT items that both grant, say, +crit_chance both wrote
+	#     "equip_percent_crit_chance" -- whichever got processed LAST won,
+	#     silently discarding the other item's bonus entirely.
+	# Fix: sum every equipped item's contribution into ONE shared total up
+	# front (same approach compute_preview_stat_bonuses() below already used
+	# correctly), then write that single combined total once. Any number of
+	# duplicate or same-stat items now just add together naturally.
+	var total_flat := {"atk": 0, "matk": 0, "def": 0, "mdef": 0, "mov": 0,
+		"crit_chance": 0.0, "crit_damage": 0.0, "hp": 0, "mana": 0}
+	var any_flat_bonus := false
+
 	for item_id in equipped_item_ids:
 		if item_id == null or item_id == "":
 			continue
@@ -51,14 +72,6 @@ func apply_equipment_to_unit(unit, equipped_item_ids: Array) -> void:
 		if item_data.is_empty():
 			push_warning("EquipmentRuntime: equipped item '" + str(item_id) + "' not found.")
 			continue
-
-		var bonus_key: String = "equip_" + item_id
-		# "hp"/"mana" added here too now — flat (non-percent) HP/mana
-		# bonuses used to be silently dropped, since this dict had no key
-		# for them to land in at all.
-		var flat_bonus := {"atk": 0, "matk": 0, "def": 0, "mdef": 0, "mov": 0,
-			"crit_chance": 0.0, "crit_damage": 0.0, "hp": 0, "mana": 0}
-		var any_flat_bonus := false
 
 		for effect in item_data.get("effects", []):
 			if effect.get("type", "") != "add_stat" or effect.get("scope", "permanent") != "permanent":
@@ -72,31 +85,46 @@ func apply_equipment_to_unit(unit, equipped_item_ids: Array) -> void:
 				# tracking a permanently higher MAX anywhere — so current
 				# could end up reading as "more than 100%" on every bar.
 				# Converting the percentage to a flat number and folding it
-				# into this same per-item flat_bonus dict means
+				# into this same shared total_flat dict means
 				# get_effective_max_hp()/get_effective_max_mana() (see
 				# unit_node.gd) now count it as part of the real max, the
 				# same way atk/def/etc. bonuses already work.
 				var base_value: int = unit.get_stats().hp if stat == "hp" else unit.get_stats().mana
-				flat_bonus[stat] += int(base_value * (amount / 100.0))
+				total_flat[stat] += int(base_value * (amount / 100.0))
+				any_flat_bonus = true
+			elif value_mode == "percent" and (stat == "crit_chance" or stat == "crit_damage"):
+				# Percent crit bonuses are added directly (not scaled against
+				# a base value) -- folded into total_flat now too instead of
+				# a separate per-stat key, so they stack across items just
+				# like everything else here.
+				total_flat[stat] += amount
 				any_flat_bonus = true
 			elif value_mode == "percent":
-				_apply_percent_bonus(unit, stat, amount)
-			elif flat_bonus.has(stat):
-				flat_bonus[stat] += amount
+				push_warning("EquipmentRuntime: percent value_mode not supported for stat '" + stat + "'")
+			elif total_flat.has(stat):
+				total_flat[stat] += amount
 				any_flat_bonus = true
 
-		if any_flat_bonus:
-			unit.momentum_bonuses[bonus_key] = flat_bonus
+	if any_flat_bonus:
+		unit.momentum_bonuses["equip_total_flat"] = total_flat
+	else:
+		unit.momentum_bonuses.erase("equip_total_flat")
 
-		# Top current HP/mana up to match the unit's new (possibly higher)
-		# max, so equipping the item reads as "bigger pool, starting full"
-		# instead of leaving current_hp sitting at whatever fraction of the
-		# OLD max it happened to be.
-		if flat_bonus.get("hp", 0) != 0:
-			unit.current_hp = unit.get_effective_max_hp()
-		if flat_bonus.get("mana", 0) != 0:
-			unit.current_mana = unit.get_effective_max_mana()
+	# Top current HP/mana up to match the unit's new (possibly higher)
+	# max, so equipping the item reads as "bigger pool, starting full"
+	# instead of leaving current_hp sitting at whatever fraction of the
+	# OLD max it happened to be.
+	if total_flat.get("hp", 0) != 0:
+		unit.current_hp = unit.get_effective_max_hp()
+	if total_flat.get("mana", 0) != 0:
+		unit.current_mana = unit.get_effective_max_mana()
 
+	for item_id in equipped_item_ids:
+		if item_id == null or item_id == "":
+			continue
+		var item_data: Dictionary = ContentLoader.get_equipment(item_id)
+		if item_data.is_empty():
+			continue
 		for effect in item_data.get("effects", []):
 			if effect.get("type", "") == "custom":
 				var custom_id: String = effect.get("custom_id", "")
@@ -153,10 +181,15 @@ func compute_preview_stat_bonuses(base_stats: StatsData, equipped_item_ids: Arra
 func remove_equipment_from_unit(unit, equipped_item_ids: Array) -> void:
 	# Call this when a unit leaves combat, so custom handlers can unsubscribe
 	# their CombatHooks callbacks cleanly instead of leaking them.
+	# ADDED: also erases "equip_percent_*" keys, which the OLD version of
+	# this function never actually cleaned up at all (a separate, smaller
+	# bug from the stacking one -- percent crit bonuses just stuck around
+	# forever after unequip). Moot now that everything lives in one
+	# "equip_total_flat" key, erased once below instead of per item.
+	unit.momentum_bonuses.erase("equip_total_flat")
 	for item_id in equipped_item_ids:
 		if item_id == null or item_id == "":
 			continue
-		unit.momentum_bonuses.erase("equip_" + item_id)
 		var item_data: Dictionary = ContentLoader.get_equipment(item_id)
 		for effect in item_data.get("effects", []):
 			if effect.get("type", "") == "custom":
@@ -202,16 +235,3 @@ func apply_permanent_modifiers_to_unit(unit, permanent_modifiers: Array) -> void
 		unit.current_hp = unit.get_effective_max_hp()
 	if flat_bonus.get("mana", 0) != 0:
 		unit.current_mana = unit.get_effective_max_mana()
-
-
-func _apply_percent_bonus(unit, stat: String, percent_amount: float) -> void:
-	# NOTE: percent hp/mana bonuses are now handled directly inside
-	# apply_equipment_to_unit() itself (folded into the per-item flat_bonus
-	# dict so they raise the unit's actual MAX, not just current) — this
-	# function only handles the remaining stat types now.
-	match stat:
-		"crit_chance", "crit_damage":
-			unit.momentum_bonuses["equip_percent_" + stat] = {stat: percent_amount}
-		_:
-			push_warning("EquipmentRuntime: percent value_mode not supported for stat '" + stat + "'")
-			

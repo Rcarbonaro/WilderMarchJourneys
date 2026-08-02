@@ -14,6 +14,8 @@
 [ext_resource type="Resource" uid="uid://cykmqjugvv0sn" path="res://resources/abilities/tether.tres" id="5_5cmow"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_b5vk1"]
 [ext_resource type="Script" uid="uid://df8avravfldch" path="res://scripts/data/dialogue_bark_data.gd" id="5_er8ly"]
+[ext_resource type="Script" uid="uid://b7m0h8v4gtmho" path="res://scripts/data/level_up_count_option.gd" id="7_mso7v"]
+[ext_resource type="Script" uid="uid://d07hb58lwi16g" path="res://scripts/data/level_up_stat_rule.gd" id="8_3itce"]
 
 [sub_resource type="Resource" id="Resource_mso7v"]
 script = ExtResource("4_tiqm1")
@@ -63,6 +65,7 @@ description = "A witch who uses her magic to weaken foes."
 portrait = ExtResource("3_b5vk1")
 battle_sprite = ExtResource("2_oi2v6")
 synergy_tags = Array[String](["debuff"])
+unit_roles = 2
 stats_by_level = Array[ExtResource("3_iwngs")]([ExtResource("1_gnfme")])
 base_stats = ExtResource("1_gnfme")
 starting_abilities = Array[ExtResource("2_lmhne")]([ExtResource("3_ps7qu"), ExtResource("4_gnfme"), ExtResource("5_5cmow")])

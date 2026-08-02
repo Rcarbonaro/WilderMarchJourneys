@@ -84,6 +84,8 @@ func apply_effect(effect: Dictionary, context: Dictionary) -> void:
 		"modify_shop_price": _do_modify_shop_price(effect, context)
 		"heal":              _do_heal(effect, context)
 		"grant_temp_hp":     _do_grant_temp_hp(effect, context)
+		"add_camp_recruit":  _do_add_camp_recruit(effect, context)   # ADDED (Mini-Encounters)
+		"add_skill_scroll":  _do_add_skill_scroll(effect, context)   # ADDED (Skill Scrolls)
 		"custom":
 			var custom_id: String = effect.get("custom_id", "")
 			if _custom_handlers.has(custom_id):
@@ -214,9 +216,56 @@ func _do_add_gold(effect: Dictionary, context: Dictionary) -> void:
 	var run_state = context.get("run_state", null)
 	if run_state == null:
 		return
-	var amount: int = int(effect.get("amount", 0))
+	# ADDED: supports a random range now ("amount_min"/"amount_max"), for
+	# things like Mini-Encounters' Rob choice ("instantly gain 4-10 gold").
+	# Falls back to the plain fixed "amount" if neither range key is
+	# present, so every existing effect using a flat amount keeps working
+	# completely unchanged.
+	var amount: int
+	if effect.has("amount_min") or effect.has("amount_max"):
+		var lo: int = int(effect.get("amount_min", 0))
+		var hi: int = int(effect.get("amount_max", lo))
+		amount = randi_range(min(lo, hi), max(lo, hi))
+	else:
+		amount = int(effect.get("amount", 0))
 	run_state.gold = max(0, run_state.gold + amount)
 	EventBus.publish(EventBus.ON_GOLD_CHANGED, {"amount": amount, "new_total": run_state.gold})
+
+
+func _do_add_camp_recruit(effect: Dictionary, context: Dictionary) -> void:
+	# ADDED (Mini-Encounters). Increments the persistent "how many survivors
+	# has this run recruited" counter, stored in RunState.runtime_effect_state
+	# (the existing generic bucket for exactly this kind of persistent
+	# counter -- see run_state.gd). Each recruit:
+	#   - adds +1 gold to EVERY future stage's end-of-stage reward, forever,
+	#     cumulatively (see stage_director.gd's gold reward calculation)
+	#   - adds one more tent to the deployment scene's camp background (see
+	#     deployment_manager.gd's _refresh_camp_decorations())
+	# Both of those just READ this same counter -- this effect is the only
+	# thing that ever increments it.
+	var run_state = context.get("run_state", null)
+	if run_state == null:
+		return
+	var current: int = int(run_state.runtime_effect_state.get("camp_recruit_count", 0))
+	run_state.runtime_effect_state["camp_recruit_count"] = current + 1
+	print("🏕️ Camp recruit count now ", current + 1)
+
+
+func _do_add_skill_scroll(effect: Dictionary, context: Dictionary) -> void:
+	# ADDED (Skill Scrolls). Grants one (or "amount", if set) more use of the
+	# generic Skill Scroll -- a simple persistent counter in
+	# RunState.runtime_effect_state, same pattern as camp_recruit_count just
+	# above, so this works as a combat/encounter/shop reward with zero JSON
+	# item content required. See deployment_manager.gd's
+	# _refresh_generic_scroll_button() for where the counter actually gets
+	# read/spent.
+	var run_state = context.get("run_state", null)
+	if run_state == null:
+		return
+	var amount: int = int(effect.get("amount", 1))
+	var current: int = int(run_state.runtime_effect_state.get("skill_scroll_count", 0))
+	run_state.runtime_effect_state["skill_scroll_count"] = current + amount
+	print("📜 Skill scroll count now ", current + amount)
 
 
 func _do_add_equipment(effect: Dictionary, context: Dictionary) -> void:
@@ -454,3 +503,4 @@ func evaluate_condition(condition: Dictionary, context: Dictionary) -> bool:
 		_:
 			push_warning("EffectSystem: unknown condition type '" + type + "' -- treated as false.")
 			return false
+			

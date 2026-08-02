@@ -255,7 +255,8 @@ func _spawn_player_party_from_run() -> void:
 		spawn_unit(
 			unit_data, spawn_positions[i], true, level,
 			unit_entry.get("equipped_item_ids", []),
-			unit_entry.get("permanent_modifiers", [])
+			unit_entry.get("permanent_modifiers", []),
+			unit_entry.get("ability_enhancements", {})
 		)
 
 
@@ -424,13 +425,15 @@ func _spawn_test_enemies(encounter_index: int) -> void:
 	print("🧪 Test encounter ", encounter_index, " deployed!")
 
 func spawn_unit(unit_data: UnitData, cell: Vector2i, is_player: bool, level: int = 1,
-				equipped_item_ids: Array = [], permanent_modifiers: Array = []) -> void:
+				equipped_item_ids: Array = [], permanent_modifiers: Array = [],
+				ability_enhancements: Dictionary = {}) -> void:
 	# Instantiates a unit scene, places it on the grid, and registers it.
 	# Also handles large units (2×2 etc.) by reading tile_footprint from unit_data.
 	#
-	# equipped_item_ids / permanent_modifiers only matter for PLAYER units —
-	# they come straight from that unit's RunState.party entry (see
-	# _spawn_player_party_from_run above) and are simply ignored for enemies.
+	# equipped_item_ids / permanent_modifiers / ability_enhancements only
+	# matter for PLAYER units — they come straight from that unit's
+	# RunState.party entry (see _spawn_player_party_from_run above) and are
+	# simply ignored for enemies.
 
 	var folder_name := unit_data.id.to_lower().replace(" ", "")
 	var scene_path  := "res://scenes/animations/%s/%s.tscn" % [folder_name, folder_name]
@@ -482,6 +485,9 @@ func spawn_unit(unit_data: UnitData, cell: Vector2i, is_player: bool, level: int
 		EquipmentRuntime.apply_equipment_to_unit(unit, equipped_item_ids)
 		unit.equipped_item_ids = equipped_item_ids
 		EquipmentRuntime.apply_permanent_modifiers_to_unit(unit, permanent_modifiers)
+		# ADDED — see unit_node.gd's build_enhanced_abilities() for the full
+		# explanation of why this duplicates rather than edits abilities in place.
+		unit.build_enhanced_abilities(ability_enhancements)
 		print("🛡️ Ally spawned: ", unit_data.display_name)
 	else:
 		enemy_units.append(unit)
@@ -921,10 +927,14 @@ func cancel_unit_move() -> void:
 		multi_target_selected.clear()
 		selected_ability = null
 		current_phase    = TurnPhase.PLAYER_TURN
-		if ui_manager and ui_manager.has_method("hide_targeting_prompt"):
-			ui_manager.hide_targeting_prompt()
-		if ui_manager and ui_manager.has_method("hide_confirm_targets_button"):
-			ui_manager.hide_confirm_targets_button()
+
+	# ADDED: unconditional (moved outside the mid_multistep_targeting check
+	# above) -- both are harmless no-ops if already hidden. Matching safety
+	# net to the identical one in cancel_ability_selection() below.
+	if ui_manager and ui_manager.has_method("hide_targeting_prompt"):
+		ui_manager.hide_targeting_prompt()
+	if ui_manager and ui_manager.has_method("hide_confirm_targets_button"):
+		ui_manager.hide_confirm_targets_button()
 
 	var unit   = selected_unit
 	var origin = unit.turn_start_position
@@ -982,10 +992,17 @@ func cancel_ability_selection() -> void:
 		wall_start_cell        = Vector2i(-1, -1)
 		leap_target_cell       = Vector2i(-1, -1)
 		multi_target_selected.clear()
-		if ui_manager and ui_manager.has_method("hide_targeting_prompt"):
-			ui_manager.hide_targeting_prompt()
-		if ui_manager and ui_manager.has_method("hide_confirm_targets_button"):
-			ui_manager.hide_confirm_targets_button()
+
+	# ADDED: moved outside the mid_multistep_targeting check above and made
+	# unconditional -- both are harmless no-ops if already hidden, so this
+	# is a free safety net against any OTHER path that might leave one of
+	# these stuck without going through the phase check above (see
+	# on_ability_selected()'s near-identical bugfix for a real example of
+	# exactly that happening).
+	if ui_manager and ui_manager.has_method("hide_targeting_prompt"):
+		ui_manager.hide_targeting_prompt()
+	if ui_manager and ui_manager.has_method("hide_confirm_targets_button"):
+		ui_manager.hide_confirm_targets_button()
 
 	selected_ability  = null
 	aoe_preview_cell  = Vector2i(-1, -1)
@@ -1100,17 +1117,39 @@ func on_ability_selected(ability: AbilityData) -> void:
 
 	selected_ability = ability
 
-	# If a wall (two-tap) targeting flow was already in progress from a
-	# PREVIOUSLY selected ability, clear it out before applying whatever
-	# this newly selected ability needs. Without this, switching away from
-	# a wall ability left current_phase stuck on WALL_SELECT_START/END —
-	# so taps kept being routed to the wall-placement handler instead of
-	# this ability's own targeting — and left the old "Select wall
-	# starting/ending location" prompt on screen indefinitely.
-	if current_phase == TurnPhase.WALL_SELECT_START or current_phase == TurnPhase.WALL_SELECT_END:
-		wall_start_cell = Vector2i(-1, -1)
+	# If a wall/leap/multi-target (any multi-tap) targeting flow was already
+	# in progress from a PREVIOUSLY selected ability, clear it out before
+	# applying whatever this newly selected ability needs.
+	#
+	# BUGFIX: this used to only check WALL_SELECT_START/WALL_SELECT_END, and
+	# only ever called hide_targeting_prompt() -- never hide_confirm_targets_
+	# button(). So switching away from a Leap or (especially) a Zephyr-
+	# Strike-style multi-target ability mid-selection left current_phase
+	# stuck, AND left the "Select targets (X/Y)" prompt AND the Confirm
+	# button both visibly stuck on screen indefinitely -- exactly the
+	# "Select Targets popup and confirmation don't disappear when the
+	# player cancels the skill" symptom, since picking a different ability
+	# is one of the most natural ways a player "cancels" whatever they were
+	# mid-way through targeting. Same root cause and same fix shape as the
+	# identical bug already fixed in cancel_unit_move() above (see its
+	# comment for the full "stale state routes future taps incorrectly"
+	# explanation) -- every multi-step phase needs clearing here too, not
+	# just wall.
+	var mid_multistep_targeting: bool = (
+		current_phase == TurnPhase.WALL_SELECT_START or
+		current_phase == TurnPhase.WALL_SELECT_END or
+		current_phase == TurnPhase.LEAP_SELECT_TARGET or
+		current_phase == TurnPhase.LEAP_SELECT_DESTINATION or
+		current_phase == TurnPhase.MULTI_TARGET_SELECT
+	)
+	if mid_multistep_targeting:
+		wall_start_cell        = Vector2i(-1, -1)
+		leap_target_cell       = Vector2i(-1, -1)
+		multi_target_selected.clear()
 		if ui_manager and ui_manager.has_method("hide_targeting_prompt"):
 			ui_manager.hide_targeting_prompt()
+		if ui_manager and ui_manager.has_method("hide_confirm_targets_button"):
+			ui_manager.hide_confirm_targets_button()
 	current_phase = TurnPhase.PLAYER_TURN
 
 	if ui_manager and ui_manager.has_method("set_cancel_move_visible"):
@@ -1301,7 +1340,12 @@ func _try_use_ability(cell: Vector2i) -> void:
 		deselect_unit()
 		return
 
-	selected_unit.has_acted       = true
+	# BUGFIX: this used to also set selected_unit.has_acted = true right here,
+	# unconditionally — ability_executor.gd's execute_ability() now sets it
+	# early (before any damage/kill logic runs), so an on_kill_reset_has_acted
+	# effect firing during the ability we just awaited is the last word
+	# instead of being silently overwritten back to true the moment we got
+	# here. See execute_ability()'s STEP 1.6 for the full explanation.
 	selected_unit.can_cancel_move = false
 
 	if selected_unit.has_method("play_animation"):
@@ -1645,6 +1689,19 @@ func _on_enemy_turn_complete() -> void:
 			unit.has_used_item_this_turn = false
 			for key in unit.ability_cooldowns:
 				unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
+
+	# ── TETHER SAFETY NET (ADDED) ──────────────────────────────────────────
+	# A full round (one player turn + one enemy turn) has now completely
+	# finished, so every unit that's going to move this round already has.
+	# This is on top of — not instead of — the per-move refresh calls
+	# unit_node.gd's move_to()/move_along_path() already make right as each
+	# individual tween finishes (see battle_grid.gd's
+	# _refresh_tether_lines() for the full explanation of why both are
+	# worth having): one extra full resync here guarantees every tether is
+	# sitting on the correct final tile before the player's next turn
+	# starts, regardless of what caused the last move of the round.
+	if grid != null:
+		grid.refresh_tether_visuals()
 
 	# BUGFIX: this used to ALSO show "Player's Turn" here (await
 	# ui_manager.show_turn_announcement(true)) and then run round_number += 1,
@@ -2281,3 +2338,4 @@ func on_item_selected(item_id: String, slot_index: int, unit) -> void:
 	ui_manager.clear_abilities()
 	ui_manager.show_unit_abilities(unit)
 	ui_manager.show_usable_items(unit)
+	

@@ -76,6 +76,7 @@ description = "A wind magic specialist who excels at manipulating enemy position
 portrait = ExtResource("3_pdhkk")
 battle_sprite = ExtResource("2_wxdo6")
 synergy_tags = Array[String](["isolation"])
+unit_roles = 2
 stats_by_level = Array[ExtResource("3_nfyw7")]([ExtResource("6_1rute")])
 base_stats = ExtResource("6_1rute")
 starting_abilities = Array[ExtResource("2_f3la8")]([ExtResource("5_1rute"), ExtResource("5_a2ykl"), ExtResource("6_pjwqc"), ExtResource("6_5ptw1")])

@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://domvok6fiyxhn"]
+
+[node name="MiniEncounterScene" type="Control" unique_id=912348187]
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 2
+
+[node name="Background" type="TextureRect" parent="." unique_id=1307717642]
+layout_mode = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+
+[node name="PortraitRect" type="TextureRect" parent="." unique_id=1198732082]
+layout_mode = 0
+offset_left = 106.0
+offset_top = 44.0
+offset_right = 501.0
+offset_bottom = 872.0
+mouse_filter = 2
+
+[node name="DescriptionLabel" type="Label" parent="." unique_id=1515740981]
+layout_mode = 0
+offset_left = 534.0
+offset_right = 1734.0
+offset_bottom = 656.0
+
+[node name="RecruitButton" type="Button" parent="." unique_id=1934910492]
+layout_mode = 0
+offset_left = 358.0
+offset_top = 943.0
+offset_right = 568.0
+offset_bottom = 1023.0
+text = "Offer Help"
+
+[node name="RobButton" type="Button" parent="." unique_id=99391018]
+layout_mode = 0
+offset_left = 1454.0
+offset_top = 943.0
+offset_right = 1666.0
+offset_bottom = 1023.0
+text = "Rob"

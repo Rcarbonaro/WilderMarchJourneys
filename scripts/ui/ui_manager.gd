@@ -49,14 +49,18 @@ extends CanvasLayer
 @export var hp_bar_pixel_width:   float = 150.0
 @export var mana_bar_pixel_width: float = 150.0
 
-# ── TEMP HP (SHIELD) OVERLAY ──────────────────────────────────────────────────
-# Task 7: visualizes grid.shield_map (see battle_grid.gd's apply_shield()/
-# get_shield()/absorb_shield_damage()) as a semi-transparent white segment
-# on top of the HP bar, plus a "+ X" label. Both nodes are created IN CODE
-# in _ready() below (see "TEMP HP OVERLAY — CREATED IN CODE" further down)
-# rather than requiring you to hand-add them to BattleUI.tscn.
-@export var temp_hp_overlay_color: Color = Color(1.0, 1.0, 1.0, 0.45)
-@export var temp_hp_label_color:   Color = Color(1.0, 1.0, 1.0, 1.0)
+# ── TEMP HP (SHIELD) LABEL ─────────────────────────────────────────────────────
+# CHANGED: this used to also draw a semi-transparent white BAR segment
+# overlaid on the HP bar (hp_bar_temp_fill). Removed entirely per request --
+# now it's just the "+X" label on its own. Reads grid.shield_map (see
+# battle_grid.gd's apply_shield()/get_shield()/absorb_shield_damage()). The
+# label is created IN CODE in _ready() below (see "TEMP HP LABEL — CREATED IN
+# CODE" further down) rather than requiring you to hand-add it to
+# BattleUI.tscn.
+@export var temp_hp_label_color: Color = Color(0.831, 0.702, 0.31, 1.0)
+# Gold by default -- matches the same gold used for Synergy Tags/Unique
+# Ability text in unit_info_popup.gd. Exported specifically so you can change
+# it later without touching code, per the request.
 
 @export var turn_announcement_duration: float = 2.0
 @export var player_turn_texture:        Texture2D   = null
@@ -80,7 +84,6 @@ var hp_bar_fill:         Control       = null
 var hp_label:            Label           = null
 var _hp_fill_texture:  TextureRect = null  
 var _mana_fill_texture: TextureRect = null  
-var hp_bar_temp_fill:    ColorRect       = null   # ADDED (task 7) — see _ready()
 var temp_hp_label:       Label           = null   # ADDED (task 7) — see _ready()
 var mana_bar_holder:     Control         = null
 var mana_bar_fill:       Control       = null
@@ -242,24 +245,15 @@ func _ready() -> void:
 	if _mana_fill_texture:
 		_mana_fill_texture.custom_minimum_size.x = mana_bar_pixel_width
 
-	# ── TEMP HP OVERLAY — CREATED IN CODE ─────────────────────────────────────
-	# Task 7: a semi-transparent white bar showing temp HP (shield), overlaid
-	# on the normal HP bar, plus a "+ X" label — both created here rather than
-	# needing to be hand-added to BattleUI.tscn. Anchored inside hp_bar_bg so
-	# they line up with hp_bar_fill/_hp_fill_texture automatically. See
-	# _refresh_live_values() below for how these get positioned/sized every
-	# frame, and HOW TO ADJUST notes there for tweaking the look.
+	# ── TEMP HP LABEL — CREATED IN CODE ───────────────────────────────────────
+	# CHANGED: this used to also create hp_bar_temp_fill, a semi-transparent
+	# white ColorRect bar segment overlaid on the HP bar. Removed -- now it's
+	# just this "+X" label, created here rather than needing to be hand-added
+	# to BattleUI.tscn. Anchored inside hp_bar_bg so it lines up with
+	# hp_bar_fill/_hp_fill_texture automatically. See _refresh_live_values()
+	# below for how its position/text get updated every frame, and HOW TO
+	# ADJUST notes there for tweaking the look.
 	if hp_bar_bg:
-		hp_bar_temp_fill = ColorRect.new()
-		hp_bar_temp_fill.name = "HPBarTempFill"
-		hp_bar_temp_fill.color = temp_hp_overlay_color
-		hp_bar_temp_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		hp_bar_temp_fill.visible = false
-		hp_bar_temp_fill.position = Vector2.ZERO
-		hp_bar_temp_fill.size = Vector2(0, hp_bar_bg.size.y if hp_bar_bg.size.y > 0 else 20.0)
-		hp_bar_bg.add_child(hp_bar_temp_fill)
-		hp_bar_temp_fill.z_index = 5   # draws above HPBarFill/_hp_fill_texture
-
 		temp_hp_label = Label.new()
 		temp_hp_label.name = "TempHPLabel"
 		temp_hp_label.add_theme_color_override("font_color", temp_hp_label_color)
@@ -477,9 +471,16 @@ func show_unit_abilities(unit) -> void:
 		return
 	if bottom_bar:
 		bottom_bar.visible = true
-	for ability in unit.unit_data.starting_abilities:
-		if ability == null:
+	for raw_ability in unit.unit_data.starting_abilities:
+		if raw_ability == null:
 			continue
+		# ADDED — swaps in this unit's own enhanced duplicate (Skill Scroll
+		# bonuses baked in) if one exists for this ability id, so
+		# execute_ability() and everything downstream of it sees the
+		# enhanced values automatically. See unit_node.gd's
+		# build_enhanced_abilities()/get_ability_for_use() for the full
+		# explanation of why this ONE substitution point is enough.
+		var ability: AbilityData = unit.get_ability_for_use(raw_ability) if unit.has_method("get_ability_for_use") else raw_ability
 		var btn := Button.new()
 		btn.text                    = ability.display_name
 		btn.icon = ability.icon
@@ -680,47 +681,31 @@ func _refresh_live_values() -> void:
 		if hp_label:
 			hp_label.text = "%d / %d" % [unit.current_hp, max_hp]
 
-		# ── TEMP HP (SHIELD) OVERLAY ────────────────────────────────────────
-		# Task 7: reads grid.shield_map (via grid.get_shield()) and draws a
-		# semi-transparent overlay + "+ X" label, positioned right after the
-		# normal HP fill's current edge — i.e. it reads as "extra HP tacked
-		# onto your current health", not as replacing/hiding the real HP
-		# color. Both nodes stay hidden whenever temp_hp is 0.
+		# ── TEMP HP (SHIELD) LABEL ────────────────────────────────────────────
+		# CHANGED: this used to also update a semi-transparent white bar
+		# overlay (hp_bar_temp_fill), positioned right after the normal HP
+		# fill's current edge. That overlay is gone -- now it's just this
+		# "+X" label, positioned directly off the normal fill's edge instead
+		# of off the (now-removed) overlay's edge. Hidden whenever temp_hp
+		# is 0.
 		#
 		# HOW TO ADJUST:
-		#   - Overlay color/opacity: temp_hp_overlay_color (exported above).
-		#   - Label color: temp_hp_label_color (exported above).
-		#   - To make the overlay OVERLAP the HP fill from x=0 instead of
-		#     extending past its right edge, change the position.x line
-		#     below to just `0.0` instead of `current_fill_px`.
-		#   - To CAP the overlay so it never visually exceeds the bar's own
-		#     width (currently it can bulge past 100% for a big shield),
-		#     clamp temp_fill_px so current_fill_px + temp_fill_px <=
-		#     hp_bar_pixel_width.
+		#   - Label color: temp_hp_label_color (exported above, gold by
+		#     default -- change it there, or expose it as a per-unit /
+		#     per-source color later if you want it to vary).
+		#   - Label position: currently sits right after the normal HP
+		#     fill's edge, same spot the old overlay's right edge used to be.
 		var temp_hp: int = 0
 		if grid and grid.has_method("get_shield"):
 			var shield_entry: Dictionary = grid.get_shield(unit)
 			temp_hp = shield_entry.get("amount", 0)
 
-		if hp_bar_temp_fill:
-			if temp_hp > 0:
-				var px_per_hp: float = hp_bar_pixel_width / float(max(1, max_hp))
-				var current_fill_px: float = hp_bar_pixel_width * pct
-				hp_bar_temp_fill.position.x = current_fill_px
-				hp_bar_temp_fill.size.x = px_per_hp * temp_hp
-				hp_bar_temp_fill.size.y = hp_bar_bg.size.y if hp_bar_bg and hp_bar_bg.size.y > 0 else hp_bar_temp_fill.size.y
-				hp_bar_temp_fill.visible = true
-			else:
-				hp_bar_temp_fill.visible = false
-
 		if temp_hp_label:
 			if temp_hp > 0:
-				temp_hp_label.text = "+ %d" % temp_hp
+				temp_hp_label.text = "+%d" % temp_hp
 				temp_hp_label.visible = true
-				if hp_bar_temp_fill:
-					temp_hp_label.position = Vector2(
-						hp_bar_temp_fill.position.x + hp_bar_temp_fill.size.x + 4.0, -2.0
-					)
+				var current_fill_px: float = hp_bar_pixel_width * pct
+				temp_hp_label.position = Vector2(current_fill_px + 4.0, -2.0)
 			else:
 				temp_hp_label.visible = false
 

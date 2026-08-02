@@ -117,6 +117,7 @@ description = "A quick fighter who relies on stealth. Excels at defeating vulner
 portrait = ExtResource("3_5debc")
 battle_sprite = ExtResource("2_l4ka4")
 synergy_tags = Array[String](["isolation"])
+unit_roles = 12
 stats_by_level = Array[ExtResource("3_cnjr4")]([ExtResource("1_5x8eh")])
 base_stats = ExtResource("1_5x8eh")
 starting_abilities = Array[ExtResource("2_0wd6k")]([ExtResource("4_fikb3"), ExtResource("5_l4ka4")])

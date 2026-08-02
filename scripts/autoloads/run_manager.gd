@@ -18,6 +18,13 @@ extends Node
 var current_run: RunState = null
 var meta: MetaState = null
 
+var _unit_data_load_cache: Dictionary = {}   # unit_id -> UnitData (or null if missing)
+# Used by _guarantee_party_roles()/_load_unit_data_cached() below, purely to
+# avoid re-loading the same .tres several times within one Random-mode party
+# pick (checking existing party members, THEN scanning the full candidate
+# pool for a replacement). Harmless to keep around between calls too -- same
+# resources every time, nothing goes stale.
+
 const SAVE_DIR := "user://saves/"
 const META_SAVE_PATH := "user://meta_state.json"
 
@@ -201,6 +208,17 @@ func start_new_run_for_mode(mode_id: String, chosen_party: Array = []) -> RunSta
 	for equipment_id in mode_config.get("starting_equipment_ids", []):
 		rs.equipment_inventory.append(equipment_id)
 
+	# ADDED: "can start with 1" -- a generic Skill Scroll, guaranteed to
+	# exist with zero content authoring required. Tracked as a simple
+	# counter in runtime_effect_state (same pattern as camp_recruit_count),
+	# NOT as a named equipment_inventory item -- so this works immediately
+	# with no JSON scroll item needed at all. See deployment_manager.gd's
+	# _refresh_generic_scroll_button() for where this actually gets used,
+	# and effect_system.gd's _do_add_skill_scroll() for how more get granted
+	# later (shop/combat/encounter rewards).
+	rs.runtime_effect_state["skill_scroll_count"] = \
+		int(rs.runtime_effect_state.get("skill_scroll_count", 0)) + 1
+
 	if not chosen_party.is_empty():
 		rs.party = chosen_party
 	else:
@@ -229,16 +247,91 @@ func _pick_random_starting_party(party_size: int, excluded_ids: Array) -> Array:
 		dir.list_dir_end()
 
 	candidates.shuffle()
-	var result: Array = []
+	var party_ids: Array[String] = []
 	for i in range(min(party_size, candidates.size())):
+		party_ids.append(candidates[i])
+
+	# ── GUARANTEE AT LEAST 1 TANK + 1 PRIMARY DAMAGE (ADDED) ────────────────
+	# See UnitData.unit_roles (Session 1's Role Tags checkboxes). A unit
+	# tagged BOTH Tank and Primary Damage satisfies both guarantees on its
+	# own -- this doesn't force two SEPARATE units if one hybrid already
+	# covers both. If no candidate anywhere carries a needed role (e.g.
+	# nothing's been tagged yet), this just warns and leaves the roll as a
+	# plain random party rather than failing run start entirely.
+	party_ids = _guarantee_party_roles(party_ids, candidates,
+		[UnitData.ROLE_TANK, UnitData.ROLE_PRIMARY_DAMAGE])
+
+	var result: Array = []
+	for i in range(party_ids.size()):
 		result.append({
-			"unit_id": candidates[i],
-			"instance_id": candidates[i] + "_" + str(Time.get_ticks_msec()) + "_" + str(i),
+			"unit_id": party_ids[i],
+			"instance_id": party_ids[i] + "_" + str(Time.get_ticks_msec()) + "_" + str(i),
 			"level": 1,
 			"equipped_item_ids": [null, null, null],
 			"permanent_modifiers": [],
 		})
 	return result
+
+
+func _load_unit_data_cached(unit_id: String) -> UnitData:
+	if _unit_data_load_cache.has(unit_id):
+		return _unit_data_load_cache[unit_id]
+	var path := "res://resources/units/" + unit_id + "_data.tres"
+	var data: UnitData = (load(path) as UnitData) if ResourceLoader.exists(path) else null
+	_unit_data_load_cache[unit_id] = data
+	return data
+
+
+func _guarantee_party_roles(party_ids: Array[String], all_candidates: Array[String],
+		required_roles: Array[int]) -> Array[String]:
+	var protected_indices: Array[int] = []
+
+	for role_flag in required_roles:
+		# Does someone already in the party cover this role?
+		var holder_index := -1
+		for i in range(party_ids.size()):
+			var data := _load_unit_data_cached(party_ids[i])
+			if data != null and data.has_role(role_flag):
+				holder_index = i
+				break
+		if holder_index != -1:
+			if not holder_index in protected_indices:
+				protected_indices.append(holder_index)
+			continue
+
+		# Nobody currently in the party covers it -- find someone (not
+		# already in the party) who does.
+		var pool: Array[String] = []
+		for id in all_candidates:
+			if id in party_ids:
+				continue
+			var data := _load_unit_data_cached(id)
+			if data != null and data.has_role(role_flag):
+				pool.append(id)
+
+		if pool.is_empty():
+			push_warning("RunManager: no available unit tagged for role " + str(role_flag) +
+				" -- Random mode's role guarantee couldn't be met this run.")
+			continue
+
+		pool.shuffle()
+
+		# Replace the first slot that ISN'T already protecting a role we've
+		# already guaranteed this pass (so fixing role #2 can't undo role #1).
+		var replace_index := -1
+		for i in range(party_ids.size()):
+			if not i in protected_indices:
+				replace_index = i
+				break
+		if replace_index == -1:
+			push_warning("RunManager: every party slot is already protecting a guaranteed role -- " +
+				"can't also fit role " + str(role_flag) + " (is party_size too small?).")
+			continue
+
+		party_ids[replace_index] = pool[0]
+		protected_indices.append(replace_index)
+
+	return party_ids
 
 
 # ── SAVE SLOT LISTING ──────────────────────────────────────────────────────────
@@ -262,3 +355,4 @@ func delete_save(slot_name: String) -> void:
 	var path := SAVE_DIR + slot_name + ".json"
 	if FileAccess.file_exists(path):
 		DirAccess.remove_absolute(path)
+		

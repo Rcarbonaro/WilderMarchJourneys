@@ -41,6 +41,29 @@ const DEPLOYMENT_SCENE_PATH := "res://scenes/meta/DeploymentScene.tscn"
 # constant if you save DeploymentScene.tscn somewhere else -- nothing else
 # needs to change to match.
 
+const MINI_ENCOUNTER_ENABLED: bool = false
+# ADDED. The single on/off switch for the whole Mini-Encounter feature --
+# set to false to disable it completely and always go straight to
+# Deployment after combat, no matter what MINI_ENCOUNTER_CHANCE is set to.
+# Handy while you're still testing/debugging MiniEncounterScene.tscn without
+# needing to touch the trigger chance or delete the scene file.
+
+const MINI_ENCOUNTER_SCENE_PATH := "res://scenes/encounter/MiniEncounterScene.tscn"
+# See mini_encounter_scene.gd for the full scene-setup instructions (it's a
+# NEW scene you need to build once in the editor -- the script alone can't
+# create the .tscn file). complete_stage() below just no-ops the roll
+# entirely (falls straight through to DeploymentScene) if this path doesn't
+# exist yet, so nothing breaks before you've built it.
+
+const MINI_ENCOUNTER_CHANCE: float = 0.3
+# Chance of a Mini-Encounter firing after each combat-shaped stage, instead
+# of going straight to Deployment. "Occasional" per the original request --
+# 0.3 = roughly 1 in 3 fights. A plain const (not @export) since autoload
+# singletons don't reliably expose Inspector-editable fields the way a
+# scene node does -- same "edit this one number directly" pattern used for
+# every other rebalance constant across this project (e.g. custom_
+# equipment_handlers.gd's BLOODTHIRSTER_MAX_STACKS).
+
 # ── STAGE CONTENT CACHE (Scout Ahead) ─────────────────────────────────────────
 # MapGenerator.generate_map() and ScalingEngine.resolve_spawn_table() are both
 # pure randomness -- calling either twice for the "same" stage produces a
@@ -117,7 +140,27 @@ func get_or_generate_stage_content(stage_index: int) -> Dictionary:
 			enemies.append(enemy_data)
 
 	var base_enemy_spawn_cells := 8
-	var enemy_spawn_cell_count: int = base_enemy_spawn_cells + int(scaling_config.get("bonus_enemy_count", 0))
+
+	# ── BUGFIX (Nightmare/Hard not spawning their extra enemies) ─────────────
+	# This used to only add scaling_config's bonus_enemy_count (the per-STAGE
+	# scaling bonus) here -- it never accounted for difficulty_spawn_bonus
+	# (the per-DIFFICULTY bonus_normal_enemies/bonus_elite_enemies that
+	# ScalingEngine._build_roster_from_table() adds to the roster on Hard/
+	# Nightmare). So on those difficulties the roster genuinely DID contain
+	# the extra enemies, but the map only ever generated enough spawn CELLS
+	# for the smaller normal-difficulty count -- battle_manager.gd's spawn
+	# loop then ran out of enemy_spawns cells partway through and silently
+	# skipped whatever was left (see its own "remaining enemies skipped"
+	# warning). Both bonuses now factor into the cell count together, so
+	# there's always at least as many cells as roster entries.
+	var difficulty_bonus: Dictionary = ContentLoader.global_difficulty.get(
+		"difficulty_spawn_bonus", {}).get(run_state.difficulty, {})
+	var difficulty_bonus_count: int = int(difficulty_bonus.get("bonus_normal_enemies", 0)) \
+		+ int(difficulty_bonus.get("bonus_elite_enemies", 0))
+
+	var enemy_spawn_cell_count: int = base_enemy_spawn_cells \
+		+ int(scaling_config.get("bonus_enemy_count", 0)) \
+		+ difficulty_bonus_count
 
 	# Same GRID_WIDTH/GRID_HEIGHT battle_scene.gd's _enter_tree() used to read
 	# off $BattleGrid directly -- borrowed via the script itself since this
@@ -144,6 +187,11 @@ func complete_stage() -> void:
 		push_warning("StageDirector: complete_stage() called with no active run.")
 		return
 
+	# ADDED -- captured BEFORE advance_stage() runs below, since "the stage
+	# that just finished" means the CURRENT stage_index right now; after
+	# advance_stage() it's already moved on to the next one.
+	var just_finished_type: String = RunManager.get_current_stage_type()
+
 	_apply_reward_rules()
 	RunManager.advance_stage()
 
@@ -159,6 +207,19 @@ func complete_stage() -> void:
 	# Clearing it here, every time a stage completes, guarantees a completely
 	# fresh ShopEngine.generate_shop() roll the next time ShopScene loads.
 	RunManager.current_run.shop_inventory.clear()
+
+	# ── MINI-ENCOUNTER ROLL (ADDED) ───────────────────────────────────────────
+	# "Occasional transitions between combat and returning to the deployment
+	# screen." Only rolled after a genuine COMBAT-shaped stage -- not after
+	# an "encounter" stage itself, so encounters can never chain straight
+	# into another encounter. See MINI_ENCOUNTER_CHANCE just below to
+	# rebalance how often this fires; MINI_ENCOUNTER_SCENE_PATH if you move
+	# the scene file.
+	var was_combat_stage: bool = just_finished_type in ["combat", "subboss", "special_combat", "boss"]
+	if MINI_ENCOUNTER_ENABLED and was_combat_stage and randf() < MINI_ENCOUNTER_CHANCE \
+			and ResourceLoader.exists(MINI_ENCOUNTER_SCENE_PATH):
+		SceneTransitions.change_scene(MINI_ENCOUNTER_SCENE_PATH)
+		return
 
 	# Default style — the brief notes deployment entry "may have a different
 	# one"; change the second argument to any style name in
@@ -195,4 +256,18 @@ func _apply_reward_rules() -> void:
 		var rule: Dictionary = ContentLoader.reward_rules[rule_id]
 		if EffectSystem.evaluate_conditions(rule.get("conditions", []), context):
 			EffectSystem.apply_effects(rule.get("effects", []), context)
+
+	# ── CAMP RECRUIT GOLD BONUS (ADDED, Mini-Encounters) ────────────────────
+	# +1 gold per survivor ever recruited into camp, EVERY stage, forever,
+	# cumulative -- per the design: "each time they recruit survivors, they
+	# get a cumulative +1 gold per mission." Applied here (after the normal
+	# reward rules) rather than as its own reward_rules JSON entry, since it
+	# needs to read a live runtime counter (runtime_effect_state), not a
+	# fixed authored amount.
+	var recruit_bonus: int = int(run_state.runtime_effect_state.get("camp_recruit_count", 0))
+	if recruit_bonus > 0:
+		run_state.gold += recruit_bonus
+		print("🏕️ +", recruit_bonus, " gold from camp recruits.")
+
 	last_stage_gold_reward = run_state.gold - gold_before
+	

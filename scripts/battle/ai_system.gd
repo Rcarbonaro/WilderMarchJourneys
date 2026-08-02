@@ -323,6 +323,8 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 	if chosen_ability.requires_line_of_sight:
 		los_ok = pathfinder.has_line_of_sight(enemy.grid_position, target_player.grid_position)
 
+	var ability_was_executed: bool = false
+
 	if final_dist >= chosen_ability.min_range and final_dist <= chosen_ability.max_range and los_ok:
 		print("⚔️ AI executing ability: ", chosen_ability.display_name,
 			  " on target: ", target_player.grid_position)
@@ -361,27 +363,19 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 			enemy, chosen_ability,
 			filtered_cells, target_player.grid_position, simulated_cells
 		)
+		ability_was_executed = true
 
-		# Apply cooldown — guard again because execute_ability is async and the
-		# enemy could have died from Thorns/tether during their own attack.
+		# BUGFIX: this whole block used to re-set enemy.ability_cooldowns
+		# here, AFTER execute_ability() above already ran its own damage/
+		# on-kill logic. execute_ability() now sets the cooldown itself,
+		# early, BEFORE any damage/kill logic runs (see its STEP 1.5) --
+		# doing it again here, afterward, silently undid
+		# on_kill_reset_cooldowns every time an enemy ability killed its
+		# target, the exact same way battle_manager.gd's old post-
+		# execute_ability has_acted stomp undid on_kill_reset_has_acted for
+		# the player. Removed entirely now that it's redundant.
 		if not is_instance_valid(enemy):
 			return
-		if "ability_cooldowns" in enemy:
-			# BUGFIX: this used to read chosen_ability.base_cooldown /
-			# .cooldown_turns -- neither field exists on AbilityData (the real
-			# field is cooldown_rounds, see ability_data.gd), so
-			# "base_cooldown" in chosen_ability / "cooldown_turns" in
-			# chosen_ability were ALWAYS false and cd_value stayed 0 forever.
-			# The cooldown was silently never actually being set, which is why
-			# enemies could spam any ability every single turn. Also keyed by
-			# ability.id now instead of display_name, matching every other
-			# cooldown read/write in the project (player-side casts in
-			# ability_executor.gd, the UI cooldown badge in ui_manager.gd, and
-			# the round-end countdown in battle_manager.gd all key by .id --
-			# two abilities sharing a display_name would have silently shared
-			# one cooldown slot under the old key).
-			if chosen_ability.cooldown_rounds > 0:
-				enemy.ability_cooldowns[chosen_ability.id] = chosen_ability.cooldown_rounds
 
 		await get_tree().create_timer(0.5).timeout
 
@@ -394,7 +388,16 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 	if enemy.has_method("play_animation"):
 		enemy.play_animation("idle")
 
-	enemy.has_acted = true
+	# BUGFIX: this used to unconditionally set has_acted = true here, even
+	# when execute_ability() above had already set it itself and possibly
+	# reset it back to false via on_kill_reset_has_acted. Now only forced
+	# true when the ability branch above was never entered at all (enemy
+	# moved into position but couldn't actually attack this turn) -- if an
+	# ability WAS cast, execute_ability()'s own STEP 1.6 already set this
+	# correctly, and an on-kill reset deserves to be the final word, not
+	# get silently overwritten a few lines later here.
+	if not ability_was_executed:
+		enemy.has_acted = true
 
 
 func _choose_enemy_ability(unit) -> AbilityData:

@@ -104,13 +104,37 @@ func generate_map(width: int, height: int, biome: String, party_size: int, enemy
 					 "' -- map will be entirely open ground.")
 	else:
 		var target_feature_count := int(width * height * FEATURE_DENSITY)
-		var attempts := 0
-		var max_attempts := target_feature_count * 8
-		while feature_placements.size() < target_feature_count and attempts < max_attempts:
-			attempts += 1
-			var cell := Vector2i(randi() % width, randi() % height)
+
+		# ── BUGFIX (density=1 not filling every eligible cell) ─────────────────
+		# The old approach picked a random (x,y) cell up to max_attempts times
+		# and skipped it if already occupied -- fine at low density, but as
+		# occupancy climbs toward 100% (FEATURE_DENSITY near 1.0), the odds of
+		# a random guess landing on one of the shrinking pool of still-empty
+		# cells collapse. A fixed "target_feature_count * 8" attempt budget
+		# runs out long before every eligible cell has actually been tried --
+		# classic coupon-collector problem. Fixed by building the full list of
+		# candidate cells up front, shuffling it ONCE, and walking straight
+		# through it in order: every eligible cell gets a genuine chance
+		# regardless of how full the map already is, so density=1 can now
+		# actually reach (as close as footprint/spawn-distance/corridor rules
+		# allow to) 100% coverage of everywhere a feature could legally go.
+		# Strictly better at low density too, not just high -- shuffling the
+		# full eligible-cell list and taking the first N is a genuinely
+		# unbiased way to pick N random unique cells, unlike repeated random
+		# sampling with rejection, which the old code was doing.
+		var candidate_cells: Array[Vector2i] = []
+		for x in width:
+			for y in height:
+				var cell := Vector2i(x, y)
+				if not occupied.has(cell):
+					candidate_cells.append(cell)
+		candidate_cells.shuffle()
+
+		for cell in candidate_cells:
+			if feature_placements.size() >= target_feature_count:
+				break
 			if occupied.has(cell):
-				continue
+				continue   # May have been claimed already by an earlier feature's multi-cell footprint.
 
 			var feature: MapFeatureData = _weighted_pick(pool)
 			if feature.category == "blocking" and reserved_corridor.has(cell):

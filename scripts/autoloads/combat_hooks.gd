@@ -106,9 +106,24 @@ func run_before_ability_used(caster, ability) -> void:
 
 
 func run_after_ability_used(caster, ability, target_cells: Array, origin_cell: Vector2i, executor) -> void:
+	# BUGFIX: fn.call(...) here used to NOT be awaited. That's harmless for a
+	# plain synchronous callback, but Starcall Prism's callback (custom_
+	# equipment_handlers.gd's _starcall_prism_after_ability) genuinely
+	# recasts the ability and needs to wait for THAT recast's own animation
+	# to finish. Without awaiting here, the recast became a detached
+	# coroutine: this function (and therefore the original execute_ability()
+	# call in ability_executor.gd, and therefore BattleManager's own
+	# `await executor.execute_ability(...)`) all returned immediately, well
+	# before the recast had actually finished playing — which is exactly
+	# what let Starcall Prism's granted post-attack movement become
+	# available after only the FIRST of its two casts, instead of after
+	# both. Awaiting each callback here fixes it at the root, for this and
+	# any future async after_ability_used hook. Safe for the existing
+	# synchronous callbacks too — awaiting a plain (non-coroutine) function
+	# call just returns immediately, no behavior change for them.
 	for fn in after_ability_used:
 		if fn.is_valid():
-			fn.call(caster, ability, target_cells, origin_cell, executor)
+			await fn.call(caster, ability, target_cells, origin_cell, executor)
 
 
 func notify_mana_spent(unit, amount: int) -> void:

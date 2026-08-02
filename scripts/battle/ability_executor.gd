@@ -76,7 +76,8 @@ var _last_hit_was_crit: bool = false
 
 func execute_ability(caster, ability: AbilityData, target_cells: Array,
 					 origin_cell: Vector2i = Vector2i(-1, -1),
-					 raw_target_cells: Array = []) -> void:
+					 raw_target_cells: Array = [],
+					 is_free_recast: bool = false) -> void:
 	# Called by BattleManager (player) and AISystem (enemy).
 	#
 	# Parameters:
@@ -94,6 +95,14 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 	#                  calculations if used for the MOVEMENT part of a dash.
 	#                  Falls back to target_cells if left empty, which keeps
 	#                  every existing non-dash caller working unmodified.
+	#   is_free_recast — ADDED. True only when Starcall Prism (or anything
+	#                  similar later) is re-invoking this same ability for
+	#                  free. Skips STEP 1's cost payment entirely (see below)
+	#                  so a recast can never charge mana or HP cost a second
+	#                  time. Every other step — animation, targeting, damage,
+	#                  on-kill, post-attack movement — still runs in full,
+	#                  since the recast is meant to be a genuine second cast,
+	#                  just without paying for it again.
 
 	# ── STEP 0: CASTER VALIDITY + MANA GATE ──────────────────────────────────
 	# Check the caster is still alive first. It's possible for an aura's entry
@@ -119,23 +128,33 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 	# ── STEP 1: APPLY COSTS ───────────────────────────────────────────────────
 	# Deduct mana and HP cost immediately (before damage resolves).
 	# If they have an Arcana Charge, consume it instead of mana.
-	if caster.has_arcana_charge and ability.consumes_arcana_charge:
-		caster.has_arcana_charge = false
-		print("✨ Arcana Charge consumed by ", caster.unit_data.display_name)
-		caster.play_animation("idle")
-	else:
-		caster.spend_mana(ability.mana_cost)
-
+	#
+	# BUGFIX: gated behind "not is_free_recast" now. Starcall Prism's proc
+	# (see custom_equipment_handlers.gd's _starcall_prism_after_ability) used
+	# to pay costs normally here and refund the MANA afterward -- but had no
+	# equivalent refund for HP cost, so an ability like Stormblade's
+	# Overcharge (which damages its own caster to use) was paying that
+	# self-damage TWICE on every Starcall Prism proc, once per cast. Skipping
+	# this whole step on a free recast fixes that at the source and makes the
+	# old post-hoc mana refund in custom_equipment_handlers.gd unnecessary.
 	var hp_cost_paid: int = 0
-	if ability.hp_cost_percent > 0:
-		# Guarantee at least 1 HP is actually spent when hp_cost_percent > 0 —
-		# int() truncates toward zero, so a small percent on a low-HP unit
-		# (e.g. 0.05 * 12 HP = 0.6 → truncates to 0) previously could compute
-		# a cost of 0 and silently cost nothing despite the field being set.
-		hp_cost_paid = max(1, int(caster.get_stats().hp * ability.hp_cost_percent))
-		caster.take_damage(hp_cost_paid, "true")
-		if not is_instance_valid(caster):
-			return   # Caster killed themselves with HP cost — nothing more to do.
+	if not is_free_recast:
+		if caster.has_arcana_charge and ability.consumes_arcana_charge:
+			caster.has_arcana_charge = false
+			print("✨ Arcana Charge consumed by ", caster.unit_data.display_name)
+			caster.play_animation("idle")
+		else:
+			caster.spend_mana(ability.mana_cost)
+
+		if ability.hp_cost_percent > 0:
+			# Guarantee at least 1 HP is actually spent when hp_cost_percent > 0 —
+			# int() truncates toward zero, so a small percent on a low-HP unit
+			# (e.g. 0.05 * 12 HP = 0.6 → truncates to 0) previously could compute
+			# a cost of 0 and silently cost nothing despite the field being set.
+			hp_cost_paid = max(1, int(caster.get_stats().hp * ability.hp_cost_percent))
+			caster.take_damage(hp_cost_paid, "true")
+			if not is_instance_valid(caster):
+				return   # Caster killed themselves with HP cost — nothing more to do.
 
 	# ── GLOBAL CONSUMED-HP TRACKING ───────────────────────────────────────────
 	# Report the HP actually spent back through a static accumulator so
@@ -147,6 +166,36 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 	if hp_cost_paid > 0:
 		total_hp_consumed += hp_cost_paid
 		print("💉 HP cost paid: ", hp_cost_paid, " | Total HP consumed this battle: ", total_hp_consumed)
+
+	# ── STEP 1.5: COOLDOWN (ADDED — moved earlier) ────────────────────────────
+	# BUGFIX: this used to be set much later ("STEP 4", after the damage/kill
+	# loop below), in EVERY ability-shape branch (this main path, and the
+	# wall/chain/multi_target/leap early returns further down). That ordering
+	# meant an ability with on_kill_reset_cooldowns (see _trigger_on_kill()
+	# below) would correctly clear ALL cooldowns the instant a kill landed —
+	# and then, moments later in that SAME execute_ability() call, cooldown-
+	# setting would run and immediately re-add THIS ability's own cooldown,
+	# silently undoing the reset every single time. Setting it here instead —
+	# before any damage/targeting/kill logic has run at all — guarantees an
+	# on-kill reset is always the last word. The old per-branch cooldown-
+	# setting below has been removed since it's now redundant.
+	if ability.cooldown_rounds > 0:
+		caster.ability_cooldowns[ability.id] = ability.cooldown_rounds
+
+	# ── STEP 1.6: MARK CASTER AS HAVING ACTED (ADDED — moved earlier) ────────
+	# BUGFIX: same root cause and same fix shape as STEP 1.5 just above.
+	# battle_manager.gd's _try_use_ability() used to set selected_unit.
+	# has_acted = true itself, AFTER awaiting this whole function — which
+	# meant an on_kill_reset_has_acted effect (see _trigger_on_kill() below)
+	# would correctly reset has_acted to false the instant a kill landed,
+	# only for battle_manager.gd to unconditionally flip it straight back to
+	# true a moment later, before the player ever got a chance to act again.
+	# Setting it here instead — early, before any damage/kill logic has run —
+	# means a later on-kill reset is the last word, for both the player path
+	# AND ai_system.gd's enemy casts, since both funnel through this one
+	# function. battle_manager.gd's redundant post-await assignment has been
+	# removed accordingly.
+	caster.has_acted = true
 
 	# ── STEP 2: DASH ──────────────────────────────────────────────────────────
 	# A "dash" is a line AOE where the CASTER physically moves to the last
@@ -195,9 +244,10 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 			print("🧱 Wall placed across ", target_cells.size(), " tiles by ",
 				  caster.unit_data.display_name)
 
-		# Cooldown still applies even though we skip the rest of the pipeline.
-		if ability.cooldown_rounds > 0:
-			caster.ability_cooldowns[ability.id] = ability.cooldown_rounds
+		# Cooldown already applied at STEP 1.5, above — removed the redundant
+		# re-set that used to be here (see STEP 1.5's comment for why setting
+		# it twice was actively a bug, not just a harmless duplicate, for
+		# on_kill_reset_cooldowns specifically).
 		# BUGFIX: this early return used to skip run_after_ability_used()
 		# entirely, so any equipment hooked to that event (Archon's Grimoire,
 		# Worldroot Staff, Lifebinder's Staff, Whispercloak, Bloodthirster,
@@ -205,29 +255,27 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 		# wearer's ability happened to be a "wall" shape. See the identical
 		# fix on the chain/multi_target/leap branches below.
 		if is_instance_valid(caster):
-			CombatHooks.run_after_ability_used(caster, ability, target_cells, origin_cell, self)
+			await CombatHooks.run_after_ability_used(caster, ability, target_cells, origin_cell, self)
 		return
 
 	# ── STEP 2.6: CHAIN LIGHTNING ──────────────────────────────────────────────
 	if ability.aoe_shape == "chain":
 		await _execute_chain_lightning(caster, ability, target_cells)
-		if ability.cooldown_rounds > 0 and is_instance_valid(caster):
-			caster.ability_cooldowns[ability.id] = ability.cooldown_rounds
+		# Cooldown already applied at STEP 1.5, above.
 		# BUGFIX: see the identical comment on the "wall" branch above — this
 		# was missing entirely, so equipment hooked to after_ability_used
 		# never triggered off a Chain Lightning-shaped spell.
 		if is_instance_valid(caster):
-			CombatHooks.run_after_ability_used(caster, ability, target_cells, origin_cell, self)
+			await CombatHooks.run_after_ability_used(caster, ability, target_cells, origin_cell, self)
 		return
 
 	# ── STEP 2.7: MULTI-TARGET (Zephyr Strike-style) ───────────────────────────
 	if ability.aoe_shape == "multi_target":
 		await _execute_multi_target_strike(caster, ability, target_cells)
-		if ability.cooldown_rounds > 0 and is_instance_valid(caster):
-			caster.ability_cooldowns[ability.id] = ability.cooldown_rounds
+		# Cooldown already applied at STEP 1.5, above.
 		# BUGFIX: see the identical comment on the "wall" branch above.
 		if is_instance_valid(caster):
-			CombatHooks.run_after_ability_used(caster, ability, target_cells, origin_cell, self)
+			await CombatHooks.run_after_ability_used(caster, ability, target_cells, origin_cell, self)
 		return
 
 	# ── STEP 2.8: LEAP ──────────────────────────────────────────────────────────
@@ -236,11 +284,10 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 	# ever holds the single enemy target cell for this ability type.
 	if ability.is_leap:
 		await _execute_leap(caster, ability, target_cells, origin_cell)
-		if ability.cooldown_rounds > 0 and is_instance_valid(caster):
-			caster.ability_cooldowns[ability.id] = ability.cooldown_rounds
+		# Cooldown already applied at STEP 1.5, above.
 		# BUGFIX: see the identical comment on the "wall" branch above.
 		if is_instance_valid(caster):
-			CombatHooks.run_after_ability_used(caster, ability, target_cells, origin_cell, self)
+			await CombatHooks.run_after_ability_used(caster, ability, target_cells, origin_cell, self)
 		return
 
 	# ── STEP 3: COLLECT UNIQUE UNIT TARGETS AND APPLY EFFECTS ─────────────────
@@ -280,6 +327,7 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 				# _apply_damage_with_effects handles guardian, shield, thorns,
 				# tether, and now also Crit Overload via _last_hit_was_crit.
 				_apply_damage_with_effects(caster, target, ability, damage)
+				_maybe_apply_double_hit(caster, target, ability)   # ADDED
 
 		# ── STATUS EFFECTS ────────────────────────────────────────────────────
 		# Apply status effects to the target (if any) from the ability's list.
@@ -387,6 +435,31 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 		if self_status != null:
 			caster.apply_status(self_status, 1, caster)
 
+	# ── SKILL SCROLL SELF-VARIANTS (ADDED) ────────────────────────────────────
+	# Same "once per cast" placement as the self-status application just
+	# above, for the same reason -- these are self-buffs, not per-target
+	# effects, so they shouldn't fire once per AOE target hit.
+	if ability.applies_thorns_to_self:
+		grid_ref.apply_thorns(caster, ability.thorns_reflect_percent,
+							  ability.thorns_scaling_stat, ability.thorns_duration_rounds)
+
+	if ability.applies_guardian_to_self:
+		# NOT the protector/protected apply_guardian() mechanic used by
+		# applies_guardian above -- see ability_data.gd's
+		# applies_guardian_to_self comment for why "protect yourself,
+		# protected by yourself" isn't a meaningful redirect. This grants a
+		# flat self damage-reduction ward instead, using the SAME
+		# damage_taken_modifier status mechanism Heavy Plate uses (see
+		# custom_equipment_handlers.gd / unit_node.gd's take_damage()).
+		var self_guardian := StatusEffectData.new()
+		self_guardian.id = "ability_guardian_self_" + ability.id
+		self_guardian.display_name = "Guarded"
+		self_guardian.description = "Taking %d%% less damage." % int(ability.guardian_redirect_percent * 100)
+		self_guardian.damage_taken_modifier = -ability.guardian_redirect_percent
+		self_guardian.duration_rounds = ability.guardian_duration_rounds
+		self_guardian.can_stack = false
+		caster.apply_status(self_guardian, 1, caster)
+
 	# ── STEP 3.5: AURA ACTIVATION ─────────────────────────────────────────────
 	# If this ability activates an aura, tell the AuraManager to register it.
 	# This runs AFTER the normal target loop so any direct hit on the initial
@@ -397,10 +470,9 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 		print("🌀 Aura activated: '", ability.aura_data.id,
 			  "' by ", caster.unit_data.display_name)
 
-	# ── STEP 4: COOLDOWN ──────────────────────────────────────────────────────
-	# Put this ability on cooldown so it cannot be used again immediately.
-	if ability.cooldown_rounds > 0:
-		caster.ability_cooldowns[ability.id] = ability.cooldown_rounds
+	# Cooldown already applied at STEP 1.5, above — see that comment for why
+	# this used to be set here (AFTER the damage/kill loop above) and why
+	# that ordering silently broke on_kill_reset_cooldowns.
 
 	# ── STEP 5: POST-ATTACK MOVEMENT ─────────────────────────────────────────
 	# If the ability grants the caster extra movement squares after attacking,
@@ -420,7 +492,17 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 			await _launch_projectile(caster, ability, target_cells[0])
 		else:
 			await _play_aoe_vfx(caster, ability, target_cells, origin_cell)
-	CombatHooks.run_after_ability_used(caster, ability, target_cells, origin_cell, self)
+	# BUGFIX: this used to fire without await — see combat_hooks.gd's
+	# run_after_ability_used() for the full explanation. In short: Starcall
+	# Prism's recast (a hook callback registered on THIS exact event) is a
+	# genuine second execute_ability() call with its own animation, and
+	# without awaiting here, execute_ability() (and therefore whatever
+	# CALLED it, e.g. BattleManager's own `await executor.execute_ability(...)`)
+	# returned immediately, well before that recast's animation had actually
+	# finished playing. That's what let post-attack movement become
+	# available after only the FIRST of Starcall Prism's two casts instead
+	# of after both.
+	await CombatHooks.run_after_ability_used(caster, ability, target_cells, origin_cell, self)
 
 # ── DAMAGE APPLICATION (with Shield / Thorns / Guardian / Tether / Crit Overload) ──
 
@@ -602,6 +684,31 @@ func _trigger_on_kill(caster, ability: AbilityData, dead_target) -> void:
 	if ability.on_kill_reset_cooldowns:
 		caster.ability_cooldowns.clear()
 		print("   ↺ All cooldowns cleared for ", caster.unit_data.display_name)
+
+	# -- Restore mana on kill (ADDED, for Skill Scroll's "restore mana on kill" enhancement).
+	if ability.on_kill_restore_mana_amount > 0:
+		caster.restore_mana(ability.on_kill_restore_mana_amount)
+		print("   💧 ", caster.unit_data.display_name, " restored ",
+			  ability.on_kill_restore_mana_amount, " mana on kill!")
+
+# ── SKILL SCROLL: DOUBLE HIT (ADDED) ───────────────────────────────────────────
+
+func _maybe_apply_double_hit(caster, target, ability: AbilityData) -> void:
+	# Skill Scroll's "chance to hit twice" enhancement (see ability_data.gd's
+	# double_hit_chance). Rolled independently per target, right after that
+	# target's normal hit already resolved -- so in an AOE, some targets can
+	# get double-hit while others don't, each roll independent. Separate
+	# from 'hits' (a guaranteed fixed count) -- this is a probability roll.
+	if ability.double_hit_chance <= 0.0:
+		return
+	if target == null or not is_instance_valid(target) or target.current_hp <= 0:
+		return   # Dead (or never existed) -- nothing left to double-hit.
+	if not is_instance_valid(caster):
+		return
+	if randf() >= ability.double_hit_chance:
+		return
+	var extra_damage: int = calculate_damage(caster, target, ability)
+	_apply_damage_with_effects(caster, target, ability, extra_damage)
 
 # ── DAMAGE FORMULA ────────────────────────────────────────────────────────────
 
@@ -905,6 +1012,7 @@ func _execute_chain_lightning(caster, ability: AbilityData, target_cells: Array)
 	if is_instance_valid(first_target):
 		var dmg = calculate_damage(caster, first_target, ability)
 		_apply_damage_with_effects(caster, first_target, ability, dmg)
+		_maybe_apply_double_hit(caster, first_target, ability)   # ADDED
 
 	if chain_targets.size() < 2:
 		return
@@ -988,6 +1096,7 @@ func _play_bounce_and_damage(caster, from_world: Vector2, target, ability: Abili
 	if is_instance_valid(target):
 		var dmg = calculate_damage(caster, target, ability)
 		_apply_damage_with_effects(caster, target, ability, dmg)
+		_maybe_apply_double_hit(caster, target, ability)   # ADDED
 
 
 func _play_bounce_scene(from_world: Vector2, target, scene: PackedScene) -> void:
@@ -1260,6 +1369,7 @@ func _multi_target_sequential(caster, ability: AbilityData, targets: Array,
 		if is_instance_valid(target):
 			var dmg = calculate_damage(caster, target, ability)
 			_apply_damage_with_effects(caster, target, ability, dmg)
+			_maybe_apply_double_hit(caster, target, ability)   # ADDED
 
 		current_cell    = dest
 		previous_target = target
@@ -1342,6 +1452,7 @@ func _duplicate_strike(caster, ability: AbilityData, target, dest_cell: Vector2i
 	if is_instance_valid(target):
 		var dmg = calculate_damage(caster, target, ability)
 		_apply_damage_with_effects(caster, target, ability, dmg)
+		_maybe_apply_double_hit(caster, target, ability)   # ADDED
 
 	if is_instance_valid(clone):
 		clone.queue_free()
@@ -1367,6 +1478,7 @@ func _execute_leap(caster, ability: AbilityData, target_cells: Array, destinatio
 	if is_instance_valid(target):
 		var dmg = calculate_damage(caster, target, ability)
 		_apply_damage_with_effects(caster, target, ability, dmg)
+		_maybe_apply_double_hit(caster, target, ability)   # ADDED
 
 
 # ── DISPLACEMENT HELPERS ──────────────────────────────────────────────────────
@@ -1650,6 +1762,19 @@ func _resolve_pending_displacements(caster, ability: AbilityData, pending: Array
 	for entry in pending:
 		if not entry["target"] in unique_targets:
 			unique_targets.append(entry["target"])
+
+	# ── TANKY DISPLACEMENT IMMUNITY (ADDED) ───────────────────────────────────
+	# Filtered out here, before the sort/dispatch below, so it applies
+	# uniformly across all three displacement types (manual/auto/scatter)
+	# from one spot instead of three. An immune unit just never enters
+	# unique_targets at all -- everyone else's push/pull order is completely
+	# unaffected by their presence (they're not "in the way" for sorting
+	# purposes, they're just skipped entirely).
+	unique_targets = unique_targets.filter(func(t):
+		return not (t.unit_data != null and t.unit_data.immune_to_displacement_and_cc)
+	)
+	if unique_targets.is_empty():
+		return
 
 	# Tracks which targets ACTUALLY moved (move_to() was called on them), so
 	# we know exactly who to wait on below — see the big comment above

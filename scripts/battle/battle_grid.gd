@@ -787,6 +787,10 @@ func apply_hazard_to_unit(unit, cell: Vector2i, trigger: String) -> void:
 			var caster_atk = entry["caster"].get_effective_atk()
 			raw_damage = max(1, int(caster_atk * hdata.damage_multiplier))
 
+		# ── TANKY HAZARD RESISTANCE (ADDED) ─────────────────────────────────
+		if unit.unit_data != null and unit.unit_data.hazard_damage_reduction_percent > 0.0:
+			raw_damage = max(1, int(round(float(raw_damage) * (1.0 - unit.unit_data.hazard_damage_reduction_percent))))
+
 		unit.take_damage(raw_damage, hdata.damage_type, false, false)
 
 		# Apply optional status.
@@ -879,10 +883,24 @@ func get_tethered_units(tether_id: String, exclude_unit) -> Array:
 # Connections are recomputed from tether_map + live unit positions every
 # time _refresh_tether_lines() runs (register_unit/unregister_unit/
 # register_large_unit/unregister_large_unit/register_tether/
-# unregister_tether — i.e. every movement path AND every death already goes
-# through this), so a unit dying, or units simply walking around and
-# changing who's nearest to whom, both correctly redraw the connections.
-# Nothing here is tracked independently of that live data.
+# unregister_tether all call it), so a unit dying, or units simply walking
+# around and changing who's nearest to whom, both correctly redraw the
+# connections. Nothing here is tracked independently of that live data.
+#
+# BUGFIX: register_unit()/unregister_unit() fire BEFORE a move's visual
+# tween actually runs (see unit_node.gd's move_to()/move_along_path(), which
+# update the grid registry first specifically so mid-step lookups see the
+# unit's new tile immediately) -- so the refresh they trigger snapshots each
+# unit's .position while it's still sitting at its OLD spot, not where the
+# tween is about to slide it to. That's what used to make a tether line
+# occasionally freeze one tile behind wherever a unit had actually finished
+# walking to, especially noticeable when nothing ELSE moved afterward to
+# incidentally trigger one more correcting refresh. Fixed with a second call
+# point: unit_node.gd now also calls the public refresh_tether_visuals()
+# wrapper right after each move's tween genuinely finishes, and
+# battle_manager.gd calls it once more as a safety net at the end of every
+# full round, so anchors can never drift for more than a frame regardless of
+# what caused the last move.
 
 var _tether_line_layer: Node2D = null
 var _tether_lines: Dictionary       = {}   # line_key (String) -> Line2D
@@ -954,6 +972,17 @@ func _compute_mst_edges(units: Array) -> Array:
 		remaining.erase(best_remaining_unit)
 
 	return edges
+
+
+func refresh_tether_visuals() -> void:
+	# ADDED: public entry point for OTHER scripts (unit_node.gd's move_to()/
+	# move_along_path(), battle_manager.gd's end-of-round safety net) to
+	# request a resync, on top of the register_unit()/unregister_unit()
+	# etc. call sites below that already trigger one internally. See the
+	# big comment on _refresh_tether_lines() just below for why a move's
+	# tween finishing is a second moment that genuinely needs its own
+	# refresh, not just registration changing.
+	_refresh_tether_lines()
 
 
 func _refresh_tether_lines() -> void:
@@ -1352,3 +1381,4 @@ func is_dangerous_for(cell: Vector2i, unit) -> bool:
 		if hdata.trigger_on_enter:
 			return true
 	return false
+	

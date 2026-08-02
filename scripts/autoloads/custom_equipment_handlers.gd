@@ -35,9 +35,23 @@
 
 extends Node
 
+# ---- REBALANCE CONSTANTS (ADDED) --------------------------------------------
+# Pulled up here so they're easy to find and tweak without hunting through
+# the handler functions below.
+
+const BLOODTHIRSTER_MAX_STACKS := 5
+# Highest number of ATK/MATK stacks Bloodthirster can build up to.
+
+const HEAVY_PLATE_DAMAGE_REDUCTION_PERCENT := 0.10
+# Flat percentage reduction to ALL incoming damage per Heavy Plate equipped
+# (ability hits, hazard tiles, DOT ticks -- everything, since this reads
+# through unit_node.gd's damage_reduction_sources / take_damage()). Stacks:
+# equipping two Heavy Plates gives 2x this reduction.
+
 # ---- PER-UNIT RUNTIME STATE --------------------------------------------------
-var _bloodthirster_stacks: Dictionary = {}   # unit -> int (0-4)
-var _bloodthirster_acted: Dictionary  = {}   # unit -> bool (attacked this round?)
+var _bloodthirster_stacks: Dictionary = {}   # unit -> int (0-BLOODTHIRSTER_MAX_STACKS)
+var _bloodthirster_acted: Dictionary  = {}   # unit -> bool (dealt real damage this round?)
+var _bloodthirster_last_shown_stacks: Dictionary = {}   # unit -> int (avoids re-applying the buff every round when the count didn't change)
 var _stoneheart_triggered: Dictionary = {}   # unit -> bool (one-time per battle)
 var _oracle_lens_used: Dictionary     = {}   # unit -> bool (one-time per battle)
 
@@ -46,6 +60,7 @@ var _arcblade_active: Dictionary   = {}   # unit -> float (damage multiplier act
 var _archons_grimoire_used: Dictionary = {}   # unit -> bool (one-time per battle)
 var _wardens_cloak_triggered: Dictionary = {} # unit -> bool (resets every round tick)
 var _starcall_prism_used_this_round: Dictionary = {} # unit -> bool (resets every round tick)
+var _heavy_plate_stack_count: Dictionary = {}   # unit -> int (how many Heavy Plates currently equipped)
 
 var _registered_callbacks: Dictionary = {}   # "<custom_id>:<unit instance id>" -> Array of {list, callback}
 
@@ -103,6 +118,9 @@ func on_unequip(custom_id: String, unit) -> void:
 		_registered_callbacks.erase(key)
 	_bloodthirster_stacks.erase(unit)
 	_bloodthirster_acted.erase(unit)
+	_bloodthirster_last_shown_stacks.erase(unit)
+	if is_instance_valid(unit):
+		unit.remove_status("equip_custom_bloodthirster_buff")
 	_stoneheart_triggered.erase(unit)
 	_oracle_lens_used.erase(unit)
 	_arcblade_pending.erase(unit)
@@ -111,6 +129,20 @@ func on_unequip(custom_id: String, unit) -> void:
 	_wardens_cloak_triggered.erase(unit)
 	_starcall_prism_used_this_round.erase(unit)
 	unit.momentum_bonuses.erase("equip_custom_" + custom_id)
+
+	# ── HEAVY PLATE CLEANUP (ADDED) ───────────────────────────────────────────
+	# Erases every damage_reduction_sources key THIS unit's Heavy Plate copies
+	# registered. on_unequip fires once per equipped copy (see
+	# EquipmentRuntime.remove_equipment_from_unit()'s per-item loop), so with
+	# 2 copies this runs twice -- the first call erases both keys and resets
+	# the counter to 0, the second finds nothing left and safely no-ops. Same
+	# "erase everything at once, harmless if called again" pattern already
+	# used by the _registered_callbacks cleanup above.
+	if custom_id == "heavy_plate":
+		var count: int = _heavy_plate_stack_count.get(unit, 0)
+		for i in range(1, count + 1):
+			unit.damage_reduction_sources.erase("heavy_plate_" + str(i))
+		_heavy_plate_stack_count.erase(unit)
 
 
 func _track(custom_id: String, unit, list: Array, callback: Callable) -> void:
@@ -127,14 +159,23 @@ func _track(custom_id: String, unit, list: Array, callback: Callable) -> void:
 func _equip_bloodthirster(unit) -> void:
 	_bloodthirster_stacks[unit] = 0
 	_bloodthirster_acted[unit] = false
-	_track("bloodthirster", unit, CombatHooks.after_ability_used,
-		Callable(self, "_bloodthirster_on_ability_used").bind(unit))
+	# CHANGED: was tracking CombatHooks.after_ability_used, which only tells
+	# you an ability with a nonzero base_damage_multiplier was USED -- not
+	# that it actually landed. A Guardian absorb, a Shield fully blocking the
+	# hit, a whiff, etc. would still count as "acted". Switched to
+	# on_damage_applied_reactions instead, which -- per
+	# ability_executor.gd's _apply_damage_with_effects -- only ever fires
+	# AFTER take_damage() genuinely lands (Guardian/Shield absorption both
+	# return early and never reach this hook at all). So actual_damage > 0
+	# here really does mean real damage was dealt this action.
+	_track("bloodthirster", unit, CombatHooks.on_damage_applied_reactions,
+		Callable(self, "_bloodthirster_on_damage_applied").bind(unit))
 	_track("bloodthirster", unit, CombatHooks.on_unit_round_tick,
 		Callable(self, "_bloodthirster_round_tick").bind(unit))
 
 
-func _bloodthirster_on_ability_used(caster, ability, target_cells: Array, origin_cell: Vector2i, executor, unit) -> void:
-	if caster == unit and ability.base_damage_multiplier > 0:
+func _bloodthirster_on_damage_applied(attacker, target, actual_damage: int, is_crit: bool, damage_type: String, unit) -> void:
+	if attacker == unit and actual_damage > 0:
 		_bloodthirster_acted[unit] = true
 
 
@@ -142,12 +183,46 @@ func _bloodthirster_round_tick(tick_unit, unit) -> void:
 	if tick_unit != unit:
 		return
 	if _bloodthirster_acted.get(unit, false):
-		_bloodthirster_stacks[unit] = min(_bloodthirster_stacks.get(unit, 0) + 1, 4)
+		_bloodthirster_stacks[unit] = min(_bloodthirster_stacks.get(unit, 0) + 1, BLOODTHIRSTER_MAX_STACKS)
 	else:
 		_bloodthirster_stacks[unit] = 0
 	_bloodthirster_acted[unit] = false
-	var stacks: int = _bloodthirster_stacks[unit]
-	unit.momentum_bonuses["equip_custom_bloodthirster"] = {"atk": stacks, "matk": stacks}
+	_refresh_bloodthirster_buff_display(unit, _bloodthirster_stacks[unit])
+
+
+func _refresh_bloodthirster_buff_display(unit, stacks: int) -> void:
+	# This status IS the mechanical effect now -- its atk_modifier/
+	# matk_modifier ARE the stat bonus (no separate momentum_bonuses entry
+	# alongside it; get_effective_atk()/get_effective_matk() already sum
+	# BOTH active_statuses' modifiers AND momentum_bonuses independently, so
+	# having both would silently double the bonus).
+	#
+	# apply_status() only refreshes DURATION on an already-active status of
+	# the same id -- it does NOT swap in a new StatusEffectData object, so
+	# just calling apply_status() again each round with an updated
+	# atk_modifier would silently keep showing the FIRST round's stack count
+	# forever. Removing and re-applying fresh whenever the count actually
+	# CHANGES sidesteps that. The last-shown check below skips the
+	# remove/reapply on rounds where nothing changed, so the buff doesn't
+	# flicker/replay its apply VFX every single round for no reason.
+	if _bloodthirster_last_shown_stacks.get(unit, -1) == stacks:
+		return
+	_bloodthirster_last_shown_stacks[unit] = stacks
+
+	unit.remove_status("equip_custom_bloodthirster_buff")
+	if stacks <= 0:
+		return
+
+	var status := StatusEffectData.new()
+	status.id = "equip_custom_bloodthirster_buff"
+	status.display_name = "Bloodthirster"
+	status.description = "+%d ATK / MATK from Bloodthirster's bloodlust. Resets if this unit deals no damage during a full round." % stacks
+	status.icon = UnitInfoPopup._resolve_icon(ContentLoader.get_equipment("bloodthirster").get("icon"))
+	status.is_permanent = true
+	status.can_stack = false
+	status.atk_modifier = stacks
+	status.matk_modifier = stacks
+	unit.apply_status(status)
 
 # ==============================================================================
 # 2. VANGUARD'S EDGE (Blade + Armor)
@@ -213,27 +288,24 @@ func _spellforged_blade_modify_damage(attacker, target, damage: int, is_crit: bo
 # ==============================================================================
 
 func _equip_heavy_plate(unit) -> void:
-	_track("heavy_plate", unit, CombatHooks.on_unit_round_tick,
-		Callable(self, "_heavy_plate_round_tick").bind(unit))
-
-
-func _heavy_plate_round_tick(tick_unit, unit) -> void:
-	if tick_unit != unit or unit.grid_ref == null:
-		return
-	var bonus_key := "equip_custom_heavy_plate_" + str(unit.get_instance_id())
-	var nearby_allies := []
-	for cell in unit.grid_ref.unit_positions:
-		var other = unit.grid_ref.unit_positions[cell]
-		if other == unit or not is_instance_valid(other) or other.is_player_unit != unit.is_player_unit:
-			continue
-		var dist = max(abs(other.grid_position.x - unit.grid_position.x),
-						abs(other.grid_position.y - unit.grid_position.y))
-		if dist <= 1:
-			nearby_allies.append(other)
-			other.momentum_bonuses[bonus_key] = {"def": 2, "mdef": 2}
-	for other in unit.grid_ref.unit_positions.values():
-		if is_instance_valid(other) and other != unit and not other in nearby_allies:
-			other.momentum_bonuses.erase(bonus_key)
+	# CHANGED: Heavy Plate used to grant DEF+2/MDEF+2 to nearby allies,
+	# re-evaluated every round based on adjacency. Replaced entirely with a
+	# flat percentage reduction to the WEARER's own incoming damage instead
+	# -- see HEAVY_PLATE_DAMAGE_REDUCTION_PERCENT at the top of this file to
+	# rebalance that one number. No round_tick needed anymore, since the new
+	# effect doesn't depend on anything that changes turn to turn (unlike
+	# ally adjacency before it) -- just set once here and left alone until
+	# unequip.
+	#
+	# Stacks naturally: on_equip() is called once PER EQUIPPED COPY (see
+	# EquipmentRuntime.apply_equipment_to_unit()'s custom-effects loop), so
+	# two Heavy Plates call this twice, each adding its OWN independent
+	# entry below -- 2x the reduction. Same "just add another key" approach
+	# every other _track()-based handler in this file already relies on for
+	# multi-copy stacking (e.g. Vital Bloom's per-copy round_tick).
+	_heavy_plate_stack_count[unit] = _heavy_plate_stack_count.get(unit, 0) + 1
+	var source_key := "heavy_plate_" + str(_heavy_plate_stack_count[unit])
+	unit.damage_reduction_sources[source_key] = HEAVY_PLATE_DAMAGE_REDUCTION_PERCENT
 
 # ==============================================================================
 # 7. STONEHEART MAIL (Armor + Talisman)
@@ -479,11 +551,14 @@ func _veilstaff_on_damage_applied(attacker, target, actual_damage: int, is_crit:
 # +2 MATK, +15% crit chance flat. When casting a spell or ability, a chance
 # equal to half the wearer's crit chance to immediately cast it again on the
 # same target/area at no cost. Once per round.
-# Now exact: genuinely re-invokes AbilityExecutor.execute_ability() with the
-# same target_cells, then refunds whatever mana that recast spent (so it
-# nets out to free). Recursion is safe: the "used this round" flag is set
-# BEFORE the recast runs, so the recast's own after_ability_used firing
-# can't proc Starcall Prism a second time.
+# Genuinely re-invokes AbilityExecutor.execute_ability() with the same
+# target_cells, passing is_free_recast = true so the recast can never pay
+# mana or HP cost a second time (see execute_ability()'s STEP 1 for why this
+# replaced the old "pay then refund mana" approach -- that had no equivalent
+# for HP-cost abilities like Stormblade's Overcharge, which were paying
+# their self-damage TWICE on every proc). Recursion is safe: the "used this
+# round" flag is set BEFORE the recast runs, so the recast's own
+# after_ability_used firing can't proc Starcall Prism a second time.
 # ==============================================================================
 
 func _equip_starcall_prism(unit) -> void:
@@ -511,8 +586,25 @@ func _starcall_prism_after_ability(caster, ability, target_cells: Array, origin_
 
 	_starcall_prism_used_this_round[unit] = true   # set BEFORE recasting -- see note above
 
+	# BUGFIX: this used to fire without await, AND without is_free_recast --
+	# two separate bugs from the same missing pieces:
+	#   1. Without await, this call became a detached coroutine: control
+	#      returned all the way back up through CombatHooks.
+	#      run_after_ability_used() -> the FIRST execute_ability() call ->
+	#      whatever called THAT (e.g. BattleManager) well before this
+	#      recast's own animation had actually finished playing. Now that
+	#      run_after_ability_used() itself awaits every callback (see
+	#      combat_hooks.gd), awaiting here means the entire chain genuinely
+	#      waits for this recast -- animation included -- to finish.
+	#   2. Without is_free_recast, this recast paid mana AND hp_cost_percent
+	#      a second time -- mana got refunded afterward below, but nothing
+	#      refunded HP cost, so a self-damaging ability like Stormblade's
+	#      Overcharge hurt its caster twice per proc. is_free_recast skips
+	#      both entirely now, so there's nothing left to refund for mana
+	#      either -- the refund logic below is kept only as a harmless
+	#      no-op safety net in case is_free_recast is ever bypassed.
 	var mana_before_recast: int = unit.current_mana
-	executor.execute_ability(caster, ability, target_cells, origin_cell)
+	await executor.execute_ability(caster, ability, target_cells, origin_cell, [], true)
 	if is_instance_valid(unit):
 		var spent: int = mana_before_recast - unit.current_mana
 		if spent > 0:

@@ -99,6 +99,7 @@ description = "A long-range fighter who focuses on targeting enemy weak spots an
 portrait = ExtResource("3_wybnv")
 battle_sprite = ExtResource("2_udbhy")
 synergy_tags = Array[String](["critical", "momentum"])
+unit_roles = 16
 stats_by_level = Array[ExtResource("3_fwn01")]([ExtResource("1_jdtuf")])
 base_stats = ExtResource("1_jdtuf")
 starting_abilities = Array[ExtResource("2_jdtuf")]([ExtResource("4_e2uu1"), ExtResource("5_00g4e")])

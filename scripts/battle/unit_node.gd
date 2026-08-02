@@ -125,6 +125,34 @@ var momentum_bonuses: Dictionary = {}
 # Fractional bonuses (e.g. 0.5 per kill) are tracked as floats by AuraManager
 # and floor()'d before writing here as integers (except crit values which stay float).
 
+# ── DAMAGE REDUCTION SOURCES (ADDED) ──────────────────────────────────────────
+
+var damage_reduction_sources: Dictionary = {}
+# Flat percentage reductions to EVERY point of incoming damage, regardless of
+# source -- ability hits, hazard tiles, DOT ticks, thorns reflects, splash,
+# everything that funnels through take_damage() below. Same shape/pattern as
+# momentum_bonuses just above: { "source_id": float_percent, ... }, summed
+# together (see get_total_damage_reduction_percent()) so multiple sources
+# stack additively. Currently only Heavy Plate writes into this (see
+# custom_equipment_handlers.gd's _equip_heavy_plate()), but any future source
+# can add its own key the same way.
+#
+# NOTE: this is deliberately separate from StatusEffectData.damage_taken_modifier
+# (the existing per-status field) -- that one is ONLY read by ability_executor.gd's
+# damage calc, so it never touched hazard/DOT damage. This dictionary is read
+# directly inside take_damage() itself, so it's the one mechanism that
+# genuinely covers "ALL incoming damage" the way Heavy Plate's design calls for.
+
+func get_total_damage_reduction_percent() -> float:
+	var total: float = 0.0
+	for source_id in damage_reduction_sources:
+		total += damage_reduction_sources[source_id]
+	return clamp(total, 0.0, 0.75)
+	# Capped at 75% so no stack of sources can make a unit literally
+	# undamageable (int(round(x * 0.25)) can still hit 0 for very small hits,
+	# but max(1, ...) further down in take_damage() guarantees at least 1
+	# damage always gets through regardless).
+
 # ── STATE FLAGS ───────────────────────────────────────────────────────────────
 
 var is_player_unit:   bool = true
@@ -245,6 +273,131 @@ func setup(data: UnitData, unit_level: int, is_player: bool) -> void:
 
 	# Compute occupied cells from the starting position and footprint.
 	_update_occupied_cells()
+
+
+# ── SKILL SCROLL ENHANCEMENTS (ADDED) ─────────────────────────────────────────
+
+var enhanced_abilities: Dictionary = {}
+# ability_id (String) -> a DUPLICATED AbilityData with this unit's applied
+# Skill Scroll enhancements baked into its fields. Built once by
+# build_enhanced_abilities() below, right after setup() -- see
+# battle_manager.gd's spawn_unit(), which calls it the same way it already
+# applies equipped_item_ids/permanent_modifiers from the party entry.
+#
+# WHY A DUPLICATE, NOT AN EDIT-IN-PLACE: unit_data.starting_abilities holds
+# the SAME AbilityData resource objects shared by every unit of this species
+# across the whole game (they're loaded once from disk, not per-instance).
+# Mutating one directly would silently enhance every OTHER unit using that
+# same ability too. Duplicating means only this specific unit's copy is
+# ever touched.
+#
+# WHY HERE, NOT A GENERIC GETTER EVERYWHERE: ability_executor.gd and
+# everything downstream of it just reads whatever AbilityData object it's
+# handed directly (ability.base_damage_multiplier, ability.max_range, etc.)
+# -- there's exactly ONE place in the whole project that resolves "this
+# unit's ability list" from unit_data (ui_manager.gd's show_unit_abilities,
+# which builds the in-battle ability bar). Swapping in the enhanced
+# duplicate AT THAT ONE CHOKE POINT means the correct (enhanced) object
+# flows through execute_ability() and every effect it triggers automatically
+# -- no need to touch dozens of individual field reads throughout
+# ability_executor.gd.
+
+func build_enhanced_abilities(ability_enhancement_ids: Dictionary) -> void:
+	# ability_enhancement_ids: { ability_id (String) -> Array[String] of
+	# applied AbilityEnhancementData ids }. Comes straight from a party
+	# entry's "ability_enhancements" field (see run_state.gd) -- empty/absent
+	# for enemies and for any player unit that's never used a scroll.
+	enhanced_abilities.clear()
+	if ability_enhancement_ids.is_empty() or unit_data == null:
+		return
+
+	for ability in unit_data.starting_abilities:
+		if ability == null:
+			continue
+		var applied_ids: Array = ability_enhancement_ids.get(ability.id, [])
+		if applied_ids.is_empty():
+			continue
+
+		var enhanced: AbilityData = ability.duplicate(true)
+		var no_friendly_fire_applied := false   # one-time correction, not additive -- see below
+
+		for enhancement_id in applied_ids:
+			var enhancement: AbilityEnhancementData = null
+			for candidate in ability.eligible_enhancements:
+				if candidate != null and candidate.id == enhancement_id:
+					enhancement = candidate
+					break
+			if enhancement == null:
+				push_warning("UnitNode: applied enhancement '" + str(enhancement_id) +
+					"' isn't in ability '" + ability.id + "''s eligible_enhancements -- skipped. " +
+					"(Was it removed from the ability after being applied?)")
+				continue
+
+			# Every branch below ADDS to the base ability's existing value --
+			# per design, Skill Scroll enhancements never overwrite/replace,
+			# only stack on top of whatever the ability already has.
+			match enhancement.enhancement_type:
+				"damage_percent":
+					enhanced.base_damage_multiplier += enhancement.magnitude
+				"range":
+					enhanced.max_range += int(enhancement.magnitude)
+				"post_attack_move":
+					enhanced.post_attack_move_squares += int(enhancement.magnitude)
+				"aoe_size":
+					enhanced.aoe_size += int(enhancement.magnitude)
+				"isolated_damage":
+					enhanced.bonus_damage_isolated += enhancement.magnitude
+				"double_hit_chance":
+					enhanced.double_hit_chance = clamp(enhanced.double_hit_chance + enhancement.magnitude, 0.0, 1.0)
+				"guardian_self":
+					enhanced.applies_guardian_to_self = true
+				"guardian_target":
+					enhanced.applies_guardian = true
+				"thorns_self":
+					enhanced.applies_thorns_to_self = true
+				"thorns_target":
+					enhanced.applies_thorns = true
+				"shield_target":
+					enhanced.applies_shield = true
+				"reset_cooldown_on_kill":
+					enhanced.has_on_kill_effect = true
+					enhanced.on_kill_reset_cooldowns = true
+				"restore_mana_on_kill":
+					enhanced.has_on_kill_effect = true
+					enhanced.on_kill_restore_mana_amount += int(enhancement.magnitude)
+				"add_buff":
+					if enhancement.attached_status != null:
+						enhanced.applies_statuses_to_self.append(enhancement.attached_status)
+				"add_debuff":
+					if enhancement.attached_status != null:
+						enhanced.applies_statuses.append(enhancement.attached_status)
+				"bonus_per_target_debuff":
+					enhanced.bonus_per_target_debuff += enhancement.magnitude
+				"bonus_per_caster_buff":
+					enhanced.bonus_damage_per_caster_buff += enhancement.magnitude
+				"no_friendly_fire":
+					# Not additive (affects_team is an enum, not a number) --
+					# just a one-time correction, safe to "apply" any number
+					# of times since it only ever does anything the first
+					# time it flips "all" to "enemies".
+					if not no_friendly_fire_applied and enhanced.affects_team == "all":
+						enhanced.affects_team = "enemies"
+						no_friendly_fire_applied = true
+				_:
+					push_warning("UnitNode: unknown enhancement_type '" +
+						str(enhancement.enhancement_type) + "' on enhancement '" + enhancement_id + "'.")
+
+		enhanced_abilities[ability.id] = enhanced
+
+
+func get_ability_for_use(base_ability: AbilityData) -> AbilityData:
+	# Call this wherever an ability is about to be SHOWN or USED (the ability
+	# bar, AI ability selection) instead of reading unit_data's copy
+	# directly -- returns this unit's own enhanced duplicate if one exists
+	# for this ability, otherwise just hands back base_ability unchanged.
+	if base_ability == null:
+		return null
+	return enhanced_abilities.get(base_ability.id, base_ability)
 
 
 # ADDED: applies res://shaders/wind_sway.gdshader to this unit's
@@ -566,13 +719,26 @@ func get_effective_mdef() -> int:
 
 func get_effective_mov() -> int:
 	var base = get_stats().mov
+	var immune_to_cc: bool = unit_data != null and unit_data.immune_to_displacement_and_cc
 	for s in active_statuses:
 		# A root effect overrides everything — rooted units cannot move at all.
-		if s["data"].is_root:
+		# CC-immune units (ADDED) skip this entirely, per unit_data.
+		# immune_to_displacement_and_cc -- see apply_status() for the matching
+		# is_stun/is_root block on application, which stops these from even
+		# landing on an immune unit in the first place. This check stays here
+		# too as a second line of defense in case a root is ever granted some
+		# other way (e.g. a future self-inflicted effect).
+		if s["data"].is_root and not immune_to_cc:
 			return 0
-		base += s["data"].mov_modifier * s["stacks"]
+		var mov_contribution: float = s["data"].mov_modifier * s["stacks"]
+		if immune_to_cc and mov_contribution < 0:
+			continue   # Ignore slows entirely; positive mov buffs still apply.
+		base += mov_contribution
 	for aura_id in momentum_bonuses:
-		base += momentum_bonuses[aura_id].get("mov", 0)
+		var mov_bonus = momentum_bonuses[aura_id].get("mov", 0)
+		if immune_to_cc and mov_bonus < 0:
+			continue
+		base += mov_bonus
 	if boss_phase_stat_multipliers.has("mov"):
 		base = int(round(base * boss_phase_stat_multipliers["mov"]))
 	return max(0, base)
@@ -661,6 +827,15 @@ func take_damage(amount: int, damage_type: String, is_crit: bool = false, apply_
 		last_damage_attacker = attacker
 
 	var requested: int = max(1, amount)
+
+	# ── FLAT INCOMING DAMAGE REDUCTION (ADDED) ──────────────────────────────
+	# Applies BEFORE the segmented-HP clamp below, so a Heavy Plate wearer's
+	# reduced number is what actually gets clamped/compared against segment
+	# floors too -- not the raw pre-reduction amount.
+	var reduction_percent: float = get_total_damage_reduction_percent()
+	if reduction_percent > 0.0:
+		requested = max(1, int(round(float(requested) * (1.0 - reduction_percent))))
+
 	var actual: int = requested
 
 	# ── SEGMENTED HP CLAMP (no bleed-through) ─────────────────────────────────
@@ -865,6 +1040,22 @@ func move_to(new_cell: Vector2i) -> void:
 			play_animation("idle")
 		_is_moving = false
 		_stop_walk_particles()
+
+		# ── TETHER FIX (ADDED) ────────────────────────────────────────────────
+		# register_unit()/unregister_unit() (called above, BEFORE this tween
+		# even started sliding) already trigger battle_grid.gd's
+		# _refresh_tether_lines() -- but that snapshots THIS unit's visual
+		# .position at the moment they're called, which at that point is
+		# still the OLD pre-move position (the tween hasn't run yet). So the
+		# tether line's anchor point used to freeze at wherever this unit was
+		# standing BEFORE this move, not where it actually ends up -- visible
+		# whenever nothing else happened to trigger another refresh
+		# afterward. Refreshing again here, now that .position has actually
+		# finished sliding to new_cell, is what makes the line genuinely
+		# catch up to the real final tile.
+		if grid_ref != null:
+			grid_ref.refresh_tether_visuals()
+
 		movement_finished.emit()
 	)
 
@@ -1011,6 +1202,17 @@ func move_along_path(path: Array) -> void:
 
 		if not is_instance_valid(self):
 			return
+
+		# ── TETHER FIX (ADDED) ────────────────────────────────────────────────
+		# Same reasoning as move_to()'s identical fix above: register_unit()
+		# just above fires BEFORE this step's tween runs, so its
+		# _refresh_tether_lines() call snapshots the position we're walking
+		# FROM, not the tile we just actually arrived at. Re-syncing here,
+		# once per step (not just at the very end of the whole path), keeps
+		# the line accurate throughout a multi-tile walk instead of only
+		# catching up once the unit stops moving entirely.
+		if grid_ref != null:
+			grid_ref.refresh_tether_visuals()
 
 		# ── HAZARD CHECK FOR THIS TILE ───────────────────────────────────────────
 		# Fires the instant we actually arrive on this tile — works for both a
@@ -1217,6 +1419,25 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster 
 			_apply_status_depth -= 1
 			return
 
+	# ── CC IMMUNITY (ADDED) ───────────────────────────────────────────────────
+	# unit_data.immune_to_displacement_and_cc blocks stun and root OUTRIGHT --
+	# the whole status fails to apply, same as the grants_immunity check just
+	# above (stuns/roots are fundamentally CONTROL effects; a common-enough
+	# genre convention is that CC immunity stops the whole effect, not just
+	# the "can't move/act" part of it). Plain slows (a status that ONLY
+	# reduces mov_modifier, with no is_stun/is_root) are handled differently
+	# on purpose -- they're still allowed to apply and show on the unit, but
+	# get_effective_mov() above silently ignores their negative contribution,
+	# so a status that's part-slow-part-something-else (say, a DOT that also
+	# slightly slows) still lands its OTHER component normally; only the
+	# movement number itself never actually drops.
+	if unit_data != null and unit_data.immune_to_displacement_and_cc and \
+			(status_data.is_stun or status_data.is_root):
+		print("🛡️ ", unit_data.display_name, " is immune to stun/root! '",
+			  status_data.display_name, "' blocked.")
+		_apply_status_depth -= 1
+		return
+
 	# If this status is already active, refresh its duration and optionally stack.
 	for s in active_statuses:
 		if s["data"].id == status_data.id:
@@ -1410,6 +1631,10 @@ func _apply_dot_tick(status_entry: Dictionary) -> void:
 				per_tick_damage = max(1, int(get_stats().matk * data.dot_damage_percent))
 
 	var total_damage = per_tick_damage * max(1, stacks)
+
+	# ── TANKY DOT RESISTANCE (ADDED) ────────────────────────────────────────
+	if unit_data != null and unit_data.dot_damage_reduction_percent > 0.0:
+		total_damage = max(1, int(round(float(total_damage) * (1.0 - unit_data.dot_damage_reduction_percent))))
 
 	# dot_damage_type (e.g. "poison"/"fire"/"curse") — NOT dot_damage_mode —
 	# is what gets passed as the damage_type. dot_damage_mode only controls
@@ -1657,15 +1882,6 @@ func has_status(status_id: String) -> bool:
 			return true
 	return false
 
-func get_status_entry(status_id: String) -> Dictionary:
-	# Returns the full status entry dict ({data, stacks, remaining_rounds,
-	# source_caster, visual_phase}) for the given status id, or an empty
-	# Dictionary if the unit doesn't have it. Used by PlagueSystem to trace
-	# who originally cast a status, since has_status() only returns a bool.
-	for s in active_statuses:
-		if s["data"].id == status_id:
-			return s
-	return {}
 
 func get_buff_count() -> int:
 	var count = 0
@@ -1811,3 +2027,4 @@ func force_idle_state() -> void:
 	# If your grid manager or battle manager needs to know the attack is done:
 	# (Look in your BattleManager for a function like "deselect_unit" or "clear_selection")
 	# If you aren't sure, calling play_animation("idle") is the safest first step.
+	

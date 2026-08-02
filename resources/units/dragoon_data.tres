@@ -13,6 +13,8 @@
 [ext_resource type="Resource" uid="uid://bw3q0dan042jh" path="res://resources/abilities/lunge.tres" id="5_0nwkx"]
 [ext_resource type="Script" uid="uid://df8avravfldch" path="res://scripts/data/dialogue_bark_data.gd" id="5_flrj2"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_qc3qx"]
+[ext_resource type="Script" uid="uid://b7m0h8v4gtmho" path="res://scripts/data/level_up_count_option.gd" id="7_tr70s"]
+[ext_resource type="Script" uid="uid://d07hb58lwi16g" path="res://scripts/data/level_up_stat_rule.gd" id="8_yqfk0"]
 [ext_resource type="Resource" uid="uid://dfy4g0j5jc4fh" path="res://resources/abilities/leap.tres" id="9_0hbrn"]
 
 [sub_resource type="Resource" id="Resource_tr70s"]
@@ -61,6 +63,7 @@ description = "A tough fighter who can leap across the battlefield. Particularly
 portrait = ExtResource("3_qc3qx")
 battle_sprite = ExtResource("2_le5di")
 synergy_tags = Array[String](["isolation"])
+unit_roles = 16
 stats_by_level = Array[ExtResource("3_4euss")]([ExtResource("1_4euss")])
 base_stats = ExtResource("1_4euss")
 starting_abilities = Array[ExtResource("2_nda02")]([ExtResource("4_nicbd"), ExtResource("5_0nwkx"), ExtResource("9_0hbrn")])

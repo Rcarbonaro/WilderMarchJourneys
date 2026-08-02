@@ -13,6 +13,8 @@
 [ext_resource type="Script" uid="uid://df8avravfldch" path="res://scripts/data/dialogue_bark_data.gd" id="5_gy3ve"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="5_u3eig"]
 [ext_resource type="Resource" uid="uid://dfpxvocy7yu3u" path="res://resources/abilities/execute.tres" id="5_vxs14"]
+[ext_resource type="Script" uid="uid://b7m0h8v4gtmho" path="res://scripts/data/level_up_count_option.gd" id="7_fh7ki"]
+[ext_resource type="Script" uid="uid://d07hb58lwi16g" path="res://scripts/data/level_up_stat_rule.gd" id="8_i33qm"]
 
 [sub_resource type="Resource" id="Resource_fh7ki"]
 script = ExtResource("4_80ekv")
@@ -59,6 +61,7 @@ description = "A strong fighter who is particularly effective against weakened e
 portrait = ExtResource("3_u3eig")
 battle_sprite = ExtResource("2_y4ilv")
 synergy_tags = Array[String](["debuff"])
+unit_roles = 16
 stats_by_level = Array[ExtResource("3_e1ta7")]([ExtResource("1_mnb5q")])
 base_stats = ExtResource("1_mnb5q")
 starting_abilities = Array[ExtResource("2_avfn6")]([ExtResource("4_1byq5"), ExtResource("5_vxs14")])

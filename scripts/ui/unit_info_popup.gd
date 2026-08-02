@@ -78,6 +78,12 @@ const BATTLE_SPRITE_SIZE := Vector2i(80, 80)
 const ABILITY_ICON_SIZE  := Vector2i(40, 40)
 const ITEM_ICON_SIZE     := Vector2i(36, 36)
 
+const GOLD_ACCENT_COLOR := Color(0.831, 0.702, 0.31, 1.0)
+# Shared gold accent for this popup -- used by the Synergy Tags line and the
+# "Unique Ability:" label prefix. Matches the same gold value used for other
+# "gold" UI accents elsewhere in the project. Tweak this one constant to
+# retune the shade everywhere it's used in this file.
+
 var theme_resource: UnitInfoPopupTheme = null
 # Optional. Set this BEFORE calling setup() to customize border/background/
 # plates/backdrop transparency -- see the file header above. If left null,
@@ -196,6 +202,45 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 		description_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 		content.add_child(_wrap_in_plate(description_label,
 			theme_resource.description_plate, theme_resource.description_plate_patch_margin))
+
+	# ── UNIQUE ABILITY (unit_data.unique_mechanics) ───────────────────────────
+	# Same position as before (directly below Description): a single line
+	# reading "Unique Ability: <text>". Only the "Unique Ability:" prefix is
+	# gold -- a plain Label can only have ONE color for its whole string, so
+	# this uses a RichTextLabel with a [color] BBCode tag around just that
+	# prefix instead (same technique deployment_manager.gd's forge preview
+	# label already uses for its own [b]...[/b] tags). Only shown when the
+	# unit actually has one set -- most units leave unit_data.unique_mechanics
+	# blank and this section simply won't appear.
+	if unit_data.unique_mechanics != "":
+		var unique_ability_label := RichTextLabel.new()
+		unique_ability_label.bbcode_enabled = true
+		unique_ability_label.fit_content = true       # grows to fit its text, no internal scrollbar
+		unique_ability_label.scroll_active = false    # the popup's own ScrollContainer handles overflow
+		unique_ability_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+		# Escape any literal "[" in the ability text so it can't accidentally
+		# be read as a BBCode tag -- doesn't affect normal text at all.
+		var safe_mechanic_text: String = unit_data.unique_mechanics.replace("[", "[lb]")
+		unique_ability_label.text = "[center][color=#%s]Unique Ability:[/color] %s[/center]" % [
+			GOLD_ACCENT_COLOR.to_html(false), safe_mechanic_text]
+		content.add_child(_wrap_in_plate(unique_ability_label,
+			theme_resource.unique_mechanics_plate, theme_resource.unique_mechanics_plate_patch_margin))
+
+	# ── SYNERGY TAGS (ADDED) ──────────────────────────────────────────────────
+	# Lets players see at a glance which synergy tag(s) this unit contributes
+	# to, so they can plan a roster around it -- see synergy_system.gd for how
+	# these tags actually grant bonuses in battle. Only shown when the unit
+	# has at least one tag; an empty synergy_tags array skips this entirely.
+	# No "Synergy Tags" header on purpose -- the gold font color alone is
+	# what marks this line out to the player.
+	if not unit_data.synergy_tags.is_empty():
+		var synergy_label := Label.new()
+		synergy_label.text = ", ".join(unit_data.synergy_tags)
+		synergy_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		synergy_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+		synergy_label.add_theme_color_override("font_color", GOLD_ACCENT_COLOR)
+		content.add_child(_wrap_in_plate(synergy_label,
+			theme_resource.synergy_tags_plate, theme_resource.synergy_tags_plate_patch_margin))
 
 	content.add_child(HSeparator.new())
 

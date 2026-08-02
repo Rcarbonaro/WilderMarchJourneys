@@ -56,6 +56,17 @@ extends Resource
 @export var description_plate: Texture2D
 @export var description_plate_patch_margin: int = 0
 
+@export var unique_mechanics_plate: Texture2D
+# ADDED. Behind the "Unique Mechanics" section (only rendered at all when a
+# unit has non-empty unit_data.unique_mechanics). Leave unset for a
+# transparent background, same convention as every other plate here.
+@export var unique_mechanics_plate_patch_margin: int = 0
+
+@export var synergy_tags_plate: Texture2D
+# ADDED. Behind the "Synergy Tags" section (only rendered when a unit has at
+# least one entry in unit_data.synergy_tags). Leave unset for transparent.
+@export var synergy_tags_plate_patch_margin: int = 0
+
 @export var stats_plate: Texture2D
 @export var stats_plate_patch_margin: int = 0
 

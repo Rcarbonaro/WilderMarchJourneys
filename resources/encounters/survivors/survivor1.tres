@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="SurvivorEncounterData" format=3 uid="uid://fdwemwy5dkql"]
+
+[ext_resource type="Script" uid="uid://dik0whb1d3sp4" path="res://scripts/data/survivor_encounter_data.gd" id="1_86co7"]
+
+[resource]
+script = ExtResource("1_86co7")
+description = "After defeating the enemies, a couple of survivors emerge from their hiding place."
+metadata/_custom_type_script = "uid://dik0whb1d3sp4"

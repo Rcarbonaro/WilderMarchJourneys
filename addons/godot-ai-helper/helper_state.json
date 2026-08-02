@@ -3,7 +3,7 @@
 	"head_text": "Here is some vital information about my project:\n1. It s a tactical turn-based roguelike\n2. Some planned features are:\nTurn‑based combat — grid movement, action economy, positioning rules, threat zones\n\nRoguelike progression — runs, meta‑progression, unlocks, difficulty scaling\n\nSynergy tags — class tags, ability tags, cross‑class interactions\n\nAI behavior — enemy archetypes, threat evaluation, focus rules, special behaviors\n\nProcedural generation — maps, encounters, enemy squads, loot tables",
 	"items": [
 		{
-			"path": "res://scenes/deployment/DeploymentUnitPreview.tscn",
+			"path": "res://scenes/meta/DeploymentScene.tscn",
 			"type": "scene_tree"
 		},
 		{
@@ -67,7 +67,7 @@
 			"type": "scene_tree"
 		},
 		{
-			"path": "res://scenes/animations/sharpshooter/sharpshooter.tscn",
+			"path": "res://scenes/deployment/DeploymentUnitPreview.tscn",
 			"type": "scene_tree"
 		},
 		{
@@ -131,8 +131,12 @@
 			"type": "scene_tree"
 		},
 		{
-			"path": "res://scenes/meta/DeploymentScene.tscn",
+			"path": "res://scenes/animations/sharpshooter/sharpshooter.tscn",
 			"type": "scene_tree"
+		},
+		{
+			"path": "res://scripts/encounter/encounter_scene.gd",
+			"type": "script"
 		},
 		{
 			"path": "res://scripts/engines/scaling_engine.gd",
@@ -207,7 +211,7 @@
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/battle/battle_manager.gd",
+			"path": "res://scripts/battle/plague_system.gd",
 			"type": "script"
 		},
 		{
@@ -287,10 +291,6 @@
 			"type": "script"
 		},
 		{
-			"path": "res://scripts/encounter/encounter_scene.gd",
-			"type": "script"
-		},
-		{
 			"path": "res://scripts/data/hazard_data.gd",
 			"type": "script"
 		},
@@ -364,6 +364,10 @@
 		},
 		{
 			"path": "res://scripts/battle/battle_grid.gd",
+			"type": "script"
+		},
+		{
+			"path": "res://scripts/battle/battle_manager.gd",
 			"type": "script"
 		},
 		{
