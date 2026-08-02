@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://dpeu1efipqt4g"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_0kfq7"]
+
+[resource]
+script = ExtResource("1_0kfq7")
+metadata/_custom_type_script = "uid://gsbk18mmfnol"
