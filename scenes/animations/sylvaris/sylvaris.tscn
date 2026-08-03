@@ -193,7 +193,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_xncy3")
 }, {
-"duration": 1.0,
+"duration": 10.0,
 "texture": SubResource("AtlasTexture_4xxub")
 }],
 "loop": false,
@@ -274,7 +274,6 @@ scale = Vector2(0.34, 0.343)
 sprite_frames = SubResource("SpriteFrames_grxbi")
 animation = &"walk"
 autoplay = "idle"
-frame_progress = 0.10192609
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0

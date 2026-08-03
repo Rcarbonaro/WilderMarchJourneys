@@ -2,12 +2,14 @@
 
 [ext_resource type="Resource" uid="uid://2hopvhxw7oyt" path="res://resources/status_effects/matkadd.tres" id="1_1db4n"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="1_cyca5"]
+[ext_resource type="Texture2D" uid="uid://cynq80w628n3b" path="res://sprites/UI/skill icons/matkadd.png" id="2_1i3wf"]
 
 [resource]
 script = ExtResource("1_cyca5")
 id = "matkadd"
 display_name = "Increase Target MATK"
 description = "Increase MATK by 1"
+icon = ExtResource("2_1i3wf")
 enhancement_type = "add_buff"
 magnitude = 1.0
 attached_status = ExtResource("1_1db4n")

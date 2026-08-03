@@ -2,7 +2,9 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_571my"]
 [ext_resource type="Texture2D" uid="uid://bi4htpcd6comc" path="res://sprites/UI/skill icons/skill_icons_thorns.png" id="2_0qmaf"]
+[ext_resource type="PackedScene" uid="uid://bplo8onrk421q" path="res://scenes/animations/thornling/thornling_basic.tscn" id="2_oth3s"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_rj4dt"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="3_pn5ea"]
 
 [resource]
 script = ExtResource("2_rj4dt")
@@ -10,6 +12,8 @@ id = "thornlingbasic"
 display_name = "Basic Attack"
 description = "A long-ranged physical attack that cannot be used up close."
 icon = ExtResource("2_0qmaf")
+effect_scene = ExtResource("2_oth3s")
+scale_vfx_to_fit_aoe = false
 min_range = 3
 max_range = 5
 base_damage_multiplier = 0.6

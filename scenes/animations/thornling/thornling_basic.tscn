@@ -20,4 +20,6 @@ animations = [{
 [node name="ThornlingBasic" type="Node2D" unique_id=997227970]
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1826986394]
+position = Vector2(-4.7683716e-07, -3.999999)
+scale = Vector2(0.15193209, 0.2025076)
 sprite_frames = SubResource("SpriteFrames_wj0iy")

@@ -2,12 +2,14 @@
 
 [ext_resource type="Resource" uid="uid://d1xmlymrlbkyp" path="res://resources/status_effects/atkreduce.tres" id="1_3tghg"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="1_jl241"]
+[ext_resource type="Texture2D" uid="uid://bmpci12npv06f" path="res://sprites/UI/skill icons/atkred.png" id="2_iglof"]
 
 [resource]
 script = ExtResource("1_jl241")
 id = "atkreduce"
 display_name = "Decrease Target ATK"
 description = "Decrease target ATK by 1 for 2 rounds"
+icon = ExtResource("2_iglof")
 enhancement_type = "add_debuff"
 magnitude = 1.0
 attached_status = ExtResource("1_3tghg")

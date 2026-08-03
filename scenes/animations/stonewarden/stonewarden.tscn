@@ -4,6 +4,7 @@
 [ext_resource type="Resource" uid="uid://bwnaicxo5cl5n" path="res://resources/units/windmage_data.tres" id="2_7p4xf"]
 [ext_resource type="Texture2D" uid="uid://brslmykdpexkl" path="res://sprites/stonewarden/stonewarden_cast.png" id="3_1kba4"]
 [ext_resource type="Texture2D" uid="uid://c3l1723u16hpu" path="res://sprites/stonewarden/stonewarden_die.png" id="4_igsrq"]
+[ext_resource type="Texture2D" uid="uid://xp60covw3urp" path="res://sprites/stonewarden/stonewarden_walk.png" id="5_1kba4"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_76165"]
 atlas = ExtResource("3_1kba4")
@@ -148,6 +149,14 @@ region = Rect2(0, 0, 330, 192)
 [sub_resource type="AtlasTexture" id="AtlasTexture_rhkjc"]
 atlas = ExtResource("3_1kba4")
 region = Rect2(330, 0, 330, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_b1o41"]
+atlas = ExtResource("5_1kba4")
+region = Rect2(0, 196, 336, 196)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_exew6"]
+atlas = ExtResource("5_1kba4")
+region = Rect2(672, 392, 336, 196)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_grxbi"]
 animations = [{
@@ -381,21 +390,21 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_yd2ug")
+"texture": SubResource("AtlasTexture_b1o41")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_rhkjc")
+"texture": SubResource("AtlasTexture_exew6")
 }],
 "loop": true,
 "name": &"walk",
-"speed": 6.0
+"speed": 5.0
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_yd2ug")
+"texture": SubResource("AtlasTexture_b1o41")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_rhkjc")
+"texture": SubResource("AtlasTexture_exew6")
 }],
 "loop": true,
 "name": &"walk_up",
@@ -410,8 +419,9 @@ unit_data = ExtResource("2_7p4xf")
 position = Vector2(0.46538734, 0.9367695)
 scale = Vector2(0.48202795, 0.42038706)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"walk"
+animation = &"walk_up"
 autoplay = "idle"
+frame_progress = 0.6569791
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0

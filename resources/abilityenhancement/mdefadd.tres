@@ -1,10 +1,12 @@
 [gd_resource type="Resource" script_class="AbilityEnhancementData" format=3 uid="uid://c2oejclxcal0y"]
 
+[ext_resource type="Texture2D" uid="uid://crlca8inax7n0" path="res://sprites/UI/skill icons/mdefadd.png" id="1_7465j"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="1_ldl7a"]
 
 [resource]
 script = ExtResource("1_ldl7a")
 id = "mdefadd"
-display_name = "Increase Target MATK"
-description = "Increase target MATK by 1 for 2 rounds"
+display_name = "Increase Target MDEF"
+description = "Increase target MDEF by 1 for 2 rounds"
+icon = ExtResource("1_7465j")
 metadata/_custom_type_script = "uid://bv33cyg2ct1h3"

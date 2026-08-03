@@ -2,12 +2,14 @@
 
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="1_3qxtj"]
 [ext_resource type="Resource" uid="uid://38f0ldm4k563" path="res://resources/status_effects/movadd.tres" id="1_rahe7"]
+[ext_resource type="Texture2D" uid="uid://dm3xwdc1mda4t" path="res://sprites/UI/skill icons/movadd.png" id="2_mjckh"]
 
 [resource]
 script = ExtResource("1_3qxtj")
 id = "movadd"
 display_name = "Increase Target MOV"
 description = "Increase target movement by 1"
+icon = ExtResource("2_mjckh")
 enhancement_type = "add_buff"
 magnitude = 1.0
 attached_status = ExtResource("1_rahe7")

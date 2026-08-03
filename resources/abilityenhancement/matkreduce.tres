@@ -2,12 +2,14 @@
 
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="1_oblt3"]
 [ext_resource type="Resource" uid="uid://d30gh3ruy5yci" path="res://resources/status_effects/matkreduce.tres" id="1_powtp"]
+[ext_resource type="Texture2D" uid="uid://cqw2j3g3ygibf" path="res://sprites/UI/skill icons/matkred.png" id="2_3wo5q"]
 
 [resource]
 script = ExtResource("1_oblt3")
 id = "matkreduce"
 display_name = "Reduce Target MATK"
 description = "Reduce target MATK by 1 for 2 rounds"
+icon = ExtResource("2_3wo5q")
 enhancement_type = "add_debuff"
 attached_status = ExtResource("1_powtp")
 metadata/_custom_type_script = "uid://bv33cyg2ct1h3"
