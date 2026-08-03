@@ -4,6 +4,10 @@
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_fbj5v"]
 [ext_resource type="Resource" uid="uid://c20siv2jtmrv5" path="res://resources/status_effects/bolstered.tres" id="2_gsk1l"]
 [ext_resource type="Texture2D" uid="uid://ymmaxeqkjs2s" path="res://sprites/UI/skill icons/skill_icons_stonespikearmor.png" id="3_gsk1l"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="3_yt00v"]
+[ext_resource type="Resource" uid="uid://dkpufeqm16o8s" path="res://resources/abilityenhancement/defadd.tres" id="4_sb5hr"]
+[ext_resource type="Resource" uid="uid://c2oejclxcal0y" path="res://resources/abilityenhancement/mdefadd.tres" id="5_c0r84"]
+[ext_resource type="Resource" uid="uid://2f1omrmpjoqp" path="res://resources/abilityenhancement/shieldadd.tres" id="6_57udp"]
 
 [resource]
 script = ExtResource("2_fbj5v")
@@ -20,4 +24,5 @@ scaling_stat = "matk"
 applies_statuses_to_self = Array[ExtResource("1_splk2")]([ExtResource("2_gsk1l")])
 ability_type = "spell"
 applies_thorns = true
+eligible_enhancements = Array[ExtResource("3_yt00v")]([ExtResource("4_sb5hr"), ExtResource("5_c0r84"), ExtResource("6_57udp")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

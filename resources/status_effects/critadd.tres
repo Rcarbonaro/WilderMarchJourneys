@@ -4,4 +4,9 @@
 
 [resource]
 script = ExtResource("1_a13dx")
+id = "critadd"
+display_name = "Increase Critical Chance"
+description = "Increase Critical Chance for 2 rounds."
+duration_rounds = 2
+crit_chance_modifier = 5.0
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

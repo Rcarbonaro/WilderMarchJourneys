@@ -8,8 +8,10 @@
 [ext_resource type="Resource" uid="uid://dfxlmpwf8tnyh" path="res://resources/bossdata/barkskinelk_phase3.tres" id="6_67ac7"]
 [ext_resource type="Resource" uid="uid://d0l7oqg170y2" path="res://resources/bossdata/barkskinelk_phase4.tres" id="7_v6v75"]
 [ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="8_m34cu"]
+[ext_resource type="Script" uid="uid://b7m0h8v4gtmho" path="res://scripts/data/level_up_count_option.gd" id="9_bnyys"]
 [ext_resource type="Texture2D" uid="uid://tml2fckt7g5t" path="res://sprites/barkskinelk/barkskin_elk_portrait.png" id="9_m8bms"]
 [ext_resource type="Script" uid="uid://utmj7y8m802a" path="res://scripts/data/unit_data.gd" id="10_ecm2g"]
+[ext_resource type="Script" uid="uid://d07hb58lwi16g" path="res://scripts/data/level_up_stat_rule.gd" id="10_jl2ba"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="11_5ccl8"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="12_4q87t"]
 [ext_resource type="Resource" uid="uid://d1rnt0ah763bw" path="res://resources/abilities/barkskinelk_basic.tres" id="13_mu7rn"]
@@ -23,6 +25,8 @@ display_name = "Barkhide Elk"
 description = "The former guardian of the forest, corrupted by unknown magic."
 portrait = ExtResource("9_m8bms")
 battle_sprite = ExtResource("2_21b2m")
+immune_to_displacement_and_cc = true
+hazard_damage_reduction_percent = 0.75
 stats_by_level = Array[ExtResource("15_1gnuj")]([ExtResource("1_k6qyd")])
 rarity = "rare"
 tier = "boss"

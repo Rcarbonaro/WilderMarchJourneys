@@ -5,6 +5,11 @@
 [ext_resource type="Resource" uid="uid://q7oq7jdgur76" path="res://resources/status_effects/taunt2.tres" id="2_o5bgn"]
 [ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="3_5eqnx"]
 [ext_resource type="Texture2D" uid="uid://cj3wctbynp3e2" path="res://sprites/UI/skill icons/skill_icons_hammercrush.png" id="3_o5bgn"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_e2ed8"]
+[ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="5_44fqn"]
+[ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="6_crxem"]
+[ext_resource type="Resource" uid="uid://bw7jx2nbji6dw" path="res://resources/abilityenhancement/matkreduce.tres" id="7_yvkl5"]
+[ext_resource type="Resource" uid="uid://d2e5baxwi0msn" path="res://resources/abilityenhancement/mdefreduce.tres" id="8_phcbk"]
 
 [resource]
 script = ExtResource("2_b8v1m")
@@ -14,4 +19,5 @@ description = "A basic attack that taunts the enemy."
 icon = ExtResource("3_o5bgn")
 effect_scene = ExtResource("3_5eqnx")
 applies_statuses = Array[ExtResource("1_gfxts")]([ExtResource("2_o5bgn")])
+eligible_enhancements = Array[ExtResource("4_e2ed8")]([ExtResource("5_44fqn"), ExtResource("6_crxem"), ExtResource("7_yvkl5"), ExtResource("8_phcbk")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

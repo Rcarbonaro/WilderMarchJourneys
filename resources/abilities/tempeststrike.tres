@@ -3,7 +3,13 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_f15ar"]
 [ext_resource type="PackedScene" uid="uid://domluf3tiv68" path="res://scenes/animations/stormblade/stormblade_chainlightning.tscn" id="2_flaly"]
 [ext_resource type="Texture2D" uid="uid://bqfka1inei282" path="res://sprites/UI/skill icons/skill_icons_lightningnaginata.png" id="3_7l2nu"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="3_fxxns"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="4_dpcs0"]
+[ext_resource type="Resource" uid="uid://cv3rds03lcwb2" path="res://resources/abilityenhancement/dmgadd.tres" id="4_nknr6"]
+[ext_resource type="Resource" uid="uid://ydam6w7q00im" path="res://resources/abilityenhancement/dmgbuff.tres" id="5_ekdg3"]
+[ext_resource type="Resource" uid="uid://dvavb62ptlg87" path="res://resources/abilityenhancement/debuffdmg.tres" id="6_m1han"]
+[ext_resource type="Resource" uid="uid://b4ok83jdg0b3d" path="res://resources/abilityenhancement/isolateadd.tres" id="7_cxgxi"]
+[ext_resource type="Resource" uid="uid://ck8ypstjsq5qv" path="res://resources/abilityenhancement/aoeadd.tres" id="8_0w4la"]
 
 [resource]
 script = ExtResource("4_dpcs0")
@@ -22,4 +28,5 @@ chain_bounce_scene_first = ExtResource("2_flaly")
 chain_bounce_scene_secondary = ExtResource("2_flaly")
 multi_target_simultaneous = true
 post_attack_move_squares = 1
+eligible_enhancements = Array[ExtResource("3_fxxns")]([ExtResource("4_nknr6"), ExtResource("5_ekdg3"), ExtResource("6_m1han"), ExtResource("7_cxgxi"), ExtResource("8_0w4la")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

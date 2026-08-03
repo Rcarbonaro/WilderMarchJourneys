@@ -4,4 +4,11 @@
 
 [resource]
 script = ExtResource("1_g01lt")
+id = "defreduce"
+display_name = "Reduce DEF"
+description = "Reduce DEF by 1 for 2 rounds."
+duration_rounds = 2
+can_stack = true
+max_stacks = 10
+def_modifier = -1
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

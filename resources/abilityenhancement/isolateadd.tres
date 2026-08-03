@@ -4,4 +4,9 @@
 
 [resource]
 script = ExtResource("1_ho5fn")
+id = "isolateadd"
+display_name = "Increase Isolated Damage"
+description = "Increased Damage to Isolated Targets"
+enhancement_type = "isolated_damage"
+magnitude = 0.1
 metadata/_custom_type_script = "uid://bv33cyg2ct1h3"

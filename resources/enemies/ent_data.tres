@@ -8,8 +8,10 @@
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="3_r02jj"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="3_snmq7"]
 [ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_l5ggl"]
+[ext_resource type="Script" uid="uid://b7m0h8v4gtmho" path="res://scripts/data/level_up_count_option.gd" id="5_0gkoq"]
 [ext_resource type="Resource" uid="uid://6fsue6q216de" path="res://resources/abilities/Ent_BasicAttack.tres" id="5_cg23b"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="5_lqift"]
+[ext_resource type="Script" uid="uid://d07hb58lwi16g" path="res://scripts/data/level_up_stat_rule.gd" id="6_8afxl"]
 
 [resource]
 script = ExtResource("2_cg23b")
@@ -18,6 +20,8 @@ display_name = "ent"
 description = "A slow but powerful tree creature, able to both take and deal high amounts of damage. Corrupted by a stange magic."
 portrait = ExtResource("3_lqift")
 battle_sprite = ExtResource("2_snmq7")
+immune_to_displacement_and_cc = true
+hazard_damage_reduction_percent = 0.75
 stats_by_level = Array[ExtResource("5_lqift")]([ExtResource("1_7qgsm")])
 tier = "elite"
 base_stats = ExtResource("1_7qgsm")

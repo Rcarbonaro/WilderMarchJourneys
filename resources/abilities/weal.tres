@@ -5,6 +5,15 @@
 [ext_resource type="Resource" uid="uid://drv0ggphou2p8" path="res://resources/status_effects/weal.tres" id="2_oeq2y"]
 [ext_resource type="Texture2D" uid="uid://vdkymeds3oum" path="res://sprites/UI/skill icons/skill_icons_weal.png" id="3_oeq2y"]
 [ext_resource type="PackedScene" uid="uid://b242uyy8mkpgo" path="res://scenes/animations/divinator/weal.tscn" id="3_quu4m"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_h06g5"]
+[ext_resource type="Resource" uid="uid://ck8ypstjsq5qv" path="res://resources/abilityenhancement/aoeadd.tres" id="5_ximav"]
+[ext_resource type="Resource" uid="uid://cdb4tbaw47268" path="res://resources/abilityenhancement/atkadd.tres" id="6_d8ma6"]
+[ext_resource type="Resource" uid="uid://dkpufeqm16o8s" path="res://resources/abilityenhancement/defadd.tres" id="7_ro5cq"]
+[ext_resource type="Resource" uid="uid://dgdf5xbctj8mt" path="res://resources/abilityenhancement/movadd.tres" id="8_ciqlr"]
+[ext_resource type="Resource" uid="uid://dt2n5hyvrfxbq" path="res://resources/abilityenhancement/matkadd.tres" id="9_hsdji"]
+[ext_resource type="Resource" uid="uid://c2oejclxcal0y" path="res://resources/abilityenhancement/mdefadd.tres" id="10_hho50"]
+[ext_resource type="Resource" uid="uid://cviy6ttm8ijac" path="res://resources/abilityenhancement/rangeadd.tres" id="11_tqc2o"]
+[ext_resource type="Resource" uid="uid://2f1omrmpjoqp" path="res://resources/abilityenhancement/shieldadd.tres" id="12_5bu41"]
 
 [resource]
 script = ExtResource("2_4qs6l")
@@ -20,4 +29,5 @@ aoe_shape = "square"
 base_damage_multiplier = 0.0
 applies_statuses = Array[ExtResource("1_gc45a")]([ExtResource("2_oeq2y")])
 ability_type = "spell"
+eligible_enhancements = Array[ExtResource("4_h06g5")]([ExtResource("5_ximav"), ExtResource("6_d8ma6"), ExtResource("7_ro5cq"), ExtResource("8_ciqlr"), ExtResource("9_hsdji"), ExtResource("10_hho50"), ExtResource("11_tqc2o"), ExtResource("12_5bu41")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

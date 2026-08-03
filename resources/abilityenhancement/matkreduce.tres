@@ -1,7 +1,13 @@
 [gd_resource type="Resource" script_class="AbilityEnhancementData" format=3 uid="uid://bw7jx2nbji6dw"]
 
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="1_oblt3"]
+[ext_resource type="Resource" uid="uid://d30gh3ruy5yci" path="res://resources/status_effects/matkreduce.tres" id="1_powtp"]
 
 [resource]
 script = ExtResource("1_oblt3")
+id = "matkreduce"
+display_name = "Reduce Target MATK"
+description = "Reduce target MATK by 1 for 2 rounds"
+enhancement_type = "add_debuff"
+attached_status = ExtResource("1_powtp")
 metadata/_custom_type_script = "uid://bv33cyg2ct1h3"

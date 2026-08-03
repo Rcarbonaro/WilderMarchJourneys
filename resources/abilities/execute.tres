@@ -4,6 +4,16 @@
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_etaya"]
 [ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="2_kw6ue"]
 [ext_resource type="Texture2D" uid="uid://ckjvlwamk0uui" path="res://sprites/UI/skill icons/skill_icons_execute.png" id="2_qu7le"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="3_1c5oe"]
+[ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="4_t8d3y"]
+[ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="5_bctqf"]
+[ext_resource type="Resource" uid="uid://bw7jx2nbji6dw" path="res://resources/abilityenhancement/matkreduce.tres" id="6_cwaap"]
+[ext_resource type="Resource" uid="uid://d2e5baxwi0msn" path="res://resources/abilityenhancement/mdefreduce.tres" id="7_y4ri7"]
+[ext_resource type="Resource" uid="uid://ydam6w7q00im" path="res://resources/abilityenhancement/dmgbuff.tres" id="8_k4ri8"]
+[ext_resource type="Resource" uid="uid://cv3rds03lcwb2" path="res://resources/abilityenhancement/dmgadd.tres" id="9_an5r8"]
+[ext_resource type="Resource" uid="uid://dvavb62ptlg87" path="res://resources/abilityenhancement/debuffdmg.tres" id="10_la4rm"]
+[ext_resource type="Resource" uid="uid://dj67lyevlfsqv" path="res://resources/abilityenhancement/pam.tres" id="11_e3vok"]
+[ext_resource type="Resource" uid="uid://b4ok83jdg0b3d" path="res://resources/abilityenhancement/isolateadd.tres" id="12_imcqb"]
 
 [resource]
 script = ExtResource("2_etaya")
@@ -22,4 +32,5 @@ on_kill_reset_cooldowns = true
 bonus_per_target_debuff = 0.4
 bonus_per_target_debuff_max = 4.0
 bonus_atk_per_caster_buff = 5
+eligible_enhancements = Array[ExtResource("3_1c5oe")]([ExtResource("4_t8d3y"), ExtResource("5_bctqf"), ExtResource("6_cwaap"), ExtResource("7_y4ri7"), ExtResource("8_k4ri8"), ExtResource("9_an5r8"), ExtResource("10_la4rm"), ExtResource("11_e3vok"), ExtResource("12_imcqb")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

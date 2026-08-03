@@ -2,8 +2,14 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_shxti"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_7okhs"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="2_8bgu0"]
 [ext_resource type="Texture2D" uid="uid://d2jvjo36lxeq8" path="res://sprites/UI/skill icons/skill_icons_wallofthorns.png" id="2_rbvqc"]
+[ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="3_1orjm"]
+[ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="4_icqfo"]
 [ext_resource type="Resource" uid="uid://caxltsrx5xk0a" path="res://resources/hazards/briarfield.tres" id="4_j2qma"]
+[ext_resource type="Resource" uid="uid://bw7jx2nbji6dw" path="res://resources/abilityenhancement/matkreduce.tres" id="5_1em8j"]
+[ext_resource type="Resource" uid="uid://d2e5baxwi0msn" path="res://resources/abilityenhancement/mdefreduce.tres" id="6_lgdjk"]
+[ext_resource type="Resource" uid="uid://ck8ypstjsq5qv" path="res://resources/abilityenhancement/aoeadd.tres" id="7_ov6tw"]
 
 [resource]
 script = ExtResource("2_7okhs")
@@ -17,4 +23,5 @@ aoe_shape = "cone"
 aoe_size = 3
 scaling_stat = "matk"
 spawns_hazard = ExtResource("4_j2qma")
+eligible_enhancements = Array[ExtResource("2_8bgu0")]([ExtResource("3_1orjm"), ExtResource("4_icqfo"), ExtResource("5_1em8j"), ExtResource("6_lgdjk"), ExtResource("7_ov6tw")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

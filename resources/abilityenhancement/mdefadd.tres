@@ -4,4 +4,7 @@
 
 [resource]
 script = ExtResource("1_ldl7a")
+id = "mdefadd"
+display_name = "Increase Target MATK"
+description = "Increase target MATK by 1 for 2 rounds"
 metadata/_custom_type_script = "uid://bv33cyg2ct1h3"

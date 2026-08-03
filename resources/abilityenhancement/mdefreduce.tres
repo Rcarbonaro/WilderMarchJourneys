@@ -1,7 +1,14 @@
 [gd_resource type="Resource" script_class="AbilityEnhancementData" format=3 uid="uid://d2e5baxwi0msn"]
 
+[ext_resource type="Resource" uid="uid://cxkld55wg3kw7" path="res://resources/status_effects/mdefreduce.tres" id="1_32rsg"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="1_xc4di"]
 
 [resource]
 script = ExtResource("1_xc4di")
+id = "mdefreduce"
+display_name = "Reduce Target MDEF"
+description = "Reduce target MDEF by 1 for 2 rounds"
+enhancement_type = "add_debuff"
+magnitude = 1.0
+attached_status = ExtResource("1_32rsg")
 metadata/_custom_type_script = "uid://bv33cyg2ct1h3"

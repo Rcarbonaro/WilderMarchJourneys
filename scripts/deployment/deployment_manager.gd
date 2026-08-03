@@ -1137,6 +1137,26 @@ func _rebuild_inventory() -> void:
 	for child in inventory_list.get_children():
 		child.queue_free()
 
+	# ── GENERIC SKILL SCROLL (ADDED) ─────────────────────────────────────────
+	# CHANGED: this used to be a separate floating button positioned in the
+	# top-right corner of the whole screen, built once in _ready() via
+	# _refresh_generic_scroll_button(). Replaced with a synthetic row added
+	# directly into the SAME inventory list every real item goes through --
+	# more discoverable (players already know to look in their inventory for
+	# usable items), and sidesteps whatever screen-specific layout issue was
+	# making the floating button not actually visible in-scene. Shown at the
+	# very top, before real items, whenever the count is above 0 -- hidden
+	# entirely at 0 rather than shown disabled, so it doesn't clutter the
+	# list for players who haven't found any yet.
+	var scroll_count: int = int(RunManager.current_run.runtime_effect_state.get("skill_scroll_count", 0))
+	if scroll_count > 0:
+		var scroll_row := HBoxContainer.new()
+		var scroll_btn := Button.new()
+		scroll_btn.text = "Skill Scroll (x%d)" % scroll_count
+		scroll_btn.pressed.connect(func(): _show_scroll_unit_picker(GENERIC_SCROLL_ID))
+		scroll_row.add_child(scroll_btn)
+		inventory_list.add_child(scroll_row)
+
 	# Items currently sitting in a forge slot are shown there instead of
 	# here (see ForgeRow), even though they're still physically present in
 	# equipment_inventory -- hide exactly as many copies as are reserved,
@@ -1315,6 +1335,30 @@ func _equip_item_to_unit(item_id: String, instance_id: String) -> void:
 # Three-step picker: unit -> ability -> enhancement. See ability_enhancement_
 # data.gd and unit_node.gd's build_enhanced_abilities() for how an applied
 # enhancement actually changes anything in battle.
+#
+# Two ways to reach this same picker:
+#   1. GENERIC scroll -- a simple counter (RunState.runtime_effect_state
+#      ["skill_scroll_count"]), granted 1 at run start (see run_manager.gd)
+#      and via the add_skill_scroll reward effect (effect_system.gd).
+#      Guaranteed to work immediately, zero content authoring required --
+#      shown as a synthetic row at the top of the normal inventory list
+#      whenever the count is above 0 (see _rebuild_inventory() above).
+#      Identified by the GENERIC_SCROLL_ID sentinel instead of a real item id.
+#   2. NAMED scroll items -- a "consumable" equipment JSON with
+#      "consumable_type": "skill_scroll", consumed from equipment_inventory
+#      like any other item (see _on_inventory_item_pressed() above). Useful
+#      if you want specific, ownable, tradeable/shop-sellable scroll items
+#      later -- entirely optional, the generic scroll works without any of
+#      this being authored.
+
+const GENERIC_SCROLL_ID := "__generic_skill_scroll__"
+
+
+func _scroll_display_name(scroll_item_id: String) -> String:
+	if scroll_item_id == GENERIC_SCROLL_ID:
+		return "Skill Scroll"
+	return ContentLoader.get_equipment(scroll_item_id).get("name", scroll_item_id)
+
 
 func _show_scroll_unit_picker(scroll_item_id: String) -> void:
 	var popup := PopupPanel.new()
@@ -1330,7 +1374,7 @@ func _show_scroll_unit_picker(scroll_item_id: String) -> void:
 	margin.add_child(vbox)
 
 	var title := Label.new()
-	title.text = "Use " + ContentLoader.get_equipment(scroll_item_id).get("name", scroll_item_id) + " on:"
+	title.text = "Use " + _scroll_display_name(scroll_item_id) + " on:"
 	title.add_theme_font_size_override("font_size", 16)
 	vbox.add_child(title)
 
@@ -1513,10 +1557,20 @@ func _apply_skill_scroll_enhancement(scroll_item_id: String, instance_id: String
 	if entry.is_empty():
 		return
 
-	if not RunManager.current_run.equipment_inventory.has(scroll_item_id):
-		push_warning("DeploymentManager: tried to use '" + scroll_item_id + "' but none left in inventory.")
-		return
-	RunManager.current_run.equipment_inventory.erase(scroll_item_id)   # consume exactly one copy
+	# ADDED: branches based on which of the two scroll paths this came from
+	# (see the big comment above _show_scroll_unit_picker for the full
+	# explanation of both).
+	if scroll_item_id == GENERIC_SCROLL_ID:
+		var count: int = int(RunManager.current_run.runtime_effect_state.get("skill_scroll_count", 0))
+		if count <= 0:
+			push_warning("DeploymentManager: tried to use the generic Skill Scroll but the count is 0.")
+			return
+		RunManager.current_run.runtime_effect_state["skill_scroll_count"] = count - 1
+	else:
+		if not RunManager.current_run.equipment_inventory.has(scroll_item_id):
+			push_warning("DeploymentManager: tried to use '" + scroll_item_id + "' but none left in inventory.")
+			return
+		RunManager.current_run.equipment_inventory.erase(scroll_item_id)   # consume exactly one copy
 
 	var applied: Dictionary = entry.get("ability_enhancements", {})
 	var applied_for_ability: Array = applied.get(ability_id, [])
@@ -1530,7 +1584,7 @@ func _apply_skill_scroll_enhancement(scroll_item_id: String, instance_id: String
 
 	RunManager.save_run()
 	_rebuild_roster()
-	_rebuild_inventory()
+	_rebuild_inventory()   # also redraws the generic scroll's (xN) count, now that it lives inline here
 
 	print("📜 Applied enhancement '", enhancement_id, "' to ability '", ability_id,
 		  "' on unit ", entry.get("unit_id", "?"))
@@ -2008,3 +2062,4 @@ func _on_continue_pressed() -> void:
 	# (SCENE_FOR_STAGE_TYPE), so route through it instead of a
 	# RunManager function that duplicated the same lookup.
 	StageDirector.enter_current_stage()
+	

@@ -3,6 +3,14 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_o7uq1"]
 [ext_resource type="Texture2D" uid="uid://ycj1tfcbrxm3" path="res://sprites/UI/skill icons/skill_icons_earthquake.png" id="2_88po4"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_hp2hh"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="2_jgipq"]
+[ext_resource type="Resource" uid="uid://cv3rds03lcwb2" path="res://resources/abilityenhancement/dmgadd.tres" id="3_f56gu"]
+[ext_resource type="Resource" uid="uid://ydam6w7q00im" path="res://resources/abilityenhancement/dmgbuff.tres" id="4_nyicp"]
+[ext_resource type="Resource" uid="uid://dvavb62ptlg87" path="res://resources/abilityenhancement/debuffdmg.tres" id="5_02x80"]
+[ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="6_3sdce"]
+[ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="7_pmw2o"]
+[ext_resource type="Resource" uid="uid://bw7jx2nbji6dw" path="res://resources/abilityenhancement/matkreduce.tres" id="8_xm2r2"]
+[ext_resource type="Resource" uid="uid://d2e5baxwi0msn" path="res://resources/abilityenhancement/mdefreduce.tres" id="9_phoob"]
 
 [resource]
 script = ExtResource("2_hp2hh")
@@ -17,4 +25,5 @@ aoe_size = 3
 base_damage_multiplier = 2.0
 damage_type = "magical"
 scaling_stat = "matk"
+eligible_enhancements = Array[ExtResource("2_jgipq")]([ExtResource("3_f56gu"), ExtResource("4_nyicp"), ExtResource("5_02x80"), ExtResource("6_3sdce"), ExtResource("7_pmw2o"), ExtResource("8_xm2r2"), ExtResource("9_phoob")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

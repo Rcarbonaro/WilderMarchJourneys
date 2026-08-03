@@ -3,8 +3,15 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_qvh21"]
 [ext_resource type="Resource" uid="uid://cvdlkj4p02im2" path="res://resources/status_effects/slowed.tres" id="2_82lxo"]
 [ext_resource type="PackedScene" uid="uid://c14rsw05sr8j2" path="res://scenes/animations/windmage/tornado.tscn" id="3_qvh21"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_d5hq3"]
 [ext_resource type="Texture2D" uid="uid://dx3s0auqke0sq" path="res://sprites/UI/skill icons/skill_icons_tornado2.png" id="4_hnbcj"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="4_rotjb"]
+[ext_resource type="Resource" uid="uid://ck8ypstjsq5qv" path="res://resources/abilityenhancement/aoeadd.tres" id="5_v7acv"]
+[ext_resource type="Resource" uid="uid://cviy6ttm8ijac" path="res://resources/abilityenhancement/rangeadd.tres" id="6_0xnpb"]
+[ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="7_6ftmp"]
+[ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="8_nokoj"]
+[ext_resource type="Resource" uid="uid://bw7jx2nbji6dw" path="res://resources/abilityenhancement/matkreduce.tres" id="9_6tqgm"]
+[ext_resource type="Resource" uid="uid://d2e5baxwi0msn" path="res://resources/abilityenhancement/mdefreduce.tres" id="10_8kfuj"]
 
 [resource]
 script = ExtResource("4_rotjb")
@@ -25,4 +32,5 @@ applies_statuses = Array[ExtResource("1_qvh21")]([ExtResource("2_82lxo")])
 displacement_squares = 2
 displacement_type = "scatter"
 ability_type = "spell"
+eligible_enhancements = Array[ExtResource("4_d5hq3")]([ExtResource("5_v7acv"), ExtResource("6_0xnpb"), ExtResource("7_6ftmp"), ExtResource("8_nokoj"), ExtResource("9_6tqgm"), ExtResource("10_8kfuj")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

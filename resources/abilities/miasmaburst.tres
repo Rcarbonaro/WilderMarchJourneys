@@ -5,6 +5,11 @@
 [ext_resource type="PackedScene" uid="uid://coak3qga3hk76" path="res://scenes/animations/plaguebringer/miasmaburst.tscn" id="3_cy1up"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="3_rxojs"]
 [ext_resource type="Texture2D" uid="uid://52hn184qn2xv" path="res://sprites/UI/skill icons/skill_icons_miasmaburst.png" id="3_vnqjn"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_ilxe0"]
+[ext_resource type="Resource" uid="uid://cv3rds03lcwb2" path="res://resources/abilityenhancement/dmgadd.tres" id="5_qodgm"]
+[ext_resource type="Resource" uid="uid://ydam6w7q00im" path="res://resources/abilityenhancement/dmgbuff.tres" id="6_dksfp"]
+[ext_resource type="Resource" uid="uid://dvavb62ptlg87" path="res://resources/abilityenhancement/debuffdmg.tres" id="7_wbjyn"]
+[ext_resource type="Resource" uid="uid://ck8ypstjsq5qv" path="res://resources/abilityenhancement/aoeadd.tres" id="8_0wkil"]
 
 [resource]
 script = ExtResource("3_rxojs")
@@ -22,4 +27,5 @@ scaling_stat = "matk"
 applies_statuses = Array[ExtResource("1_6w36y")]([ExtResource("2_vnqjn")])
 ability_type = "spell"
 bonus_per_target_debuff = 0.2
+eligible_enhancements = Array[ExtResource("4_ilxe0")]([ExtResource("5_qodgm"), ExtResource("6_dksfp"), ExtResource("7_wbjyn"), ExtResource("8_0wkil")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

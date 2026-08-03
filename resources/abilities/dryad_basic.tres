@@ -4,6 +4,12 @@
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_nd5sv"]
 [ext_resource type="Texture2D" uid="uid://bi4htpcd6comc" path="res://sprites/UI/skill icons/skill_icons_thorns.png" id="2_neb1i"]
 [ext_resource type="PackedScene" uid="uid://c4xtg4mviym7d" path="res://scenes/animations/dryad/dryadbasic.tscn" id="2_ow8lw"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="3_sdl7j"]
+[ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="4_vm5bl"]
+[ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="5_ypwsi"]
+[ext_resource type="Resource" uid="uid://bw7jx2nbji6dw" path="res://resources/abilityenhancement/matkreduce.tres" id="6_u2d0h"]
+[ext_resource type="Resource" uid="uid://d2e5baxwi0msn" path="res://resources/abilityenhancement/mdefreduce.tres" id="7_bl41u"]
+[ext_resource type="Resource" uid="uid://dj67lyevlfsqv" path="res://resources/abilityenhancement/pam.tres" id="8_gnxb1"]
 
 [resource]
 script = ExtResource("2_nd5sv")
@@ -15,4 +21,5 @@ effect_scene = ExtResource("2_ow8lw")
 max_range = 2
 damage_type = "magical"
 scaling_stat = "matk"
+eligible_enhancements = Array[ExtResource("3_sdl7j")]([ExtResource("4_vm5bl"), ExtResource("5_ypwsi"), ExtResource("6_u2d0h"), ExtResource("7_bl41u"), ExtResource("8_gnxb1")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

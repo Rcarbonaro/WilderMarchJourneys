@@ -4,7 +4,21 @@
 [ext_resource type="Resource" uid="uid://cvdlkj4p02im2" path="res://resources/status_effects/slowed.tres" id="2_30ako"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_um2vd"]
 [ext_resource type="PackedScene" uid="uid://dc6iq5hufh7em" path="res://scenes/animations/icemage/shatter.tscn" id="3_30ako"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_0quu2"]
 [ext_resource type="Texture2D" uid="uid://gqplgagj2bpc" path="res://sprites/UI/skill icons/skill_icons_shatter.png" id="4_udi8o"]
+[ext_resource type="Resource" uid="uid://dgpymny7v78tg" path="res://resources/abilityenhancement/careful.tres" id="5_cddw5"]
+[ext_resource type="Resource" uid="uid://i537rn0jp4y4" path="res://resources/abilityenhancement/vampire.tres" id="6_b3o77"]
+[ext_resource type="Resource" uid="uid://ck8ypstjsq5qv" path="res://resources/abilityenhancement/aoeadd.tres" id="7_0yknx"]
+[ext_resource type="Resource" uid="uid://cviy6ttm8ijac" path="res://resources/abilityenhancement/rangeadd.tres" id="8_y124u"]
+[ext_resource type="Resource" uid="uid://cv3rds03lcwb2" path="res://resources/abilityenhancement/dmgadd.tres" id="9_hn36e"]
+[ext_resource type="Resource" uid="uid://ydam6w7q00im" path="res://resources/abilityenhancement/dmgbuff.tres" id="10_60on3"]
+[ext_resource type="Resource" uid="uid://dvavb62ptlg87" path="res://resources/abilityenhancement/debuffdmg.tres" id="11_3aky8"]
+[ext_resource type="Resource" uid="uid://b4ok83jdg0b3d" path="res://resources/abilityenhancement/isolateadd.tres" id="12_g56xt"]
+[ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="13_opk8b"]
+[ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="14_3tced"]
+[ext_resource type="Resource" uid="uid://bw7jx2nbji6dw" path="res://resources/abilityenhancement/matkreduce.tres" id="15_ocsn4"]
+[ext_resource type="Resource" uid="uid://d2e5baxwi0msn" path="res://resources/abilityenhancement/mdefreduce.tres" id="16_7uqhn"]
+[ext_resource type="Resource" uid="uid://dj67lyevlfsqv" path="res://resources/abilityenhancement/pam.tres" id="17_bpmg4"]
 
 [resource]
 script = ExtResource("2_um2vd")
@@ -15,10 +29,12 @@ icon = ExtResource("4_udi8o")
 effect_scene = ExtResource("3_30ako")
 mana_cost = 20
 max_range = 4
+affects_team = "all"
 aoe_shape = "cross"
 base_damage_multiplier = 1.25
 damage_type = "magical"
 scaling_stat = "matk"
 applies_statuses = Array[ExtResource("1_trdws")]([ExtResource("2_30ako")])
 element = "ice"
+eligible_enhancements = Array[ExtResource("4_0quu2")]([ExtResource("5_cddw5"), ExtResource("6_b3o77"), ExtResource("7_0yknx"), ExtResource("8_y124u"), ExtResource("9_hn36e"), ExtResource("10_60on3"), ExtResource("11_3aky8"), ExtResource("12_g56xt"), ExtResource("13_opk8b"), ExtResource("14_3tced"), ExtResource("15_ocsn4"), ExtResource("16_7uqhn"), ExtResource("17_bpmg4")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

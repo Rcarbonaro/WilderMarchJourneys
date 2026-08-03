@@ -1,8 +1,19 @@
 [gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://cvo30h186mrer"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_l007f"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="2_0m0im"]
 [ext_resource type="Texture2D" uid="uid://db3nbovig2s7y" path="res://sprites/UI/skill icons/skill_icons_arcthrust.png" id="2_l007f"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="3_ssgvl"]
+[ext_resource type="Resource" uid="uid://dj67lyevlfsqv" path="res://resources/abilityenhancement/pam.tres" id="3_y7twu"]
+[ext_resource type="Resource" uid="uid://ck8ypstjsq5qv" path="res://resources/abilityenhancement/aoeadd.tres" id="4_e8wj4"]
+[ext_resource type="Resource" uid="uid://ydam6w7q00im" path="res://resources/abilityenhancement/dmgbuff.tres" id="5_ses0p"]
+[ext_resource type="Resource" uid="uid://i537rn0jp4y4" path="res://resources/abilityenhancement/vampire.tres" id="6_5s43b"]
+[ext_resource type="Resource" uid="uid://b4ok83jdg0b3d" path="res://resources/abilityenhancement/isolateadd.tres" id="7_y0p2f"]
+[ext_resource type="Resource" uid="uid://cv3rds03lcwb2" path="res://resources/abilityenhancement/dmgadd.tres" id="8_xil52"]
+[ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="9_6wfta"]
+[ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="10_gb1sm"]
+[ext_resource type="Resource" uid="uid://bw7jx2nbji6dw" path="res://resources/abilityenhancement/matkreduce.tres" id="11_kug3b"]
+[ext_resource type="Resource" uid="uid://d2e5baxwi0msn" path="res://resources/abilityenhancement/mdefreduce.tres" id="12_rjsa8"]
 
 [resource]
 script = ExtResource("3_ssgvl")
@@ -19,4 +30,5 @@ base_damage_multiplier = 2.5
 damage_type = "magical"
 consumes_arcana_charge = true
 element = "lightning"
+eligible_enhancements = Array[ExtResource("2_0m0im")]([ExtResource("3_y7twu"), ExtResource("4_e8wj4"), ExtResource("5_ses0p"), ExtResource("6_5s43b"), ExtResource("7_y0p2f"), ExtResource("8_xil52"), ExtResource("9_6wfta"), ExtResource("10_gb1sm"), ExtResource("11_kug3b"), ExtResource("12_rjsa8")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

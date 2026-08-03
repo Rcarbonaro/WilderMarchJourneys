@@ -3,7 +3,14 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_v0us8"]
 [ext_resource type="Texture2D" uid="uid://0rxe02kkj7ax" path="res://sprites/UI/skill icons/skill_icons_walloffire.png" id="2_6ttbg"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_k36vv"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="2_wsdfi"]
 [ext_resource type="Resource" uid="uid://cbh8s7n6r1bib" path="res://resources/hazards/firewall.tres" id="3_k36vv"]
+[ext_resource type="Resource" uid="uid://cviy6ttm8ijac" path="res://resources/abilityenhancement/rangeadd.tres" id="3_k8678"]
+[ext_resource type="Resource" uid="uid://ck8ypstjsq5qv" path="res://resources/abilityenhancement/aoeadd.tres" id="4_4n47t"]
+[ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="5_qw3yp"]
+[ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="6_kerwk"]
+[ext_resource type="Resource" uid="uid://bw7jx2nbji6dw" path="res://resources/abilityenhancement/matkreduce.tres" id="7_hkaux"]
+[ext_resource type="Resource" uid="uid://d2e5baxwi0msn" path="res://resources/abilityenhancement/mdefreduce.tres" id="8_oxbow"]
 
 [resource]
 script = ExtResource("2_k36vv")
@@ -20,4 +27,5 @@ base_damage_multiplier = 0.8
 damage_type = "magical"
 scaling_stat = "matk"
 spawns_hazard = ExtResource("3_k36vv")
+eligible_enhancements = Array[ExtResource("2_wsdfi")]([ExtResource("3_k8678"), ExtResource("4_4n47t"), ExtResource("5_qw3yp"), ExtResource("6_kerwk"), ExtResource("7_hkaux"), ExtResource("8_oxbow")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

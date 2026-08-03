@@ -1,7 +1,14 @@
 [gd_resource type="Resource" script_class="AbilityEnhancementData" format=3 uid="uid://dgdf5xbctj8mt"]
 
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="1_3qxtj"]
+[ext_resource type="Resource" uid="uid://38f0ldm4k563" path="res://resources/status_effects/movadd.tres" id="1_rahe7"]
 
 [resource]
 script = ExtResource("1_3qxtj")
+id = "movadd"
+display_name = "Increase Target MOV"
+description = "Increase target movement by 1"
+enhancement_type = "add_buff"
+magnitude = 1.0
+attached_status = ExtResource("1_rahe7")
 metadata/_custom_type_script = "uid://bv33cyg2ct1h3"

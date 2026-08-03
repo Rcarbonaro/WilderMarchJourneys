@@ -4,4 +4,9 @@
 
 [resource]
 script = ExtResource("1_dri40")
+id = "debuffdmg"
+display_name = "Damage Against Debuffed"
+description = "Increased damage based on number of enemy debuffs"
+enhancement_type = "bonus_per_target_debuff"
+magnitude = 0.025
 metadata/_custom_type_script = "uid://bv33cyg2ct1h3"

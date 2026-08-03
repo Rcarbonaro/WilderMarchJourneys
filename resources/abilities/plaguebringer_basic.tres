@@ -5,6 +5,16 @@
 [ext_resource type="PackedScene" uid="uid://b2fskimaby3vf" path="res://scenes/animations/plaguebringer/blightbolt.tscn" id="2_mrirh"]
 [ext_resource type="Resource" uid="uid://cakcsif54475e" path="res://resources/status_effects/blightbolt.tres" id="2_pnh4p"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_wv4lp"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_i0y0p"]
+[ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="5_kx4tu"]
+[ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="6_0516n"]
+[ext_resource type="Resource" uid="uid://bw7jx2nbji6dw" path="res://resources/abilityenhancement/matkreduce.tres" id="7_q0qi7"]
+[ext_resource type="Resource" uid="uid://d2e5baxwi0msn" path="res://resources/abilityenhancement/mdefreduce.tres" id="8_j2xhh"]
+[ext_resource type="Resource" uid="uid://cv3rds03lcwb2" path="res://resources/abilityenhancement/dmgadd.tres" id="9_xrv3s"]
+[ext_resource type="Resource" uid="uid://ydam6w7q00im" path="res://resources/abilityenhancement/dmgbuff.tres" id="10_iutfy"]
+[ext_resource type="Resource" uid="uid://dvavb62ptlg87" path="res://resources/abilityenhancement/debuffdmg.tres" id="11_je6k3"]
+[ext_resource type="Resource" uid="uid://b4ok83jdg0b3d" path="res://resources/abilityenhancement/isolateadd.tres" id="12_ruclf"]
+[ext_resource type="Resource" uid="uid://cviy6ttm8ijac" path="res://resources/abilityenhancement/rangeadd.tres" id="13_12vqj"]
 
 [resource]
 script = ExtResource("2_wv4lp")
@@ -19,4 +29,5 @@ scaling_stat = "matk"
 applies_statuses = Array[ExtResource("1_x3hri")]([ExtResource("2_pnh4p")])
 bonus_per_target_debuff = 0.1
 bonus_damage_per_caster_buff_max = 0.0
+eligible_enhancements = Array[ExtResource("4_i0y0p")]([ExtResource("5_kx4tu"), ExtResource("6_0516n"), ExtResource("7_q0qi7"), ExtResource("8_j2xhh"), ExtResource("9_xrv3s"), ExtResource("10_iutfy"), ExtResource("11_je6k3"), ExtResource("12_ruclf"), ExtResource("13_12vqj")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

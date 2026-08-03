@@ -2,7 +2,17 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_tfied"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_8h26d"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="2_cej4y"]
 [ext_resource type="Texture2D" uid="uid://cyt2vb0g4cfmk" path="res://sprites/UI/skill icons/skill_icons_windblades.png" id="2_eh863"]
+[ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="3_4aei7"]
+[ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="4_gpeom"]
+[ext_resource type="Resource" uid="uid://bw7jx2nbji6dw" path="res://resources/abilityenhancement/matkreduce.tres" id="5_6jsjy"]
+[ext_resource type="Resource" uid="uid://d2e5baxwi0msn" path="res://resources/abilityenhancement/mdefreduce.tres" id="6_u7tof"]
+[ext_resource type="Resource" uid="uid://cviy6ttm8ijac" path="res://resources/abilityenhancement/rangeadd.tres" id="7_82a64"]
+[ext_resource type="Resource" uid="uid://cv3rds03lcwb2" path="res://resources/abilityenhancement/dmgadd.tres" id="8_ue0s2"]
+[ext_resource type="Resource" uid="uid://ydam6w7q00im" path="res://resources/abilityenhancement/dmgbuff.tres" id="9_p62fi"]
+[ext_resource type="Resource" uid="uid://dvavb62ptlg87" path="res://resources/abilityenhancement/debuffdmg.tres" id="10_sixim"]
+[ext_resource type="Resource" uid="uid://b4ok83jdg0b3d" path="res://resources/abilityenhancement/isolateadd.tres" id="11_d8dvp"]
 
 [resource]
 script = ExtResource("2_8h26d")
@@ -16,4 +26,5 @@ base_damage_multiplier = 0.75
 damage_type = "magical"
 scaling_stat = "matk"
 displacement_squares = 1
+eligible_enhancements = Array[ExtResource("2_cej4y")]([ExtResource("3_4aei7"), ExtResource("4_gpeom"), ExtResource("5_6jsjy"), ExtResource("6_u7tof"), ExtResource("7_82a64"), ExtResource("8_ue0s2"), ExtResource("9_p62fi"), ExtResource("10_sixim"), ExtResource("11_d8dvp")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

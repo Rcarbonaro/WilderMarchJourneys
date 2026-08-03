@@ -4,4 +4,9 @@
 
 [resource]
 script = ExtResource("1_inlaj")
+id = "rangeadd"
+display_name = "Increase Ability Range"
+description = "Increase ability's range by 1"
+enhancement_type = "range"
+magnitude = 1.0
 metadata/_custom_type_script = "uid://bv33cyg2ct1h3"

@@ -4,4 +4,9 @@
 
 [resource]
 script = ExtResource("1_2mj8c")
+id = "pam"
+display_name = "Add Post Ability Movement"
+description = "Increase tiles unit can move after using the ability"
+enhancement_type = "post_attack_move"
+magnitude = 1.0
 metadata/_custom_type_script = "uid://bv33cyg2ct1h3"

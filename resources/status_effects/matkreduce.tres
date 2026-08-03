@@ -4,4 +4,10 @@
 
 [resource]
 script = ExtResource("1_7xsk0")
+id = "matkreduce"
+display_name = "Reduce MATK"
+description = "Reduce Magical Attack by 1 for 2 rounds."
+duration_rounds = 2
+max_stacks = 10
+matk_modifier = -1
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

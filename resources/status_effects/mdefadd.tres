@@ -4,4 +4,11 @@
 
 [resource]
 script = ExtResource("1_h11hy")
+id = "mdefadd"
+display_name = "Increase MDEF"
+description = "Increase Magical Defense by 1 for 2 rounds."
+duration_rounds = 2
+can_stack = true
+max_stacks = 10
+mdef_modifier = -1
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

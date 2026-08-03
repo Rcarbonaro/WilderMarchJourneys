@@ -4,6 +4,13 @@
 [ext_resource type="PackedScene" uid="uid://bfnh5i05aabj1" path="res://scenes/animations/spellsword/windslash_dash.tscn" id="2_6j38w"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_mx4nk"]
 [ext_resource type="Texture2D" uid="uid://cyt2vb0g4cfmk" path="res://sprites/UI/skill icons/skill_icons_windblades.png" id="2_xmw2x"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="3_0ijm5"]
+[ext_resource type="Resource" uid="uid://ck8ypstjsq5qv" path="res://resources/abilityenhancement/aoeadd.tres" id="4_fo62a"]
+[ext_resource type="Resource" uid="uid://b4ok83jdg0b3d" path="res://resources/abilityenhancement/isolateadd.tres" id="5_48seq"]
+[ext_resource type="Resource" uid="uid://cviy6ttm8ijac" path="res://resources/abilityenhancement/rangeadd.tres" id="6_fp2tw"]
+[ext_resource type="Resource" uid="uid://cv3rds03lcwb2" path="res://resources/abilityenhancement/dmgadd.tres" id="7_71k10"]
+[ext_resource type="Resource" uid="uid://ydam6w7q00im" path="res://resources/abilityenhancement/dmgbuff.tres" id="8_agml2"]
+[ext_resource type="Resource" uid="uid://dvavb62ptlg87" path="res://resources/abilityenhancement/debuffdmg.tres" id="9_a36id"]
 
 [resource]
 script = ExtResource("2_mx4nk")
@@ -27,4 +34,5 @@ applies_thorns = true
 on_kill_reset_has_acted = true
 on_kill_reset_has_moved = true
 consumes_arcana_charge = true
+eligible_enhancements = Array[ExtResource("3_0ijm5")]([ExtResource("4_fo62a"), ExtResource("5_48seq"), ExtResource("6_fp2tw"), ExtResource("7_71k10"), ExtResource("8_agml2"), ExtResource("9_a36id")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

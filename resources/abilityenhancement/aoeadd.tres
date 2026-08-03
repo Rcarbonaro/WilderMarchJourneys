@@ -4,4 +4,9 @@
 
 [resource]
 script = ExtResource("1_v6k51")
+id = "aoeadd"
+display_name = "Increase Area of Effect Magnitude by 1"
+description = "Increase the magnitude of the area size by 1"
+enhancement_type = "aoe_size"
+magnitude = 1.0
 metadata/_custom_type_script = "uid://bv33cyg2ct1h3"

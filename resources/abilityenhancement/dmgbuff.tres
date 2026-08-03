@@ -4,4 +4,9 @@
 
 [resource]
 script = ExtResource("1_uw0v2")
+id = "dmgbuff"
+display_name = "Damage Based on Buffs"
+description = "Increased damage based on number of buffs"
+enhancement_type = "bonus_per_caster_buff"
+magnitude = 0.025
 metadata/_custom_type_script = "uid://bv33cyg2ct1h3"

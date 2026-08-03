@@ -5,6 +5,12 @@
 [ext_resource type="Resource" uid="uid://6oeegldom1yq" path="res://resources/status_effects/exposed.tres" id="2_po7l4"]
 [ext_resource type="PackedScene" uid="uid://4dm4begunh2j" path="res://scenes/animations/dragoon/dragoon_lunge.tscn" id="3_dylrp"]
 [ext_resource type="Texture2D" uid="uid://5ak3ab1d5qbg" path="res://sprites/UI/skill icons/skill_icons_lunge.png" id="3_po7l4"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_qr3mr"]
+[ext_resource type="Resource" uid="uid://ck8ypstjsq5qv" path="res://resources/abilityenhancement/aoeadd.tres" id="5_vf086"]
+[ext_resource type="Resource" uid="uid://cv3rds03lcwb2" path="res://resources/abilityenhancement/dmgadd.tres" id="6_hcete"]
+[ext_resource type="Resource" uid="uid://ydam6w7q00im" path="res://resources/abilityenhancement/dmgbuff.tres" id="7_3uyxc"]
+[ext_resource type="Resource" uid="uid://dvavb62ptlg87" path="res://resources/abilityenhancement/debuffdmg.tres" id="8_qrr26"]
+[ext_resource type="Resource" uid="uid://b4ok83jdg0b3d" path="res://resources/abilityenhancement/isolateadd.tres" id="9_6whky"]
 
 [resource]
 script = ExtResource("2_pfl7k")
@@ -20,4 +26,5 @@ aoe_size = 5
 applies_statuses = Array[ExtResource("1_ui481")]([ExtResource("2_po7l4")])
 is_dash = true
 bonus_damage_isolated = 0.75
+eligible_enhancements = Array[ExtResource("4_qr3mr")]([ExtResource("5_vf086"), ExtResource("6_hcete"), ExtResource("7_3uyxc"), ExtResource("8_qrr26"), ExtResource("9_6whky")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

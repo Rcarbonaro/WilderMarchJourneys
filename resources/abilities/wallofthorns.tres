@@ -5,6 +5,9 @@
 [ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="2_pby74"]
 [ext_resource type="Resource" uid="uid://ddaf7ic4a2aal" path="res://resources/hazards/wallofthorns.tres" id="3_if6pe"]
 [ext_resource type="Texture2D" uid="uid://d2jvjo36lxeq8" path="res://sprites/UI/skill icons/skill_icons_wallofthorns.png" id="3_pby74"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="3_v4qhi"]
+[ext_resource type="Resource" uid="uid://cviy6ttm8ijac" path="res://resources/abilityenhancement/rangeadd.tres" id="4_7uwnm"]
+[ext_resource type="Resource" uid="uid://ck8ypstjsq5qv" path="res://resources/abilityenhancement/aoeadd.tres" id="5_fwr06"]
 
 [resource]
 script = ExtResource("2_if6pe")
@@ -23,4 +26,5 @@ base_damage_multiplier = 0.4
 damage_type = "magical"
 scaling_stat = "matk"
 spawns_hazard = ExtResource("3_if6pe")
+eligible_enhancements = Array[ExtResource("3_v4qhi")]([ExtResource("4_7uwnm"), ExtResource("5_fwr06")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

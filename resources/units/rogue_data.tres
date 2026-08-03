@@ -114,6 +114,7 @@ script = ExtResource("1_6usi5")
 id = "rogue"
 display_name = "Rogue"
 description = "A quick fighter who relies on stealth. Excels at defeating vulnerable and isolated enemies."
+unique_mechanics = "Defeating an enemy causes the rogue to become invisible"
 portrait = ExtResource("3_5debc")
 battle_sprite = ExtResource("2_l4ka4")
 synergy_tags = Array[String](["isolation"])

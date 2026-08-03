@@ -22,6 +22,7 @@ script = ExtResource("1_hbk8x")
 id = "spellsword"
 display_name = "Spellsword"
 description = "A swordswoman who uses magic to enhance her sword. Can absorb mana used by allies to power her own enhanced attacks. Spells deal magic damage, but scale with ATK."
+unique_mechanics = "After ally team consumes a total of 75 mana, can use a spell for no mana cost."
 portrait = ExtResource("3_1n7wx")
 battle_sprite = ExtResource("2_utbtp")
 synergy_tags = Array[String](["arcane"])

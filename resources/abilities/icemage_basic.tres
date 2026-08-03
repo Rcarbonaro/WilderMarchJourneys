@@ -4,7 +4,15 @@
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_18ua7"]
 [ext_resource type="Resource" uid="uid://cvdlkj4p02im2" path="res://resources/status_effects/slowed.tres" id="2_bbweq"]
 [ext_resource type="PackedScene" uid="uid://cwbtn61qef387" path="res://scenes/animations/icemage/icebolt.tscn" id="3_mcssj"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_681fd"]
 [ext_resource type="Texture2D" uid="uid://bnqbt0qb47isq" path="res://sprites/UI/skill icons/skill_icons_icespear.png" id="4_mcssj"]
+[ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="5_xrpi4"]
+[ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="6_7cinc"]
+[ext_resource type="Resource" uid="uid://bw7jx2nbji6dw" path="res://resources/abilityenhancement/matkreduce.tres" id="7_u0aw7"]
+[ext_resource type="Resource" uid="uid://d2e5baxwi0msn" path="res://resources/abilityenhancement/mdefreduce.tres" id="8_6emh7"]
+[ext_resource type="Resource" uid="uid://dvavb62ptlg87" path="res://resources/abilityenhancement/debuffdmg.tres" id="9_7etgu"]
+[ext_resource type="Resource" uid="uid://ydam6w7q00im" path="res://resources/abilityenhancement/dmgbuff.tres" id="10_2xwef"]
+[ext_resource type="Resource" uid="uid://cviy6ttm8ijac" path="res://resources/abilityenhancement/rangeadd.tres" id="11_4hkfq"]
 
 [resource]
 script = ExtResource("2_18ua7")
@@ -17,4 +25,5 @@ max_range = 3
 damage_type = "magical"
 scaling_stat = "matk"
 applies_statuses = Array[ExtResource("1_nu44h")]([ExtResource("2_bbweq")])
+eligible_enhancements = Array[ExtResource("4_681fd")]([ExtResource("5_xrpi4"), ExtResource("6_7cinc"), ExtResource("7_u0aw7"), ExtResource("8_6emh7"), ExtResource("9_7etgu"), ExtResource("10_2xwef"), ExtResource("11_4hkfq")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

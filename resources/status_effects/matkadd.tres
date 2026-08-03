@@ -4,4 +4,11 @@
 
 [resource]
 script = ExtResource("1_rhkbx")
+id = "matkadd"
+display_name = "Increase MATK"
+description = "Increase magical attack by 1 for 2 rounds."
+duration_rounds = 2
+can_stack = true
+max_stacks = 10
+matk_modifier = 1
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

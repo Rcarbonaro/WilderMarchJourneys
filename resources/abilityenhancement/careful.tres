@@ -4,4 +4,9 @@
 
 [resource]
 script = ExtResource("1_vo2cj")
+id = "careful"
+display_name = "Careful"
+description = "Ability no longer damages allies"
+enhancement_type = "no_friendly_fire"
+magnitude = 100.0
 metadata/_custom_type_script = "uid://bv33cyg2ct1h3"

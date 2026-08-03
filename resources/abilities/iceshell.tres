@@ -4,7 +4,15 @@
 [ext_resource type="Resource" uid="uid://b2d4isamx87fv" path="res://resources/status_effects/ice_shell.tres" id="2_3uqhq"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_ev3ev"]
 [ext_resource type="PackedScene" uid="uid://bigp3lru0g2wv" path="res://scenes/animations/icemage/iceshell.tscn" id="3_3uqhq"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_6qrkm"]
 [ext_resource type="Texture2D" uid="uid://cnbog526w4p6a" path="res://sprites/UI/skill icons/skill_icons_iceshell.png" id="4_van27"]
+[ext_resource type="Resource" uid="uid://cdb4tbaw47268" path="res://resources/abilityenhancement/atkadd.tres" id="5_4fx30"]
+[ext_resource type="Resource" uid="uid://dkpufeqm16o8s" path="res://resources/abilityenhancement/defadd.tres" id="6_nf6vo"]
+[ext_resource type="Resource" uid="uid://dgdf5xbctj8mt" path="res://resources/abilityenhancement/movadd.tres" id="7_5lmet"]
+[ext_resource type="Resource" uid="uid://dt2n5hyvrfxbq" path="res://resources/abilityenhancement/matkadd.tres" id="8_uuk8x"]
+[ext_resource type="Resource" uid="uid://c2oejclxcal0y" path="res://resources/abilityenhancement/mdefadd.tres" id="9_4mnnn"]
+[ext_resource type="Resource" uid="uid://cviy6ttm8ijac" path="res://resources/abilityenhancement/rangeadd.tres" id="10_qh30f"]
+[ext_resource type="Resource" uid="uid://2f1omrmpjoqp" path="res://resources/abilityenhancement/shieldadd.tres" id="11_aqpk5"]
 
 [resource]
 script = ExtResource("2_ev3ev")
@@ -24,4 +32,5 @@ ability_type = "spell"
 applies_thorns = true
 thorns_reflect_percent = 0.5
 thorns_scaling_stat = "mdef"
+eligible_enhancements = Array[ExtResource("4_6qrkm")]([ExtResource("5_4fx30"), ExtResource("6_nf6vo"), ExtResource("7_5lmet"), ExtResource("8_uuk8x"), ExtResource("9_4mnnn"), ExtResource("10_qh30f"), ExtResource("11_aqpk5")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

@@ -5,6 +5,14 @@
 [ext_resource type="Resource" uid="uid://ds2a6026yun8u" path="res://resources/status_effects/dreadknight curse.tres" id="2_ff4w5"]
 [ext_resource type="Texture2D" uid="uid://cj3he80p7vm3l" path="res://sprites/UI/skill icons/skill_icon_darkgreatsword.png" id="3_pk451"]
 [ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="3_uqvlo"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_levbx"]
+[ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="5_v70bi"]
+[ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="6_qbluc"]
+[ext_resource type="Resource" uid="uid://bw7jx2nbji6dw" path="res://resources/abilityenhancement/matkreduce.tres" id="7_rmc0s"]
+[ext_resource type="Resource" uid="uid://d2e5baxwi0msn" path="res://resources/abilityenhancement/mdefreduce.tres" id="8_eqkhj"]
+[ext_resource type="Resource" uid="uid://cv3rds03lcwb2" path="res://resources/abilityenhancement/dmgadd.tres" id="9_dewxf"]
+[ext_resource type="Resource" uid="uid://dvavb62ptlg87" path="res://resources/abilityenhancement/debuffdmg.tres" id="10_h10th"]
+[ext_resource type="Resource" uid="uid://dj67lyevlfsqv" path="res://resources/abilityenhancement/pam.tres" id="11_5voe0"]
 
 [resource]
 script = ExtResource("1_6hig2")
@@ -17,4 +25,5 @@ base_damage_multiplier = 0.8
 damage_type = "magical"
 scaling_stat = "matk"
 applies_statuses = Array[ExtResource("1_b0230")]([ExtResource("2_ff4w5")])
+eligible_enhancements = Array[ExtResource("4_levbx")]([ExtResource("5_v70bi"), ExtResource("6_qbluc"), ExtResource("7_rmc0s"), ExtResource("8_eqkhj"), ExtResource("9_dewxf"), ExtResource("10_h10th"), ExtResource("11_5voe0")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

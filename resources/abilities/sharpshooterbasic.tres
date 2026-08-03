@@ -4,7 +4,16 @@
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_4lcoe"]
 [ext_resource type="PackedScene" uid="uid://cpbh2fr13qevl" path="res://scenes/animations/sharpshooter/arrow.tscn" id="2_vvd0j"]
 [ext_resource type="Texture2D" uid="uid://bu4y8gpm4iccv" path="res://sprites/UI/skill icons/skill_icons_crossbow.png" id="3_65yb4"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="3_avqcy"]
 [ext_resource type="Resource" uid="uid://dypt6wtrloga7" path="res://resources/status_effects/momentumsharpshooter.tres" id="3_vvd0j"]
+[ext_resource type="Resource" uid="uid://cviy6ttm8ijac" path="res://resources/abilityenhancement/rangeadd.tres" id="4_ca4eg"]
+[ext_resource type="Resource" uid="uid://cv3rds03lcwb2" path="res://resources/abilityenhancement/dmgadd.tres" id="5_vsvoh"]
+[ext_resource type="Resource" uid="uid://ydam6w7q00im" path="res://resources/abilityenhancement/dmgbuff.tres" id="6_prq3s"]
+[ext_resource type="Resource" uid="uid://dvavb62ptlg87" path="res://resources/abilityenhancement/debuffdmg.tres" id="7_mrp8l"]
+[ext_resource type="Resource" uid="uid://b4ok83jdg0b3d" path="res://resources/abilityenhancement/isolateadd.tres" id="8_cqhsc"]
+[ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="9_gj7ke"]
+[ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="10_aasvr"]
+[ext_resource type="Resource" uid="uid://d2e5baxwi0msn" path="res://resources/abilityenhancement/mdefreduce.tres" id="11_vmie2"]
 
 [resource]
 script = ExtResource("2_4lcoe")
@@ -17,4 +26,5 @@ min_range = 2
 max_range = 6
 has_on_kill_effect = true
 on_kill_apply_status = ExtResource("3_vvd0j")
+eligible_enhancements = Array[ExtResource("3_avqcy")]([ExtResource("4_ca4eg"), ExtResource("5_vsvoh"), ExtResource("6_prq3s"), ExtResource("7_mrp8l"), ExtResource("8_cqhsc"), ExtResource("9_gj7ke"), ExtResource("10_aasvr"), ExtResource("11_vmie2")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

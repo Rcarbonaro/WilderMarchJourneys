@@ -5,6 +5,11 @@
 [ext_resource type="Resource" uid="uid://6oeegldom1yq" path="res://resources/status_effects/exposed.tres" id="2_qpbmu"]
 [ext_resource type="Texture2D" uid="uid://cdinrndf1bp07" path="res://sprites/UI/skill icons/skill_icons_tempestgrasp.png" id="3_qpbmu"]
 [ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="3_to41x"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_dydvh"]
+[ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="5_7ifjp"]
+[ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="6_yg1j5"]
+[ext_resource type="Resource" uid="uid://bw7jx2nbji6dw" path="res://resources/abilityenhancement/matkreduce.tres" id="7_b4g70"]
+[ext_resource type="Resource" uid="uid://d2e5baxwi0msn" path="res://resources/abilityenhancement/mdefreduce.tres" id="8_2f67i"]
 
 [resource]
 script = ExtResource("2_gm58u")
@@ -21,4 +26,5 @@ damage_type = "magical"
 scaling_stat = "matk"
 applies_statuses = Array[ExtResource("1_hicjn")]([ExtResource("2_qpbmu")])
 displacement_squares = -6
+eligible_enhancements = Array[ExtResource("4_dydvh")]([ExtResource("5_7ifjp"), ExtResource("6_yg1j5"), ExtResource("7_b4g70"), ExtResource("8_2f67i")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

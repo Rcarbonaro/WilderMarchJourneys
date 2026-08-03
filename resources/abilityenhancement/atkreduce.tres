@@ -1,7 +1,14 @@
 [gd_resource type="Resource" script_class="AbilityEnhancementData" format=3 uid="uid://crucb45ycu1bs"]
 
+[ext_resource type="Resource" uid="uid://d1xmlymrlbkyp" path="res://resources/status_effects/atkreduce.tres" id="1_3tghg"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="1_jl241"]
 
 [resource]
 script = ExtResource("1_jl241")
+id = "atkreduce"
+display_name = "Decrease Target ATK"
+description = "Decrease target ATK by 1 for 2 rounds"
+enhancement_type = "add_debuff"
+magnitude = 1.0
+attached_status = ExtResource("1_3tghg")
 metadata/_custom_type_script = "uid://bv33cyg2ct1h3"

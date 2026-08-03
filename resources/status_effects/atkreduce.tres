@@ -4,4 +4,11 @@
 
 [resource]
 script = ExtResource("1_wwwd1")
+id = "atkreduce"
+display_name = "Reduce Attack"
+description = "Reduce Attack by 1 for 2 rounds."
+duration_rounds = 2
+can_stack = true
+max_stacks = 10
+atk_modifier = -1
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

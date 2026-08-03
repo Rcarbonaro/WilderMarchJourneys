@@ -4,6 +4,17 @@
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_4e7tr"]
 [ext_resource type="Texture2D" uid="uid://bekvd18nwwxw3" path="res://sprites/UI/skill icons/skill_icons_scorchwindslash.png" id="2_7c18j"]
 [ext_resource type="PackedScene" uid="uid://7f73binoe852" path="res://scenes/animations/spellsword/scorchwindslash.tscn" id="2_iu5re"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="3_nelop"]
+[ext_resource type="Resource" uid="uid://i537rn0jp4y4" path="res://resources/abilityenhancement/vampire.tres" id="4_yerbh"]
+[ext_resource type="Resource" uid="uid://ck8ypstjsq5qv" path="res://resources/abilityenhancement/aoeadd.tres" id="5_243lc"]
+[ext_resource type="Resource" uid="uid://cv3rds03lcwb2" path="res://resources/abilityenhancement/dmgadd.tres" id="6_udd2g"]
+[ext_resource type="Resource" uid="uid://ydam6w7q00im" path="res://resources/abilityenhancement/dmgbuff.tres" id="7_6yyc4"]
+[ext_resource type="Resource" uid="uid://dvavb62ptlg87" path="res://resources/abilityenhancement/debuffdmg.tres" id="8_mu7p4"]
+[ext_resource type="Resource" uid="uid://b4ok83jdg0b3d" path="res://resources/abilityenhancement/isolateadd.tres" id="9_untsi"]
+[ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="10_7mbno"]
+[ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="11_pgok4"]
+[ext_resource type="Resource" uid="uid://bw7jx2nbji6dw" path="res://resources/abilityenhancement/matkreduce.tres" id="12_6d6wf"]
+[ext_resource type="Resource" uid="uid://d2e5baxwi0msn" path="res://resources/abilityenhancement/mdefreduce.tres" id="13_syj3p"]
 
 [resource]
 script = ExtResource("2_4e7tr")
@@ -21,4 +32,5 @@ base_damage_multiplier = 1.75
 damage_type = "magical"
 consumes_arcana_charge = true
 element = "fire"
+eligible_enhancements = Array[ExtResource("3_nelop")]([ExtResource("4_yerbh"), ExtResource("5_243lc"), ExtResource("6_udd2g"), ExtResource("7_6yyc4"), ExtResource("8_mu7p4"), ExtResource("9_untsi"), ExtResource("10_7mbno"), ExtResource("11_pgok4"), ExtResource("12_6d6wf"), ExtResource("13_syj3p")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

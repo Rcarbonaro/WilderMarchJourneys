@@ -4,6 +4,16 @@
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_hj54k"]
 [ext_resource type="Texture2D" uid="uid://c6nn7nj545keb" path="res://sprites/UI/skill icons/skill_icons_swordslash.png" id="2_rxtw3"]
 [ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="2_vfnjq"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="3_gtowh"]
+[ext_resource type="Resource" uid="uid://dj67lyevlfsqv" path="res://resources/abilityenhancement/pam.tres" id="4_mxqhd"]
+[ext_resource type="Resource" uid="uid://i537rn0jp4y4" path="res://resources/abilityenhancement/vampire.tres" id="5_3arc3"]
+[ext_resource type="Resource" uid="uid://cv3rds03lcwb2" path="res://resources/abilityenhancement/dmgadd.tres" id="6_n5ov5"]
+[ext_resource type="Resource" uid="uid://ydam6w7q00im" path="res://resources/abilityenhancement/dmgbuff.tres" id="7_5gp28"]
+[ext_resource type="Resource" uid="uid://dvavb62ptlg87" path="res://resources/abilityenhancement/debuffdmg.tres" id="8_xkqe2"]
+[ext_resource type="Resource" uid="uid://b4ok83jdg0b3d" path="res://resources/abilityenhancement/isolateadd.tres" id="9_csob8"]
+[ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="10_twb3a"]
+[ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="11_re5tb"]
+[ext_resource type="Resource" uid="uid://d2e5baxwi0msn" path="res://resources/abilityenhancement/mdefreduce.tres" id="12_nca7y"]
 
 [resource]
 script = ExtResource("2_hj54k")
@@ -13,4 +23,5 @@ description = "A basic melee attack dealing physical damage."
 icon = ExtResource("2_rxtw3")
 effect_scene = ExtResource("2_vfnjq")
 attack_animation_name = "attack"
+eligible_enhancements = Array[ExtResource("3_gtowh")]([ExtResource("4_mxqhd"), ExtResource("5_3arc3"), ExtResource("6_n5ov5"), ExtResource("7_5gp28"), ExtResource("8_xkqe2"), ExtResource("9_csob8"), ExtResource("10_twb3a"), ExtResource("11_re5tb"), ExtResource("12_nca7y")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

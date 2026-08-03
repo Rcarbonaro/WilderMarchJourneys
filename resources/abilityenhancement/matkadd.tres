@@ -1,7 +1,14 @@
 [gd_resource type="Resource" script_class="AbilityEnhancementData" format=3 uid="uid://dt2n5hyvrfxbq"]
 
+[ext_resource type="Resource" uid="uid://2hopvhxw7oyt" path="res://resources/status_effects/matkadd.tres" id="1_1db4n"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="1_cyca5"]
 
 [resource]
 script = ExtResource("1_cyca5")
+id = "matkadd"
+display_name = "Increase Target MATK"
+description = "Increase MATK by 1"
+enhancement_type = "add_buff"
+magnitude = 1.0
+attached_status = ExtResource("1_1db4n")
 metadata/_custom_type_script = "uid://bv33cyg2ct1h3"

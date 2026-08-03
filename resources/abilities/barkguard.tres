@@ -5,6 +5,9 @@
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_ua1bp"]
 [ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="3_42agm"]
 [ext_resource type="Texture2D" uid="uid://c2rp4gsg1cuv3" path="res://sprites/UI/skill icons/skill_icon_barkguard.png" id="4_42agm"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_qjxj8"]
+[ext_resource type="Resource" uid="uid://dkpufeqm16o8s" path="res://resources/abilityenhancement/defadd.tres" id="5_7j7jy"]
+[ext_resource type="Resource" uid="uid://c2oejclxcal0y" path="res://resources/abilityenhancement/mdefadd.tres" id="6_u2tsu"]
 
 [resource]
 script = ExtResource("2_ua1bp")
@@ -22,4 +25,5 @@ base_damage_multiplier = 0.0
 applies_statuses = Array[ExtResource("1_lm0tg")]([ExtResource("2_bvodd")])
 applies_shield = true
 shield_amount = 20
+eligible_enhancements = Array[ExtResource("4_qjxj8")]([ExtResource("5_7j7jy"), ExtResource("6_u2tsu")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

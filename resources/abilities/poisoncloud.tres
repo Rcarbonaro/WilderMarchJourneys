@@ -4,8 +4,15 @@
 [ext_resource type="Resource" uid="uid://dxft4tccskmnc" path="res://resources/status_effects/poisoncloud.tres" id="2_3deaq"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_emqve"]
 [ext_resource type="Resource" uid="uid://cvdlkj4p02im2" path="res://resources/status_effects/slowed.tres" id="3_tgt34"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_p1gfb"]
 [ext_resource type="Texture2D" uid="uid://dge2o34isxty" path="res://sprites/UI/skill icons/skill_icons_poisongas.png" id="4_tgt34"]
 [ext_resource type="Resource" uid="uid://ru4n7oosj1qw" path="res://resources/hazards/poisoncloud.tres" id="5_0xn76"]
+[ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="5_awsjc"]
+[ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="6_pd23b"]
+[ext_resource type="Resource" uid="uid://bw7jx2nbji6dw" path="res://resources/abilityenhancement/matkreduce.tres" id="7_q7bns"]
+[ext_resource type="Resource" uid="uid://d2e5baxwi0msn" path="res://resources/abilityenhancement/mdefreduce.tres" id="8_nsc2c"]
+[ext_resource type="Resource" uid="uid://cviy6ttm8ijac" path="res://resources/abilityenhancement/rangeadd.tres" id="9_uwu3n"]
+[ext_resource type="Resource" uid="uid://ck8ypstjsq5qv" path="res://resources/abilityenhancement/aoeadd.tres" id="10_kh0bg"]
 
 [resource]
 script = ExtResource("2_emqve")
@@ -23,4 +30,5 @@ damage_type = "magical"
 scaling_stat = "matk"
 applies_statuses = Array[ExtResource("1_c2jvy")]([ExtResource("2_3deaq"), ExtResource("3_tgt34")])
 spawns_hazard = ExtResource("5_0xn76")
+eligible_enhancements = Array[ExtResource("4_p1gfb")]([ExtResource("5_awsjc"), ExtResource("6_pd23b"), ExtResource("7_q7bns"), ExtResource("8_nsc2c"), ExtResource("9_uwu3n"), ExtResource("10_kh0bg")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

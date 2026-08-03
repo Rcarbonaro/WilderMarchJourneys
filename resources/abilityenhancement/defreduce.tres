@@ -1,7 +1,14 @@
 [gd_resource type="Resource" script_class="AbilityEnhancementData" format=3 uid="uid://usdlrto7r5e8"]
 
+[ext_resource type="Resource" uid="uid://dw2a7o0xexhor" path="res://resources/status_effects/defreduce.tres" id="1_335xi"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="1_y0fym"]
 
 [resource]
 script = ExtResource("1_y0fym")
+id = "defreduce"
+display_name = "Reduce Target DEF"
+description = "Reduce target def by 1"
+enhancement_type = "add_debuff"
+magnitude = 1.0
+attached_status = ExtResource("1_335xi")
 metadata/_custom_type_script = "uid://bv33cyg2ct1h3"

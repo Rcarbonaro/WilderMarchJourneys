@@ -1,7 +1,14 @@
 [gd_resource type="Resource" script_class="AbilityEnhancementData" format=3 uid="uid://cdb4tbaw47268"]
 
-[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="1_bn4ry"]
+[ext_resource type="Resource" uid="uid://c0mhu16ij1tqe" path="res://resources/status_effects/atkadd.tres" id="1_qsoe8"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="2_crdmx"]
 
 [resource]
-script = ExtResource("1_bn4ry")
+script = ExtResource("2_crdmx")
+id = "addatk"
+display_name = "Increase Target ATK"
+description = "Increase Target ATK by 1 for 2 rounds"
+enhancement_type = "add_buff"
+magnitude = 1.0
+attached_status = ExtResource("1_qsoe8")
 metadata/_custom_type_script = "uid://bv33cyg2ct1h3"

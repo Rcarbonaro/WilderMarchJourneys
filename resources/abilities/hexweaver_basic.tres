@@ -5,6 +5,14 @@
 [ext_resource type="Resource" uid="uid://dsi53tejx35hr" path="res://resources/status_effects/weakened.tres" id="2_yi5be"]
 [ext_resource type="PackedScene" uid="uid://bg66ynyakit7" path="res://scenes/animations/hexweaver/hexweaverbasic.tscn" id="3_8p1jv"]
 [ext_resource type="Texture2D" uid="uid://b6l7nu7erlla1" path="res://sprites/UI/skill icons/skill_icons_purplehand.png" id="3_yi5be"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_lpcf1"]
+[ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="5_1gpla"]
+[ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="6_kq1ru"]
+[ext_resource type="Resource" uid="uid://bw7jx2nbji6dw" path="res://resources/abilityenhancement/matkreduce.tres" id="7_vxgd1"]
+[ext_resource type="Resource" uid="uid://d2e5baxwi0msn" path="res://resources/abilityenhancement/mdefreduce.tres" id="8_q7gdw"]
+[ext_resource type="Resource" uid="uid://cviy6ttm8ijac" path="res://resources/abilityenhancement/rangeadd.tres" id="9_6wp3i"]
+[ext_resource type="Resource" uid="uid://dvavb62ptlg87" path="res://resources/abilityenhancement/debuffdmg.tres" id="10_5spol"]
+[ext_resource type="Resource" uid="uid://ydam6w7q00im" path="res://resources/abilityenhancement/dmgbuff.tres" id="11_bhdqa"]
 
 [resource]
 script = ExtResource("2_1auvo")
@@ -15,4 +23,5 @@ icon = ExtResource("3_yi5be")
 effect_scene = ExtResource("3_8p1jv")
 max_range = 4
 applies_statuses = Array[ExtResource("1_etlcb")]([ExtResource("2_yi5be")])
+eligible_enhancements = Array[ExtResource("4_lpcf1")]([ExtResource("5_1gpla"), ExtResource("6_kq1ru"), ExtResource("7_vxgd1"), ExtResource("8_q7gdw"), ExtResource("9_6wp3i"), ExtResource("10_5spol"), ExtResource("11_bhdqa")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

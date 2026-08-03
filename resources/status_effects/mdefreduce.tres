@@ -4,4 +4,10 @@
 
 [resource]
 script = ExtResource("1_3clj2")
+id = "mdefreduce"
+display_name = "Reduce MDEF"
+description = "Reduce Magical Defense by 1 for 2 rounds."
+can_stack = true
+max_stacks = 10
+mdef_modifier = -1
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

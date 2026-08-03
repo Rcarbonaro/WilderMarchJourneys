@@ -1472,6 +1472,16 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster 
 	_refresh_status_glow()
 	_apply_status_depth -= 1
 
+func get_status_entry(status_id: String) -> Dictionary:
+	# Returns the full status entry dict ({data, stacks, remaining_rounds,
+	# source_caster, visual_phase}) for the given status id, or an empty
+	# Dictionary if the unit doesn't have it. Used by PlagueSystem to trace
+	# who originally cast a status, since has_status() only returns a bool.
+	for s in active_statuses:
+		if s["data"].id == status_id:
+			return s
+	return {}
+
 
 func remove_status(status_id: String) -> void:
 	# Removes a status by its id string. Used for cleanse/dispel effects, and

@@ -56,6 +56,17 @@ func start_new_run(difficulty: String = "normal") -> RunState:
 	var pool: Array = ContentLoader.biome_pool.duplicate()
 	pool.shuffle()
 	rs.biome_sequence.assign(pool.slice(0, min(3, pool.size())))
+
+	# ADDED: BUGFIX -- start_new_run_for_mode() below actually calls THIS
+	# function to build its own RunState (see the line right at the top of
+	# that function), so granting it here covers BOTH paths at once: plain
+	# start_new_run() (used directly by at least game_mode_select.gd's Test
+	# mode) and start_new_run_for_mode() (used by Random/Draft). One grant
+	# point, no duplication -- same counter-in-runtime_effect_state approach
+	# as camp_recruit_count, zero content authoring required.
+	rs.runtime_effect_state["skill_scroll_count"] = \
+		int(rs.runtime_effect_state.get("skill_scroll_count", 0)) + 1
+
 	current_run = rs
 	return rs
 
@@ -208,16 +219,12 @@ func start_new_run_for_mode(mode_id: String, chosen_party: Array = []) -> RunSta
 	for equipment_id in mode_config.get("starting_equipment_ids", []):
 		rs.equipment_inventory.append(equipment_id)
 
-	# ADDED: "can start with 1" -- a generic Skill Scroll, guaranteed to
-	# exist with zero content authoring required. Tracked as a simple
-	# counter in runtime_effect_state (same pattern as camp_recruit_count),
-	# NOT as a named equipment_inventory item -- so this works immediately
-	# with no JSON scroll item needed at all. See deployment_manager.gd's
-	# _refresh_generic_scroll_button() for where this actually gets used,
-	# and effect_system.gd's _do_add_skill_scroll() for how more get granted
-	# later (shop/combat/encounter rewards).
-	rs.runtime_effect_state["skill_scroll_count"] = \
-		int(rs.runtime_effect_state.get("skill_scroll_count", 0)) + 1
+	# NOTE: the Skill Scroll starting grant lives in start_new_run() above
+	# (called on the line right above this comment block, to build 'rs' in
+	# the first place) -- NOT here. It used to also be duplicated here,
+	# which meant anything going through this function actually started
+	# with 2 scrolls instead of 1, since start_new_run()'s grant ran first
+	# and this block ran a second time right after. Removed the duplicate.
 
 	if not chosen_party.is_empty():
 		rs.party = chosen_party
@@ -258,8 +265,16 @@ func _pick_random_starting_party(party_size: int, excluded_ids: Array) -> Array:
 	# covers both. If no candidate anywhere carries a needed role (e.g.
 	# nothing's been tagged yet), this just warns and leaves the roll as a
 	# plain random party rather than failing run start entirely.
-	party_ids = _guarantee_party_roles(party_ids, candidates,
-		[UnitData.ROLE_TANK, UnitData.ROLE_PRIMARY_DAMAGE])
+	#
+	# BUGFIX: passing an array literal directly as a function argument where
+	# an Array[int] is expected (e.g. "_fn([UnitData.ROLE_TANK, ...])") can
+	# throw a type-mismatch error in GDScript's static checker -- a plain
+	# "[a, b]" literal is an untyped Array until it's actually ASSIGNED to a
+	# typed variable, and Godot doesn't always coerce it automatically when
+	# it's inline in a call. Building it as its own explicitly-typed
+	# variable first sidesteps that entirely.
+	var required_roles: Array[int] = [UnitData.ROLE_TANK, UnitData.ROLE_PRIMARY_DAMAGE]
+	party_ids = _guarantee_party_roles(party_ids, candidates, required_roles)
 
 	var result: Array = []
 	for i in range(party_ids.size()):
