@@ -1,16 +1,19 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://cece1o0gnu4ud"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_34xes"]
+[ext_resource type="Texture2D" uid="uid://52hn184qn2xv" path="res://sprites/UI/skill icons/skill_icons_miasmaburst.png" id="1_ni443"]
 
 [resource]
 script = ExtResource("1_34xes")
 id = "mutation3"
 display_name = "White Plague Mutation"
+description = "Decreased ATK and MATK"
+icon = ExtResource("1_ni443")
 is_permanent = true
 can_stack = true
 max_stacks = 10
-atk_modifier = -1
-matk_modifier = -1
+atk_modifier = -2
+matk_modifier = -2
 has_dot = true
 dot_damage_mode = "flat"
 dot_flat_amount = 1

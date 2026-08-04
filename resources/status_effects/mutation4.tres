@@ -1,16 +1,19 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://dbim28prfs2ed"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_j2nls"]
+[ext_resource type="Texture2D" uid="uid://52hn184qn2xv" path="res://sprites/UI/skill icons/skill_icons_miasmaburst.png" id="1_pkjll"]
 
 [resource]
 script = ExtResource("1_j2nls")
 id = "mutation4"
 display_name = "White Plague Mutation"
+description = "Decreased DEF and MATK"
+icon = ExtResource("1_pkjll")
 is_permanent = true
 can_stack = true
 max_stacks = 10
-def_modifier = -1
-matk_modifier = -1
+def_modifier = -2
+matk_modifier = -2
 has_dot = true
 dot_damage_mode = "flat"
 dot_flat_amount = 1

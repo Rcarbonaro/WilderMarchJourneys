@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://bfbynrbn0pbil"
+path="res://.godot/imported/Immortal Dream.ogg-7401bba3b33d95a2c897ffc371412903.oggvorbisstr"
+
+[deps]
+
+source_file="res://assets/audio/music/Immortal Dream.ogg"
+dest_files=["res://.godot/imported/Immortal Dream.ogg-7401bba3b33d95a2c897ffc371412903.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

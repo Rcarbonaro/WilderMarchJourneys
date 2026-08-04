@@ -1,16 +1,19 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://bkpgld80e1ic1"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_odnj5"]
+[ext_resource type="Texture2D" uid="uid://52hn184qn2xv" path="res://sprites/UI/skill icons/skill_icons_miasmaburst.png" id="1_xsh5s"]
 
 [resource]
 script = ExtResource("1_odnj5")
 id = "mutation7"
 display_name = "White Plague Mutation"
+description = "Additional Damage over Time"
+icon = ExtResource("1_xsh5s")
 is_permanent = true
 can_stack = true
 max_stacks = 10
 has_dot = true
 dot_damage_mode = "magical"
 dot_flat_amount = 1
-dot_damage_percent = 0.25
+dot_damage_percent = 0.5
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

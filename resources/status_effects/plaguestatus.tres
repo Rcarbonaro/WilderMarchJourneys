@@ -14,5 +14,5 @@ is_permanent = true
 has_dot = true
 dot_damage_mode = "magical"
 dot_flat_amount = 0
-dot_damage_percent = 0.33
+dot_damage_percent = 1.0
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

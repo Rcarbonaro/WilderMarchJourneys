@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://dcy8fmttljyvj"
+path="res://.godot/imported/Echoed Blades (Loop).ogg-a8fb5f2807163aa9a663f6cd1f259bde.oggvorbisstr"
+
+[deps]
+
+source_file="res://assets/audio/music/Echoed Blades (Loop).ogg"
+dest_files=["res://.godot/imported/Echoed Blades (Loop).ogg-a8fb5f2807163aa9a663f6cd1f259bde.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

@@ -9,7 +9,6 @@ id = "dreadknightcurse"
 display_name = "Dreadknight's Curse"
 description = "Reduces enemy ATK and MATK, and taunts target."
 icon = ExtResource("1_ya4gm")
-duration_rounds = 5
 can_stack = true
 max_stacks = 5
 atk_modifier = -1

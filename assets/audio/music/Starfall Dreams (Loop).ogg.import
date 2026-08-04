@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://co0bw3qbv0ybs"
+path="res://.godot/imported/Starfall Dreams (Loop).ogg-868e0070e7235699f677cc303c625d4d.oggvorbisstr"
+
+[deps]
+
+source_file="res://assets/audio/music/Starfall Dreams (Loop).ogg"
+dest_files=["res://.godot/imported/Starfall Dreams (Loop).ogg-868e0070e7235699f677cc303c625d4d.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4
