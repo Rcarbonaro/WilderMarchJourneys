@@ -6,6 +6,7 @@
 [ext_resource type="Resource" uid="uid://bv7sadolaliac" path="res://resources/status_effects/tethered.tres" id="3_5ul24"]
 [ext_resource type="PackedScene" uid="uid://b8tkt4gm52ihd" path="res://scenes/animations/hexweaver/tether.tscn" id="3_38v47"]
 [ext_resource type="Texture2D" uid="uid://txsgiv2pwwh" path="res://sprites/UI/skill icons/skill_icons_tether.png" id="3_c4x1a"]
+[ext_resource type="AudioStream" uid="uid://bfg7wd1786sfv" path="res://assets/audio/sfx/spells/arcane/Arcane_AttackF3.wav" id="4_cx0rf"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="5_6sn63"]
 [ext_resource type="Resource" uid="uid://ck8ypstjsq5qv" path="res://resources/abilityenhancement/aoeadd.tres" id="6_cx0rf"]
 [ext_resource type="Resource" uid="uid://cviy6ttm8ijac" path="res://resources/abilityenhancement/rangeadd.tres" id="7_ujueq"]
@@ -23,6 +24,7 @@ display_name = "Tether"
 description = "Tether the targets in the area. When a \"Tethered\" target is hit by a single target attack, other \"Tethered\" enemies also take 50% of that damage. Cost: 30 mana"
 icon = ExtResource("3_c4x1a")
 effect_scene = ExtResource("3_38v47")
+cast_sfx = ExtResource("4_cx0rf")
 mana_cost = 20
 max_range = 4
 aoe_shape = "cross"

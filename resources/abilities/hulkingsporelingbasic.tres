@@ -3,7 +3,9 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_riw7g"]
 [ext_resource type="Texture2D" uid="uid://cbt1r5o77jgvc" path="res://sprites/UI/skill icons/skill_icons_oakclaw.png" id="2_1lr8y"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_egntn"]
+[ext_resource type="AudioStream" uid="uid://cwew7kyalue5r" path="res://assets/audio/sfx/attacks/hammerCrack.wav" id="2_hy4vx"]
 [ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="2_lb26a"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_inwhl"]
 
 [resource]
 script = ExtResource("2_egntn")
@@ -12,5 +14,6 @@ display_name = "Corrupted Fist"
 description = "Punch with a corrupted fist, dealing physical damage."
 icon = ExtResource("2_1lr8y")
 effect_scene = ExtResource("2_lb26a")
+cast_sfx = ExtResource("2_hy4vx")
 base_damage_multiplier = 0.4
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

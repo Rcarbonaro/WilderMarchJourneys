@@ -3,13 +3,16 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_8deio"]
 [ext_resource type="Resource" uid="uid://6oeegldom1yq" path="res://resources/status_effects/exposed.tres" id="2_u47r4"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_xucen"]
+[ext_resource type="AudioStream" uid="uid://nxa4d3gqmn0i" path="res://assets/audio/sfx/spells/arcane/Noise_Attack.wav" id="3_4s4en"]
 [ext_resource type="Texture2D" uid="uid://cyt2vb0g4cfmk" path="res://sprites/UI/skill icons/skill_icons_windblades.png" id="3_xucen"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_jbunb"]
 
 [resource]
 script = ExtResource("2_xucen")
 id = "windshear"
 display_name = "Windshear"
 icon = ExtResource("3_xucen")
+cast_sfx = ExtResource("3_4s4en")
 mana_cost = 30
 max_range = 4
 damage_type = "magical"

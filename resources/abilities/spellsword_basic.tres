@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_bxgln"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_hj54k"]
+[ext_resource type="AudioStream" uid="uid://uuhpdcjgc22v" path="res://assets/audio/sfx/attacks/Sword Attack 2.ogg" id="2_mxqhd"]
 [ext_resource type="Texture2D" uid="uid://c6nn7nj545keb" path="res://sprites/UI/skill icons/skill_icons_swordslash.png" id="2_rxtw3"]
 [ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="2_vfnjq"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="3_gtowh"]
@@ -23,5 +24,6 @@ description = "A basic melee attack dealing physical damage."
 icon = ExtResource("2_rxtw3")
 effect_scene = ExtResource("2_vfnjq")
 attack_animation_name = "attack"
+cast_sfx = ExtResource("2_mxqhd")
 eligible_enhancements = Array[ExtResource("3_gtowh")]([ExtResource("4_mxqhd"), ExtResource("5_3arc3"), ExtResource("6_n5ov5"), ExtResource("7_5gp28"), ExtResource("8_xkqe2"), ExtResource("9_csob8"), ExtResource("10_twb3a"), ExtResource("11_re5tb"), ExtResource("12_nca7y")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

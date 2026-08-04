@@ -5,6 +5,7 @@
 [ext_resource type="Resource" uid="uid://ds2a6026yun8u" path="res://resources/status_effects/dreadknight curse.tres" id="2_ff4w5"]
 [ext_resource type="Texture2D" uid="uid://cj3he80p7vm3l" path="res://sprites/UI/skill icons/skill_icon_darkgreatsword.png" id="3_pk451"]
 [ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="3_uqvlo"]
+[ext_resource type="AudioStream" uid="uid://dmfpyb1vmlg8c" path="res://assets/audio/sfx/spells/arcane/Arcane_ImpactF1.wav" id="3_v70bi"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_levbx"]
 [ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="5_v70bi"]
 [ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="6_qbluc"]
@@ -21,6 +22,7 @@ display_name = "Basic Attack"
 description = "A melee attack that deals moderate damage, taunts, and reduces enemy ATK."
 icon = ExtResource("3_pk451")
 effect_scene = ExtResource("3_uqvlo")
+cast_sfx = ExtResource("3_v70bi")
 base_damage_multiplier = 0.8
 damage_type = "magical"
 scaling_stat = "matk"

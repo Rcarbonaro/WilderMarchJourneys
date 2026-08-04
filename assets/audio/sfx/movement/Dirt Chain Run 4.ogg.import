@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://befr4bu4p8jnt"
+path="res://.godot/imported/Dirt Chain Run 4.ogg-d0171b37db284240d3ebd99bcfac5f26.oggvorbisstr"
+
+[deps]
+
+source_file="res://assets/audio/sfx/movement/Dirt Chain Run 4.ogg"
+dest_files=["res://.godot/imported/Dirt Chain Run 4.ogg-d0171b37db284240d3ebd99bcfac5f26.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

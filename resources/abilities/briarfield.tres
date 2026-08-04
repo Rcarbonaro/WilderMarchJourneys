@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://db46p6l7ny3jw"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_shxti"]
+[ext_resource type="AudioStream" uid="uid://ro1tp83viewy" path="res://assets/audio/sfx/spells/nature/Rock Wall 2.ogg" id="2_1orjm"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_7okhs"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="2_8bgu0"]
 [ext_resource type="Texture2D" uid="uid://d2jvjo36lxeq8" path="res://sprites/UI/skill icons/skill_icons_wallofthorns.png" id="2_rbvqc"]
@@ -17,6 +18,7 @@ id = "briarfield"
 display_name = "Briar Field"
 description = "Create a briar field for 3 turns. Field deals damage, slows enemies, and decreases damage dealt."
 icon = ExtResource("2_rbvqc")
+cast_sfx = ExtResource("2_1orjm")
 cooldown_rounds = 3
 max_range = 3
 aoe_shape = "cone"

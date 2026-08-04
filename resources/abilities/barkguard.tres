@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_lm0tg"]
 [ext_resource type="Resource" uid="uid://h1bwtk25nbyd" path="res://resources/status_effects/barkguard.tres" id="2_bvodd"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_ua1bp"]
+[ext_resource type="AudioStream" uid="uid://ro1tp83viewy" path="res://assets/audio/sfx/spells/nature/Rock Wall 2.ogg" id="3_7j7jy"]
 [ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="3_42agm"]
 [ext_resource type="Texture2D" uid="uid://c2rp4gsg1cuv3" path="res://sprites/UI/skill icons/skill_icon_barkguard.png" id="4_42agm"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_qjxj8"]
@@ -16,6 +17,7 @@ display_name = "Barkguard"
 description = "Surround yourself with heavy bark armor, providing temporary health and increased defense, but becoming unable to move. Lasts 2 turns. Cooldown: 2"
 icon = ExtResource("4_42agm")
 effect_scene = ExtResource("3_42agm")
+cast_sfx = ExtResource("3_7j7jy")
 cooldown_rounds = 2
 max_range = 0
 requires_line_of_sight = false

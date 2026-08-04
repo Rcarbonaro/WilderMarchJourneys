@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_l007f"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="2_0m0im"]
+[ext_resource type="AudioStream" uid="uid://7dk3xnkbmy2n" path="res://assets/audio/sfx/spells/lightning/chainlightning.ogg" id="2_e8wj4"]
 [ext_resource type="Texture2D" uid="uid://db3nbovig2s7y" path="res://sprites/UI/skill icons/skill_icons_arcthrust.png" id="2_l007f"]
 [ext_resource type="PackedScene" uid="uid://wudvgxnhtepe" path="res://scenes/animations/spellsword/arcthrust.tscn" id="2_y7twu"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="3_ssgvl"]
@@ -24,6 +25,7 @@ description = "Imbue your sword with lightning to deal massive damage in a strai
 icon = ExtResource("2_l007f")
 effect_scene = ExtResource("2_y7twu")
 attack_animation_name = "attack_lightning"
+cast_sfx = ExtResource("2_e8wj4")
 mana_cost = 25
 min_range = 1
 aoe_shape = "line"

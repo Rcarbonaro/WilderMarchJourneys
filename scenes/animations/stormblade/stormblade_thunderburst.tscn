@@ -1,0 +1,95 @@
+[gd_scene format=3 uid="uid://chm5klb7giuqu"]
+
+[ext_resource type="Texture2D" uid="uid://dl6v0ynlrqilj" path="res://sprites/stormblade/stormblade_thunderburst.png" id="1_m0a4s"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_k5q1h"]
+atlas = ExtResource("1_m0a4s")
+region = Rect2(0, 0, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qse4h"]
+atlas = ExtResource("1_m0a4s")
+region = Rect2(352, 0, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_uiyn2"]
+atlas = ExtResource("1_m0a4s")
+region = Rect2(704, 0, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hu4cv"]
+atlas = ExtResource("1_m0a4s")
+region = Rect2(1056, 0, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_70121"]
+atlas = ExtResource("1_m0a4s")
+region = Rect2(0, 192, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wfyeu"]
+atlas = ExtResource("1_m0a4s")
+region = Rect2(352, 192, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4csb2"]
+atlas = ExtResource("1_m0a4s")
+region = Rect2(704, 192, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_v3o7s"]
+atlas = ExtResource("1_m0a4s")
+region = Rect2(1056, 192, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rtd53"]
+atlas = ExtResource("1_m0a4s")
+region = Rect2(0, 384, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4ftjt"]
+atlas = ExtResource("1_m0a4s")
+region = Rect2(0, 576, 352, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dvgca"]
+atlas = ExtResource("1_m0a4s")
+region = Rect2(352, 576, 352, 192)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ohdvq"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_k5q1h")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qse4h")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_uiyn2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hu4cv")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_70121")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wfyeu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4csb2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_v3o7s")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rtd53")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4ftjt")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dvgca")
+}],
+"loop": false,
+"name": &"default",
+"speed": 26.0
+}]
+
+[node name="StormbladeThunderburst" type="Node2D" unique_id=1640800672]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1288465026]
+sprite_frames = SubResource("SpriteFrames_ohdvq")
+frame = 10
+frame_progress = 1.0

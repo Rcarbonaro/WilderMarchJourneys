@@ -2,13 +2,16 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_ko5mk"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_oe7qj"]
+[ext_resource type="AudioStream" uid="uid://cwew7kyalue5r" path="res://assets/audio/sfx/attacks/hammerCrack.wav" id="2_pcd5u"]
 [ext_resource type="PackedScene" uid="uid://by83wa6a2kd4r" path="res://scenes/animations/barkskinelk/barkskinelk.tscn" id="2_scmb3"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_vydop"]
 
 [resource]
 script = ExtResource("2_oe7qj")
 id = "guardiancharge"
 display_name = "Goring Rush"
 description = "The Elk charges in a straight line, goring targets in its path"
+cast_sfx = ExtResource("2_pcd5u")
 cooldown_rounds = 3
 max_range = 4
 aoe_shape = "line"

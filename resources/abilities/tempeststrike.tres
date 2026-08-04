@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_f15ar"]
 [ext_resource type="PackedScene" uid="uid://domluf3tiv68" path="res://scenes/animations/stormblade/stormblade_chainlightning.tscn" id="2_flaly"]
+[ext_resource type="AudioStream" uid="uid://7dk3xnkbmy2n" path="res://assets/audio/sfx/spells/lightning/chainlightning.ogg" id="2_nknr6"]
 [ext_resource type="Texture2D" uid="uid://bqfka1inei282" path="res://sprites/UI/skill icons/skill_icons_lightningnaginata.png" id="3_7l2nu"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="3_fxxns"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="4_dpcs0"]
@@ -17,6 +18,7 @@ id = "tempeststrike"
 display_name = "Tempest Strike"
 description = "A powerful melee strike against a single target which then causes lightning to fork, striking up to 3 additional targets within 3 squares. Cost: 60 mana "
 icon = ExtResource("3_7l2nu")
+cast_sfx = ExtResource("2_nknr6")
 mana_cost = 60
 aoe_shape = "chain"
 aoe_size = 3

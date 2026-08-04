@@ -3,6 +3,8 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_w1xmm"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_2fbi3"]
 [ext_resource type="Texture2D" uid="uid://bwq47ucyn863j" path="res://sprites/UI/skill icons/skill_icons_thunderburst.png" id="2_2j2id"]
+[ext_resource type="AudioStream" uid="uid://br2rmdfdn07g7" path="res://assets/audio/sfx/spells/lightning/thunderburst.ogg" id="2_23ktv"]
+[ext_resource type="PackedScene" uid="uid://chm5klb7giuqu" path="res://scenes/animations/stormblade/stormblade_thunderburst.tscn" id="2_30xvm"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="2_j442s"]
 [ext_resource type="Resource" uid="uid://ck8ypstjsq5qv" path="res://resources/abilityenhancement/aoeadd.tres" id="3_30xvm"]
 [ext_resource type="Resource" uid="uid://dj67lyevlfsqv" path="res://resources/abilityenhancement/pam.tres" id="4_23ktv"]
@@ -21,6 +23,8 @@ id = "thunderburst"
 display_name = "Thunderburst"
 description = "Deal massive damage to nearby enemies. Cost: 30 mana"
 icon = ExtResource("2_2j2id")
+effect_scene = ExtResource("2_30xvm")
+cast_sfx = ExtResource("2_23ktv")
 mana_cost = 30
 max_range = 0
 aoe_shape = "square"

@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_18ua7"]
 [ext_resource type="Resource" uid="uid://cvdlkj4p02im2" path="res://resources/status_effects/slowed.tres" id="2_bbweq"]
 [ext_resource type="PackedScene" uid="uid://cwbtn61qef387" path="res://scenes/animations/icemage/icebolt.tscn" id="3_mcssj"]
+[ext_resource type="AudioStream" uid="uid://841t0c105237" path="res://assets/audio/sfx/spells/ice/icemagebasic.ogg" id="3_xrpi4"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_681fd"]
 [ext_resource type="Texture2D" uid="uid://bnqbt0qb47isq" path="res://sprites/UI/skill icons/skill_icons_icespear.png" id="4_mcssj"]
 [ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="5_xrpi4"]
@@ -21,6 +22,7 @@ display_name = "Basic Attack"
 description = "A basic ranged attack that reduces target's speed by 1 for 1 round."
 icon = ExtResource("4_mcssj")
 effect_scene = ExtResource("3_mcssj")
+cast_sfx = ExtResource("3_xrpi4")
 max_range = 3
 damage_type = "magical"
 scaling_stat = "matk"

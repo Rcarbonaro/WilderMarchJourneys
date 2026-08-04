@@ -2,7 +2,9 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_4uxj3"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_kftiy"]
+[ext_resource type="AudioStream" uid="uid://7dk3xnkbmy2n" path="res://assets/audio/sfx/spells/lightning/chainlightning.ogg" id="2_qphgy"]
 [ext_resource type="PackedScene" uid="uid://domluf3tiv68" path="res://scenes/animations/stormblade/stormblade_chainlightning.tscn" id="2_s3a6l"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_jk0bs"]
 
 [resource]
 script = ExtResource("2_kftiy")
@@ -11,6 +13,7 @@ display_name = "Chain Lightning"
 description = "A powerful lightning strike that hits a single target, then forks and stikes up to 3 additional targets within 3 squares. Cost: 60 mana "
 effect_scene = ExtResource("2_s3a6l")
 attack_animation_name = "cast"
+cast_sfx = ExtResource("2_qphgy")
 mana_cost = 60
 max_range = 3
 aoe_shape = "chain"

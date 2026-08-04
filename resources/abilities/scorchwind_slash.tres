@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_4e7tr"]
 [ext_resource type="Texture2D" uid="uid://bekvd18nwwxw3" path="res://sprites/UI/skill icons/skill_icons_scorchwindslash.png" id="2_7c18j"]
 [ext_resource type="PackedScene" uid="uid://7f73binoe852" path="res://scenes/animations/spellsword/scorchwindslash.tscn" id="2_iu5re"]
+[ext_resource type="AudioStream" uid="uid://dnlmsc7kgutf3" path="res://assets/audio/sfx/spells/fire/scorchwind.ogg" id="2_yerbh"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="3_nelop"]
 [ext_resource type="Resource" uid="uid://i537rn0jp4y4" path="res://resources/abilityenhancement/vampire.tres" id="4_yerbh"]
 [ext_resource type="Resource" uid="uid://ck8ypstjsq5qv" path="res://resources/abilityenhancement/aoeadd.tres" id="5_243lc"]
@@ -24,6 +25,7 @@ description = "Imbue your blade with fire to unleash a powerful fiery swing in a
 icon = ExtResource("2_7c18j")
 effect_scene = ExtResource("2_iu5re")
 attack_animation_name = "attack_fire"
+cast_sfx = ExtResource("2_yerbh")
 mana_cost = 25
 max_range = 3
 aoe_shape = "cone"

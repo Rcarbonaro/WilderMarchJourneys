@@ -5,6 +5,8 @@
 [ext_resource type="Resource" uid="uid://bys2b1xudatox" path="res://resources/auras/necroticaura.tres" id="2_q3w4j"]
 [ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="3_mkv3l"]
 [ext_resource type="Texture2D" uid="uid://piehfg1se3g3" path="res://sprites/UI/skill icons/skill_iconsnecroticaura.png" id="3_q3w4j"]
+[ext_resource type="AudioStream" uid="uid://bbkb4jfh5s10t" path="res://assets/audio/sfx/spells/arcane/Arcane_AttackF1.wav" id="3_xyf6d"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="5_2po46"]
 
 [resource]
 script = ExtResource("2_leck8")
@@ -13,6 +15,7 @@ display_name = "Necrotic Aura"
 description = "Activate a permanent aura that deals damage to all enemies within the radius. Using another aura will end this aura."
 icon = ExtResource("3_q3w4j")
 effect_scene = ExtResource("3_mkv3l")
+cast_sfx = ExtResource("3_xyf6d")
 max_range = 0
 base_damage_multiplier = 0.0
 damage_type = "magical"

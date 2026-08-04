@@ -3,12 +3,17 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_v4xn3"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_4rymo"]
 [ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="2_8rcqy"]
+[ext_resource type="AudioStream" uid="uid://cwew7kyalue5r" path="res://assets/audio/sfx/attacks/hammerCrack.wav" id="2_us6ir"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_yjn2q"]
+[ext_resource type="Texture2D" uid="uid://bbjfrg47mnvu8" path="res://sprites/UI/skill icons/elk_basic.png" id="5_x4ho7"]
 
 [resource]
 script = ExtResource("2_4rymo")
 id = "barkskinelkbasic"
 display_name = "Basic Attack"
 description = "The twisted guardian gores its target with its antlers."
+icon = ExtResource("5_x4ho7")
 effect_scene = ExtResource("2_8rcqy")
+cast_sfx = ExtResource("2_us6ir")
 displacement_squares = 1
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

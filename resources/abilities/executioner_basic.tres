@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_5gsx2"]
 [ext_resource type="Texture2D" uid="uid://cvdfewo8c8v3l" path="res://sprites/UI/skill icons/skill_icons_greataxe.png" id="2_akasm"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_dcnnm"]
+[ext_resource type="AudioStream" uid="uid://d2iqy1tspuoee" path="res://assets/audio/sfx/attacks/Sword Attack 3.ogg" id="2_duq3d"]
 [ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="2_g0xya"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="3_s6nq4"]
 [ext_resource type="Resource" uid="uid://ydam6w7q00im" path="res://resources/abilityenhancement/dmgbuff.tres" id="4_1ngek"]
@@ -12,6 +13,7 @@
 [ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="8_bafk8"]
 [ext_resource type="Resource" uid="uid://bw7jx2nbji6dw" path="res://resources/abilityenhancement/matkreduce.tres" id="9_rd1ns"]
 [ext_resource type="Resource" uid="uid://d2e5baxwi0msn" path="res://resources/abilityenhancement/mdefreduce.tres" id="10_0ftlx"]
+[ext_resource type="AudioStream" uid="uid://dys47c7n2u0x0" path="res://assets/audio/sfx/impacts/Sword Impact Hit 3.ogg" id="13_twyt2"]
 
 [resource]
 script = ExtResource("2_dcnnm")
@@ -20,6 +22,8 @@ display_name = "Basic Attack"
 description = "A melee attack that deals extra damage based on the number of enemy debuffs."
 icon = ExtResource("2_akasm")
 effect_scene = ExtResource("2_g0xya")
+cast_sfx = ExtResource("2_duq3d")
+impact_sfx = ExtResource("13_twyt2")
 bonus_per_target_debuff = 0.2
 bonus_per_target_debuff_max = 4.0
 bonus_atk_per_caster_buff = 5

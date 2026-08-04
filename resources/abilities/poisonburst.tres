@@ -4,7 +4,9 @@
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_713gc"]
 [ext_resource type="Resource" uid="uid://dxft4tccskmnc" path="res://resources/status_effects/poisoncloud.tres" id="2_shqrj"]
 [ext_resource type="PackedScene" uid="uid://coak3qga3hk76" path="res://scenes/animations/plaguebringer/miasmaburst.tscn" id="3_kc74k"]
+[ext_resource type="AudioStream" uid="uid://bps7trf6fqdgg" path="res://assets/audio/sfx/spells/arcane/Sizzle_Impact3.wav" id="3_mxxil"]
 [ext_resource type="Texture2D" uid="uid://dge2o34isxty" path="res://sprites/UI/skill icons/skill_icons_poisongas.png" id="4_mxxil"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="5_5qnof"]
 
 [resource]
 script = ExtResource("2_713gc")
@@ -14,6 +16,7 @@ description = "Blast poison in a cone in front of the caster."
 icon = ExtResource("4_mxxil")
 effect_scene = ExtResource("3_kc74k")
 attack_animation_name = "cast"
+cast_sfx = ExtResource("3_mxxil")
 cooldown_rounds = 3
 aoe_shape = "cone"
 aoe_size = 3

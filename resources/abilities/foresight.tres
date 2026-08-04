@@ -5,6 +5,7 @@
 [ext_resource type="Resource" uid="uid://bofmi1ba06wrj" path="res://resources/status_effects/foresight.tres" id="2_6v6h1"]
 [ext_resource type="PackedScene" uid="uid://bm7cy130wggck" path="res://scenes/animations/divinator/foresight.tscn" id="3_6r5if"]
 [ext_resource type="Texture2D" uid="uid://dlo5qi85wvxgm" path="res://sprites/UI/skill icons/skill_icons_foresight.png" id="3_6v6h1"]
+[ext_resource type="AudioStream" uid="uid://dkemj65gpdhe2" path="res://assets/audio/sfx/spells/arcane/Shine_Impact2.wav" id="3_d0atn"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_htvv2"]
 [ext_resource type="Resource" uid="uid://cdb4tbaw47268" path="res://resources/abilityenhancement/atkadd.tres" id="5_d0atn"]
 [ext_resource type="Resource" uid="uid://dgdf5xbctj8mt" path="res://resources/abilityenhancement/movadd.tres" id="6_e73o7"]
@@ -22,6 +23,7 @@ display_name = "Foresight"
 description = "Glimpse into the future to increase an ally's critical hit chance"
 icon = ExtResource("3_6v6h1")
 effect_scene = ExtResource("3_6r5if")
+cast_sfx = ExtResource("3_d0atn")
 max_range = 2
 affects_team = "allies"
 aoe_shape = "square"

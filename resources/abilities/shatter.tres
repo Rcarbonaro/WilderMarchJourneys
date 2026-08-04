@@ -4,6 +4,7 @@
 [ext_resource type="Resource" uid="uid://cvdlkj4p02im2" path="res://resources/status_effects/slowed.tres" id="2_30ako"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_um2vd"]
 [ext_resource type="PackedScene" uid="uid://dc6iq5hufh7em" path="res://scenes/animations/icemage/shatter.tscn" id="3_30ako"]
+[ext_resource type="AudioStream" uid="uid://wy3ia0pteqve" path="res://assets/audio/sfx/spells/ice/shatter.ogg" id="3_cddw5"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_0quu2"]
 [ext_resource type="Texture2D" uid="uid://gqplgagj2bpc" path="res://sprites/UI/skill icons/skill_icons_shatter.png" id="4_udi8o"]
 [ext_resource type="Resource" uid="uid://dgpymny7v78tg" path="res://resources/abilityenhancement/careful.tres" id="5_cddw5"]
@@ -27,6 +28,7 @@ display_name = "Shatter"
 description = "Form ice and shatter it, dealing damage in a cross shape. Range: 3 Cost: 20 mana"
 icon = ExtResource("4_udi8o")
 effect_scene = ExtResource("3_30ako")
+cast_sfx = ExtResource("3_cddw5")
 mana_cost = 20
 max_range = 4
 affects_team = "all"

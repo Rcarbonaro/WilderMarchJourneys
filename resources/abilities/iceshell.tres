@@ -4,6 +4,7 @@
 [ext_resource type="Resource" uid="uid://b2d4isamx87fv" path="res://resources/status_effects/ice_shell.tres" id="2_3uqhq"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_ev3ev"]
 [ext_resource type="PackedScene" uid="uid://bigp3lru0g2wv" path="res://scenes/animations/icemage/iceshell.tscn" id="3_3uqhq"]
+[ext_resource type="AudioStream" uid="uid://bnpegprvmchet" path="res://assets/audio/sfx/spells/ice/iceshell.ogg" id="3_4fx30"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_6qrkm"]
 [ext_resource type="Texture2D" uid="uid://cnbog526w4p6a" path="res://sprites/UI/skill icons/skill_icons_iceshell.png" id="4_van27"]
 [ext_resource type="Resource" uid="uid://cdb4tbaw47268" path="res://resources/abilityenhancement/atkadd.tres" id="5_4fx30"]
@@ -22,6 +23,7 @@ description = "Surround an ally with ice armor, reducing damage taken and reflec
 icon = ExtResource("4_van27")
 effect_scene = ExtResource("3_3uqhq")
 scale_vfx_to_fit_aoe = false
+cast_sfx = ExtResource("3_4fx30")
 mana_cost = 10
 max_range = 3
 affects_team = "allies"

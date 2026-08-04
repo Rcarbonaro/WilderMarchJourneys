@@ -5,6 +5,7 @@
 [ext_resource type="Resource" uid="uid://bkmms5lwopy0e" path="res://resources/status_effects/plaguestatus.tres" id="2_macer"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="3_0s71w"]
 [ext_resource type="Texture2D" uid="uid://52hn184qn2xv" path="res://sprites/UI/skill icons/skill_icons_miasmaburst.png" id="3_macer"]
+[ext_resource type="AudioStream" uid="uid://bps7trf6fqdgg" path="res://assets/audio/sfx/spells/arcane/Sizzle_Impact3.wav" id="3_ocaqw"]
 [ext_resource type="Resource" uid="uid://cviy6ttm8ijac" path="res://resources/abilityenhancement/rangeadd.tres" id="4_ocaqw"]
 [ext_resource type="Resource" uid="uid://ck8ypstjsq5qv" path="res://resources/abilityenhancement/aoeadd.tres" id="5_yoqu3"]
 [ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="6_1qy78"]
@@ -18,6 +19,7 @@ id = "whiteplague"
 display_name = "White Plague"
 description = "A dangerous virus that infects a single enemy, then spreads to other targets. Upon death of an infected target, viral mutations spread to nearby targets, spreading additional debuffs. Does not affect allies. Range: 5. Cost: 30"
 icon = ExtResource("3_macer")
+cast_sfx = ExtResource("3_ocaqw")
 mana_cost = 30
 max_range = 5
 aoe_shape = "square"

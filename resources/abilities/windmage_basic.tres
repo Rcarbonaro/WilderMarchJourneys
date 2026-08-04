@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://bkhl370vs27t7"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_tfied"]
+[ext_resource type="AudioStream" uid="uid://nxa4d3gqmn0i" path="res://assets/audio/sfx/spells/arcane/Noise_Attack.wav" id="2_4aei7"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_8h26d"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="2_cej4y"]
 [ext_resource type="Texture2D" uid="uid://cyt2vb0g4cfmk" path="res://sprites/UI/skill icons/skill_icons_windblades.png" id="2_eh863"]
@@ -20,6 +21,7 @@ id = "windmagebasic"
 display_name = "Basic Attack"
 description = "Attack from a range with a wind blade, dealing light damage."
 icon = ExtResource("2_eh863")
+cast_sfx = ExtResource("2_4aei7")
 min_range = 1
 max_range = 4
 base_damage_multiplier = 0.75

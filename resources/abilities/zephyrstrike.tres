@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_pxjrn"]
 [ext_resource type="PackedScene" uid="uid://bfnh5i05aabj1" path="res://scenes/animations/spellsword/windslash_dash.tscn" id="2_6j38w"]
+[ext_resource type="AudioStream" uid="uid://nxa4d3gqmn0i" path="res://assets/audio/sfx/spells/arcane/Noise_Attack.wav" id="2_48seq"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_mx4nk"]
 [ext_resource type="Texture2D" uid="uid://cyt2vb0g4cfmk" path="res://sprites/UI/skill icons/skill_icons_windblades.png" id="2_xmw2x"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="3_0ijm5"]
@@ -11,6 +12,7 @@
 [ext_resource type="Resource" uid="uid://cv3rds03lcwb2" path="res://resources/abilityenhancement/dmgadd.tres" id="7_71k10"]
 [ext_resource type="Resource" uid="uid://ydam6w7q00im" path="res://resources/abilityenhancement/dmgbuff.tres" id="8_agml2"]
 [ext_resource type="Resource" uid="uid://dvavb62ptlg87" path="res://resources/abilityenhancement/debuffdmg.tres" id="9_a36id"]
+[ext_resource type="AudioStream" uid="uid://dys47c7n2u0x0" path="res://assets/audio/sfx/impacts/Sword Impact Hit 3.ogg" id="12_fp2tw"]
 
 [resource]
 script = ExtResource("2_mx4nk")
@@ -20,6 +22,8 @@ description = "Lunge forward with a powerful burst of wind, striking enemies fro
 icon = ExtResource("2_xmw2x")
 effect_scene = ExtResource("2_6j38w")
 attack_animation_name = "windcharge"
+cast_sfx = ExtResource("2_48seq")
+impact_sfx = ExtResource("12_fp2tw")
 mana_cost = 25
 min_range = 1
 max_range = 3

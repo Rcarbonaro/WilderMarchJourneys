@@ -1,0 +1,69 @@
+[gd_scene format=3 uid="uid://cue8ikdbn7vn"]
+
+[ext_resource type="Texture2D" uid="uid://cmq34e2ul6dch" path="res://sprites/stonewarden/earthquake.png" id="1_dv4ks"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2oyy2"]
+atlas = ExtResource("1_dv4ks")
+region = Rect2(0, 0, 269, 196)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_crwkx"]
+atlas = ExtResource("1_dv4ks")
+region = Rect2(269, 0, 269, 196)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4lobr"]
+atlas = ExtResource("1_dv4ks")
+region = Rect2(538, 0, 269, 196)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jrpf1"]
+atlas = ExtResource("1_dv4ks")
+region = Rect2(807, 0, 269, 196)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7p22i"]
+atlas = ExtResource("1_dv4ks")
+region = Rect2(269, 196, 269, 196)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_te1u0"]
+atlas = ExtResource("1_dv4ks")
+region = Rect2(538, 196, 269, 196)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ke7k3"]
+atlas = ExtResource("1_dv4ks")
+region = Rect2(807, 196, 269, 196)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_nba64"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2oyy2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_crwkx")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4lobr")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jrpf1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7p22i")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_te1u0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ke7k3")
+}],
+"loop": false,
+"name": &"default",
+"speed": 30.0
+}]
+
+[node name="Earthquake" type="Node2D" unique_id=884709188]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=966788909]
+position = Vector2(-3, 1)
+scale = Vector2(0.8680297, 0.8214286)
+sprite_frames = SubResource("SpriteFrames_nba64")
+frame = 6
+frame_progress = 1.0

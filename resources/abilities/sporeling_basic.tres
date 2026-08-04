@@ -1,9 +1,11 @@
 [gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://ddi4fgvxy6c56"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_jb3bw"]
+[ext_resource type="AudioStream" uid="uid://nxa4d3gqmn0i" path="res://assets/audio/sfx/spells/arcane/Noise_Attack.wav" id="2_6wyg8"]
 [ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="2_d2q47"]
 [ext_resource type="Texture2D" uid="uid://c178r0452wrrf" path="res://sprites/UI/skill icons/skill_icons_spores.png" id="2_hbmw4"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_qs2yi"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_106e1"]
 [ext_resource type="Resource" uid="uid://ru4n7oosj1qw" path="res://resources/hazards/poisoncloud.tres" id="5_d2q47"]
 
 [resource]
@@ -13,6 +15,7 @@ display_name = "Spore Cloud"
 description = "Sporeling unleashes a small cloud of toxic spores, dealing magic damage."
 icon = ExtResource("2_hbmw4")
 effect_scene = ExtResource("2_d2q47")
+cast_sfx = ExtResource("2_6wyg8")
 aoe_shape = "square"
 damage_type = "magical"
 scaling_stat = "matk"

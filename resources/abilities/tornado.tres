@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_qvh21"]
 [ext_resource type="Resource" uid="uid://cvdlkj4p02im2" path="res://resources/status_effects/slowed.tres" id="2_82lxo"]
 [ext_resource type="PackedScene" uid="uid://c14rsw05sr8j2" path="res://scenes/animations/windmage/tornado.tscn" id="3_qvh21"]
+[ext_resource type="AudioStream" uid="uid://nxa4d3gqmn0i" path="res://assets/audio/sfx/spells/arcane/Noise_Attack.wav" id="3_v7acv"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="4_d5hq3"]
 [ext_resource type="Texture2D" uid="uid://dx3s0auqke0sq" path="res://sprites/UI/skill icons/skill_icons_tornado2.png" id="4_hnbcj"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="4_rotjb"]
@@ -20,6 +21,7 @@ display_name = "Tornado"
 description = "Deals damage and scatters enemies. Cost: 30 mana"
 icon = ExtResource("4_hnbcj")
 effect_scene = ExtResource("3_qvh21")
+cast_sfx = ExtResource("3_v7acv")
 mana_cost = 30
 min_range = 1
 max_range = 5

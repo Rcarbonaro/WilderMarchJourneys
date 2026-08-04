@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_41o8a"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_0bjim"]
 [ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="2_2bhkx"]
+[ext_resource type="AudioStream" uid="uid://d2iqy1tspuoee" path="res://assets/audio/sfx/attacks/Sword Attack 3.ogg" id="2_87ex5"]
 [ext_resource type="Texture2D" uid="uid://covbnx1roclbx" path="res://sprites/UI/skill icons/skill_icons_spear.png" id="2_a8qvt"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="3_sivaf"]
 [ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="4_87ex5"]
@@ -22,6 +23,7 @@ display_name = "Basic Attack"
 description = "A basic melee attack. Deals extra damage to isolated foes."
 icon = ExtResource("2_a8qvt")
 effect_scene = ExtResource("2_2bhkx")
+cast_sfx = ExtResource("2_87ex5")
 bonus_damage_isolated = 0.75
 eligible_enhancements = Array[ExtResource("3_sivaf")]([ExtResource("4_87ex5"), ExtResource("5_aixc1"), ExtResource("6_g8o0g"), ExtResource("7_kr3hq"), ExtResource("8_6k386"), ExtResource("9_cyq7u"), ExtResource("10_g6wab"), ExtResource("11_qhcew"), ExtResource("12_o3gdb"), ExtResource("10_g6wab")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

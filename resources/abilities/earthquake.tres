@@ -2,8 +2,10 @@
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_o7uq1"]
 [ext_resource type="Texture2D" uid="uid://ycj1tfcbrxm3" path="res://sprites/UI/skill icons/skill_icons_earthquake.png" id="2_88po4"]
+[ext_resource type="PackedScene" uid="uid://cue8ikdbn7vn" path="res://scenes/animations/stonewarden/earthquake.tscn" id="2_f56gu"]
 [ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="2_hp2hh"]
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="2_jgipq"]
+[ext_resource type="AudioStream" uid="uid://kvyrrpxbwi3t" path="res://assets/audio/sfx/spells/earth/earthquake.ogg" id="2_nyicp"]
 [ext_resource type="Resource" uid="uid://cv3rds03lcwb2" path="res://resources/abilityenhancement/dmgadd.tres" id="3_f56gu"]
 [ext_resource type="Resource" uid="uid://ydam6w7q00im" path="res://resources/abilityenhancement/dmgbuff.tres" id="4_nyicp"]
 [ext_resource type="Resource" uid="uid://dvavb62ptlg87" path="res://resources/abilityenhancement/debuffdmg.tres" id="5_02x80"]
@@ -16,8 +18,10 @@
 script = ExtResource("2_hp2hh")
 id = "earthquake"
 display_name = "Earthquake"
-description = "Rends the ground to deal damage to all nearby enemies. Cost: 40 mana"
+description = "Rends the ground to deal damage to nearby enemies. Cost: 40 mana"
 icon = ExtResource("2_88po4")
+effect_scene = ExtResource("2_f56gu")
+cast_sfx = ExtResource("2_nyicp")
 mana_cost = 40
 max_range = 0
 aoe_shape = "square"
