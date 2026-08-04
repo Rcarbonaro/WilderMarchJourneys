@@ -10,6 +10,8 @@
 [ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="3_v8vml"]
 [ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_566tl"]
 [ext_resource type="Resource" uid="uid://b45ggi28imxoq" path="res://resources/abilities/sylavris_basic.tres" id="4_r0s07"]
+[ext_resource type="Script" uid="uid://b7m0h8v4gtmho" path="res://scripts/data/level_up_count_option.gd" id="5_h27l6"]
+[ext_resource type="Script" uid="uid://d07hb58lwi16g" path="res://scripts/data/level_up_stat_rule.gd" id="6_ucb8m"]
 
 [resource]
 script = ExtResource("1_1vwcd")

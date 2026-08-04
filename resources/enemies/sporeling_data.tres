@@ -7,7 +7,11 @@
 [ext_resource type="Texture2D" uid="uid://uprs1bjx2ilg" path="res://sprites/sporeling/sporeling_portrait.png" id="3_0nwty"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="3_36sv8"]
 [ext_resource type="Script" uid="uid://dlthrdiu5tc4w" path="res://scripts/data/aura_data.gd" id="3_brdrg"]
+[ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="3_sripr"]
+[ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_8diky"]
 [ext_resource type="Resource" uid="uid://ddi4fgvxy6c56" path="res://resources/abilities/sporeling_basic.tres" id="4_brdrg"]
+[ext_resource type="Script" uid="uid://b7m0h8v4gtmho" path="res://scripts/data/level_up_count_option.gd" id="5_yvp4s"]
+[ext_resource type="Script" uid="uid://d07hb58lwi16g" path="res://scripts/data/level_up_stat_rule.gd" id="6_xo0ta"]
 
 [resource]
 script = ExtResource("1_6jv45")

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="AbilityData" format=3 uid="uid://c6i0kom8hggln"]
+
+[ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_eb7gn"]
+[ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="2_1wcq5"]
+[ext_resource type="AudioStream" uid="uid://cwew7kyalue5r" path="res://assets/audio/sfx/attacks/hammerCrack.wav" id="2_3lnei"]
+[ext_resource type="PackedScene" uid="uid://b3komthg26brl" path="res://scenes/animations/rogue/empty.tscn" id="3_lkrpw"]
+[ext_resource type="Script" uid="uid://ba6fjn73ew7qv" path="res://scripts/data/ability_data.gd" id="3_yqgca"]
+[ext_resource type="Texture2D" uid="uid://0b0n6uvkduor" path="res://sprites/UI/skill icons/skill_icon_rend.png" id="5_8sa4v"]
+
+[resource]
+script = ExtResource("3_yqgca")
+id = "basicattack"
+display_name = "Basic Attack"
+description = "A basic melee attack"
+icon = ExtResource("5_8sa4v")
+effect_scene = ExtResource("3_lkrpw")
+cast_sfx = ExtResource("2_3lnei")
+metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

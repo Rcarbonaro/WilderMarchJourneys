@@ -9,7 +9,9 @@
 [ext_resource type="Texture2D" uid="uid://5r54ufkoym4q" path="res://sprites/leshy/leshy_portrait.png" id="3_xcb5m"]
 [ext_resource type="Script" uid="uid://c3bdx4sniu017" path="res://scripts/data/stats_data.gd" id="4_0wd04"]
 [ext_resource type="Script" uid="uid://qpq1iv6i8tlo" path="res://scripts/data/interrupt_ability_data.gd" id="4_bcykh"]
+[ext_resource type="Script" uid="uid://b7m0h8v4gtmho" path="res://scripts/data/level_up_count_option.gd" id="5_1lekt"]
 [ext_resource type="Resource" uid="uid://ofamf1d87qd0" path="res://resources/abilities/leshy_basic.tres" id="5_pkp5g"]
+[ext_resource type="Script" uid="uid://d07hb58lwi16g" path="res://scripts/data/level_up_stat_rule.gd" id="6_l016c"]
 [ext_resource type="Resource" uid="uid://dq7nk76exnyiw" path="res://resources/abilities/poisonburst.tres" id="10_x1mc2"]
 
 [resource]
