@@ -179,6 +179,12 @@ var has_arcana_charge: bool = false
 @export var hurt_sfx:  AudioStream = null
 @export var death_sfx: AudioStream = null
 
+@export var movement_sfx: AudioStream = null
+# ADDED. Optional per-unit override for the footstep sound looped while this
+# unit walks (see unit_node.gd's move_along_path()). Leave null to use the
+# project-wide default footstep sound (unit_node.gd's DEFAULT_MOVEMENT_SFX_PATH,
+# res://assets/audio/sfx/movement/Dirt Run 1.ogg).
+
 # ── WIND SWAY ──────────────────────────────────────────────────────────────
 # ADDED. unit_node.gd's setup() applies res://shaders/wind_sway.gdshader
 # (the same shader map features use — see map_feature_data.gd) to this

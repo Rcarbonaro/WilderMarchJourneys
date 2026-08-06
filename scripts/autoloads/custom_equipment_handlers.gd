@@ -735,7 +735,7 @@ func _shadowcloak_modify_damage(attacker, target, damage: int, is_crit: bool, da
 		var status := StatusEffectData.new()
 		status.id = "shadowcloak_buff"
 		status.display_name = "Shadowcloak"
-		status.duration_rounds = 1
+		status.duration_rounds = 2
 		status.can_stack = false
 		status.damage_dealt_modifier = 0.33
 		status.mov_modifier = 1

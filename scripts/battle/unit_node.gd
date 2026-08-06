@@ -359,6 +359,7 @@ func build_enhanced_abilities(ability_enhancement_ids: Dictionary) -> void:
 					enhanced.applies_thorns = true
 				"shield_target":
 					enhanced.applies_shield = true
+					enhanced.shield_amount += int(enhancement.magnitude)
 				"reset_cooldown_on_kill":
 					enhanced.has_on_kill_effect = true
 					enhanced.on_kill_reset_cooldowns = true
@@ -1130,6 +1131,62 @@ func _stop_walk_particles() -> void:
 		_walk_particles.emitting = false
 
 
+# ── FOOTSTEP SOUND (ADDED) ────────────────────────────────────────────────
+# Loops a footstep clip for as long as the unit is walking. Uses its own
+# dedicated AudioStreamPlayer (rather than AudioManager's pooled one-shot
+# play_sfx()) so it can be told "stop looping" without cutting the sound
+# off mid-clip — the in-flight playthrough always finishes naturally.
+const DEFAULT_MOVEMENT_SFX_PATH := "res://assets/audio/sfx/movement/Dirt Run 1.ogg"
+static var _default_movement_sfx: AudioStream = null
+
+var _footstep_player: AudioStreamPlayer = null
+var _footstep_looping: bool = false
+
+func _get_movement_sfx() -> AudioStream:
+	# unit_data.movement_sfx wins if set; otherwise falls back to the one
+	# shared default sound, loaded once and cached across all units.
+	if unit_data != null and unit_data.movement_sfx != null:
+		return unit_data.movement_sfx
+	if _default_movement_sfx == null and ResourceLoader.exists(DEFAULT_MOVEMENT_SFX_PATH):
+		_default_movement_sfx = load(DEFAULT_MOVEMENT_SFX_PATH)
+	return _default_movement_sfx
+
+
+func _ensure_footstep_player() -> AudioStreamPlayer:
+	if _footstep_player == null:
+		_footstep_player = AudioStreamPlayer.new()
+		_footstep_player.bus = "SFX" if AudioServer.get_bus_index("SFX") != -1 else "Master"
+		add_child(_footstep_player)
+		_footstep_player.finished.connect(_on_footstep_finished)
+	return _footstep_player
+
+
+func _start_footstep_loop() -> void:
+	var stream := _get_movement_sfx()
+	if stream == null:
+		return
+	var player := _ensure_footstep_player()
+	_footstep_looping = true
+	player.stream = stream
+	player.play()
+
+
+func _on_footstep_finished() -> void:
+	# Fires every time one playthrough of the footstep clip ends. If we're
+	# still walking, start it again -- this IS the loop. If movement has
+	# already stopped, do nothing: the clip that was playing when we
+	# arrived already finished on its own, it's just not cut off mid-sound.
+	if _footstep_looping:
+		_footstep_player.play()
+
+
+func _stop_footstep_loop() -> void:
+	# Don't stop the player here -- that would cut the sound off abruptly.
+	# Just flip the flag so _on_footstep_finished() won't restart it once
+	# the current cycle ends on its own.
+	_footstep_looping = false
+
+
 func move_along_path(path: Array) -> void:
 	# NEW: walks the unit smoothly through EVERY tile in 'path', one at a time,
 	# instead of move_to()'s single straight-line slide from start to finish.
@@ -1156,6 +1213,7 @@ func move_along_path(path: Array) -> void:
 
 	_is_moving = true
 	_start_walk_particles()
+	_start_footstep_loop()   # ADDED
 	for step_cell in path:
 		# Bail out cleanly if we were freed mid-walk for some unrelated reason.
 		if not is_instance_valid(self):
@@ -1231,6 +1289,7 @@ func move_along_path(path: Array) -> void:
 		play_animation("idle")
 	_is_moving = false
 	_stop_walk_particles()
+	_stop_footstep_loop()   # ADDED
 	movement_finished.emit()
 
 

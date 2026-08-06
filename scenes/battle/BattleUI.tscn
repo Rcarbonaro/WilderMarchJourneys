@@ -76,10 +76,10 @@ expand_mode = 1
 
 [node name="HPLabel" type="Label" parent="BottomBar/HBoxContainer/UnitInfoColumn/HPBarBG" unique_id=1168712820]
 layout_mode = 0
-offset_left = 166.90945
-offset_top = 14.394066
-offset_right = 253.90945
-offset_bottom = 42.394066
+offset_left = 166.90237
+offset_top = 19.394066
+offset_right = 253.90237
+offset_bottom = 47.394066
 theme_override_font_sizes/font_size = 18
 text = "min/max"
 horizontal_alignment = 1
@@ -111,10 +111,10 @@ expand_mode = 1
 [node name="ManaLabel" type="Label" parent="BottomBar/HBoxContainer/UnitInfoColumn/ManaBarHolder" unique_id=1438872432]
 custom_minimum_size = Vector2(50, 20)
 layout_mode = 0
-offset_left = 132.812
-offset_top = 13.345259
-offset_right = 183.04608
-offset_bottom = 41.345257
+offset_left = 132.80766
+offset_top = 16.34526
+offset_right = 183.04175
+offset_bottom = 44.34526
 theme_override_font_sizes/font_size = 13
 text = "min/max"
 

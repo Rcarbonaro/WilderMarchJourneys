@@ -82,6 +82,7 @@ func _refresh_display() -> void:
 	_rebuild_roster()
 	_rebuild_equip_slots()
 	_rebuild_inventory()
+	AudioManager.wire_all_buttons_in(self)   # ADDED — re-wires click/hover sfx, including any buttons just rebuilt above
 
 
 func _update_gold_label() -> void:
@@ -382,6 +383,7 @@ func _show_purchase_reward_popup(item_type: String, item_id: String) -> void:
 			{"text": "More Information", "callback": func(): _show_shop_unit_info_popup(item_id)},
 		])
 	else:
+		AudioManager.play_sfx(load("res://assets/audio/sfx/bells.wav"))   # ADDED
 		var data: Dictionary = ContentLoader.get_equipment(item_id)
 		var icon: Texture2D = UnitInfoPopup.texture_or_black_box(
 			UnitInfoPopup._resolve_icon(data.get("icon")), Vector2i(96, 96))
@@ -398,6 +400,7 @@ func _show_level_up_popup(unit_id: String, new_level: int, level_up_results: Arr
 	var unit_data := _load_unit_data(unit_id)
 	if unit_data == null:
 		return
+	AudioManager.play_sfx(load("res://assets/audio/sfx/levelup.wav"))   # ADDED
 	var popup := LevelUpPopup.new()
 	add_child(popup)
 	popup.setup(unit_data, new_level, level_up_results)

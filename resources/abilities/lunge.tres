@@ -12,6 +12,7 @@
 [ext_resource type="Resource" uid="uid://ydam6w7q00im" path="res://resources/abilityenhancement/dmgbuff.tres" id="7_3uyxc"]
 [ext_resource type="Resource" uid="uid://dvavb62ptlg87" path="res://resources/abilityenhancement/debuffdmg.tres" id="8_qrr26"]
 [ext_resource type="Resource" uid="uid://b4ok83jdg0b3d" path="res://resources/abilityenhancement/isolateadd.tres" id="9_6whky"]
+[ext_resource type="AudioStream" uid="uid://bb5a0p66ocywr" path="res://assets/audio/sfx/impacts/Sword Impact Hit 1.ogg" id="12_hcete"]
 
 [resource]
 script = ExtResource("2_pfl7k")
@@ -21,6 +22,7 @@ description = "A line attack dealing damage in a single line, the caster ending 
 icon = ExtResource("3_po7l4")
 effect_scene = ExtResource("3_dylrp")
 cast_sfx = ExtResource("3_vf086")
+impact_sfx = ExtResource("12_hcete")
 cooldown_rounds = 2
 max_range = 5
 aoe_shape = "line"

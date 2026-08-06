@@ -45,6 +45,8 @@ func _ready() -> void:
 	_display_node(first_node)
 
 
+@onready var _default_bg: Texture2D = background.texture
+
 func _set_background(encounter_id: String) -> void:
 	# Each encounter's OWN JSON content file can set a "background" field
 	# (a res:// path to an image) -- this is a convention this script reads
@@ -56,13 +58,11 @@ func _set_background(encounter_id: String) -> void:
 		background.texture = load(bg_path)
 		return
 
-	# No background set (or path doesn't exist) -- a plain gray placeholder
-	# rather than leaving the TextureRect showing nothing at all.
-	if _placeholder_bg == null:
-		var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
-		img.fill(Color(0.25, 0.25, 0.28))
-		_placeholder_bg = ImageTexture.create_from_image(img)
-	background.texture = _placeholder_bg
+	# Fall back to the default image assigned to the node in the Inspector.
+	# If no texture was set in the Inspector, fall back to a generated gray image.
+	if _default_bg != null:
+		background.texture = _default_bg
+
 
 
 func _display_node(node: Dictionary) -> void:
@@ -170,6 +170,7 @@ func _get_choice_effects(choice_id: String) -> Array:
 func _show_encounter_item_reward(equipment_id: String) -> void:
 	if equipment_id == "" or equipment_id.begins_with("$"):
 		return   # Templated id ("$event_payload...") -- nothing concrete to show.
+	AudioManager.play_sfx(load("res://assets/audio/sfx/bells.wav"))   # ADDED
 	var data: Dictionary = ContentLoader.get_equipment(equipment_id)
 	var icon: Texture2D = UnitInfoPopup.texture_or_black_box(
 		UnitInfoPopup._resolve_icon(data.get("icon")), Vector2i(96, 96))

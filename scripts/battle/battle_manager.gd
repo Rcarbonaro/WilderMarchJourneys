@@ -574,6 +574,7 @@ func _battle_defeat() -> void:
 	print("Player Defeat!")
 	current_phase  = TurnPhase.GAME_OVER
 	is_battle_over = true
+	AudioManager.play_music(load("res://assets/audio/sfx/defeat.wav"))   # ADDED
 	if ui_manager and ui_manager.has_method("set_game_over_input_locked"):
 		ui_manager.set_game_over_input_locked(true)
 	if ui_manager and ui_manager.has_method("show_battle_result_banner"):
@@ -789,6 +790,7 @@ func on_tile_tapped(cell: Vector2i) -> void:
 
 func _show_unit_info(unit) -> void:
 	# Shows the HP/Mana/buff panel for a unit without selecting them.
+	AudioManager.play_sfx(load("res://assets/audio/sfx/ui_press.wav"))   # ADDED
 	if ui_manager and ui_manager.has_method("show_unit_info"):
 		ui_manager.show_unit_info(unit)
 

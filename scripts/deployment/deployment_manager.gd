@@ -376,6 +376,8 @@ func _rebuild_roster() -> void:
 
 	_rebuild_deployed_party_slots()
 
+	AudioManager.wire_all_buttons_in(self)   # ADDED — covers every button just (re)built above, wherever its container lives
+
 
 # ADDED: shows the currently-selected unit's 3 equipped items, each with an
 # Unequip button (returns it to the inventory bag) and an Info button (same
@@ -1195,6 +1197,8 @@ func _rebuild_inventory() -> void:
 
 		inventory_list.add_child(row)
 
+	AudioManager.wire_all_buttons_in(inventory_list)   # ADDED — covers item/info buttons just (re)built above (idempotent alongside the wire_all_buttons_in(self) call in _rebuild_roster())
+
 
 # CHANGED: clicking an item used to "pick it up" (a lingering selection you'd
 # then click a destination -- an equip slot or a forge Set button -- to
@@ -1917,6 +1921,7 @@ func _on_forge_pressed() -> void:
 # button (_show_equip_unit_picker), so equipping fresh off the forge works
 # identically to equipping anything else.
 func _show_forge_result_popup(item_id: String) -> void:
+	AudioManager.play_sfx(load("res://assets/audio/sfx/advanced_item.wav"))   # ADDED
 	var data: Dictionary = ContentLoader.get_equipment(item_id)
 	var icon: Texture2D = UnitInfoPopup.texture_or_black_box(
 		UnitInfoPopup._resolve_icon(data.get("icon")), Vector2i(96, 96))

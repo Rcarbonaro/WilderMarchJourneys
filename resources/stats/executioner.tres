@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_urere")
-hp = 30
+hp = 25
 atk = 22
 def = 11
 mdef = 8

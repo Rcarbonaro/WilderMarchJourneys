@@ -1,29 +1,52 @@
 [gd_scene format=3 uid="uid://dfksluvm8bkq2"]
 
 [ext_resource type="Script" uid="uid://b0e45m7iu5jhk" path="res://scripts/encounter/encounter_scene.gd" id="1_5pimu"]
+[ext_resource type="Texture2D" uid="uid://nqgamtlyakct" path="res://sprites/UI/encounter/encounter_generic.png" id="2_owt5m"]
+[ext_resource type="Texture2D" uid="uid://wd0mrtw0qni2" path="res://sprites/UI/encounter/scroll.png" id="3_1u55c"]
 
 [node name="EncounterScene" type="Node2D" unique_id=1559897194]
 script = ExtResource("1_5pimu")
 
 [node name="Background" type="TextureRect" parent="." unique_id=921359840]
-offset_right = 40.0
-offset_bottom = 40.0
+z_index = -9
+offset_right = 1920.0
+offset_bottom = 1085.0
+mouse_filter = 2
+texture = ExtResource("2_owt5m")
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=1990453632]
+z_index = -1
+offset_left = 859.0
+offset_top = 199.0
+offset_right = 1277.0
+offset_bottom = 690.0
+mouse_filter = 2
+texture = ExtResource("3_1u55c")
+expand_mode = 1
 
 [node name="TitleLabel" type="Label" parent="." unique_id=1995753110]
-offset_left = 50.0
-offset_top = 721.0
-offset_right = 1039.0
-offset_bottom = 1095.0
+offset_left = 604.0
+offset_top = 85.0
+offset_right = 1346.0
+offset_bottom = 114.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "Something happened..."
+horizontal_alignment = 1
+justification_flags = 171
 
 [node name="DescriptionLabel" type="RichTextLabel" parent="." unique_id=861906969]
-offset_left = 28.0
-offset_top = 40.0
-offset_right = 1050.0
-offset_bottom = 1065.0
+offset_left = 910.0
+offset_top = 273.0
+offset_right = 1217.0
+offset_bottom = 612.0
+theme_override_colors/default_color = Color(0.015416782, 0.10236826, 0.03163195, 1)
 text = "Description of Encounter."
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="ChoicesContainer" type="HBoxContainer" parent="." unique_id=444802204]
-offset_top = 608.0
-offset_right = 1915.0
-offset_bottom = 693.0
+offset_left = 600.0
+offset_top = 716.0
+offset_right = 1372.0
+offset_bottom = 934.0
+alignment = 1

@@ -45,15 +45,13 @@
     { "id": "end_aid", "text": "The survivors thank you and give you a small gift.", "choices": [] },
     {
       "id": "end_salvage",
-      "text": "You find some salvage but disturb a nest of bandits.",
+      "text": "You don't find anything. Taking you as bandits, the survivors flee.",
       "choices": [
         {
-          "id": "fight_bandits",
-          "text": "Fight the bandits",
+          "id": "continue",
+          "text": "Continue",
           "effects": [],
-          "next_node_id": null,
-          "leads_to_combat": true,
-          "combat_request": { "enemy_group_id": "bandit_ambush_lvl_2", "modifiers": ["surprise"] }
+          "next_node_id": "end_ignore"
         }
       ]
     },

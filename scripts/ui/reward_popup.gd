@@ -217,7 +217,6 @@ func _apply_border_style() -> void:
 
 func _spawn_glitter() -> void:
 	await get_tree().process_frame
-	await get_tree().process_frame
 	if not is_instance_valid(_card):
 		return   # Popup was closed again before layout even finished.
 	_spawn_burst()
