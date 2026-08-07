@@ -70,3 +70,38 @@ extends Resource
 # whichever status this scroll should attach. "add_buff" appends it to the
 # ability's applies_statuses_to_self (applied to the CASTER on every use);
 # "add_debuff" appends to applies_statuses (applied to every hit TARGET).
+
+
+static func build_enhanced_description(base_description: String, applied_ids: Array,
+		eligible_enhancements: Array) -> String:
+	# Appends a gold "Enhancements" header + one line per currently-applied
+	# enhancement below the ability's own normal description. Shared by the
+	# in-battle ability tooltip (ui_manager.gd) and the "More Info" character
+	# sheet (unit_info_popup.gd) so applied Skill Scroll enhancements always
+	# show up wherever the ability's description is shown. Returns
+	# base_description unchanged if nothing is applied.
+	var safe_base: String = base_description.replace("[", "[lb]")
+	if applied_ids.is_empty():
+		return safe_base
+
+	# Count how many times each id appears -- two copies of the same scroll
+	# on one ability show as "x2" instead of two duplicate lines.
+	var counts: Dictionary = {}
+	for eid in applied_ids:
+		counts[eid] = int(counts.get(eid, 0)) + 1
+
+	var lines: Array[String] = []
+	for eid in counts.keys():
+		var display: String = eid   # fallback if it can't be resolved
+		for candidate in eligible_enhancements:
+			if candidate != null and candidate.id == eid:
+				display = candidate.display_name
+				break
+		display = display.replace("[", "[lb]")
+		var count: int = counts[eid]
+		lines.append(display + ("  x%d" % count if count > 1 else ""))
+
+	const GOLD := Color(0.831, 0.702, 0.31, 1.0)
+	var block := "\n\n[color=#%s]Enhancements[/color]\n%s" % [GOLD.to_html(false), "\n".join(lines)]
+	return safe_base + block
+	

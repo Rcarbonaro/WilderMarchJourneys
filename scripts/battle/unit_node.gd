@@ -302,12 +302,20 @@ var enhanced_abilities: Dictionary = {}
 # -- no need to touch dozens of individual field reads throughout
 # ability_executor.gd.
 
+var applied_enhancement_ids: Dictionary = {}
+# ADDED: same shape as the param below (ability_id -> Array[String] of
+# applied enhancement ids), just kept around on the unit after
+# build_enhanced_abilities() runs so anything that wants to DISPLAY this
+# unit's enhancements (the in-battle "Information" popup) doesn't need to
+# separately re-derive it.
+
 func build_enhanced_abilities(ability_enhancement_ids: Dictionary) -> void:
 	# ability_enhancement_ids: { ability_id (String) -> Array[String] of
 	# applied AbilityEnhancementData ids }. Comes straight from a party
 	# entry's "ability_enhancements" field (see run_state.gd) -- empty/absent
 	# for enemies and for any player unit that's never used a scroll.
 	enhanced_abilities.clear()
+	applied_enhancement_ids = ability_enhancement_ids.duplicate(true)   # ADDED
 	if ability_enhancement_ids.is_empty() or unit_data == null:
 		return
 
@@ -359,7 +367,7 @@ func build_enhanced_abilities(ability_enhancement_ids: Dictionary) -> void:
 					enhanced.applies_thorns = true
 				"shield_target":
 					enhanced.applies_shield = true
-					enhanced.shield_amount += int(enhancement.magnitude)
+					enhanced.shield_amount += int(enhancement.magnitude)   # BUGFIX: was never set before
 				"reset_cooldown_on_kill":
 					enhanced.has_on_kill_effect = true
 					enhanced.on_kill_reset_cooldowns = true
@@ -368,10 +376,26 @@ func build_enhanced_abilities(ability_enhancement_ids: Dictionary) -> void:
 					enhanced.on_kill_restore_mana_amount += int(enhancement.magnitude)
 				"add_buff":
 					if enhancement.attached_status != null:
-						enhanced.applies_statuses_to_self.append(enhancement.attached_status)
+						# BUGFIX: this used to append to applies_statuses_to_self,
+						# which buffs the CASTER -- but "add_buff" scrolls are for
+						# support abilities that target an ALLY (e.g. select a
+						# teammate, grant them +movement). It needs the same
+						# target-facing list "add_debuff" already uses correctly;
+						# ability_executor.gd applies whatever's in
+						# applies_statuses to whoever the ability actually hits,
+						# filtered by the ability's own affects_team ("allies" for
+						# a support ability), which is what makes this land on the
+						# selected ally instead of the caster.
+						var buff_status: StatusEffectData = enhancement.attached_status.duplicate(true)
+						if enhancement.icon != null:
+							buff_status.icon = enhancement.icon
+						enhanced.applies_statuses.append(buff_status)
 				"add_debuff":
 					if enhancement.attached_status != null:
-						enhanced.applies_statuses.append(enhancement.attached_status)
+						var debuff_status: StatusEffectData = enhancement.attached_status.duplicate(true)
+						if enhancement.icon != null:
+							debuff_status.icon = enhancement.icon
+						enhanced.applies_statuses.append(debuff_status)
 				"bonus_per_target_debuff":
 					enhanced.bonus_per_target_debuff += enhancement.magnitude
 				"bonus_per_caster_buff":
@@ -388,8 +412,13 @@ func build_enhanced_abilities(ability_enhancement_ids: Dictionary) -> void:
 					push_warning("UnitNode: unknown enhancement_type '" +
 						str(enhancement.enhancement_type) + "' on enhancement '" + enhancement_id + "'.")
 
-		enhanced_abilities[ability.id] = enhanced
+		# ADDED — bake the gold "Enhancements" block onto the description,
+		# based off the ORIGINAL ability's description so re-running this
+		# function never compounds duplicate blocks.
+		enhanced.description = AbilityEnhancementData.build_enhanced_description(
+			ability.description, applied_ids, ability.eligible_enhancements)
 
+		enhanced_abilities[ability.id] = enhanced
 
 func get_ability_for_use(base_ability: AbilityData) -> AbilityData:
 	# Call this wherever an ability is about to be SHOWN or USED (the ability

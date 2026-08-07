@@ -1,5 +1,6 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://c0mhu16ij1tqe"]
 
+[ext_resource type="Texture2D" uid="uid://bd2b1w1rrv0iu" path="res://sprites/UI/skill icons/atkadd.png" id="1_3ar5t"]
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_eby51"]
 
 [resource]
@@ -7,6 +8,7 @@ script = ExtResource("1_eby51")
 id = "atkadd"
 display_name = "Increase Attack"
 description = "Increase ATK by 1 for 2 rounds."
+icon = ExtResource("1_3ar5t")
 duration_rounds = 2
 can_stack = true
 max_stacks = 10

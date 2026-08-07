@@ -1,12 +1,14 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://cxkld55wg3kw7"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_3clj2"]
+[ext_resource type="Texture2D" uid="uid://8855yjf513qu" path="res://sprites/UI/skill icons/mdefred.png" id="1_qsjv5"]
 
 [resource]
 script = ExtResource("1_3clj2")
 id = "mdefreduce"
 display_name = "Reduce MDEF"
 description = "Reduce Magical Defense by 1 for 2 rounds."
+icon = ExtResource("1_qsjv5")
 can_stack = true
 max_stacks = 10
 mdef_modifier = -1

@@ -202,6 +202,14 @@ func advance_stage() -> void:
 		EventBus.publish(EventBus.ON_STAGE_COMPLETE, {"run_complete": true})
 		current_run = null
 		return
+
+	# ADDED — recurring Skill Scroll grant, on top of the single starting
+	# scroll start_new_run() already grants: one more every 3rd stage
+	# (stage 3, 6, 9, ...).
+	if current_run.stage_index % 3 == 0:
+		current_run.runtime_effect_state["skill_scroll_count"] = \
+			int(current_run.runtime_effect_state.get("skill_scroll_count", 0)) + 1
+
 	save_run()
 
 

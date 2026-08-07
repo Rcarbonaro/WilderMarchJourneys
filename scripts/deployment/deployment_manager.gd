@@ -890,9 +890,10 @@ func _on_more_info_pressed(index: int) -> void:
 
 	var popup_instance := UnitInfoPopup.new()
 	add_child(popup_instance)
-	popup_instance.setup(unit_data, stat_lines, equipped_entries)
+	popup_instance.setup(unit_data, stat_lines, equipped_entries, entry.get("ability_enhancements", {}))
 
 
+# ADDED: identical to _on_more_info_pressed above, just looked up by
 # ADDED: identical to _on_more_info_pressed above, just looked up by
 # instance_id (what the deployed-party strip has on hand) instead of a
 # roster list index (what the roster list has on hand). Kept as a
@@ -939,11 +940,10 @@ func _show_full_unit_info_popup_for_instance(instance_id: String) -> void:
 
 	var popup_instance := UnitInfoPopup.new()
 	add_child(popup_instance)
-	popup_instance.setup(unit_data, stat_lines, equipped_entries)
+	popup_instance.setup(unit_data, stat_lines, equipped_entries, entry.get("ability_enhancements", {}))
 
 
 # ── BIOME BACKGROUND ───────────────────────────────────────────────────────────
-
 # ── CAMP DECORATIONS (ADDED, Mini-Encounters) ─────────────────────────────────
 # One tent per survivor ever recruited (see mini_encounter_scene.gd's Recruit
 # choice / effect_system.gd's _do_add_camp_recruit()), rebuilt fresh every
@@ -1550,9 +1550,141 @@ func _show_scroll_enhancement_picker(scroll_item_id: String, instance_id: String
 
 	popup.popup_centered(Vector2(300, 360))
 
+const MAX_ENHANCEMENTS_PER_ABILITY := 3   # ADDED — place this near the top of the file with your other consts
 
 func _apply_skill_scroll_enhancement(scroll_item_id: String, instance_id: String,
-									 ability_id: String, enhancement_id: String) -> void:
+									   ability_id: String, enhancement_id: String) -> void:
+	var entry: Dictionary = {}
+	for candidate in _get_full_roster():
+		if candidate.get("instance_id", "") == instance_id:
+			entry = candidate
+			break
+	if entry.is_empty():
+		return
+
+	var applied: Dictionary = entry.get("ability_enhancements", {})
+	var applied_for_ability: Array = applied.get(ability_id, [])
+
+	if applied_for_ability.size() >= MAX_ENHANCEMENTS_PER_ABILITY:
+		_show_enhancement_overwrite_confirm(scroll_item_id, instance_id, ability_id, enhancement_id)
+		return
+
+	_commit_skill_scroll_enhancement(scroll_item_id, instance_id, ability_id, enhancement_id, -1)
+
+
+func _show_enhancement_overwrite_confirm(scroll_item_id: String, instance_id: String,
+										   ability_id: String, enhancement_id: String) -> void:
+	var popup := PopupPanel.new()
+	add_child(popup)
+
+	var margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 16)
+	popup.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	margin.add_child(vbox)
+
+	var label := Label.new()
+	label.text = ("Each skill can have a maximum of 3 enhancements.\n" +
+		"To enhance again, you will overwrite one of your existing enhancements\n" +
+		"Would you like to overwrite an existing enhancement?")
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	label.custom_minimum_size = Vector2(260, 0)
+	vbox.add_child(label)
+
+	var button_row := HBoxContainer.new()
+	button_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	button_row.add_theme_constant_override("separation", 12)
+	vbox.add_child(button_row)
+
+	var yes_btn := Button.new()
+	yes_btn.text = "Yes"
+	yes_btn.pressed.connect(func():
+		popup.queue_free()
+		_show_enhancement_overwrite_picker(scroll_item_id, instance_id, ability_id, enhancement_id)
+	)
+	button_row.add_child(yes_btn)
+
+	var no_btn := Button.new()
+	no_btn.text = "No"
+	no_btn.pressed.connect(func(): popup.queue_free())
+	button_row.add_child(no_btn)
+
+	AudioManager.wire_all_buttons_in(popup)
+	popup.popup_centered(Vector2(300, 220))
+
+
+func _show_enhancement_overwrite_picker(scroll_item_id: String, instance_id: String,
+										  ability_id: String, new_enhancement_id: String) -> void:
+	var entry: Dictionary = {}
+	for candidate in _get_full_roster():
+		if candidate.get("instance_id", "") == instance_id:
+			entry = candidate
+			break
+	if entry.is_empty():
+		return
+
+	var unit_data := _load_unit_data(entry.get("unit_id", ""))
+	var ability: AbilityData = null
+	if unit_data != null:
+		for candidate_ability in unit_data.starting_abilities:
+			if candidate_ability != null and candidate_ability.id == ability_id:
+				ability = candidate_ability
+				break
+	if ability == null:
+		return
+
+	var applied: Dictionary = entry.get("ability_enhancements", {})
+	var applied_for_ability: Array = applied.get(ability_id, [])
+
+	var popup := PopupPanel.new()
+	add_child(popup)
+
+	var margin := MarginContainer.new()
+	for side in ["left", "right", "top", "bottom"]:
+		margin.add_theme_constant_override("margin_" + side, 16)
+	popup.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 6)
+	margin.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "Overwrite which enhancement?"
+	title.add_theme_font_size_override("font_size", 16)
+	vbox.add_child(title)
+
+	for i in range(applied_for_ability.size()):
+		var existing_id: String = applied_for_ability[i]
+		var existing_name: String = existing_id
+		for candidate_enh in ability.eligible_enhancements:
+			if candidate_enh != null and candidate_enh.id == existing_id:
+				existing_name = candidate_enh.display_name
+				break
+		var slot_index: int = i
+		var overwrite_btn := Button.new()
+		overwrite_btn.text = existing_name
+		overwrite_btn.pressed.connect(func():
+			popup.queue_free()
+			_commit_skill_scroll_enhancement(scroll_item_id, instance_id, ability_id,
+				new_enhancement_id, slot_index)
+		)
+		vbox.add_child(overwrite_btn)
+
+	var cancel_btn := Button.new()
+	cancel_btn.text = "Cancel"
+	cancel_btn.pressed.connect(func(): popup.queue_free())
+	vbox.add_child(cancel_btn)
+
+	AudioManager.wire_all_buttons_in(popup)
+	popup.popup_centered(Vector2(300, 320))
+
+
+func _commit_skill_scroll_enhancement(scroll_item_id: String, instance_id: String,
+										ability_id: String, enhancement_id: String,
+										overwrite_index: int) -> void:
 	var entry: Dictionary = {}
 	for candidate in _get_full_roster():
 		if candidate.get("instance_id", "") == instance_id:
@@ -1578,7 +1710,12 @@ func _apply_skill_scroll_enhancement(scroll_item_id: String, instance_id: String
 
 	var applied: Dictionary = entry.get("ability_enhancements", {})
 	var applied_for_ability: Array = applied.get(ability_id, [])
-	applied_for_ability.append(enhancement_id)
+
+	if overwrite_index >= 0 and overwrite_index < applied_for_ability.size():
+		applied_for_ability[overwrite_index] = enhancement_id
+	else:
+		applied_for_ability.append(enhancement_id)
+
 	applied[ability_id] = applied_for_ability
 	entry["ability_enhancements"] = applied
 	# NOTE: this only affects the party entry -- the actual enhanced
@@ -1592,7 +1729,6 @@ func _apply_skill_scroll_enhancement(scroll_item_id: String, instance_id: String
 
 	print("📜 Applied enhancement '", enhancement_id, "' to ability '", ability_id,
 		  "' on unit ", entry.get("unit_id", "?"))
-
 
 # ADDED: a small reusable "OK" message popup, used for the "No Equip Slot
 # Available" / "No Forge Slot Available" feedback.

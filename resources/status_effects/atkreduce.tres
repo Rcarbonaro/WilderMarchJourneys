@@ -1,5 +1,6 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://d1xmlymrlbkyp"]
 
+[ext_resource type="Texture2D" uid="uid://bmpci12npv06f" path="res://sprites/UI/skill icons/atkred.png" id="1_p5f7v"]
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_wwwd1"]
 
 [resource]
@@ -7,6 +8,7 @@ script = ExtResource("1_wwwd1")
 id = "atkreduce"
 display_name = "Reduce Attack"
 description = "Reduce Attack by 1 for 2 rounds."
+icon = ExtResource("1_p5f7v")
 duration_rounds = 2
 can_stack = true
 max_stacks = 10

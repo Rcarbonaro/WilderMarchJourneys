@@ -1,12 +1,14 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://dpeu1efipqt4g"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_0kfq7"]
+[ext_resource type="Texture2D" uid="uid://kuxeedyfw0hm" path="res://sprites/UI/skill icons/defadd.png" id="1_wknt4"]
 
 [resource]
 script = ExtResource("1_0kfq7")
 id = "defadd"
 display_name = "Increase DEF"
 description = "Increase DEF by 1 for 2 rounds"
+icon = ExtResource("1_wknt4")
 duration_rounds = 2
 can_stack = true
 max_stacks = 10

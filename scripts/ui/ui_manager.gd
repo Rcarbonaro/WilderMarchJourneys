@@ -1009,8 +1009,7 @@ func _on_more_info_pressed() -> void:
 
 	var popup_instance := UnitInfoPopup.new()
 	add_child(popup_instance)
-	popup_instance.setup(unit.unit_data, live_stat_lines, items)
-
+	popup_instance.setup(unit.unit_data, live_stat_lines, items, unit.applied_enhancement_ids)
 
 func _on_grid_toggle_pressed() -> void:
 	if grid == null or not grid.has_method("set_grid_lines_visible"):
@@ -1069,7 +1068,10 @@ func _show_ability_tooltip(ability, anchor_btn: Control) -> void:
 	else:
 		desc_text = "(No description)"
 
-	var desc := Label.new()
+	var desc := RichTextLabel.new()
+	desc.bbcode_enabled      = true
+	desc.fit_content         = true
+	desc.scroll_active       = false
 	desc.text                = desc_text
 	desc.custom_minimum_size = Vector2(220, 0)
 	desc.autowrap_mode       = TextServer.AUTOWRAP_WORD

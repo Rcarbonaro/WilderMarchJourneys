@@ -1,12 +1,14 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://dw2a7o0xexhor"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_g01lt"]
+[ext_resource type="Texture2D" uid="uid://b7t6j3jm82sq8" path="res://sprites/UI/skill icons/defred.png" id="1_ldw0u"]
 
 [resource]
 script = ExtResource("1_g01lt")
 id = "defreduce"
 display_name = "Reduce DEF"
 description = "Reduce DEF by 1 for 2 rounds."
+icon = ExtResource("1_ldw0u")
 duration_rounds = 2
 can_stack = true
 max_stacks = 10

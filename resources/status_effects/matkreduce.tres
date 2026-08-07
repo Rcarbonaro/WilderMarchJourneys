@@ -1,12 +1,14 @@
 [gd_resource type="Resource" script_class="StatusEffectData" format=3 uid="uid://d30gh3ruy5yci"]
 
 [ext_resource type="Script" uid="uid://gsbk18mmfnol" path="res://scripts/data/status_effect_data.gd" id="1_7xsk0"]
+[ext_resource type="Texture2D" uid="uid://cqw2j3g3ygibf" path="res://sprites/UI/skill icons/matkred.png" id="1_c63bu"]
 
 [resource]
 script = ExtResource("1_7xsk0")
 id = "matkreduce"
 display_name = "Reduce MATK"
 description = "Reduce Magical Attack by 1 for 2 rounds."
+icon = ExtResource("1_c63bu")
 duration_rounds = 2
 max_stacks = 10
 matk_modifier = -1

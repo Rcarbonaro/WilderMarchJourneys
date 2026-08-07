@@ -11,6 +11,5 @@ display_name = "Increase Target DEF"
 description = "Increase target def by 1 for 2 rounds."
 icon = ExtResource("2_kaf40")
 enhancement_type = "add_buff"
-magnitude = 1.0
 attached_status = ExtResource("1_nb5bf")
 metadata/_custom_type_script = "uid://bv33cyg2ct1h3"

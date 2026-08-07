@@ -133,7 +133,8 @@ func _ready() -> void:
 	add_child(_card)
 
 
-func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array = []) -> void:
+func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array = [],
+		ability_enhancement_ids: Dictionary = {}) -> void:
 	# Builds the entire card's contents. Call this once, right after adding
 	# this popup to the tree (so _ready() has already built the card shell).
 	if unit_data == null:
@@ -333,10 +334,16 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 		ability_name_label.text = ability.display_name
 		ability_text.add_child(ability_name_label)
 
-		if ability.description != "":
-			var ability_desc_label := Label.new()
-			ability_desc_label.text = ability.description
-			ability_desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+		var applied_ids: Array = ability_enhancement_ids.get(ability.id, [])
+		var full_desc: String = AbilityEnhancementData.build_enhanced_description(
+			ability.description, applied_ids, ability.eligible_enhancements)
+		if full_desc != "":
+			var ability_desc_label := RichTextLabel.new()
+			ability_desc_label.bbcode_enabled = true
+			ability_desc_label.fit_content    = true
+			ability_desc_label.scroll_active  = false
+			ability_desc_label.text           = full_desc
+			ability_desc_label.autowrap_mode  = TextServer.AUTOWRAP_WORD
 			ability_desc_label.add_theme_font_size_override("font_size", 14)
 			ability_text.add_child(ability_desc_label)
 
