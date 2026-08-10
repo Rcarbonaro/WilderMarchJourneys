@@ -11,5 +11,5 @@ description = "Reduce Magical Defense by 1 for 2 rounds."
 icon = ExtResource("1_qsjv5")
 can_stack = true
 max_stacks = 10
-mdef_modifier = -1
+mdef_modifier = -2
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

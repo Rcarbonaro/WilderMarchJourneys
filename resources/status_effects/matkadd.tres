@@ -12,5 +12,5 @@ icon = ExtResource("1_s2rwf")
 duration_rounds = 2
 can_stack = true
 max_stacks = 10
-matk_modifier = 1
+matk_modifier = 2
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

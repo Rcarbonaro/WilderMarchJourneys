@@ -1091,6 +1091,18 @@ func on_ability_selected(ability: AbilityData) -> void:
 	if selected_unit == null:
 		return
 
+	# BUGFIX: without this, a stale ability button left on screen from
+	# before the unit acted (most notably during POST_ATTACK's free
+	# repositioning window, where the bar was never hidden -- see the fix
+	# in _start_post_attack_movement() below) could still be pressed. This
+	# function had no idea the unit had already acted or that a phase like
+	# POST_ATTACK was in progress -- it just trusted the ability bar to
+	# only ever offer legal buttons, which POST_ATTACK broke. That let a
+	# unit attack again for free, no kill required, repeating forever on
+	# any ability with post_attack_move_squares.
+	if selected_unit.has_acted or current_phase != TurnPhase.PLAYER_TURN:
+		return
+
 	# ── UNLEASH GATE ──────────────────────────────────────────────────────────
 	# Unleash abilities are blocked entirely until the party-wide HP-cost
 	# counter has crossed HP_UNLEASH_THRESHOLD. Checked BEFORE the normal mana

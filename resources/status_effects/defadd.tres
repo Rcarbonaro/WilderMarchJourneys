@@ -12,5 +12,5 @@ icon = ExtResource("1_wknt4")
 duration_rounds = 2
 can_stack = true
 max_stacks = 10
-def_modifier = 1
+def_modifier = 2
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

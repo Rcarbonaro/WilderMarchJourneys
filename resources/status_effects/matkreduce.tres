@@ -11,5 +11,5 @@ description = "Reduce Magical Attack by 1 for 2 rounds."
 icon = ExtResource("1_c63bu")
 duration_rounds = 2
 max_stacks = 10
-matk_modifier = -1
+matk_modifier = -2
 metadata/_custom_type_script = "uid://gsbk18mmfnol"
