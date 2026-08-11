@@ -25,6 +25,7 @@ can_ignore_los = true
 affects_team = "all"
 base_damage_multiplier = 0.0
 applies_statuses = Array[ExtResource("1_lm0tg")]([ExtResource("2_bvodd")])
+effect_is_cancelable = true
 applies_shield = true
 shield_amount = 20
 eligible_enhancements = Array[ExtResource("4_qjxj8")]([ExtResource("5_7j7jy"), ExtResource("6_u2tsu")])

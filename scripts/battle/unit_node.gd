@@ -1489,7 +1489,8 @@ func look_at_target(target_pos: Vector2i, custom_animation_name: String = "") ->
 
 # ── STATUS EFFECTS ────────────────────────────────────────────────────────────
 
-func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster = null) -> void:
+func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster = null,
+				is_cancelable: bool = false) -> void:
 	#This helps prevent recursion loops
 	_apply_status_depth += 1
 	if _apply_status_depth > 8:
@@ -1533,6 +1534,7 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster 
 				s["stacks"] = min(s["stacks"] + stacks, status_data.max_stacks)
 			s["remaining_rounds"] = status_data.duration_rounds
 			s["source_caster"] = source_caster
+			s["is_cancelable"] = is_cancelable   # ADDED
 			_debug_print_status_applied(status_data, s["stacks"])
 			_apply_status_depth -= 1
 			return
@@ -1544,6 +1546,7 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster 
 		"remaining_rounds": status_data.duration_rounds,
 		"source_caster":    source_caster,
 		"visual_phase":     "none",
+		"is_cancelable":    is_cancelable,   # ADDED
 	})
 	_debug_print_status_applied(status_data, stacks)
 	update_visuals()

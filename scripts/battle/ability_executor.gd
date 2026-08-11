@@ -240,7 +240,7 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 			printerr("❌ Wall ability '", ability.display_name,
 					 "' spawns_hazard is not flagged is_wall_hazard!")
 		else:
-			grid_ref.place_wall(target_cells, ability.spawns_hazard, caster)
+			grid_ref.place_wall(target_cells, ability.spawns_hazard, caster, ability.effect_is_cancelable)
 			print("🧱 Wall placed across ", target_cells.size(), " tiles by ",
 				  caster.unit_data.display_name)
 
@@ -335,7 +335,7 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 		# attacks toward, and DoT can scale damage off the correct unit's stats.
 		if target != null:
 			for status_data in ability.applies_statuses:
-				target.apply_status(status_data, 1, caster)
+				target.apply_status(status_data, 1, caster, ability.effect_is_cancelable)
 
 		# ── TETHER APPLICATION ────────────────────────────────────────────────
 		# If this ability applies a tether, register the hit unit in the group.
@@ -368,7 +368,7 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 		# ── SPAWN HAZARD ──────────────────────────────────────────────────────
 		# Places a hazard tile at the target cell (e.g. fire, poison pool).
 		if ability.spawns_hazard != null:
-			grid_ref.add_hazard(cell, ability.spawns_hazard, caster)
+			grid_ref.add_hazard(cell, ability.spawns_hazard, caster, "", ability.effect_is_cancelable)
 
 		# ── DISPLACEMENT / KNOCKBACK / SCATTER ────────────────────────────────
 		# Don't move the target yet — just remember that they need to be
@@ -433,7 +433,7 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 		return
 	for self_status in ability.applies_statuses_to_self:
 		if self_status != null:
-			caster.apply_status(self_status, 1, caster)
+			caster.apply_status(self_status, 1, caster, ability.effect_is_cancelable)
 
 	# ── SKILL SCROLL SELF-VARIANTS (ADDED) ────────────────────────────────────
 	# Same "once per cast" placement as the self-status application just
@@ -619,6 +619,8 @@ func _apply_damage_with_effects(caster, target, ability: AbilityData, damage: in
 				ally.take_damage(ally_actual, "true")   # Tether uses true damage.
 				# THE FIX: same duplicate-number bug as Guardian/Thorns above —
 				# take_damage() already spawns its own number.
+				CombatFeedback.spawn_tether_spread_particles(ally.global_position)
+				
 	# -- 6. ON-KILL CHECK ──────────────────────────────────────────────────────
 	# If the target just died from this hit (HP was above 0 before, now at/below 0),
 	# trigger on-kill effects. This also notifies Momentum via _trigger_on_kill.

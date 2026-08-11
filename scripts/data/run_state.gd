@@ -20,7 +20,7 @@ extends Resource
 @export var run_id: String = ""
 @export var player_seed: int = 0
 @export var draft_or_random_mode: String = "random"   # "random" | "draft"
-@export var difficulty: String = "normal"               # "normal" | "hard" | "nightmare"
+@export var difficulty: String = "easy"               # "easy" | "normal" | "hard" | "nightmare"
 
 # ---- PROGRESSION ----------------------------------------------------------------
 @export var stage_index: int = 1
@@ -92,7 +92,7 @@ static func from_dict(data: Dictionary) -> RunState:
 	rs.run_id = data.get("run_id", "")
 	rs.player_seed = data.get("player_seed", 0)
 	rs.draft_or_random_mode = data.get("draft_or_random_mode", "random")
-	rs.difficulty = data.get("difficulty", "normal")
+	rs.difficulty = data.get("difficulty", "easy")
 	rs.stage_index = data.get("stage_index", 1)
 	rs.biome_sequence.assign(data.get("biome_sequence", []))
 	rs.gold = data.get("gold", 10)

@@ -162,6 +162,15 @@ extends Resource
 @export var spawns_hazard: HazardData
 # If set, places a hazard tile on every affected cell.
 
+@export var effect_is_cancelable: bool = false
+# If true, whatever hazard (spawns_hazard, including walls) and/or status
+# (applies_statuses / applies_statuses_to_self) THIS ability creates can be
+# instantly ended early by its caster's owner, at no action cost, via the
+# in-battle "Cancel Effect" button. Threaded through at the point
+# ability_executor.gd actually applies each effect -- see
+# BattleGrid.add_hazard()/place_wall() and UnitNode.apply_status()'s
+# is_cancelable param.
+
 @export var heal_percent: float = 0.0
 # Fraction of max HP to restore. e.g. 0.3 = heals 30%.
 

@@ -179,13 +179,46 @@ func apply_scaling(base_stats: StatsData, run_state: RunState, tier: String = "n
 
 	var global_config: Dictionary = ContentLoader.global_difficulty
 	var stages_elapsed: int = max(0, run_state.stage_index - 1)
-	if not global_config.is_empty():
+
+	# ── PER-STAGE GROWTH (ADDED: per-difficulty, interval-aware) ────────────
+	# If this difficulty defines its own difficulty_stat_growth entry, use
+	# that. Each rule ticks up by `amount` every `every_n_stages` stages --
+	# every_n_stages: 1 = every stage, 2 = every other stage, etc. Formula:
+	# ticks = floor(stages_elapsed / every_n_stages), so stage 1 always
+	# starts at +0 (stages_elapsed is 0-based) and growth kicks in as the
+	# run progresses. Example with every_n_stages: 2, amount: 1:
+	#   stage 1 → +0   stage 3 → +1   stage 5 → +2
+	#   stage 2 → +0   stage 4 → +1   stage 6 → +2
+	# If this difficulty has NO entry here (this is how "easy" stays on its
+	# original behavior without needing its own entry), fall back to the
+	# original flat, difficulty-agnostic stat_growth_per_stage below.
+	var difficulty_growth_table: Dictionary = global_config.get("difficulty_stat_growth", {})
+	if difficulty_growth_table.has(run_state.difficulty):
+		for rule in difficulty_growth_table[run_state.difficulty]:
+			var every_n: int = max(1, int(rule.get("every_n_stages", 1)))
+			var ticks: int = int(floor(float(stages_elapsed) / float(every_n)))
+			if ticks > 0:
+				_apply_stat_modifiers(scaled, [{
+					"type": "add_stat", "stat": rule.get("stat", ""),
+					"amount": rule.get("amount", 0) * ticks,
+				}])
+	elif not global_config.is_empty():
 		var growth: Dictionary = global_config.get("stat_growth_per_stage", {})
 		scaled.hp   += int(round(float(growth.get("hp", 0.0))   * stages_elapsed))
 		scaled.atk  += int(round(float(growth.get("atk", 0.0))  * stages_elapsed))
 		scaled.matk += int(round(float(growth.get("matk", 0.0)) * stages_elapsed))
 		scaled.def  += int(round(float(growth.get("def", 0.0))  * stages_elapsed))
 		scaled.mdef += int(round(float(growth.get("mdef", 0.0)) * stages_elapsed))
+
+	# ── DIFFICULTY BASE STAT BONUS (ADDED) ───────────────────────────────────
+	# Flat bonus present from stage 1 onward -- e.g. Normal's "+1 extra ATK
+	# and MATK", Hard's "+1 to all base stats", Nightmare's "+2 to all base
+	# stats". Kept separate from the growth table above so "how much tougher
+	# from the very start" and "how much tougher as the run goes on" can be
+	# tuned independently.
+	var base_bonus: Dictionary = global_config.get("difficulty_base_stat_bonus", {}).get(run_state.difficulty, {})
+	for stat_name in base_bonus:
+		_apply_stat_modifiers(scaled, [{"type": "add_stat", "stat": stat_name, "amount": base_bonus[stat_name]}])
 
 	var config := ContentLoader.get_scaling_config(run_state.stage_index)
 	if not config.is_empty():
@@ -211,12 +244,23 @@ func apply_scaling(base_stats: StatsData, run_state: RunState, tier: String = "n
 		scaled.def  = int(scaled.def  * elite_mult)
 		scaled.mdef = int(scaled.mdef * elite_mult)
 
+	# ── DIFFICULTY HP % BONUS (ADDED) ────────────────────────────────────────
+	# HP-only percentage boost -- Normal +25%, Hard +50%, Nightmare +100%.
+	# Applied LAST, after growth/base-bonus/per-stage-modifiers/elite
+	# multiplier, so it scales the FULLY assembled HP total -- same
+	# reasoning as the elite multiplier and the difficulty_stat_multiplier
+	# below both also being applied last.
+	var hp_pct: float = float(global_config.get("difficulty_hp_percent_bonus", {}).get(run_state.difficulty, 0.0))
+	if hp_pct != 0.0:
+		scaled.hp = int(round(float(scaled.hp) * (1.0 + hp_pct)))
+
 	# ---- DIFFICULTY STAT MULTIPLIER (ADDED) ----------------------------------
-	# Applied LAST, after global growth + per-stage modifiers + elite
-	# multiplier, so it scales the fully-assembled total -- same reasoning
-	# as why the elite multiplier itself is applied last, just one layer
-	# further out. mov/crit_chance/crit_damage/mana deliberately untouched,
-	# matching the elite multiplier's existing behavior.
+	# Pre-existing, difficulty-wide multiplier across all 5 core stats.
+	# None of easy/normal/hard/nightmare set this anymore -- they use the
+	# more granular base-bonus/growth/HP-% knobs above instead. Left in
+	# place in case you ever want a difficulty that scales everything
+	# uniformly again. mov/crit_chance/crit_damage/mana deliberately
+	# untouched, matching the elite multiplier's existing behavior.
 	var diff_mult: float = float(global_config.get("difficulty_stat_multiplier", {}).get(run_state.difficulty, 1.0))
 	if diff_mult != 1.0:
 		scaled.hp   = int(scaled.hp   * diff_mult)

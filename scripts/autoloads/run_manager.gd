@@ -44,7 +44,7 @@ func _ready() -> void:
 	meta = _load_meta_state()
 
 
-func start_new_run(difficulty: String = "normal") -> RunState:
+func start_new_run(difficulty: String = "easy") -> RunState:
 	var rs := RunState.new()
 	rs.run_id = "run_" + Time.get_datetime_string_from_system().replace(":", "-")
 	rs.player_seed = randi()
@@ -186,7 +186,7 @@ func get_scout_cost() -> int:
 
 func get_difficulty() -> String:
 	if current_run == null:
-		return "normal"
+		return "easy"
 	return current_run.difficulty
 
 
@@ -220,7 +220,7 @@ func start_new_run_for_mode(mode_id: String, chosen_party: Array = []) -> RunSta
 	# starting_equipment_ids, applies them to a fresh RunState, and (for
 	# Draft mode, where the player already picked their party on a Draft
 	# screen) accepts that party directly via chosen_party.
-	var rs := start_new_run(current_run.difficulty if current_run != null else "normal")
+	var rs := start_new_run(current_run.difficulty if current_run != null else "easy")
 	var mode_config := ContentLoader.get_game_mode_config(mode_id)
 	rs.draft_or_random_mode = mode_id
 	rs.gold = int(mode_config.get("starting_gold", 10))

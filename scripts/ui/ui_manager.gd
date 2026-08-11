@@ -98,6 +98,7 @@ var end_turn_button:     Button          = null
 var grid_toggle_button:  Button          = null
 var speed_toggle_button: Button = null
 var _prev_bar_hp: int = -1
+var _cancel_effects_popup: PopupPanel = null
 
 ### Pause Menu Variables
 var pause_menu:           Control = null
@@ -1431,3 +1432,62 @@ func _open_items_popup(anchor_button: Button, unit, consumables: Array) -> void:
 	# to taste once you see it against your actual action bar layout.
 	_items_popup.position = Vector2(anchor_button.global_position.x, anchor_button.global_position.y - 200)
 	_items_popup.popup()
+
+func show_cancelable_effects(unit) -> void:
+	# Mirrors show_usable_items() — adds a "Cancel Effect" button to the
+	# ability bar only if this specific unit currently has something
+	# cancelable out on the field.
+	if ability_bar == null or unit == null:
+		return
+	if not (battle_manager and battle_manager.has_method("get_cancelable_effects_for")):
+		return
+	var effects: Array = battle_manager.get_cancelable_effects_for(unit)
+	if effects.is_empty():
+		return
+
+	var cancel_btn := Button.new()
+	cancel_btn.text = "Cancel Effect"
+	cancel_btn.custom_minimum_size = Vector2(90, 40)
+	cancel_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cancel_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+	cancel_btn.pressed.connect(func(): _open_cancel_effects_popup(cancel_btn, unit))
+	AudioManager.wire_button_sfx(cancel_btn)
+	ability_bar.add_child(cancel_btn)
+
+
+func _open_cancel_effects_popup(anchor_button: Button, unit) -> void:
+	# Mirrors _open_items_popup() — a small list popup anchored to the
+	# button, one entry per cancelable effect. Picking one cancels it
+	# immediately (no action cost) and rebuilds the ability bar, exactly
+	# like using an item does, so the button disappears once nothing's
+	# left to cancel.
+	if _cancel_effects_popup != null and is_instance_valid(_cancel_effects_popup):
+		_cancel_effects_popup.queue_free()
+
+	_cancel_effects_popup = PopupPanel.new()
+	var list := VBoxContainer.new()
+	list.add_theme_constant_override("separation", 4)
+	_cancel_effects_popup.add_child(list)
+
+	var effects: Array = battle_manager.get_cancelable_effects_for(unit)
+	for effect_entry in effects:
+		var btn := Button.new()
+		btn.text = effect_entry["display_name"]
+		var icon: Texture2D = effect_entry.get("icon")
+		if icon != null:
+			btn.icon = icon
+			btn.expand_icon = true
+			btn.add_theme_constant_override("icon_max_width", 48)
+		btn.custom_minimum_size = Vector2(150, 36)
+		btn.pressed.connect(func():
+			_cancel_effects_popup.hide()
+			battle_manager.cancel_effect(effect_entry)
+			if battle_manager.has_method("refresh_ability_bar"):
+				battle_manager.refresh_ability_bar(unit)
+		)
+		AudioManager.wire_button_sfx(btn)
+		list.add_child(btn)
+
+	ability_bar.add_child(_cancel_effects_popup)
+	_cancel_effects_popup.position = Vector2(anchor_button.global_position.x, anchor_button.global_position.y - 200)
+	_cancel_effects_popup.popup()

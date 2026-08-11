@@ -1,21 +1,40 @@
 {
-  "id": "global_difficulty",
-  "stat_growth_per_stage": {
-    "hp": 2.5,
-    "atk": 0.4,
-    "matk": 0.4,
-    "def": 0.25,
-    "mdef": 0.25
+  "difficulty_base_stat_bonus": {
+    "normal":    { "atk": 1, "matk": 1 },
+    "hard":      { "atk": 1, "matk": 1, "def": 1, "mdef": 1 },
+    "nightmare": { "atk": 2, "matk": 2, "def": 2, "mdef": 2 }
   },
-  "default_elite_stat_multiplier": 1.5,
-  "difficulty_stat_multiplier": {
-    "normal": 1.0,
-    "hard": 1.15,
-    "nightmare": 1.30
+
+  "difficulty_stat_growth": {
+    "normal": [
+      { "stat": "hp",   "amount": 2, "every_n_stages": 1 },
+      { "stat": "atk",  "amount": 1, "every_n_stages": 2 },
+      { "stat": "matk", "amount": 1, "every_n_stages": 2 }
+    ],
+    "hard": [
+      { "stat": "hp",   "amount": 4, "every_n_stages": 1 },
+      { "stat": "atk",  "amount": 1, "every_n_stages": 2 },
+      { "stat": "matk", "amount": 1, "every_n_stages": 2 },
+      { "stat": "def",  "amount": 1, "every_n_stages": 2 },
+      { "stat": "mdef", "amount": 1, "every_n_stages": 2 }
+    ],
+    "nightmare": [
+      { "stat": "atk",  "amount": 1, "every_n_stages": 2 },
+      { "stat": "matk", "amount": 1, "every_n_stages": 2 },
+      { "stat": "def",  "amount": 1, "every_n_stages": 2 },
+      { "stat": "mdef", "amount": 1, "every_n_stages": 2 }
+    ]
   },
+
+  "difficulty_hp_percent_bonus": {
+    "normal": 0.25,
+    "hard": 0.5,
+    "nightmare": 1.0
+  },
+
   "difficulty_spawn_bonus": {
-    "normal": { "bonus_normal_enemies": 0, "bonus_elite_enemies": 0 },
-    "hard": { "bonus_normal_enemies": 1, "bonus_elite_enemies": 0 },
-    "nightmare": { "bonus_normal_enemies": 1, "bonus_elite_enemies": 1 }
+    "normal":    { "bonus_normal_enemies": 1 },
+    "hard":      { "bonus_normal_enemies": 1, "bonus_elite_enemies": 1 },
+    "nightmare": { "bonus_normal_enemies": 3, "bonus_elite_enemies": 1 }
   }
 }

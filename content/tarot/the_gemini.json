@@ -1,0 +1,17 @@
+{
+  "id": "the_gemini",
+  "name": "The Gemini",
+  "description": "The first character you buy from the shop each run instantly gains an extra copy of themselves, leveling them up.",
+  "category": "blessed",
+  "stackable": false,
+  "triggers": [
+	{
+	  "event": "on_shop_purchase",
+	  "once_per_run": true,
+	  "condition": { "type": "event_payload_true", "field": "is_unit_purchase" },
+	  "effects": [
+		{ "type": "add_unit", "unit_id": "$event_payload.item_id" }
+	  ]
+	}
+  ]
+}

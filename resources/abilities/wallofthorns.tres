@@ -28,5 +28,6 @@ base_damage_multiplier = 0.4
 damage_type = "magical"
 scaling_stat = "matk"
 spawns_hazard = ExtResource("3_if6pe")
+effect_is_cancelable = true
 eligible_enhancements = Array[ExtResource("3_v4qhi")]([ExtResource("4_7uwnm"), ExtResource("5_fwr06")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

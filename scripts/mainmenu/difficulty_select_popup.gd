@@ -3,6 +3,7 @@ extends CanvasLayer
 signal difficulty_chosen(difficulty: String)
 signal cancelled
 
+var easy_button:    Button = null
 var normal_button:    Button = null
 var hard_button:      Button = null
 var nightmare_button: Button = null
@@ -10,18 +11,20 @@ var cancel_button:    Button = null
 
 
 func _ready() -> void:
+	easy_button    = find_child("EasyButton",    true, false) as Button
 	normal_button    = find_child("NormalButton",    true, false) as Button
 	hard_button      = find_child("HardButton",      true, false) as Button
 	nightmare_button = find_child("NightmareButton", true, false) as Button
 	cancel_button    = find_child("CancelButton",    true, false) as Button
 
-	for pair in [["NormalButton", normal_button], ["HardButton", hard_button],
+	for pair in [["EasyButton", easy_button], ["NormalButton", normal_button], ["HardButton", hard_button],
 				 ["NightmareButton", nightmare_button], ["CancelButton", cancel_button]]:
 		if pair[1] == null:
 			push_warning("DifficultySelectPopup: could not find a Button named '%s' in the scene -- check the Name field matches exactly (case-sensitive)." % pair[0])
 
 	var unlocks: Dictionary = RunManager.meta.difficulty_unlocks if RunManager.meta != null else {"normal": true, "hard": false, "nightmare": false}
 
+	_setup_button(easy_button,    "Easy",    "easy",    true)
 	_setup_button(normal_button,    "Normal",    "normal",    true)
 	_setup_button(hard_button,      "Hard",      "hard",      unlocks.get("hard", false))
 	_setup_button(nightmare_button, "Nightmare", "nightmare", unlocks.get("nightmare", false))

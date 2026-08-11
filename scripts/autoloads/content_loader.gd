@@ -308,6 +308,9 @@ func get_biome_slot(stage_index: int) -> int:
 
 func get_difficulty_summary(difficulty: String) -> Dictionary:
 	return {
-		"stat_multiplier": float(global_difficulty.get("difficulty_stat_multiplier", {}).get(difficulty, 1.0)),
-		"spawn_bonus":     global_difficulty.get("difficulty_spawn_bonus", {}).get(difficulty, {}),
+		"stat_multiplier":   float(global_difficulty.get("difficulty_stat_multiplier", {}).get(difficulty, 1.0)),
+		"spawn_bonus":       global_difficulty.get("difficulty_spawn_bonus", {}).get(difficulty, {}),
+		"hp_percent_bonus":  float(global_difficulty.get("difficulty_hp_percent_bonus", {}).get(difficulty, 0.0)),
+		"base_stat_bonus":   global_difficulty.get("difficulty_base_stat_bonus", {}).get(difficulty, {}),
+		"stat_growth":       global_difficulty.get("difficulty_stat_growth", {}).get(difficulty, []),
 	}

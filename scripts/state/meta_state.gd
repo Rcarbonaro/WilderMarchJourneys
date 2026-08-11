@@ -8,7 +8,7 @@ class_name MetaState
 extends Resource
 
 @export var player_id: String = ""
-@export var difficulty_unlocks: Dictionary = {"normal": true, "hard": true, "nightmare": true}
+@export var difficulty_unlocks: Dictionary = {"easy": true, "normal": true, "hard": true, "nightmare": true}
 @export var achievements: Array[String] = []
 @export var endless_teams: Array = []
 # Each entry: { "team_name": "...", "units": [ <full unit save Dictionary>, ... ], "created_from_run": "run_id" }
@@ -49,7 +49,7 @@ func to_dict() -> Dictionary:
 static func from_dict(data: Dictionary) -> MetaState:
 	var ms := MetaState.new()
 	ms.player_id = data.get("player_id", "")
-	ms.difficulty_unlocks = data.get("difficulty_unlocks", {"normal": true, "hard": false, "nightmare": false})
+	ms.difficulty_unlocks = data.get("difficulty_unlocks", {"easy": true, "normal": false, "hard": false, "nightmare": false})
 	ms.achievements.assign(data.get("achievements", []))
 	ms.endless_teams = data.get("endless_teams", [])
 	ms.settings = data.get("settings", {"volume": 0.8, "font_size": 14})

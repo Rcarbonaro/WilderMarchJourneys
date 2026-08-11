@@ -21,7 +21,7 @@ extends Node
 # Change these to tune the feel without touching any other code.
 
 ## Seconds the engine is frozen on a critical hit (real time, not game time).
-@export var hit_stop_duration:   float = 0.055
+@export var hit_stop_duration:   float = 0.155
 ## How fast screen shake decays. Higher = shorter rumble.
 @export var shake_falloff:       float = 6.0
 ## Damage as % of target's max HP that triggers each colour tier.
@@ -53,6 +53,44 @@ var dot_damage_colors: Dictionary = {
 										   # is never confused with a crit.
 	"curse":  Color(0.45, 0.08, 0.55),   # dark purple
 }
+
+## ── IMPACT PARTICLES (ADDED) ──────────────────────────────────────────────
+## Everything about the on-hit particle burst — white for a normal attack,
+## red for a crit, count scaled by damage dealt.
+##
+## HOW MANY PARTICLES SPAWN:
+##   count = impact_particle_base_amount
+##         + (damage_dealt * impact_particle_amount_per_damage)
+##   ...then multiplied by impact_particle_crit_amount_multiplier on a crit,
+##   then clamped to impact_particle_amount_max.
+##   e.g. defaults below: a 20-damage normal hit spawns 6 + (20*0.6) = 18
+##   particles; the same hit as a crit spawns 18 * 1.5 = 27.
+@export var impact_particle_base_amount:            int   = 6
+@export var impact_particle_amount_per_damage:       float = 0.6
+@export var impact_particle_crit_amount_multiplier:  float = 1.5
+@export var impact_particle_amount_max:              int   = 40
+## How long each particle lives before disappearing (seconds).
+@export var impact_particle_lifetime:                float = 0.45
+## How fast particles shoot outward (px/sec) — randomized per-particle
+## between min and the appropriate max.
+@export var impact_particle_speed_min:               float = 60.0
+@export var impact_particle_speed_max_normal:        float = 140.0
+@export var impact_particle_speed_max_crit:          float = 200.0
+## Colours — white for a normal hit, red for a crit.
+@export var impact_particle_color_normal: Color = Color(1.00, 1.00, 1.00)
+@export var impact_particle_color_crit:   Color = Color(1.00, 0.15, 0.15)
+
+## ── TETHER SPREAD PARTICLES (ADDED) ───────────────────────────────────────
+## Purple burst shown on each ally hit by tether-spread damage — see
+## spawn_tether_spread_particles() below.
+@export var tether_spread_particle_amount:    int   = 14
+@export var tether_spread_particle_speed_min: float = 80.0
+@export var tether_spread_particle_speed_max: float = 220.0
+## Distance travelled before disappearing ≈ speed * lifetime (there's no
+## gravity on these), so raise this to make them travel farther before
+## vanishing, or shorten it for a tighter, snappier burst.
+@export var tether_spread_particle_lifetime:  float = 0.5
+@export var tether_spread_particle_color: Color = Color(0.65, 0.2, 0.85, 0.9)   # matches battle_grid.gd's tether_line_color
 
 
 # ── INTERNAL STATE ─────────────────────────────────────────────────────────────
@@ -107,8 +145,8 @@ func show_hit(unit, amount: int, is_crit: bool, damage_type: String, apply_shake
 	spawn_damage_number(unit.global_position, amount, is_crit, max_hp, damage_type, is_dot)
 
 	# ── Impact particles ──────────────────────────────────────────────────────
-	spawn_impact_particles(unit.global_position, damage_type, is_crit)
-
+	spawn_impact_particles(unit.global_position, amount, is_crit)
+	
 	# ── Screen shake — scales with how significant the hit is ─────────────────
 	if apply_shake:
 		var pct: float = float(amount) / float(max_hp)
@@ -250,50 +288,74 @@ func spawn_damage_number(world_pos: Vector2, amount: int,
 
 
 func spawn_impact_particles(world_pos: Vector2,
-							 damage_type: String, is_crit: bool = false) -> void:
-	## Spawns a one-shot burst of CPUParticles2D at the hit location.
-	## Colour is chosen by damage_type — add new match arms for custom types.
+							 amount: int, is_crit: bool = false) -> void:
+	## Spawns a one-shot burst of CPUParticles2D at the hit location: white
+	## for a normal hit, red for a crit. Particle COUNT scales with how much
+	## damage was dealt — see the impact_particle_* @export vars above for
+	## exactly what to tweak.
 	var p := CPUParticles2D.new()
 	_fx_layer.add_child(p)
 	p.position               = _to_screen(world_pos)
 	p.emitting               = false
 	p.one_shot               = true
 	p.explosiveness          = 0.95
-	p.amount                 = 18 if is_crit else 12
-	p.lifetime               = 0.45
+
+	# ── PARTICLE COUNT — scales with damage ───────────────────────────────────
+	var count: int = impact_particle_base_amount + int(round(float(amount) * impact_particle_amount_per_damage))
+	if is_crit:
+		count = int(round(float(count) * impact_particle_crit_amount_multiplier))
+	p.amount                 = clampi(count, 1, impact_particle_amount_max)
+
+	p.lifetime               = impact_particle_lifetime
 	p.direction              = Vector2(0.0, -1.0)
-	p.spread                 = 180.0
+	p.spread                 = 180.0   # full 360° coverage — shoots out in every direction
 	p.gravity                = Vector2(0.0, 190.0)
-	p.initial_velocity_min   = 60.0
-	p.initial_velocity_max   = 200.0 if is_crit else 140.0
+	p.initial_velocity_min   = impact_particle_speed_min
+	p.initial_velocity_max   = impact_particle_speed_max_crit if is_crit else impact_particle_speed_max_normal
 	p.scale_amount_min       = 2.5
 	p.scale_amount_max       = 6.0 if is_crit else 4.0
 
-	match damage_type:
-		"physical", "slash", "pierce", "blunt":
-			p.color = Color(1.00, 0.92, 0.75)   # warm white / gold
-		"fire":
-			p.color = Color(1.00, 0.45, 0.10)   # orange
-		"ice", "frost", "cold":
-			p.color = Color(0.60, 0.90, 1.00)   # icy blue
-		"lightning", "electric":
-			p.color = Color(0.95, 0.95, 0.20)   # yellow
-		"poison", "nature":
-			p.color = Color(0.30, 0.90, 0.25)   # green
-		"curse":
-			p.color = Color(0.45, 0.08, 0.55)   # dark purple — matches dot_damage_colors
-		"magic", "arcane":
-			p.color = Color(0.65, 0.40, 1.00)   # purple
-		"dark", "shadow":
-			p.color = Color(0.50, 0.20, 0.80)   # dark purple
-		"holy", "light":
-			p.color = Color(1.00, 0.95, 0.60)   # warm gold
-		_:
-			p.color = Color(1.00, 1.00, 1.00)   # white fallback
+	# ── COLOUR — white for a normal hit, red for a crit ───────────────────────
+	p.color = impact_particle_color_crit if is_crit else impact_particle_color_normal
 
 	p.emitting = true
 
 	# Auto-cleanup after the burst finishes.
+	get_tree().create_timer(p.lifetime + 0.2).timeout.connect(
+		func():
+			if is_instance_valid(p):
+				p.queue_free()
+	)
+
+
+func spawn_tether_spread_particles(world_pos: Vector2) -> void:
+	## Called once per ally that takes tether-spread damage (see
+	## ability_executor.gd's TETHER PROPAGATION step). Purple particles
+	## shoot outward in every direction from the hit unit.
+	##
+	## HOW TO EDIT (all in the CONFIGURATION section above):
+	##   - tether_spread_particle_amount        → how many particles
+	##   - tether_spread_particle_speed_min/max → how fast (px/sec)
+	##   - tether_spread_particle_lifetime      → how far before disappearing
+	##     (there's no gravity here, so distance ≈ speed * lifetime)
+	var p := CPUParticles2D.new()
+	_fx_layer.add_child(p)
+	p.position               = _to_screen(world_pos)
+	p.emitting               = false
+	p.one_shot               = true
+	p.explosiveness          = 1.0          # all particles fire at once
+	p.amount                 = tether_spread_particle_amount
+	p.lifetime                = tether_spread_particle_lifetime
+	p.direction               = Vector2(0.0, -1.0)
+	p.spread                  = 180.0        # every direction
+	p.gravity                 = Vector2.ZERO # no gravity -- speed*lifetime IS the travel distance
+	p.initial_velocity_min    = tether_spread_particle_speed_min
+	p.initial_velocity_max    = tether_spread_particle_speed_max
+	p.scale_amount_min        = 2.5
+	p.scale_amount_max        = 5.0
+	p.color                   = tether_spread_particle_color
+
+	p.emitting = true
 	get_tree().create_timer(p.lifetime + 0.2).timeout.connect(
 		func():
 			if is_instance_valid(p):

@@ -872,9 +872,11 @@ func _show_abilities_for(unit) -> void:
 		ui_manager.show_unit_abilities(unit)
 	if ui_manager and ui_manager.has_method("show_usable_items"):   # ADDED
 		ui_manager.show_usable_items(unit)
+	if ui_manager and ui_manager.has_method("show_cancelable_effects"):   # ADDED
+		ui_manager.show_cancelable_effects(unit)
 	if ui_manager and ui_manager.has_method("set_cancel_move_visible"):
 		ui_manager.set_cancel_move_visible(unit.can_cancel_move and not unit.has_acted)
-
+		
 # ── CANCEL MOVE ───────────────────────────────────────────────────────────────
 
 func cancel_unit_move() -> void:
@@ -1704,7 +1706,7 @@ func _on_enemy_turn_complete() -> void:
 			for key in unit.ability_cooldowns:
 				unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
 
-	# ── TETHER SAFETY NET (ADDED) ──────────────────────────────────────────
+# ── TETHER SAFETY NET (ADDED) ──────────────────────────────────────────
 	# A full round (one player turn + one enemy turn) has now completely
 	# finished, so every unit that's going to move this round already has.
 	# This is on top of — not instead of — the per-move refresh calls
@@ -1717,6 +1719,18 @@ func _on_enemy_turn_complete() -> void:
 	if grid != null:
 		grid.refresh_tether_visuals()
 
+	# ── DEAD UNIT SAFETY NET (ADDED) ──────────────────────────────────────
+	# A unit at 0 or below HP should already be mid-death via take_damage()
+	# → die() → the unit_died signal → _on_unit_died() (which erases it from
+	# player_units/enemy_units and re-checks victory/defeat). But that chain
+	# has a death-animation await in the middle (unit_node.gd's
+	# _finish_death()) -- if that ever gets stuck (a Thorns/tether reflect
+	# or a DOT tick killing a unit at an awkward moment for its
+	# AnimatedSprite2D, for instance), the signal never fires, the "corpse"
+	# never leaves player_units/enemy_units, and the stage can't end even
+	# though the unit is functionally dead. Re-check every round.
+	_sweep_dead_units()
+
 	# BUGFIX: this used to ALSO show "Player's Turn" here (await
 	# ui_manager.show_turn_announcement(true)) and then run round_number += 1,
 	# current_phase = PLAYER_TURN, _refresh_synergies(), and the ability-bar
@@ -1726,6 +1740,32 @@ func _on_enemy_turn_complete() -> void:
 	# as end_player_turn() above; _announce_then_start_player_turn() is the
 	# sole place that does any of this now.
 	_announce_then_start_player_turn()
+
+
+func _sweep_dead_units() -> void:
+	# Safety net only -- purely defensive. Called once per full round.
+	# Two different failure modes are handled here:
+	#   1. A unit is at 0 or below HP but die() was somehow never called at
+	#      all (_death_started is still false) -- call die() now.
+	#   2. die() WAS called (_death_started is true, so the death animation
+	#      is supposedly playing) but the unit is STILL sitting in
+	#      player_units/enemy_units -- its unit_died signal never fired (the
+	#      animation await got stuck). Finish the cleanup manually rather
+	#      than waiting on a signal that may never come.
+	for unit in player_units + enemy_units:
+		if not is_instance_valid(unit):
+			continue
+		if unit.current_hp > 0:
+			continue
+
+		if not unit._death_started:
+			print("☠️ Dead-unit safety net: ", unit.unit_data.display_name,
+				  " was at ", unit.current_hp, " HP but die() was never called -- forcing it now.")
+			unit.die()
+		elif unit in player_units or unit in enemy_units:
+			print("☠️ Dead-unit safety net: ", unit.unit_data.display_name,
+				  " never finished its death sequence -- forcing cleanup now.")
+			_on_unit_died(unit)
 
 
 func check_plague_spread_for(unit) -> void:
@@ -2352,4 +2392,63 @@ func on_item_selected(item_id: String, slot_index: int, unit) -> void:
 	ui_manager.clear_abilities()
 	ui_manager.show_unit_abilities(unit)
 	ui_manager.show_usable_items(unit)
-	
+	ui_manager.show_cancelable_effects(unit)
+
+func get_cancelable_effects_for(unit) -> Array:
+	# ADDED — gathers every still-active hazard/status THIS unit created
+	# with an ability flagged effect_is_cancelable, wherever it currently
+	# lives on the battlefield (a hazard on the grid, or a status sitting
+	# on any unit -- ally, enemy, or the caster itself). Each entry carries
+	# enough info to both display and cancel it. Used by ui_manager.gd's
+	# Cancel Effect button/popup, mirroring
+	# show_usable_items()/_open_items_popup().
+	var result: Array = []
+
+	if grid != null and grid.has_method("get_cancelable_hazards_for"):
+		for entry in grid.get_cancelable_hazards_for(unit):
+			var hdata: HazardData = entry["data"]
+			result.append({
+				"kind":         "hazard",
+				"display_name": hdata.display_name,
+				"icon":         hdata.icon,
+				"cell":         entry["cell"],
+				"hazard_id":    entry["hazard_id"],
+			})
+
+	var all_units: Array = player_units + enemy_units
+	for host_unit in all_units:
+		if not is_instance_valid(host_unit):
+			continue
+		for status_entry in host_unit.active_statuses:
+			if status_entry.get("is_cancelable", false) and status_entry.get("source_caster") == unit:
+				var sdata: StatusEffectData = status_entry["data"]
+				result.append({
+					"kind":         "status",
+					"display_name": sdata.display_name + " (on " + host_unit.unit_data.display_name + ")",
+					"icon":         sdata.icon,
+					"host_unit":    host_unit,
+					"status_id":    sdata.id,
+				})
+
+	return result
+
+
+func cancel_effect(effect_entry: Dictionary) -> void:
+	# ADDED — called by ui_manager.gd's Cancel Effect popup when the player
+	# picks one. No action cost, no phase/turn restriction — can be done
+	# any number of times, any time it's the player's turn.
+	if effect_entry.get("kind") == "hazard":
+		if grid != null and grid.has_method("cancel_hazard_group"):
+			grid.cancel_hazard_group(effect_entry["cell"], effect_entry["hazard_id"])
+	elif effect_entry.get("kind") == "status":
+		var host_unit = effect_entry.get("host_unit")
+		if is_instance_valid(host_unit):
+			host_unit.remove_status(effect_entry["status_id"])
+
+
+func refresh_ability_bar(unit) -> void:
+	# ADDED — public wrapper so ui_manager.gd can rebuild the whole ability
+	# bar after a cancel (exactly like on_item_selected() already does
+	# after using an item). _show_abilities_for() itself stays internal —
+	# every other caller of it lives inside this script.
+	_show_abilities_for(unit)

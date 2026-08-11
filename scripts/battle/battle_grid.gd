@@ -500,7 +500,7 @@ func _footprint_fully_free(anchor: Vector2i, footprint: Array, exclude_cell: Vec
 # ── HAZARD SYSTEM ─────────────────────────────────────────────────────────────
 
 func add_hazard(cell: Vector2i, hazard_data: HazardData, caster = null,
-				wall_group_id: String = "") -> void:
+				wall_group_id: String = "", is_cancelable: bool = false) -> void:
 	# Places (or refreshes) a hazard on a tile.
 	# Rules:
 	#   - Only one hazard of each TYPE (id) per tile.
@@ -510,6 +510,11 @@ func add_hazard(cell: Vector2i, hazard_data: HazardData, caster = null,
 	# wall_group_id links multiple cells together as one wall placement.
 	# Pass the SAME string for every cell in a single wall so they can be
 	# tracked/removed as a unit if needed later. Leave blank for normal hazards.
+	#
+	# is_cancelable: ADDED — comes straight from the ability's
+	# effect_is_cancelable toggle. Lets battle_manager's Cancel Effect
+	# button find and instantly remove this hazard early. See
+	# get_cancelable_hazards_for()/cancel_hazard_group() below.
 
 	if not hazard_map.has(cell):
 		hazard_map[cell] = {}
@@ -523,6 +528,7 @@ func add_hazard(cell: Vector2i, hazard_data: HazardData, caster = null,
 		if not hazard_data.is_wall_hazard:
 			refreshed_duration = min(refreshed_duration, HAZARD_MAX_TURNS)
 		slot[hazard_data.id]["remaining"] = refreshed_duration
+		slot[hazard_data.id]["is_cancelable"] = is_cancelable   # ADDED
 		return
 
 	# New hazard type: calculate duration.
@@ -540,6 +546,7 @@ func add_hazard(cell: Vector2i, hazard_data: HazardData, caster = null,
 		"visual":        null,
 		"visual_state":  "none",
 		"wall_group_id": wall_group_id,
+		"is_cancelable": is_cancelable,   # ADDED
 	}
 
 	_spawn_hazard_visual(cell, hazard_data.id)
@@ -805,7 +812,8 @@ func apply_hazard_to_unit(unit, cell: Vector2i, trigger: String) -> void:
 
 # ── WALL HAZARD PLACEMENT ─────────────────────────────────────────────────────
 
-func place_wall(cells: Array, hazard_data: HazardData, caster = null) -> void:
+func place_wall(cells: Array, hazard_data: HazardData, caster = null,
+				is_cancelable: bool = false) -> void:
 	# Places a wall hazard across every cell in 'cells'. All cells share the
 	# same wall_group_id so they're recognisably part of one wall placement.
 	# Called by ability_executor after it has calculated the wall's cell line
@@ -827,8 +835,48 @@ func place_wall(cells: Array, hazard_data: HazardData, caster = null) -> void:
 		# terrain — that tile is already impassable for an unrelated reason.
 		if tile_map.has(cell) and tile_map[cell].is_wall:
 			continue
-		add_hazard(cell, hazard_data, caster, wall_group_id)
+		add_hazard(cell, hazard_data, caster, wall_group_id, is_cancelable)
 
+func get_cancelable_hazards_for(owner_unit) -> Array:
+	# ADDED — used by battle_manager.gd's Cancel Effect button. Returns one
+	# entry per DISTINCT cancelable hazard this unit caused, using a single
+	# representative cell for each -- a multi-cell wall placement shares one
+	# wall_group_id across all its cells, so it's collapsed to one entry
+	# here. Canceling that entry removes every cell of the wall together
+	# (see cancel_hazard_group() below).
+	var result: Array = []
+	var seen_wall_groups: Array = []
+	for cell in hazard_map.keys():
+		for hazard_id in hazard_map[cell]:
+			var entry = hazard_map[cell][hazard_id]
+			if entry.get("caster") != owner_unit or not entry.get("is_cancelable", false):
+				continue
+			var group_id: String = entry.get("wall_group_id", "")
+			if group_id != "":
+				if group_id in seen_wall_groups:
+					continue
+				seen_wall_groups.append(group_id)
+			result.append({"cell": cell, "hazard_id": hazard_id, "data": entry["data"]})
+	return result
+
+
+func cancel_hazard_group(cell: Vector2i, hazard_id: String) -> void:
+	# ADDED — removes a cancelable hazard the player chose to end early via
+	# the Cancel Effect button. If it's part of a wall (shares a
+	# wall_group_id with other cells), the whole wall is removed together —
+	# canceling one segment of a wall you placed removes the wall.
+	if not hazard_map.has(cell) or not hazard_map[cell].has(hazard_id):
+		return
+	var group_id: String = hazard_map[cell][hazard_id].get("wall_group_id", "")
+	if group_id == "":
+		remove_hazard(cell, hazard_id)
+		return
+	var cells_to_clear: Array = []
+	for c in hazard_map.keys():
+		if hazard_map[c].has(hazard_id) and hazard_map[c][hazard_id].get("wall_group_id", "") == group_id:
+			cells_to_clear.append(c)
+	for c in cells_to_clear:
+		remove_hazard(c, hazard_id)
 
 func tick_shields() -> void:
 	# Counts down shield durations. Called each round.

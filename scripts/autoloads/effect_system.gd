@@ -279,7 +279,6 @@ func _do_add_equipment(effect: Dictionary, context: Dictionary) -> void:
 	run_state.equipment_inventory.append(equipment_id)
 	EventBus.publish(EventBus.ON_EQUIPMENT_ACQUIRED, {"equipment_id": equipment_id})
 
-
 func _do_add_unit(effect: Dictionary, context: Dictionary) -> void:
 	var run_state = context.get("run_state", null)
 	if run_state == null:
@@ -288,6 +287,25 @@ func _do_add_unit(effect: Dictionary, context: Dictionary) -> void:
 	if unit_id == "":
 		push_warning("EffectSystem: add_unit effect missing unit_id")
 		return
+
+	# ── DUPLICATE CHECK (ADDED) ────────────────────────────────────────────
+	# Mirrors ShopEngine.purchase()'s "buying a copy you already own levels
+	# it up instead of adding a second copy" rule -- but here, for EVERY
+	# source of a free unit (tarot cards, encounter rewards, etc.), not just
+	# shop purchases. If the player already owns this unit, level it up
+	# instead of creating a duplicate roster entry. Already max level? Then
+	# there's nothing left to level -- the extra copy is simply not granted
+	# (same as a maxed unit having nothing left to "sell" at the shop).
+	var existing_entry: Dictionary = _find_owned_unit_entry(unit_id, run_state)
+	if not existing_entry.is_empty():
+		if LevelUpEngine.can_level_up(existing_entry):
+			var level_up_results: Array = LevelUpEngine.perform_level_up(existing_entry, _load_unit_data(unit_id))
+			EventBus.publish(EventBus.ON_UNIT_LEVELED_UP, {
+				"unit_entry": existing_entry, "unit_id": unit_id,
+				"new_level": int(existing_entry.get("level", 1)), "level_up_results": level_up_results,
+			})
+		return
+
 	var new_entry := {
 		"unit_id": unit_id,
 		"instance_id": unit_id + "_" + str(Time.get_ticks_msec()),
@@ -299,6 +317,31 @@ func _do_add_unit(effect: Dictionary, context: Dictionary) -> void:
 		run_state.party.append(new_entry)
 	else:
 		run_state.bench.append(new_entry)
+
+
+func _find_owned_unit_entry(unit_id: String, run_state) -> Dictionary:
+	# Same lookup ShopEngine._find_owned_unit_entry() / shop_manager.gd's
+	# _find_owned_entry() use -- duplicated here (rather than reaching into
+	# ShopEngine's private helper) so EffectSystem doesn't need to depend on
+	# ShopEngine just to check unit ownership. Returns the actual party/bench
+	# Dictionary (party checked first), NOT a copy -- GDScript Dictionaries
+	# are passed by reference, so LevelUpEngine.perform_level_up() mutating
+	# this return value mutates the real save data directly.
+	for entry in run_state.party:
+		if entry.get("unit_id", "") == unit_id:
+			return entry
+	for entry in run_state.bench:
+		if entry.get("unit_id", "") == unit_id:
+			return entry
+	return {}
+
+
+func _load_unit_data(unit_id: String) -> UnitData:
+	# Same path convention ShopEngine._load_unit_data() uses.
+	var path := "res://resources/units/" + unit_id + "_data.tres"
+	if not ResourceLoader.exists(path):
+		return null
+	return load(path) as UnitData
 
 
 func _do_add_tarot_card(effect: Dictionary, context: Dictionary) -> void:

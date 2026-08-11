@@ -58,6 +58,7 @@ script = ExtResource("1_quapp")
 id = "executioner"
 display_name = "Executioner"
 description = "A strong fighter who is particularly effective against weakened enemies."
+unique_mechanics = "Deals bonus damage based on number of debuffs on the enemy."
 portrait = ExtResource("3_u3eig")
 battle_sprite = ExtResource("2_y4ilv")
 synergy_tags = Array[String](["debuff"])
