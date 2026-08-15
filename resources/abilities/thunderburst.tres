@@ -8,14 +8,11 @@
 [ext_resource type="Script" uid="uid://bv33cyg2ct1h3" path="res://scripts/data/ability_enhancement_data.gd" id="2_j442s"]
 [ext_resource type="Resource" uid="uid://ck8ypstjsq5qv" path="res://resources/abilityenhancement/aoeadd.tres" id="3_30xvm"]
 [ext_resource type="Resource" uid="uid://dj67lyevlfsqv" path="res://resources/abilityenhancement/pam.tres" id="4_23ktv"]
+[ext_resource type="Resource" uid="uid://i537rn0jp4y4" path="res://resources/abilityenhancement/vampire.tres" id="5_4o80k"]
 [ext_resource type="Resource" uid="uid://b4ok83jdg0b3d" path="res://resources/abilityenhancement/isolateadd.tres" id="5_ewwy6"]
 [ext_resource type="Resource" uid="uid://cv3rds03lcwb2" path="res://resources/abilityenhancement/dmgadd.tres" id="6_0fqrk"]
 [ext_resource type="Resource" uid="uid://ydam6w7q00im" path="res://resources/abilityenhancement/dmgbuff.tres" id="7_qlayp"]
 [ext_resource type="Resource" uid="uid://dvavb62ptlg87" path="res://resources/abilityenhancement/debuffdmg.tres" id="8_h0xk7"]
-[ext_resource type="Resource" uid="uid://crucb45ycu1bs" path="res://resources/abilityenhancement/atkreduce.tres" id="9_o81cf"]
-[ext_resource type="Resource" uid="uid://usdlrto7r5e8" path="res://resources/abilityenhancement/defreduce.tres" id="10_halia"]
-[ext_resource type="Resource" uid="uid://bw7jx2nbji6dw" path="res://resources/abilityenhancement/matkreduce.tres" id="11_f7ugh"]
-[ext_resource type="Resource" uid="uid://d2e5baxwi0msn" path="res://resources/abilityenhancement/mdefreduce.tres" id="12_8a1ux"]
 
 [resource]
 script = ExtResource("2_2fbi3")
@@ -29,10 +26,10 @@ mana_cost = 30
 max_range = 0
 aoe_shape = "square"
 aoe_size = 2
-base_damage_multiplier = 1.2
+base_damage_multiplier = 1.5
 damage_type = "magical"
 scaling_stat = "matk"
 heal_percent = -2.0
 post_attack_move_squares = 1
-eligible_enhancements = Array[ExtResource("2_j442s")]([ExtResource("3_30xvm"), ExtResource("4_23ktv"), ExtResource("5_ewwy6"), ExtResource("6_0fqrk"), ExtResource("7_qlayp"), ExtResource("8_h0xk7"), ExtResource("9_o81cf"), ExtResource("10_halia"), ExtResource("11_f7ugh"), ExtResource("12_8a1ux")])
+eligible_enhancements = Array[ExtResource("2_j442s")]([ExtResource("5_4o80k"), ExtResource("3_30xvm"), ExtResource("4_23ktv"), ExtResource("5_ewwy6"), ExtResource("6_0fqrk"), ExtResource("7_qlayp"), ExtResource("8_h0xk7")])
 metadata/_custom_type_script = "uid://ba6fjn73ew7qv"

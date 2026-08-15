@@ -62,6 +62,6 @@ text = "Confirm Party"
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1392260819]
 z_index = -17
-position = Vector2(968.0001, 546.5)
-scale = Vector2(1.1406618, 1.1580645)
+position = Vector2(959.99994, 540)
+scale = Vector2(1.1347518, 1.1612903)
 texture = ExtResource("2_a4tp1")

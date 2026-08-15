@@ -15,5 +15,5 @@ max_stacks = 10
 has_dot = true
 dot_damage_mode = "magical"
 dot_flat_amount = 1
-dot_damage_percent = 0.5
+dot_damage_percent = 0.25
 metadata/_custom_type_script = "uid://gsbk18mmfnol"

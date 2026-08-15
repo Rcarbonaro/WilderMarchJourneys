@@ -15,6 +15,5 @@ idle_scene = ExtResource("3_cespw")
 exit_scene = ExtResource("2_c33bb")
 damage_multiplier = 0.75
 is_wall_hazard = true
-wall_length = 4
 wall_blocks_line_of_sight = true
 metadata/_custom_type_script = "uid://bv2ltgyye0n4f"

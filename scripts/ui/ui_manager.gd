@@ -359,7 +359,7 @@ func _build_stat_rows() -> void:
 	var icon_paths: Dictionary = {
 		"atk":         "res://sprites/UI/Icons/atk_icon.png",
 		"matk":        "res://sprites/UI/Icons/matk_icon.png",
-		"crit_chance": "res://sprites/UI/Icons/crit%_icon.png",
+		"crit_chance": "res://sprites/UI/Icons/crit_icon.png",
 		"crit_damage": "res://sprites/UI/Icons/critdmg_icon.png",
 		"def":         "res://sprites/UI/Icons/def_icon.png",
 		"mdef":        "res://sprites/UI/Icons/mdef_icon.png",

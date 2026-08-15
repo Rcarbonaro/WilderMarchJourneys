@@ -7,8 +7,8 @@
 script = ExtResource("1_nf1mi")
 id = "shieldadd"
 display_name = "Add Temporary HP"
-description = "Add 5 temporary HP"
+description = "Add 10 temporary HP"
 icon = ExtResource("1_s3alg")
 enhancement_type = "shield_target"
-magnitude = 5.0
+magnitude = 10.0
 metadata/_custom_type_script = "uid://bv33cyg2ct1h3"

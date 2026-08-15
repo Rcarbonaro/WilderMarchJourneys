@@ -28,8 +28,10 @@ static func get_available_units(excluded_ids: Array = []) -> Array[UnitData]:
 		return result
 
 	dir.list_dir_begin()
+	print ("DEBUG found file: ", UNITS_DIR)
 	var file_name := dir.get_next()
 	while file_name != "":
+		print ("DEBUG found file: ", file_name)
 		if not dir.current_is_dir() and file_name.ends_with(".tres"):
 			var unit_data := load(UNITS_DIR + file_name) as UnitData
 			if unit_data != null and not excluded_ids.has(unit_data.id):

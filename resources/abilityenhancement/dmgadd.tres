@@ -7,5 +7,5 @@ script = ExtResource("1_cdyny")
 id = "dmgadd"
 display_name = "Increase Damage Dealt"
 description = "Increase damage dealt by 5%"
-magnitude = 0.05
+magnitude = 0.1
 metadata/_custom_type_script = "uid://bv33cyg2ct1h3"

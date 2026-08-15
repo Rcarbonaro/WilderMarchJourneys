@@ -264,7 +264,7 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 		"MATK": preload("res://sprites/UI/Icons/matk_icon.png"),
 		"DEF": preload("res://sprites/UI/Icons/def_icon.png"),
 		"MDEF": preload("res://sprites/UI/Icons/mdef_icon.png"),
-		"Crit %": preload("res://sprites/UI/Icons/crit%_icon.png"),
+		"Crit %": preload("res://sprites/UI/Icons/crit_icon.png"),
 		"Crit DMG": preload("res://sprites/UI/Icons/critdmg_icon.png"),
 		"MOV": preload("res://sprites/UI/Icons/mov_icon.png")
 	}

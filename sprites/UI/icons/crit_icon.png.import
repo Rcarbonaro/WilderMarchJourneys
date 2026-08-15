@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://7p7o50wbmtpr"
-path="res://.godot/imported/crit%_icon.png-23a9ee393890969fe7c8bc5ede0e3b34.ctex"
+uid="uid://naspu1qvrnv5"
+path="res://.godot/imported/crit_icon.png-d8e7ced7bb1b36a1d7ba021b4b1b8dc9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/UI/icons/crit%_icon.png"
-dest_files=["res://.godot/imported/crit%_icon.png-23a9ee393890969fe7c8bc5ede0e3b34.ctex"]
+source_file="res://sprites/UI/icons/crit_icon.png"
+dest_files=["res://.godot/imported/crit_icon.png-d8e7ced7bb1b36a1d7ba021b4b1b8dc9.ctex"]
 
 [params]
 

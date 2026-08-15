@@ -1,6 +1,6 @@
 {
   "id": "lesser_healing_potion", "name": "Lesser Healing Potion", "type": "consumable",
   "description": "Restore 10 HP",
-  "icon": "res://sprites/UI/skill icons/mana potion.png",
+  "icon": "res://sprites/UI/skill icons/health potion.png",
   "effect_type": "heal_flat", "heal_amount": 10
 }

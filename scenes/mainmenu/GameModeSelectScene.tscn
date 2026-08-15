@@ -7,6 +7,8 @@
 [node name="GameModeSelect" type="Control" unique_id=209950630]
 layout_mode = 3
 anchors_preset = 0
+offset_left = -1.0
+offset_top = -1.0
 script = ExtResource("1_w3dmr")
 
 [node name="CenterContainer" type="CenterContainer" parent="." unique_id=12145280]
@@ -59,6 +61,6 @@ color = Color(0, 0, 0, 0.3529412)
 
 [node name="Sprite2D3" type="Sprite2D" parent="." unique_id=1195883113]
 z_index = -6
-position = Vector2(960.5, 540)
-scale = Vector2(1.1353428, 1.1612904)
+position = Vector2(961.00006, 540.5)
+scale = Vector2(1.1347518, 1.1602151)
 texture = ExtResource("3_yx7ac")
