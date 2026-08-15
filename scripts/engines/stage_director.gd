@@ -64,6 +64,12 @@ const MINI_ENCOUNTER_CHANCE: float = 0.3
 # every other rebalance constant across this project (e.g. custom_
 # equipment_handlers.gd's BLOODTHIRSTER_MAX_STACKS).
 
+const TUTORIAL_ENEMY_IDS: Array[String] = ["forest_bandit", "forest_bandit"]
+# ADDED. EDIT to match 1-2 real, weak, tutorial-appropriate enemy_ids from
+# your content -- these are placeholder guesses. Must match
+# MapGenerator.generate_tutorial_map()'s TUTORIAL_ENEMY_COUNT (2 by
+# default) in length, or some spawn cells will just sit empty.
+
 # ── STAGE CONTENT CACHE (Scout Ahead) ─────────────────────────────────────────
 # MapGenerator.generate_map() and ScalingEngine.resolve_spawn_table() are both
 # pure randomness -- calling either twice for the "same" stage produces a
@@ -96,6 +102,36 @@ func get_or_generate_stage_content(stage_index: int) -> Dictionary:
 	if run_state.run_id != _cache_run_id:
 		_stage_content_cache.clear()
 		_cache_run_id = run_state.run_id
+
+	# ── TUTORIAL BRANCH (ADDED) ─────────────────────────────────────────────
+	# Bypasses ScalingEngine.resolve_spawn_table() (real difficulty scaling
+	# has no business touching the tutorial's fixed, easy fight) and
+	# MapGenerator.generate_map() (which can't produce the exact hand-placed
+	# formation the tutorial needs) in favor of a fixed, simple setup.
+	if run_state.is_tutorial:
+		if _stage_content_cache.has(stage_index):
+			var cached: Dictionary = _stage_content_cache[stage_index]
+			MapGenerator.last_result = {
+				"tile_map": cached.get("tile_map", {}), "player_spawns": cached.get("ally_cells", []),
+				"enemy_spawns": cached.get("enemy_cells", []), "feature_placements": [],
+			}
+			return cached
+		var battle_grid_script := preload("res://scripts/battle/battle_grid.gd")
+		MapGenerator.generate_tutorial_map(battle_grid_script.GRID_WIDTH, battle_grid_script.GRID_HEIGHT)
+		var enemies: Array = []
+		for enemy_id: String in TUTORIAL_ENEMY_IDS:
+			var path: String = "res://resources/enemies/" + enemy_id + "_data.tres"
+			if ResourceLoader.exists(path):
+				enemies.append(load(path) as UnitData)
+		var tutorial_content := {
+			"stage_type": "combat", "biome": "forest", "enemies": enemies,
+			"tile_map": MapGenerator.last_result.get("tile_map", {}),
+			"ally_cells": MapGenerator.last_result.get("player_spawns", []),
+			"enemy_cells": MapGenerator.last_result.get("enemy_spawns", []),
+			"feature_placements": [],
+		}
+		_stage_content_cache[stage_index] = tutorial_content
+		return tutorial_content
 
 	if _stage_content_cache.has(stage_index):
 		var cached: Dictionary = _stage_content_cache[stage_index]
@@ -216,8 +252,8 @@ func complete_stage() -> void:
 	# rebalance how often this fires; MINI_ENCOUNTER_SCENE_PATH if you move
 	# the scene file.
 	var was_combat_stage: bool = just_finished_type in ["combat", "subboss", "special_combat", "boss"]
-	if MINI_ENCOUNTER_ENABLED and was_combat_stage and randf() < MINI_ENCOUNTER_CHANCE \
-			and ResourceLoader.exists(MINI_ENCOUNTER_SCENE_PATH):
+	if MINI_ENCOUNTER_ENABLED and was_combat_stage and not RunManager.current_run.is_tutorial \
+			and randf() < MINI_ENCOUNTER_CHANCE and ResourceLoader.exists(MINI_ENCOUNTER_SCENE_PATH):
 		SceneTransitions.change_scene(MINI_ENCOUNTER_SCENE_PATH)
 		return
 
@@ -246,6 +282,16 @@ func _apply_reward_rules() -> void:
 	# match wins." Any rule whose conditions pass against the JUST-FINISHED
 	# stage has its effects applied; multiple rules can fire on the same stage.
 	var run_state := RunManager.current_run
+
+	# ── TUTORIAL GOLD OVERRIDE (ADDED) ───────────────────────────────────────
+	# "In the tutorial, let's have it give 30 gold to make sure the player
+	# can get everything they need" -- fixed amount, real reward rules
+	# skipped entirely so nothing about it depends on authored content.
+	if run_state.is_tutorial:
+		run_state.gold += 30
+		last_stage_gold_reward = 30
+		return
+
 	# ADDED: measuring gold before/after (rather than reading each rule's own
 	# "amount") also picks up any other gold-changing side effects a rule's
 	# effects might trigger, so the popup always matches what the player's
@@ -270,4 +316,3 @@ func _apply_reward_rules() -> void:
 		print("🏕️ +", recruit_bonus, " gold from camp recruits.")
 
 	last_stage_gold_reward = run_state.gold - gold_before
-	

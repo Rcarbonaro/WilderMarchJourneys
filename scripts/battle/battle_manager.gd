@@ -123,6 +123,13 @@ var plague_system: PlagueSystem = null
 
 func _ready() -> void:
 	EventBus.publish(EventBus.ON_BATTLE_START, {})
+	TutorialManager.register_battle_manager(self)
+	TutorialManager.register_wait_for_check("all_player_units_acted", func() -> bool:
+		for unit in player_units:
+			if is_instance_valid(unit) and not unit.has_acted:
+				return false
+		return true
+	)
 
 	# ADDED — stage announcement banner. Test mode has no real stage_index,
 	# so it's skipped there rather than showing a meaningless number.
@@ -603,6 +610,25 @@ func on_tile_tapped(cell: Vector2i) -> void:
 	# Main entry point for all grid taps. Called by input_handler.gd.
 	print("🎯 Tile tapped: ", cell, " | Phase: ", current_phase)
 
+	# ── TUTORIAL GATE (ADDED) ────────────────────────────────────────────
+	# A no-op when no tutorial is running. When one IS running, this lets
+	# through only unit-selects and moves that match what the current step
+	# is waiting for -- see tutorial_manager.gd's try_consume().
+	if TutorialManager.is_active:
+		var unit_here = grid.get_unit_at(cell)
+		if selected_unit == null and unit_here != null and unit_here.is_player_unit:
+			if not TutorialManager.try_consume("unit_selected", {"unit_id": unit_here.unit_data.id}):
+				return
+		elif selected_unit != null and selected_ability == null:
+			# ADDED: is_real_move distinguishes an actual move from tapping
+			# the unit's own tile (which normally means "skip movement") --
+			# without this, re-tapping the unit satisfied the gate without
+			# ever actually moving it.
+			var is_real_move: bool = cell != selected_unit.grid_position and reachable_cells.has(cell)
+			if not TutorialManager.try_consume("unit_moved",
+					{"unit_id": selected_unit.unit_data.id, "is_real_move": is_real_move}):
+				return
+				
 	# ── WALL PLACEMENT MODE ────────────────────────────────────────────────────
 	# Two-tap flow: first tap picks the start tile, second tap picks the end
 	# tile and (if valid) executes the wall ability immediately.
@@ -1093,6 +1119,12 @@ func on_ability_selected(ability: AbilityData) -> void:
 	if selected_unit == null:
 		return
 
+	# ── TUTORIAL GATE (ADDED) ────────────────────────────────────────────
+	if TutorialManager.is_active:
+		if not TutorialManager.try_consume("ability_selected",
+				{"unit_id": selected_unit.unit_data.id, "is_aura": ability.is_aura}):
+			return
+
 	# BUGFIX: without this, a stale ability button left on screen from
 	# before the unit acted (most notably during POST_ATTACK's free
 	# repositioning window, where the bar was never hidden -- see the fix
@@ -1520,6 +1552,14 @@ func end_player_turn() -> void:
 	# See the mirrored guard in _on_enemy_turn_complete() below.
 	if is_battle_over or current_phase == TurnPhase.GAME_OVER:
 		return
+	# ── TUTORIAL GATE (ADDED) ────────────────────────────────────────────
+	# With the auto-end-turn skip in _check_end_player_turn() below, this
+	# is now the ONLY way end_player_turn() gets called during the
+	# tutorial -- so gating right here cleanly covers the real "End Round"
+	# button press, matching step s23.
+	if TutorialManager.is_active:
+		if not TutorialManager.try_consume("end_round_pressed", {}):
+			return
 	if _check_for_occupancy_conflicts():
 		if ui_manager and ui_manager.has_method("show_big_warning_popup"):
 			ui_manager.show_big_warning_popup("Two units cannot occupy the same space")
@@ -1782,6 +1822,13 @@ func _check_end_player_turn() -> void:
 	for unit in player_units:
 		if is_instance_valid(unit) and not unit.has_acted:
 			return   # At least one unit still hasn't acted — keep waiting.
+	# ── TUTORIAL (ADDED) ──────────────────────────────────────────────────
+	# Skip the auto-end-turn convenience while the tutorial is running --
+	# step s23 wants the player to manually press End Round, with the
+	# tutorial spotlighting and gating that specific press, not have the
+	# round silently end itself the instant the last unit acts.
+	if TutorialManager.is_active:
+		return
 	end_player_turn()
 
 

@@ -19,6 +19,10 @@
 # possible near the right edge -- both by explicit distance-based selection,
 # not just "different random ranges."
 #
+# TUTORIAL (ADDED): generate_tutorial_map() below is a separate, non-random
+# entry point used only by the tutorial's opening battle -- see its own
+# comment for why it can't just reuse generate_map().
+#
 # Register this as an autoload named "MapGenerator".
 
 extends Node
@@ -38,6 +42,11 @@ const MAP_FEATURES_DIR := "res://resources/map_features/"
 # convenience (res://resources/map_features/forest/oak_tree.tres etc.), but
 # matching is always based on each resource's OWN "biomes" field, not its
 # folder location.
+
+const TUTORIAL_ENEMY_COUNT := 2
+# ADDED. How many enemy spawn cells generate_tutorial_map() produces. EDIT to
+# taste -- must match the length of TUTORIAL_ENEMY_IDS in stage_director.gd,
+# or some spawn cells will just sit empty.
 
 
 var last_result: Dictionary = {}
@@ -188,6 +197,45 @@ func generate_map(width: int, height: int, biome: String, party_size: int, enemy
 		"player_spawns": player_spawns,
 		"enemy_spawns": enemy_spawns,
 		"feature_placements": feature_placements,
+	}
+	return last_result
+
+
+func generate_tutorial_map(width: int, height: int) -> Dictionary:
+	# ADDED: the tutorial's opening battle needs an exact, hand-placed
+	# formation -- not generate_map()'s randomized clustering -- and zero
+	# scattered decoration, just open forest ground. See stage_director.gd's
+	# get_or_generate_stage_content() for where this gets called instead of
+	# generate_map().
+	#
+	# Formation per the tutorial design doc: Hexweaver, Icemage, and
+	# Dreadknight in a row, Executioner directly above the Icemage. Player
+	# party array order (run_manager.gd's start_tutorial_run()) is
+	# [hexweaver, icemage, dreadknight, executioner] -- index i in the party
+	# array must land on player_spawns[i], so this order has to match that
+	# exactly (see battle_manager.gd's _spawn_player_party_from_run()).
+	var center_row: int = height / 2
+	var player_spawns: Array[Vector2i] = [
+		Vector2i(1, center_row),      # Hexweaver
+		Vector2i(2, center_row),      # Icemage
+		Vector2i(3, center_row),      # Dreadknight
+		Vector2i(2, center_row - 1),  # Executioner -- one row up, above the Icemage
+	]
+
+	var enemy_spawns := _generate_enemy_spawns(width, height, TUTORIAL_ENEMY_COUNT)
+
+	var tile_map: Dictionary = {}
+	for x in range(width):
+		for y in range(height):
+			tile_map[Vector2i(x, y)] = _make_open_tile()   # forest background only -- no scattered features
+
+	_ensure_full_connectivity(tile_map, player_spawns, enemy_spawns, width, height)
+
+	last_result = {
+		"tile_map": tile_map,
+		"player_spawns": player_spawns,
+		"enemy_spawns": enemy_spawns,
+		"feature_placements": [],
 	}
 	return last_result
 

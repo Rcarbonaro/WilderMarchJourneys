@@ -35,6 +35,7 @@ const EQUIPMENT_ADVANCED_DIR := "res://content/equipment/advanced/"
 const FORGING_RECIPES_FILE   := "res://content/equipment/forging_recipes.json"
 const SHOP_DIR                := "res://content/shop/"
 const SCALING_DIR             := "res://content/scaling/"
+const TUTORIAL_DIR            := "res://content/tutorial/"   # ADDED
 const SPAWN_TABLE_DIR         := "res://content/spawn_tables/"
 const STAGE_TYPE_MAP_FILE     := "res://content/scaling/stage_type_map.json"
 const GAME_MODES_DIR          := "res://content/game_modes/"
@@ -66,6 +67,7 @@ var dialogue_graphs: Dictionary = {}
 var equipment: Dictionary = {}          # basic AND advanced share one table
 var shop_entries: Dictionary = {}
 var scaling_configs: Dictionary = {}    # keyed by their own "id", looked up by stage_index
+var tutorial_steps: Dictionary = {}     # ADDED -- keyed by their own "id", e.g. "tutorial_intro"
 var spawn_tables: Dictionary = {}
 var forging_recipes: Dictionary = {}    # keyed by "subtypeA_subtypeB" (sorted)
 var stage_type_map: Dictionary = {}     # keyed by String(stage 1-10)
@@ -112,6 +114,8 @@ func _load_all_content() -> void:
 	# mistaken for a scaling config, so we make sure it isn't in the dict.
 	scaling_configs.erase("stage_type_map")
 	stage_type_map = _load_single_file(STAGE_TYPE_MAP_FILE, [])
+
+	tutorial_steps = _load_folder(TUTORIAL_DIR, ["id", "steps"])   # ADDED
 
 	forging_recipes = _load_forging_recipes()
 	game_modes = _load_folder(GAME_MODES_DIR, ["id", "starting_gold", "party_size"])
@@ -262,6 +266,10 @@ func get_scaling_config(stage_index: int) -> Dictionary:
 		if int(cfg.get("stage_index", -1)) == stage_index:
 			return cfg
 	return {}
+
+func get_tutorial_steps(id: String) -> Array:   # ADDED
+	var def: Dictionary = tutorial_steps.get(id, {})
+	return def.get("steps", [])
 
 func get_spawn_table(id: String) -> Dictionary:
 	return spawn_tables.get(id, {})

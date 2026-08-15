@@ -1,17 +1,19 @@
 # res://scripts/ui/tutorial_overlay.gd
 #
-# TUTORIAL OVERLAY -- the actual on-screen popup + arrow + spotlight. One
-# instance lives for the whole tutorial (add it once, high in the scene
-# tree, e.g. as a sibling CanvasLayer in your main scene, same way
-# UnitInfoPopup gets added). It listens to TutorialManager.step_started and
-# rebuilds itself for each new step; it doesn't know anything about battle,
-# shop, or deployment specifically.
+# TUTORIAL OVERLAY -- the actual on-screen popup + arrow + spotlight.
+# Spawned automatically by tutorial_manager.gd's _ready() -- you do NOT
+# place this in any scene yourself, and it needs no node name. It survives
+# every scene change because its parent (TutorialManager) is an autoload.
+#
+# It listens to TutorialManager.step_started and rebuilds itself for each
+# new step; it doesn't know anything about battle, shop, or deployment
+# specifically -- it only knows how to point at a registered target.
 #
 # BLOCKING vs NON-BLOCKING: a step can set "block_input": false (default is
 # true) to skip the darkened scrim entirely -- use this when pointing at
 # something inside a screen that already protects itself, like the
-# read-only UnitInfoPopup (see its own _unhandled_input -- outside clicks
-# just close it, there's nothing else in there TO misclick).
+# read-only UnitInfoPopup (outside clicks just close it, there's nothing
+# else in there TO misclick).
 
 class_name TutorialOverlay
 extends CanvasLayer
@@ -25,7 +27,6 @@ var _scrim_top: ColorRect
 var _scrim_bottom: ColorRect
 var _scrim_left: ColorRect
 var _scrim_right: ColorRect
-var _spotlight_border: Control     # drawn via _draw() override below
 var _arrow: Polygon2D
 var _textbox: PanelContainer
 var _textbox_label: RichTextLabel
@@ -33,6 +34,10 @@ var _continue_button: Button
 
 var _current_step: Dictionary = {}
 var _current_target_key: String = ""
+# NOTE: this is a KEY (String), not a cached Node reference. The target is
+# re-resolved fresh every frame in _get_target_screen_rect() -- see that
+# function's comment for why caching the resolved node broke step 1 at
+# tutorial startup (the target may not exist yet the instant a step begins).
 
 
 func _ready() -> void:
@@ -53,7 +58,10 @@ func _build_shell() -> void:
 
 	_arrow = Polygon2D.new()
 	_arrow.color = ARROW_COLOR
-	_arrow.polygon = PackedVector2Array([Vector2(0, -14), Vector2(14, 10), Vector2(-14, 10)])
+	# Apex points DOWN by default (rotation 0 = sitting above the target,
+	# pointing down into it). _layout() rotates 180 to flip it for
+	# below-the-target placement.
+	_arrow.polygon = PackedVector2Array([Vector2(0, 14), Vector2(14, -10), Vector2(-14, -10)])
 	add_child(_arrow)
 	_arrow.visible = false
 
@@ -110,7 +118,7 @@ func _on_tutorial_ended() -> void:
 
 func _process(_delta: float) -> void:
 	if visible:
-		_layout()   # target may be moving (a unit walking) or the window may have resized
+		_layout()   # target may be moving (a unit walking), not yet spawned, or the window may have resized
 
 
 func _layout() -> void:
@@ -118,7 +126,8 @@ func _layout() -> void:
 	var target_rect: Rect2 = _get_target_screen_rect()
 
 	if target_rect == Rect2():
-		# No target (or it's a pure-narration step) -- full scrim, textbox centered low.
+		# No target (or it's a pure-narration step, or the target hasn't
+		# resolved yet this frame) -- full scrim, textbox centered low.
 		_scrim_top.position = Vector2.ZERO
 		_scrim_top.size = viewport_size
 		_scrim_bottom.size = Vector2.ZERO
@@ -160,7 +169,6 @@ func _layout() -> void:
 		20, viewport_size.x - box_size.x - 20)
 	_textbox.position = Vector2(box_x, box_y)
 
-
 func _get_target_screen_rect() -> Rect2:
 	# Re-resolved every call (this runs once a frame via _process -> _layout)
 	# instead of cached once when the step started -- a "unit:" target in
@@ -168,15 +176,28 @@ func _get_target_screen_rect() -> Rect2:
 	# tutorial's very first step fires before BattleScene has even finished
 	# loading and spawning units), so this keeps retrying every frame
 	# instead of permanently giving up after one failed attempt.
+	if _current_target_key.begins_with("cell_offset:"):
+		var parts: PackedStringArray = _current_target_key.split(":")
+		if parts.size() == 4:
+			var world_pos = TutorialManager.get_cell_offset_world_pos(parts[1], int(parts[2]), int(parts[3]))
+			if world_pos != null:
+				var canvas_transform: Transform2D = get_viewport().get_canvas_transform()
+				var screen_pos: Vector2 = canvas_transform * world_pos
+				return Rect2(screen_pos - Vector2(28, 28), Vector2(56, 56))
+		return Rect2()
 	var target: Node = TutorialManager.get_target_node(_current_target_key)
 	if target == null:
 		return Rect2()
 	if target is Control:
 		return (target as Control).get_global_rect()
 	if target is Node2D:
+		# Camera2D has no unproject_position() (that's a Camera3D method) --
+		# the canvas transform is what Godot itself uses to draw every 2D
+		# node to the screen, and already accounts for the active Camera2D's
+		# position/zoom/rotation.
 		var canvas_transform: Transform2D = get_viewport().get_canvas_transform()
 		var screen_pos: Vector2 = canvas_transform * target.global_position
-		return Rect2(screen_pos - Vector2(28, 28), Vector2(56, 56))
+		return Rect2(screen_pos - Vector2(28, 28), Vector2(56, 56))   # ~1 grid-tile-ish box around a unit
 	return Rect2()
 
 

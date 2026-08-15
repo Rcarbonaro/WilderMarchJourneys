@@ -71,6 +71,35 @@ func start_new_run(difficulty: String = "easy") -> RunState:
 	return rs
 
 
+# ADDED -- the tutorial's own dedicated run setup. Doesn't go through
+# start_new_run() (no random biome_sequence, no starting Skill Scroll grant,
+# fixed 4-unit roster instead of a random one) since none of that applies to
+# a fixed, scripted tutorial battle. See tutorial_manager.gd/
+# game_mode_select.gd's _start_tutorial_run() for how the actual scene
+# transition after this is handled.
+func start_tutorial_run() -> RunState:
+	var rs := RunState.new()
+	rs.run_id = "tutorial_run"
+	rs.player_seed = 0
+	rs.difficulty = "easy"
+	rs.is_tutorial = true
+	rs.stage_index = 1
+	rs.biome_sequence = ["forest"]
+	rs.party = [
+		{ "unit_id": "hexweaver",   "instance_id": "hexweaver_tutorial",   "level": 1, "equipped_item_ids": [null, null, null], "permanent_modifiers": [] },
+		{ "unit_id": "icemage",     "instance_id": "icemage_tutorial",     "level": 1, "equipped_item_ids": [null, null, null], "permanent_modifiers": [] },
+		{ "unit_id": "dreadknight", "instance_id": "dreadknight_tutorial", "level": 1, "equipped_item_ids": [null, null, null], "permanent_modifiers": [] },
+		{ "unit_id": "executioner", "instance_id": "executioner_tutorial", "level": 1, "equipped_item_ids": [null, null, null], "permanent_modifiers": [] },
+	]
+	rs.gold = 0
+	rs.bench = []
+	rs.tarot_cards = []
+	rs.equipment_inventory = []
+	current_run = rs
+	TutorialManager.start_tutorial()
+	return rs
+
+
 func save_run(slot_name: String = "autosave") -> void:
 	if current_run == null:
 		return
@@ -378,4 +407,3 @@ func delete_save(slot_name: String) -> void:
 	var path := SAVE_DIR + slot_name + ".json"
 	if FileAccess.file_exists(path):
 		DirAccess.remove_absolute(path)
-		

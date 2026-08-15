@@ -1,4 +1,19 @@
 # res://scripts/autoloads/tutorial_manager.gd
+#
+# TUTORIAL MANAGER -- walks tutorial_steps.json one step at a time. Every
+# other system that needs to participate does so through exactly two calls:
+#   - register_target(key, node)   -- "here's a Control/Node2D the tutorial
+#                                      might want to point an arrow at"
+#   - try_consume(event, payload)  -- "this real game action just happened,
+#                                      does it satisfy the current step?"
+# Nothing else in the project needs to know the tutorial exists beyond that.
+#
+# ADD THIS AS AN AUTOLOAD: Project Settings > Autoload > add this script,
+# name it "TutorialManager". Order relative to other autoloads doesn't
+# matter as long as it's before anything that calls it in _ready() (in
+# practice, Godot autoloads are all available to every other autoload's
+# _ready() regardless of declared order, so this is a non-issue).
+
 extends Node
 
 signal step_started(step: Dictionary)
@@ -8,8 +23,8 @@ var is_active: bool = false
 var steps: Array = []
 var current_step_index: int = -1
 
-var _targets: Dictionary = {}
-var _wait_for_checkers: Dictionary = {}
+var _targets: Dictionary = {}          # key (String) -> Node, re-registered per-screen
+var _wait_for_checkers: Dictionary = {} # condition name (String) -> Callable
 var _battle_manager_ref: Node = null
 
 
@@ -46,6 +61,9 @@ func get_current_step() -> Dictionary:
 
 
 func register_target(key: String, node: Node) -> void:
+	# Call this from any screen while the tutorial is active, right after
+	# creating a Control/Node2D the tutorial content might reference by this
+	# key. Safe to call even when the tutorial isn't running.
 	if not is_active:
 		return
 	_targets[key] = node
@@ -54,6 +72,16 @@ func register_target(key: String, node: Node) -> void:
 func unregister_target(key: String) -> void:
 	_targets.erase(key)
 
+func get_cell_offset_world_pos(unit_id: String, dx: int, dy: int) -> Variant:
+	# Used for "cell_offset:<unit_id>:<dx>:<dy>" targets -- resolves to the
+	# WORLD position of a cell relative to a unit's CURRENT grid position,
+	# e.g. "point at the tile 2 squares right of the Dreadknight" for a
+	# movement-step suggestion. Returns null if it can't be resolved yet.
+	var unit := _resolve_unit_target(unit_id)
+	if unit == null or _battle_manager_ref == null or _battle_manager_ref.grid == null:
+		return null
+	var target_cell: Vector2i = unit.grid_position + Vector2i(dx, dy)
+	return _battle_manager_ref.grid.grid_to_world(target_cell)
 
 func get_target_node(key: String) -> Node:
 	if key.begins_with("unit:"):
@@ -66,19 +94,24 @@ func get_target_node(key: String) -> Node:
 
 
 func register_wait_for_check(condition_name: String, checker: Callable) -> void:
+	# `wait_for` steps poll a named condition (e.g. "all_player_units_acted").
+	# battle_manager.gd registers that one in its own _ready().
 	_wait_for_checkers[condition_name] = checker
 
 
 func try_consume(event: String, payload: Dictionary = {}) -> bool:
+	# Returns true if the caller's action should be ALLOWED to proceed.
+	# Returns false if it should be BLOCKED (a gate step is active and this
+	# wasn't the required action).
 	if not is_active:
 		return true
 	var step := get_current_step()
 	if step.is_empty():
 		return true
 	if step.get("type", "gate") != "gate":
-		return true
+		return true   # narrate/wait_for/system_action steps don't gate real actions
 	if step.get("advance_on", "") != event:
-		return true
+		return true   # this event isn't what THIS step cares about -- don't block unrelated input
 	if not _payload_matches(step.get("advance_match", {}), payload):
 		_nudge()
 		return false
@@ -87,6 +120,8 @@ func try_consume(event: String, payload: Dictionary = {}) -> bool:
 
 
 func advance() -> void:
+	# Used by the overlay's "Continue" tap for narrate steps, and by
+	# system_action steps once their action is done.
 	_advance_to_next_step()
 
 
@@ -111,6 +146,9 @@ func _poll_wait_for(step: Dictionary) -> void:
 	if not checker.is_valid():
 		push_warning("TutorialManager: no wait_for checker registered for '" + condition_name + "'")
 		return
+	# Poll on a short timer rather than requiring every possible caller to
+	# remember to notify us -- these conditions (like "has everyone acted")
+	# are cheap Array checks.
 	while is_active and current_step_index < steps.size() and get_current_step() == step:
 		if checker.call():
 			_advance_to_next_step()
@@ -147,4 +185,7 @@ func _resolve_unit_target(unit_id: String) -> Node:
 
 
 func _nudge() -> void:
+	# Called when the player clicks something the current gate step doesn't
+	# allow. TutorialOverlay listens for this to play a quick "no, not that"
+	# shake animation.
 	EventBus.publish("tutorial_nudge", {})

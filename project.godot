@@ -44,6 +44,7 @@ CursorManager="*uid://dh4lapp3pefh1"
 BiomeThemeManager="*uid://b71k6ex8hwk0w"
 SceneTransitions="*uid://f17eigk2ea1m"
 LevelUpEngine="*uid://b43l88500o857"
+TutorialManager="*uid://dylyvdslibagm"
 
 [display]
 

@@ -5,9 +5,11 @@
 #   "Random"     -> instantly auto-picks 4 units and jumps straight to battle.
 #   "Draft Mode" -> hands off to DraftScene, where the player spends a gold
 #                   budget to hand-pick their own 4 units.
+#   "Tutorial"   -> fixed guided walkthrough -- see tutorial_manager.gd.
 #   "Back"       -> returns to the main menu without starting anything.
-# Both Random and Draft now show a difficulty popup first -- see
-# _show_difficulty_popup().
+# Random and Draft both show a difficulty popup first -- see
+# _show_difficulty_popup(). Tutorial does not -- it always runs on Easy,
+# fixed content.
 
 extends Control
 
@@ -21,6 +23,10 @@ const DIFFICULTY_POPUP_SCENE_PATH := "res://scenes/mainmenu/DifficultySelectPopu
 @onready var draft_button: Button = $CenterContainer/VBoxContainer/DraftModeButton
 @onready var back_button: Button = $CenterContainer/VBoxContainer/BackButton
 @onready var test_button: Button = $CenterContainer/VBoxContainer/TestModeButton
+@onready var tutorial_button: Button = $CenterContainer/VBoxContainer/TutorialModeButton   # ADDED
+# ^ Requires a Button node named "TutorialModeButton" added as a sibling of
+# the other 4 buttons in GameModeSelect.tscn -- this @onready line alone
+# does not create it. See the editor steps in the tutorial setup notes.
 
 func _ready() -> void:
 	AudioManager.play_menu_music()
@@ -28,6 +34,7 @@ func _ready() -> void:
 	draft_button.pressed.connect(_on_draft_pressed)
 	back_button.pressed.connect(_on_back_pressed)
 	test_button.pressed.connect(_on_test_pressed)
+	tutorial_button.pressed.connect(_start_tutorial_run)   # ADDED
 	AudioManager.wire_all_buttons_in(self)
 
 	# ── MODE TOOLTIPS (ADDED) ─────────────────────────────────────────────────
@@ -37,6 +44,8 @@ func _ready() -> void:
 	draft_button.mouse_exited.connect(_hide_mode_tooltip)
 	test_button.mouse_entered.connect(func(): _show_mode_tooltip("test", test_button))
 	test_button.mouse_exited.connect(_hide_mode_tooltip)
+	tutorial_button.mouse_entered.connect(func(): _show_mode_tooltip("tutorial", tutorial_button))   # ADDED
+	tutorial_button.mouse_exited.connect(_hide_mode_tooltip)   # ADDED
 	# BackButton intentionally has no tooltip -- it's not a game mode.
 
 
@@ -56,9 +65,10 @@ func _show_difficulty_popup(on_chosen: Callable) -> void:   # ADDED
 # UIManager, since this screen doesn't otherwise use it at all.
 
 const MODE_DESCRIPTIONS: Dictionary = {
-	"random": "True Roguelike Experience",
-	"draft":  "Allows you to select a specific team to play; does not grant progress or achievements",
-	"test":   "For testing specific mechanics (Developer tool)",
+	"random":   "True Roguelike Experience",
+	"draft":    "Allows you to select a specific team to play; does not grant progress or achievements",
+	"test":     "For testing specific mechanics (Developer tool)",
+	"tutorial": "Learn the basics with a guided walkthrough",
 }
 
 var _mode_tooltip: PanelContainer = null
@@ -160,13 +170,7 @@ func _on_test_pressed() -> void:
 	RunManager.is_test_mode = true
 	SceneTransitions.change_scene(TEST_ENCOUNTER_SCENE_PATH)   # default style — task 5
 
-#Code to make difficulties actually work
-var _selected_difficulty: String = "normal"
-func _on_normal_pressed() -> void:
-	_selected_difficulty = "normal"
-	
-func _on_hard_pressed() -> void:
-	_selected_difficulty = "hard"
 
-func _on_nightmare_pressed() -> void:
-	_selected_difficulty = "nightmare"
+func _start_tutorial_run() -> void:
+	RunManager.start_tutorial_run()
+	SceneTransitions.change_scene("res://scenes/battle/BattleScene.tscn", "parchment_burn")

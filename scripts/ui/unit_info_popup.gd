@@ -56,6 +56,10 @@
 #   popup.theme_resource = preload("res://resources/ui/default_unit_info_theme.tres")
 #   popup.setup(unit_data, stat_lines)
 # Leave theme_resource unset entirely to keep today's plain default look.
+#
+# TUTORIAL INTEGRATION (ADDED): every TutorialManager.register_target() /
+# try_consume() call below is a safe no-op when no tutorial is running (see
+# tutorial_manager.gd) -- nothing here changes behavior outside the tutorial.
 
 class_name UnitInfoPopup
 extends Control
@@ -157,6 +161,10 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 	scroll.custom_minimum_size = CARD_SIZE
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_card.add_child(scroll)
+	TutorialManager.register_target("popup_scroll_area", scroll)   # ADDED
+	if TutorialManager.is_active:   # ADDED
+		scroll.get_v_scroll_bar().value_changed.connect(func(_v):
+			TutorialManager.try_consume("popup_scrolled", {}))
 
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 8)
@@ -167,6 +175,7 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 	close_button.text = "✖ Close"
 	close_button.pressed.connect(_close)
 	content.add_child(close_button)
+	TutorialManager.register_target("popup_close_button", close_button)   # ADDED
 
 	# ── PORTRAIT + BATTLE SPRITE ──────────────────────────────────────────────
 	var image_row := HBoxContainer.new()
@@ -226,6 +235,7 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 			GOLD_ACCENT_COLOR.to_html(false), safe_mechanic_text]
 		content.add_child(_wrap_in_plate(unique_ability_label,
 			theme_resource.unique_mechanics_plate, theme_resource.unique_mechanics_plate_patch_margin))
+		TutorialManager.register_target("unique_ability_section", unique_ability_label)   # ADDED
 
 	# ── SYNERGY TAGS (ADDED) ──────────────────────────────────────────────────
 	# Lets players see at a glance which synergy tag(s) this unit contributes
@@ -279,6 +289,10 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 
 		if stat_name == "HP" or stat_name == "Mana":
 			stat_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+		# ADDED -- lets the tutorial spotlight specific stat rows (HP, MOV, Mana).
+		if stat_name == "HP" or stat_name == "MOV" or stat_name == "Mana":
+			TutorialManager.register_target("stat_row:" + stat_name.to_lower(), stat_row)
 
 		# Increased from Vector2(16, 16) to matching Vector2(22, 22)
 		var icon_rect := TextureRect.new()
@@ -349,6 +363,7 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 
 		content.add_child(_wrap_in_plate(ability_row,
 			theme_resource.ability_plate, theme_resource.ability_plate_patch_margin))
+		TutorialManager.register_target("ability_row:" + ability.id, ability_row)   # ADDED
 
 	if not any_ability_shown:
 		var no_abilities_label := Label.new()
@@ -463,6 +478,7 @@ func _close() -> void:
 	if PopupManager.current_popup == self:
 		PopupManager.current_popup = null
 	closed.emit()
+	TutorialManager.try_consume("popup_closed", {})   # ADDED
 	queue_free()
 
 

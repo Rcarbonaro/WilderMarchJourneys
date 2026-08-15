@@ -17,6 +17,10 @@
 # ContentLoader.get_forging_recipe(subtype_a, subtype_b). Everything below
 # now matches shop_manager.gd's already-correct implementation of the same
 # ideas, so items equipped or forged here actually show up in combat.
+#
+# TUTORIAL INTEGRATION (ADDED): every TutorialManager.register_target() /
+# try_consume() call below is a safe no-op when no tutorial is running (see
+# tutorial_manager.gd) -- nothing here changes behavior outside the tutorial.
 
 extends Node2D
 
@@ -171,12 +175,22 @@ func _ready() -> void:
 	if not _validate_required_nodes():
 		return
 
-	shop_button.pressed.connect(func(): SceneTransitions.change_scene("res://scenes/meta/ShopScene.tscn"))
+	var shop_callback := func():
+		if TutorialManager.try_consume("shop_button_pressed", {}):
+			SceneTransitions.change_scene("res://scenes/meta/ShopScene.tscn")
+	shop_button.pressed.connect(shop_callback)
+	TutorialManager.register_target("shop_button", shop_button)   # ADDED
+
 	continue_button.pressed.connect(_on_continue_pressed)
 	forge_slot_a_button.pressed.connect(func(): _on_forge_slot_pressed(true))
 	forge_slot_b_button.pressed.connect(func(): _on_forge_slot_pressed(false))
 	forge_button.pressed.connect(_on_forge_pressed)
 	forge_preview_button.pressed.connect(_on_forge_preview_pressed)
+	TutorialManager.register_target("forge_slot_a_button", forge_slot_a_button)   # ADDED
+	TutorialManager.register_target("forge_slot_b_button", forge_slot_b_button)   # ADDED
+	TutorialManager.register_target("forge_button", forge_button)                 # ADDED
+	TutorialManager.register_target("forge_preview_button", forge_preview_button) # ADDED
+
 	scout_button.pressed.connect(_on_scout_pressed)
 	scout_back_button.text = "Back"
 	scout_back_button.pressed.connect(func(): scout_panel.visible = false)
@@ -894,7 +908,6 @@ func _on_more_info_pressed(index: int) -> void:
 
 
 # ADDED: identical to _on_more_info_pressed above, just looked up by
-# ADDED: identical to _on_more_info_pressed above, just looked up by
 # instance_id (what the deployed-party strip has on hand) instead of a
 # roster list index (what the roster list has on hand). Kept as a
 # separate function rather than reworking _on_more_info_pressed's
@@ -1196,6 +1209,7 @@ func _rebuild_inventory() -> void:
 		row.add_child(info_btn)
 
 		inventory_list.add_child(row)
+		TutorialManager.register_target("inventory_item:" + item_id, row)   # ADDED
 
 	AudioManager.wire_all_buttons_in(inventory_list)   # ADDED — covers item/info buttons just (re)built above (idempotent alongside the wire_all_buttons_in(self) call in _rebuild_roster())
 
@@ -1206,6 +1220,8 @@ func _rebuild_inventory() -> void:
 # the 2 actions directly: Equip (pick which unit) or Combine (send it to an
 # open forge slot). No more in-between state to track.
 func _on_inventory_item_pressed(item_id: String) -> void:
+	if not TutorialManager.try_consume("inventory_item_selected", {"item_id": item_id}):   # ADDED
+		return
 	var data: Dictionary = ContentLoader.get_equipment(item_id)
 
 	# ── SKILL SCROLLS (ADDED) ────────────────────────────────────────────────
@@ -1247,11 +1263,14 @@ func _on_inventory_item_pressed(item_id: String) -> void:
 
 	var combine_btn := Button.new()
 	combine_btn.text = "Combine"
-	combine_btn.pressed.connect(func():
+	var combine_callback := func():   # ADDED (pulled out to a named var -- see forge_slot_a note below)
+		if not TutorialManager.try_consume("combine_pressed", {"item_id": item_id}):
+			return
 		popup.queue_free()
 		_combine_item_into_forge(item_id)
-	)
+	combine_btn.pressed.connect(combine_callback)
 	vbox.add_child(combine_btn)
+	TutorialManager.register_target("inventory_combine_button", combine_btn)   # ADDED
 
 	var cancel_btn := Button.new()
 	cancel_btn.text = "Cancel"
@@ -1290,11 +1309,15 @@ func _show_equip_unit_picker(item_id: String) -> void:
 
 		var unit_btn := Button.new()
 		unit_btn.text = label + " (Lv " + str(entry.get("level", 1)) + ")"
-		unit_btn.pressed.connect(func():
+		var pick_callback := func():   # ADDED (pulled out to a named var)
+			if not TutorialManager.try_consume("item_equipped", {}):
+				return
 			popup.queue_free()
 			_equip_item_to_unit(item_id, instance_id)
-		)
+		unit_btn.pressed.connect(pick_callback)
 		vbox.add_child(unit_btn)
+		if entry.get("unit_id", "") == "executioner":   # ADDED -- lets the tutorial spotlight the suggested pick
+			TutorialManager.register_target("unit_picker_row:executioner", unit_btn)
 
 	var cancel_btn := Button.new()
 	cancel_btn.text = "Cancel"
@@ -1938,6 +1961,8 @@ func _describe_item_for_preview(label: String, item_id: String) -> String:
 # forge_preview_label text -- shows the resulting item's icon, stats, and
 # description in a bigger, standalone popup before you commit to forging.
 func _on_forge_preview_pressed() -> void:
+	if not TutorialManager.try_consume("forge_preview_opened", {}):   # ADDED
+		return
 	if _forge_slot_a == "" or _forge_slot_b == "":
 		forge_status_label.text = "Set both Slot A and Slot B first to preview."
 		return
@@ -2010,13 +2035,18 @@ func _show_item_preview_popup(item_id: String) -> void:
 
 	var close_btn := Button.new()
 	close_btn.text = "Close"
-	close_btn.pressed.connect(func(): popup.queue_free())
+	var close_callback := func():   # ADDED (pulled out to a named var)
+		TutorialManager.try_consume("preview_closed", {})   # harmless no-op outside the forge-preview step
+		popup.queue_free()
+	close_btn.pressed.connect(close_callback)
 	vbox.add_child(close_btn)
 
 	popup.popup_centered(Vector2(320, 220))
 
 
 func _on_forge_pressed() -> void:
+	if not TutorialManager.try_consume("item_forged", {}):   # ADDED
+		return
 	if _forge_slot_a == "" or _forge_slot_b == "":
 		forge_status_label.text = "Set both Slot A and Slot B first."
 		return
@@ -2062,6 +2092,12 @@ func _show_forge_result_popup(item_id: String) -> void:
 	var icon: Texture2D = UnitInfoPopup.texture_or_black_box(
 		UnitInfoPopup._resolve_icon(data.get("icon")), Vector2i(96, 96))
 
+	var equip_callback := func():   # ADDED (pulled out to a named var -- avoids nesting an if inside a
+		# lambda inside a Dictionary inside an Array inside this call, which GDScript's
+		# indentation rules can't reliably track)
+		if TutorialManager.try_consume("forge_equip_clicked", {}):
+			_show_equip_unit_picker(item_id)
+
 	var popup := RewardPopup.new()
 	add_child(popup)
 	popup.setup(
@@ -2069,7 +2105,7 @@ func _show_forge_result_popup(item_id: String) -> void:
 		data.get("description", ""),
 		FORGE_GLITTER_GOLD,
 		[
-			{"text": "Equip", "callback": func(): _show_equip_unit_picker(item_id)},
+			{"text": "Equip", "callback": equip_callback},
 			{"text": "Close", "callback": Callable()},
 		],
 		true   # thick_glitter -- forging reads as a bigger deal than a routine purchase
@@ -2088,6 +2124,8 @@ func _show_gold_reward_popup(amount: int) -> void:
 		REWARD_GLITTER_BLUE,
 		[{"text": "Close", "callback": Callable()}],
 	)
+	TutorialManager.register_target("gold_popup", popup)   # ADDED
+	popup.closed.connect(func(): TutorialManager.try_consume("gold_popup_closed", {}))   # ADDED
 
 
 # ── SCOUT AHEAD ────────────────────────────────────────────────────────────────
@@ -2203,4 +2241,3 @@ func _on_continue_pressed() -> void:
 	# (SCENE_FOR_STAGE_TYPE), so route through it instead of a
 	# RunManager function that duplicated the same lookup.
 	StageDirector.enter_current_stage()
-	

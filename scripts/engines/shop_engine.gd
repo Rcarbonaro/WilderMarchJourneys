@@ -38,10 +38,32 @@ const BASE_SHOP_SLOTS: int = 5
 const MAX_SHOP_SLOTS: int = 7
 const REFRESH_BASE_COST: int = 3
 
+const TUTORIAL_SHOP_ENTRY_IDS := ["blade", "talisman_of_health", "dreadknight", "plaguebringer", "vial_of_might"]
+# ADDED. EDIT THESE to match your actual shop_entry ids (from your
+# content/shop/*.json files) if these guesses are wrong -- order matters,
+# it's the order the tutorial's callouts point at them in.
+
 
 func generate_shop(run_state: RunState) -> Array:
+	if run_state.is_tutorial:
+		return _generate_tutorial_shop(run_state)
 	var slot_count: int = clamp(BASE_SHOP_SLOTS + run_state.shop_slot_modifier, 1, MAX_SHOP_SLOTS)
 	var offer := _roll_offer(slot_count, run_state)
+	run_state.shop_inventory = offer
+	EventBus.publish(EventBus.ON_SHOP_OPEN, {"offer": offer})
+	return offer
+
+
+func _generate_tutorial_shop(run_state: RunState) -> Array:
+	# ADDED: the tutorial always shows this exact 5-item lineup, in this
+	# exact order, so the scripted callouts always land on the right slot.
+	var offer := []
+	for shop_entry_id in TUTORIAL_SHOP_ENTRY_IDS:
+		var entry := ContentLoader.get_shop_entry(shop_entry_id)
+		if entry.is_empty():
+			push_warning("ShopEngine: tutorial shop entry '" + shop_entry_id + "' not found -- check TUTORIAL_SHOP_ENTRY_IDS.")
+			continue
+		offer.append({"shop_entry_id": shop_entry_id, "final_price": _final_price(entry, run_state)})
 	run_state.shop_inventory = offer
 	EventBus.publish(EventBus.ON_SHOP_OPEN, {"offer": offer})
 	return offer

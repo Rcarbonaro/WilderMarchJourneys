@@ -30,6 +30,10 @@
 # already runs after every purchase (via _refresh_display()), buying one copy
 # of a unit instantly updates the label on every OTHER shop slot offering that
 # same unit too, with no extra wiring needed.
+#
+# TUTORIAL INTEGRATION (ADDED): every TutorialManager.register_target() /
+# try_consume() call below is a safe no-op when no tutorial is running (see
+# tutorial_manager.gd) -- nothing here changes behavior outside the tutorial.
 
 extends Node2D
 
@@ -65,6 +69,8 @@ var _selected_inventory_item_id: String = ""  # currently-picked-up inventory it
 func _ready() -> void:
 	refresh_button.pressed.connect(_on_refresh_pressed)
 	continue_button.pressed.connect(_on_continue_pressed)
+	TutorialManager.register_target("shop_refresh_button", refresh_button)   # ADDED
+	TutorialManager.register_target("shop_back_button", continue_button)     # ADDED
 
 	if RunManager.current_run == null:
 		printerr("❌ ShopScene: RunManager.current_run is null.")
@@ -172,6 +178,7 @@ func _build_slot_panel(offer_entry: Dictionary) -> Control:
 	more_info_button.pressed.connect(func(): _on_shop_more_info_pressed(entry))
 	vbox.add_child(more_info_button)
 
+	TutorialManager.register_target("shop_item:" + item_id, panel)   # ADDED
 	return panel
 
 
@@ -407,6 +414,7 @@ func _show_level_up_popup(unit_id: String, new_level: int, level_up_results: Arr
 
 
 func _on_refresh_pressed() -> void:
+	TutorialManager.try_consume("shop_refreshed", {})   # ADDED -- narration-only step, never actually blocks
 	var success := ShopEngine.refresh_shop(RunManager.current_run)
 	if not success:
 		print("⛔ Not enough gold to refresh.")
@@ -415,6 +423,8 @@ func _on_refresh_pressed() -> void:
 
 
 func _on_continue_pressed() -> void:
+	if not TutorialManager.try_consume("shop_closed", {}):   # ADDED
+		return
 	SceneTransitions.change_scene(StageDirector.DEPLOYMENT_SCENE_PATH)
 
 
