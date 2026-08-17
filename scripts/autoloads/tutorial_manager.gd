@@ -179,9 +179,22 @@ func _run_system_action(step: Dictionary) -> void:
 				return
 			for item_id in step.get("item_ids", []):
 				run_state.equipment_inventory.append(item_id)
+		"grant_item_if_missing":   # ADDED -- for items that might already be owned (e.g. a potion bought in the shop)
+			var run_state = RunManager.current_run
+			if run_state == null:
+				return
+			var item_id: String = step.get("item_id", "")
+			if item_id != "" and not run_state.equipment_inventory.has(item_id):
+				run_state.equipment_inventory.append(item_id)
+		"grant_generic_scroll_if_missing":   # ADDED -- start_tutorial_run() skips the normal 1-scroll starting grant
+			var run_state = RunManager.current_run
+			if run_state == null:
+				return
+			if int(run_state.runtime_effect_state.get("skill_scroll_count", 0)) <= 0:
+				run_state.runtime_effect_state["skill_scroll_count"] = 1
 		_:
 			push_warning("TutorialManager: unknown system_action '" + step.get("action", "") + "'")
-
+			
 
 func _payload_matches(expected: Dictionary, actual: Dictionary) -> bool:
 	for key in expected:

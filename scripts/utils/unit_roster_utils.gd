@@ -19,7 +19,6 @@ extends RefCounted
 
 const UNITS_DIR := "res://resources/units/"
 
-
 static func get_available_units(excluded_ids: Array = []) -> Array[UnitData]:
 	var result: Array[UnitData] = []
 	var dir := DirAccess.open(UNITS_DIR)
@@ -28,16 +27,24 @@ static func get_available_units(excluded_ids: Array = []) -> Array[UnitData]:
 		return result
 
 	dir.list_dir_begin()
-	print ("DEBUG found file: ", UNITS_DIR)
 	var file_name := dir.get_next()
 	while file_name != "":
-		print ("DEBUG found file: ", file_name)
-		if not dir.current_is_dir() and file_name.ends_with(".tres"):
-			var unit_data := load(UNITS_DIR + file_name) as UnitData
+		# In an EXPORTED build with "Convert Text Resources to Binary"
+		# enabled, .tres files are physically renamed to "<name>.tres.remap"
+		# in the packed PCK -- ResourceLoader.load() still resolves the
+		# ORIGINAL "res://...tres" path fine, but a raw folder scan only
+		# ever sees the ".remap" filename on disk. Match both extensions,
+		# and strip ".remap" back off before load()'ing. In the editor (or
+		# an export with that conversion setting off), file_name is already
+		# a plain ".tres" and stripping a suffix it doesn't have is a no-op.
+		if not dir.current_is_dir() and (file_name.ends_with(".tres") or file_name.ends_with(".tres.remap")):
+			var clean_name := file_name.trim_suffix(".remap")
+			var unit_data := load(UNITS_DIR + clean_name) as UnitData
 			if unit_data != null and not excluded_ids.has(unit_data.id):
 				result.append(unit_data)
 			elif unit_data == null:
-				printerr("⚠️ UnitRosterUtils: ", file_name, " did not load as a UnitData resource -- skipped.")
+				printerr("⚠️ UnitRosterUtils: ", clean_name, " did not load as a UnitData resource -- skipped.")
 		file_name = dir.get_next()
 	dir.list_dir_end()
 	return result
+	

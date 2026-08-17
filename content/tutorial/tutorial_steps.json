@@ -63,9 +63,13 @@
     { "id": "s19", "type": "gate", "text": "Ok, we can now close this window and return.",
       "target": "popup_close_button", "advance_on": "popup_closed", "advance_match": {}, "block_input": false },
 
-    { "id": "s20", "type": "gate", "text": "Ok, now let's move the Icemage. Remember, if you ever accidentally put your unit into the wrong spot, as long as you have not yet used your action, you can click 'Cancel Movement' to return them to their original spot and try to move them again.",
-      "target": "unit:icemage", "advance_on": "unit_moved",
+    { "id": "s19b", "type": "narrate", "text": "Ok, now let's move the Icemage. Remember, if you ever accidentally put your unit into the wrong spot, as long as you have not yet used your action, you can click 'Cancel Movement' to return them to their original spot and try to move them again.",
+      "target": "unit:icemage" },
+
+    { "id": "s20", "type": "gate", "text": "Move the Icemage toward the enemy.",
+      "target": "cell_offset:icemage:2:0", "advance_on": "unit_moved",
       "advance_match": { "unit_id": "icemage", "is_real_move": true } },
+
     { "id": "s21", "type": "narrate", "text": "Ok, now you can move the rest of your team. Remember that you can always review the information and abilities of a unit if you ever forget or obtain a new unit!",
       "target": "" },
 
@@ -103,6 +107,16 @@
 
     { "id": "s33", "type": "gate", "text": "Click 'Back' to return to the Deployment screen.",
       "target": "shop_back_button", "advance_on": "shop_closed", "advance_match": {} },
+
+    { "id": "s33b", "type": "system_action", "action": "grant_item_if_missing", "item_id": "vial_of_might" },
+
+    { "id": "s33c", "type": "narrate", "text": "You can also equip one-time use consumables to restore health or stamina, or boost stats. Be sure to experiment with them!",
+      "target": "inventory_item:vial_of_might" },
+
+    { "id": "s33d", "type": "system_action", "action": "grant_generic_scroll_if_missing" },
+
+    { "id": "s33e", "type": "narrate", "text": "Skill scrolls can let you enhance abilities! Try experimenting to enhance and customize the abilities of your favorite units!",
+      "target": "inventory_item:skill_scroll" },
 
     { "id": "s34", "type": "system_action", "action": "grant_items", "item_ids": ["blade", "blade"] },
 

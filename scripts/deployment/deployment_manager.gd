@@ -1171,6 +1171,7 @@ func _rebuild_inventory() -> void:
 		scroll_btn.pressed.connect(func(): _show_scroll_unit_picker(GENERIC_SCROLL_ID))
 		scroll_row.add_child(scroll_btn)
 		inventory_list.add_child(scroll_row)
+		TutorialManager.register_target("inventory_item:skill_scroll", scroll_row)  
 
 	# Items currently sitting in a forge slot are shown there instead of
 	# here (see ForgeRow), even though they're still physically present in

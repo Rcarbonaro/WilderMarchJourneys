@@ -64,7 +64,7 @@ const MINI_ENCOUNTER_CHANCE: float = 0.3
 # every other rebalance constant across this project (e.g. custom_
 # equipment_handlers.gd's BLOODTHIRSTER_MAX_STACKS).
 
-const TUTORIAL_ENEMY_IDS: Array[String] = ["forest_bandit", "forest_bandit"]
+const TUTORIAL_ENEMY_IDS: Array[String] = ["wolf", "wolf"]
 # ADDED. EDIT to match 1-2 real, weak, tutorial-appropriate enemy_ids from
 # your content -- these are placeholder guesses. Must match
 # MapGenerator.generate_tutorial_map()'s TUTORIAL_ENEMY_COUNT (2 by

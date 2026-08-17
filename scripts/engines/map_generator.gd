@@ -403,22 +403,28 @@ func _get_feature_pool(biome: String) -> Array[MapFeatureData]:
 	_scan_features_recursive(MAP_FEATURES_DIR, biome, result)
 	return result
 
-
 func _scan_features_recursive(path: String, biome: String, result: Array[MapFeatureData]) -> void:
 	var dir := DirAccess.open(path)
 	if dir == null:
 		return
+
 	dir.list_dir_begin()
 	var entry_name := dir.get_next()
+
 	while entry_name != "":
 		var full_path := path + entry_name
+
 		if dir.current_is_dir() and entry_name != "." and entry_name != "..":
 			_scan_features_recursive(full_path + "/", biome, result)
+
 		elif entry_name.ends_with(".tres"):
-			var feature := load(full_path) as MapFeatureData
+			var feature := ResourceLoader.load(full_path) as MapFeatureData
+
 			if feature != null and (feature.biomes.is_empty() or feature.biomes.has(biome)):
 				result.append(feature)
+
 		entry_name = dir.get_next()
+
 	dir.list_dir_end()
 
 
