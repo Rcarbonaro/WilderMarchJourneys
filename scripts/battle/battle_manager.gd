@@ -707,8 +707,12 @@ func on_tile_tapped(cell: Vector2i) -> void:
 			_hide_unit_info()
 			highlight.clear_threat_range()
 
-	# ── STATE B: Ability selected → try to cast it on this tile ──────────────
+# ── STATE B: Ability selected → try to cast it on this tile ──────────────
 	elif selected_ability != null:
+		# ── TUTORIAL GATE (ADDED) ────────────────────────────────────────────
+		if TutorialManager.is_active:
+			if not TutorialManager.try_consume("ability_target_selected", {"unit_id": selected_unit.unit_data.id}):
+				return
 		_try_use_ability(cell)
 
 	# ── STATE C: Unit selected, waiting for move or re-tap ───────────────────

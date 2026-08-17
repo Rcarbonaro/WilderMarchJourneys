@@ -67,6 +67,21 @@ func register_target(key: String, node: Node) -> void:
 	if not is_active:
 		return
 	_targets[key] = node
+	# ADDED: auto-unregister the instant this node starts leaving the tree --
+	# without this, a key registered by a popup (e.g. "popup_close_button")
+	# keeps pointing at that popup's freed button after it closes, until
+	# something re-registers the SAME key later. Anything that queries it
+	# in between gets a stale reference. CONNECT_ONE_SHOT means this never
+	# needs manual cleanup.
+	node.tree_exiting.connect(_on_target_node_exiting.bind(node, key), CONNECT_ONE_SHOT)
+
+
+func _on_target_node_exiting(node: Node, key: String) -> void:
+	# Only clear the entry if it STILL points at the exact node that's
+	# exiting -- guards the rare case where the same key was already
+	# re-registered to a newer node before this old one's exit fired.
+	if _targets.get(key, null) == node:
+		_targets.erase(key)
 
 
 func unregister_target(key: String) -> void:

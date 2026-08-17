@@ -228,7 +228,14 @@ func _ready() -> void:
 	if more_info_button:
 		if not more_info_button.pressed.is_connected(_on_more_info_pressed):
 			more_info_button.pressed.connect(_on_more_info_pressed)
+		TutorialManager.register_target("more_info_button", more_info_button)   # ADDED
 
+	if ability_bar:   # ADDED
+		TutorialManager.register_target("ability_bar", ability_bar)
+
+	if end_turn_button:   # ADDED — this is the node s23's "End Round" step points at
+		TutorialManager.register_target("end_round_button", end_turn_button)
+		
 	if grid_toggle_button:
 		grid_toggle_button.toggle_mode = true
 		grid_toggle_button.text        = "Grid: Off"
@@ -966,6 +973,8 @@ func _on_cancel_move_pressed() -> void:
 
 func _on_more_info_pressed() -> void:
 	if not is_instance_valid(_bar_unit):
+		return
+	if not TutorialManager.try_consume("more_info_opened", {"unit_id": _bar_unit.unit_data.id}):   # ADDED
 		return
 
 	var unit     = _bar_unit

@@ -4,8 +4,8 @@
     { "id": "s01", "type": "gate", "text": "Let's start by clicking on the Dreadknight.",
       "target": "unit:dreadknight", "advance_on": "unit_selected", "advance_match": { "unit_id": "dreadknight" } },
 
-    { "id": "s02", "type": "narrate", "text": "Click on the 'More Information' button to view stats, abilities, and equipment.",
-      "target": "more_info_button", "block_input": false },
+    { "id": "s02", "type": "gate", "text": "Click on the 'More Information' button to view stats, abilities, and equipment.",
+      "target": "more_info_button", "advance_on": "more_info_opened", "advance_match": { "unit_id": "dreadknight" } },
 
     { "id": "s03", "type": "narrate", "text": "The 'Unique Ability' information contains a short summary of that character's mechanics.",
       "target": "unique_ability_section", "block_input": false },
@@ -39,13 +39,17 @@
       "advance_match": { "unit_id": "dreadknight", "is_real_move": true } },
 
     { "id": "s13", "type": "gate", "text": "After moving, you can select your action. Since the enemies are far away, it would be a good idea to set up an aura.",
-      "target": "ability_bar", "advance_on": "ability_selected", "advance_match": { "unit_id": "dreadknight", "is_aura": true },
-      "block_input": false },
+      "target": "ability_bar", "advance_on": "ability_selected", "advance_match": { "unit_id": "dreadknight", "is_aura": true } },
+
+    { "id": "s13b", "type": "gate", "text": "Now tap the Dreadknight to cast the aura.",
+      "target": "unit:dreadknight", "advance_on": "ability_target_selected",
+      "advance_match": { "unit_id": "dreadknight" } },
+
     { "id": "s14", "type": "gate", "text": "Next, let's move the Icemage.",
       "target": "unit:icemage", "advance_on": "unit_selected", "advance_match": { "unit_id": "icemage" } },
 
-    { "id": "s15", "type": "narrate", "text": "The Icemage is a support character, who can deal damage to enemies, slow them down, and use their Ice Shell spell to bolster ally defenses. To see their abilities, you can select 'More Information' again.",
-      "target": "more_info_button", "block_input": false },
+    { "id": "s15", "type": "gate", "text": "The Icemage is a support character, who can deal damage to enemies, slow them down, and use their Ice Shell spell to bolster ally defenses. To see their abilities, you can select 'More Information' again.",
+      "target": "more_info_button", "advance_on": "more_info_opened", "advance_match": { "unit_id": "icemage" } },
 
     { "id": "s16", "type": "narrate", "text": "Some abilities consume mana. If you run out of mana, you won't be able to cast abilities with a mana cost.",
       "target": "stat_row:mana", "block_input": false },

@@ -278,17 +278,15 @@ func start_new_run_for_mode(mode_id: String, chosen_party: Array = []) -> RunSta
 
 func _pick_random_starting_party(party_size: int, excluded_ids: Array) -> Array:
 	var candidates: Array[String] = []
-	var dir := DirAccess.open("res://resources/units/")
-	if dir != null:
-		dir.list_dir_begin()
-		var file_name := dir.get_next()
-		while file_name != "":
-			if file_name.ends_with("_data.tres"):
-				var unit_id := file_name.trim_suffix("_data.tres")
-				if not excluded_ids.has(unit_id):
-					candidates.append(unit_id)
-			file_name = dir.get_next()
-		dir.list_dir_end()
+	
+	var files := ResourceLoader.list_directory("res://resources/units/")
+	
+	for file_name in files:
+		if file_name.ends_with("_data.tres"):
+			var unit_id := file_name.trim_suffix("_data.tres")
+			
+			if not excluded_ids.has(unit_id):
+				candidates.append(unit_id)
 
 	candidates.shuffle()
 	var party_ids: Array[String] = []
