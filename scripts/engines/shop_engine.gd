@@ -39,7 +39,6 @@ const MAX_SHOP_SLOTS: int = 7
 const REFRESH_BASE_COST: int = 3
 
 const TUTORIAL_SHOP_ENTRY_IDS := ["blade", "talisman_of_health", "dreadknight", "plaguebringer", "vial_of_might"]
-# ADDED. EDIT THESE to match your actual shop_entry ids (from your
 # content/shop/*.json files) if these guesses are wrong -- order matters,
 # it's the order the tutorial's callouts point at them in.
 

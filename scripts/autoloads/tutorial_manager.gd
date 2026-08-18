@@ -18,6 +18,7 @@ extends Node
 
 signal step_started(step: Dictionary)
 signal tutorial_ended
+signal inventory_granted
 
 var is_active: bool = false
 var steps: Array = []
@@ -31,6 +32,23 @@ var _battle_manager_ref: Node = null
 func _ready() -> void:
 	var overlay := TutorialOverlay.new()
 	add_child(overlay)
+
+	# ADDED: scene-transition guards. A gate that triggers a scene change
+	# (shop button, End Round -> victory -> Deployment) advances the
+	# tutorial SYNCHRONOUSLY, before the new scene has actually loaded --
+	# these let a wait_for step sit quietly (no blocking, no visible UI)
+	# until the thing on the OTHER side of that transition genuinely exists,
+	# instead of the very next step trying to spotlight a target that isn't
+	# there yet.
+	register_wait_for_check("gold_popup_exists", func() -> bool:
+		return get_target_node("gold_popup") != null
+	)
+	register_wait_for_check("shop_scene_ready", func() -> bool:
+		return get_target_node("shop_refresh_button") != null
+	)
+	register_wait_for_check("deployment_scene_ready", func() -> bool:
+		return get_target_node("shop_button") != null
+	)
 
 
 func register_battle_manager(node: Node) -> void:
@@ -179,22 +197,24 @@ func _run_system_action(step: Dictionary) -> void:
 				return
 			for item_id in step.get("item_ids", []):
 				run_state.equipment_inventory.append(item_id)
-		"grant_item_if_missing":   # ADDED -- for items that might already be owned (e.g. a potion bought in the shop)
+			inventory_granted.emit()   # ADDED
+		"grant_item_if_missing":
 			var run_state = RunManager.current_run
 			if run_state == null:
 				return
 			var item_id: String = step.get("item_id", "")
 			if item_id != "" and not run_state.equipment_inventory.has(item_id):
 				run_state.equipment_inventory.append(item_id)
-		"grant_generic_scroll_if_missing":   # ADDED -- start_tutorial_run() skips the normal 1-scroll starting grant
+			inventory_granted.emit()   # ADDED
+		"grant_generic_scroll_if_missing":
 			var run_state = RunManager.current_run
 			if run_state == null:
 				return
 			if int(run_state.runtime_effect_state.get("skill_scroll_count", 0)) <= 0:
 				run_state.runtime_effect_state["skill_scroll_count"] = 1
+			inventory_granted.emit()   # ADDED
 		_:
 			push_warning("TutorialManager: unknown system_action '" + step.get("action", "") + "'")
-			
 
 func _payload_matches(expected: Dictionary, actual: Dictionary) -> bool:
 	for key in expected:
@@ -217,3 +237,19 @@ func _nudge() -> void:
 	# allow. TutorialOverlay listens for this to play a quick "no, not that"
 	# shake animation.
 	EventBus.publish("tutorial_nudge", {})
+
+func jump_to_step(step_id: String) -> void:
+	# Force-advances straight to a specific step by id, skipping everything
+	# in between WITHOUT requiring their gates to fire -- for when a real
+	# game event makes the remaining steps for a phase moot. e.g. the battle
+	# can end (last enemy dies mid-round) before the player ever manually
+	# presses "End Round," which would otherwise leave the tutorial stuck on
+	# that gate forever, waiting for a press that's never coming.
+	if not is_active:
+		return
+	for i in range(steps.size()):
+		if steps[i].get("id", "") == step_id:
+			current_step_index = i - 1   # _advance_to_next_step()'s += 1 lands exactly on i
+			_advance_to_next_step()
+			return
+	push_warning("TutorialManager: jump_to_step -- no step with id '" + step_id + "' found.")

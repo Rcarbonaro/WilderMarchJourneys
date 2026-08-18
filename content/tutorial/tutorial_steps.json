@@ -71,7 +71,7 @@
       "advance_match": { "unit_id": "icemage", "is_real_move": true } },
 
     { "id": "s21", "type": "narrate", "text": "Ok, now you can move the rest of your team. Remember that you can always review the information and abilities of a unit if you ever forget or obtain a new unit!",
-      "target": "" },
+      "target": "", "allow_game_input": true },
 
     { "id": "s22", "type": "wait_for", "text": "", "condition": "all_player_units_acted" },
 
@@ -79,13 +79,17 @@
       "target": "end_round_button", "advance_on": "end_round_pressed", "advance_match": {} },
 
     { "id": "s24", "type": "narrate", "text": "Now that you've got the basics, I think you can take care of these enemies. When in combat, remember to experiment with different types of abilities and combinations!",
-      "target": "" },
+      "target": "", "block_input": false, "allow_game_input": true },
+
+    { "id": "s24b", "type": "wait_for", "text": "", "condition": "gold_popup_exists" },
 
     { "id": "s25", "type": "gate", "text": "After you complete stages, you will obtain rewards! You can spend these rewards in the shop.",
       "target": "gold_popup", "advance_on": "gold_popup_closed", "advance_match": {} },
 
     { "id": "s26", "type": "gate", "text": "You can spend your gold in the shop to buy items to gain new units and make them stronger!",
       "target": "shop_button", "advance_on": "shop_button_pressed", "advance_match": {} },
+
+    { "id": "s26b", "type": "wait_for", "text": "", "condition": "shop_scene_ready" },
 
     { "id": "s27", "type": "narrate", "text": "The blade is a basic item that increases ATK. You can click 'More Info' to see more information about any item.",
       "target": "shop_item:blade" },
@@ -107,6 +111,8 @@
 
     { "id": "s33", "type": "gate", "text": "Click 'Back' to return to the Deployment screen.",
       "target": "shop_back_button", "advance_on": "shop_closed", "advance_match": {} },
+
+    { "id": "s33a2", "type": "wait_for", "text": "", "condition": "deployment_scene_ready" },
 
     { "id": "s33b", "type": "system_action", "action": "grant_item_if_missing", "item_id": "vial_of_might" },
 

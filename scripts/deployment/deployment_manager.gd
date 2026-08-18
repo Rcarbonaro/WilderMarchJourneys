@@ -220,6 +220,7 @@ func _ready() -> void:
 	_rebuild_roster()
 	_rebuild_inventory()
 	_update_scout_button()
+	TutorialManager.inventory_granted.connect(_rebuild_inventory)  
 	_update_stage_label()
 	_setup_deployment_background()
 	_refresh_camp_decorations()   # ADDED (Mini-Encounters/Camp)

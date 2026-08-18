@@ -566,6 +566,12 @@ func _battle_victory() -> void:
 	print("Player Victory!")
 	current_phase  = TurnPhase.GAME_OVER
 	is_battle_over = true
+	# ADDED: the battle can end mid-round (killing the last enemy without
+	# ever pressing "End Round"), which would otherwise leave the tutorial
+	# stuck forever on whatever in-battle gate it was waiting on -- jump
+	# straight to the first post-battle step regardless of where we are.
+	if TutorialManager.is_active:
+		TutorialManager.jump_to_step("s24b")
 	# Belt-and-suspenders alongside the is_battle_over guards added to
 	# end_player_turn()/_on_enemy_turn_complete() above (task 6 fix): disables
 	# "End Turn" immediately so a stray tap during the ~2s banner below can't
@@ -615,6 +621,20 @@ func on_tile_tapped(cell: Vector2i) -> void:
 	# through only unit-selects and moves that match what the current step
 	# is waiting for -- see tutorial_manager.gd's try_consume().
 	if TutorialManager.is_active:
+		# ── NARRATE STEPS THAT POINT AT A LIVE UNIT (ADDED) ────────────────────
+		# The overlay's spotlight cutout lets clicks through the spotlighted
+		# area by design -- fine normally, but a narrate step pointing at a
+		# unit (e.g. "look at the green squares") never expected the player
+		# to interact with that unit; only the tutorial's own Continue
+		# button should move things forward. Without this, tapping the
+		# spotlighted unit runs real game logic (skip movement, show
+		# ability bar) the tutorial has no idea happened, permanently
+		# desyncing the two. Steps that genuinely want normal play to
+		# continue opt out via "allow_game_input": true.
+		var current_step: Dictionary = TutorialManager.get_current_step()
+		if current_step.get("type", "") == "narrate" and not current_step.get("allow_game_input", false):
+			return
+
 		var unit_here = grid.get_unit_at(cell)
 		if selected_unit == null and unit_here != null and unit_here.is_player_unit:
 			if not TutorialManager.try_consume("unit_selected", {"unit_id": unit_here.unit_data.id}):
