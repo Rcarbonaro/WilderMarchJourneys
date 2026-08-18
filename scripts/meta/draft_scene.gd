@@ -248,7 +248,10 @@ func _on_confirm_pressed() -> void:
 	if _selected_units.size() != _party_size:
 		return
 
-	RunManager.start_new_run("normal")
+	var difficulty: String = "normal"
+	if RunManager.current_run != null:
+		difficulty = RunManager.current_run.difficulty
+	RunManager.start_new_run(difficulty)
 	RunManager.current_run.draft_or_random_mode = "draft"
 	# starting_gold (from draft.json) PLUS whatever draft budget is left
 	# over -- per project decision, leftover draft gold becomes part of the

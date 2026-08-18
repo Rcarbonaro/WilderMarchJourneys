@@ -108,7 +108,11 @@ func get_or_generate_stage_content(stage_index: int) -> Dictionary:
 	# has no business touching the tutorial's fixed, easy fight) and
 	# MapGenerator.generate_map() (which can't produce the exact hand-placed
 	# formation the tutorial needs) in favor of a fixed, simple setup.
-	if run_state.is_tutorial:
+		# ── TUTORIAL BRANCH (ADDED) ─────────────────────────────────────────────
+	# Only stage 1 gets the fixed, hand-placed battle -- everything from
+	# stage 2 onward falls through to normal procedural generation below,
+	# same as any other run.
+	if run_state.is_tutorial and stage_index == 1:
 		if _stage_content_cache.has(stage_index):
 			var cached: Dictionary = _stage_content_cache[stage_index]
 			MapGenerator.last_result = {
@@ -287,7 +291,11 @@ func _apply_reward_rules() -> void:
 	# "In the tutorial, let's have it give 30 gold to make sure the player
 	# can get everything they need" -- fixed amount, real reward rules
 	# skipped entirely so nothing about it depends on authored content.
-	if run_state.is_tutorial:
+		# Only the tutorial's own first stage gets the guaranteed 30 gold --
+	# _apply_reward_rules() runs BEFORE advance_stage() below, so
+	# stage_index here is still "the stage that just finished." Every
+	# stage after that uses normal reward_rules, same as any other run.
+	if run_state.is_tutorial and run_state.stage_index == 1:
 		run_state.gold += 30
 		last_stage_gold_reward = 30
 		return

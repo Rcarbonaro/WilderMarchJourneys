@@ -1830,6 +1830,14 @@ func _sweep_dead_units() -> void:
 			print("☠️ Dead-unit safety net: ", unit.unit_data.display_name,
 				  " never finished its death sequence -- forcing cleanup now.")
 			_on_unit_died(unit)
+			# ADDED: _on_unit_died() only updates team lists / battle-end
+			# state -- the wedged _finish_death() await (typically a looping
+			# "die" animation that never emits animation_finished, e.g. a
+			# unit killed by a Thorns reflect mid-attack) means the node
+			# itself would keep rendering on the field forever. Hide and free
+			# it here so the round-start sweep also cleans up the SPRITE.
+			unit.hide()
+			unit.queue_free()
 
 
 func check_plague_spread_for(unit) -> void:

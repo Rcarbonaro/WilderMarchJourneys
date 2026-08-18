@@ -980,7 +980,13 @@ func _finish_death() -> void:
 		# If the sprite has a "die" animation, wait for it to finish naturally.
 		# If the animation loops or doesn't exist we fall back to a fixed delay.
 		if sprite.sprite_frames != null and sprite.sprite_frames.has_animation("die"):
-			await sprite.animation_finished
+			# ADDED: race the animation against a hard timeout. If "die" is
+			# set to loop, animation_finished never fires and the old code
+			# waited here forever -- unit_died never emitted and the sprite
+			# stayed on the field (the Thorns-kill ghost-sprite bug).
+			var timeout := get_tree().create_timer(1.5)
+			while sprite.is_playing() and timeout.time_left > 0.0:
+				await get_tree().process_frame
 		else:
 			await get_tree().create_timer(0.4).timeout
 	else:

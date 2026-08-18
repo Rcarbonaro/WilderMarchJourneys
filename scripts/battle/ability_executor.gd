@@ -71,6 +71,7 @@ var _last_hit_was_crit: bool = false
 # Read inside _apply_damage_with_effects() to decide whether to fire Crit Overload.
 # Reset to false at the START of every calculate_damage() call so it is always
 # accurate for the most recent hit.
+var _on_kill_reapplied_invisible: bool = false
 
 # ── MAIN ENTRY POINT ──────────────────────────────────────────────────────────
 
@@ -305,9 +306,8 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 
 	# If the caster was invisible, attacking reveals them. remove_status()
 	# refreshes sprite transparency itself now, so no separate call needed here.
-	if caster.has_status("invisible"):
-		caster.remove_status("invisible")
-		print("👁️ ", caster.unit_data.display_name, " revealed by attacking!")
+	var caster_was_invisible: bool = caster.has_status("invisible")
+	_on_kill_reapplied_invisible = false
 
 	for cell in target_cells:
 		var target = grid_ref.get_unit_at(cell)
@@ -406,6 +406,18 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 				print("✨ Cleansed ", cleansed_count, " effect(s) from ",
 					  cleanse_target.unit_data.display_name)
 
+		# ── STEP 3.2b: REVEAL (invisibility breaks AFTER the attack) ──────────
+	# All hits, double-hits, and on-kill triggers for this cast have now
+	# resolved, so the stealth ATK/crit boost applied to every one of them.
+	# If a kill this cast re-applied invisibility via on_kill_apply_status,
+	# _on_kill_reapplied_invisible is set and we keep the fresh status --
+	# that's the "re-applying if they defeated the enemy" case. This also
+	# deliberately runs BEFORE STEP 3.4's applies_statuses_to_self, so an
+	# ability that re-stealths the caster on cast is never stripped either.
+	if caster_was_invisible and is_instance_valid(caster) and not _on_kill_reapplied_invisible:
+		caster.remove_status("invisible")
+		print("👁️ ", caster.unit_data.display_name, " revealed by attacking!")
+	
 	# ── STEP 3.3: RESOLVE DISPLACEMENT (PUSH/PULL/SCATTER) ────────────────────
 	# For displacement abilities: start the VFX at the same moment we begin
 # moving the pushed/pulled units so the tornado plays OVER the movement
@@ -671,8 +683,12 @@ func _trigger_on_kill(caster, ability: AbilityData, dead_target) -> void:
 	# -- Apply a self-buff to the caster on kill.
 	if ability.on_kill_apply_status != null:
 		caster.apply_status(ability.on_kill_apply_status)
+		# ADDED: if this kill re-granted invisibility, flag it so the
+		# post-attack reveal in execute_ability() leaves the fresh status alone.
+		if ability.on_kill_apply_status.id == "invisible" or ability.on_kill_apply_status.is_invisible:
+			_on_kill_reapplied_invisible = true
 		print("✨ Condition successfully applied to: ", caster.unit_data.display_name)
-
+		
 	# -- Reset action flags so the caster can act again this turn.
 	if ability.on_kill_reset_has_acted:
 		caster.has_acted = false

@@ -44,7 +44,11 @@ const TUTORIAL_SHOP_ENTRY_IDS := ["blade", "talisman_of_health", "dreadknight", 
 
 
 func generate_shop(run_state: RunState) -> Array:
-	if run_state.is_tutorial:
+	# Only the FIRST shop visit (right after the tutorial's scripted stage 1
+	# battle -- stage_index is already 2 by the time this shop opens, since
+	# advance_stage() already ran) gets the guaranteed lineup. Every later
+	# shop visit rolls normally.
+	if run_state.is_tutorial and run_state.stage_index == 2:
 		return _generate_tutorial_shop(run_state)
 	var slot_count: int = clamp(BASE_SHOP_SLOTS + run_state.shop_slot_modifier, 1, MAX_SHOP_SLOTS)
 	var offer := _roll_offer(slot_count, run_state)

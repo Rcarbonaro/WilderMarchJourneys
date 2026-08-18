@@ -99,10 +99,17 @@ func _on_step_started(step: Dictionary) -> void:
 	_current_target_key = step.get("target", "")
 	visible = true
 
+	# ADDED: a wait_for step is meant to be fully silent -- no scrim, no
+	# arrow, and (this was the missing piece) no floating textbox/button
+	# either. Without this, an empty-text wait_for step still showed a bare
+	# "Continue ▶" button sitting on screen for as long as it was waiting.
+	var is_wait_for: bool = step.get("type", "") == "wait_for"
+	_textbox.visible = not is_wait_for
+
 	_textbox_label.text = step.get("text", "")
 	var is_gate: bool = step.get("type", "gate") == "gate"
 	_continue_button.visible = not is_gate   # gate steps advance from the real action, not a button
-
+	
 	var should_block: bool = step.get("block_input", true) and step.get("type", "") != "wait_for"
 	_scrim_top.visible = should_block
 	_scrim_bottom.visible = should_block

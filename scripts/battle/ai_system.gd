@@ -132,11 +132,23 @@ func _run_single_enemy(enemy, players: Array, grid: Node,
 	# 3. Target selection: find the closest visible player unit.
 	# This is the DEFAULT target used for non-damaging abilities, and the
 	# fallback target if this enemy is taunted but can't reach the taunter.
+		# Build the target pool: visible players only. Can't target invisible units.
+	var target_pool: Array = []
+	for p in valid_players:
+		if not p.has_status("invisible"):
+			target_pool.append(p)
+
+	# ADDED (last-unit-stealth fix): if EVERY remaining player unit is
+	# invisible -- i.e. a stealthed Rogue is the last unit standing --
+	# invisibility stops protecting them, and enemies target the closest one
+	# anyway. Without this, default_target stayed null and every enemy just
+	# skipped its turn forever against a solo invisible Rogue.
+	if target_pool.is_empty():
+		target_pool = valid_players
+
 	var default_target = null
 	var closest_dist  = 999999
-	for p in valid_players:
-		if p.has_status("invisible"):
-			continue   # Can't target invisible units.
+	for p in target_pool:
 		var dist = (abs(enemy.grid_position.x - p.grid_position.x)
 				  + abs(enemy.grid_position.y - p.grid_position.y))
 		if dist < closest_dist:
