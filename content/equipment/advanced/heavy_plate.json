@@ -1,7 +1,7 @@
 {
   "id": "heavy_plate",
   "name": "Heavy Plate",
-  "description": "+6 DEF. Increases nearby ally DEF/MDEF by +2.",
+  "description": "+6 DEF. Reduces all damage taken by 10%",
   "icon": "res://sprites/UI/skill icons/heavyplate.png",
   "type": "advanced",
   "subtype": "armor_armor",

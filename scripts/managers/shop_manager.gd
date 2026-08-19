@@ -37,6 +37,11 @@
 
 extends Node2D
 
+const TUTORIAL_SHOP_ENTRY_IDS := [
+	"shop_entry_blade_1", "shop_entry_talisman_of_health_7",
+	"shop_dreadknight", "shop_plaguebringer", "shop_entry_vial_of_strength",
+]
+
 const MAX_EQUIP_SLOTS := 3
 # Not enforced anywhere else in the backend (RunState.party's
 # equipped_item_ids is just a plain Array with no size cap) -- this is a

@@ -139,7 +139,7 @@
     { "id": "s45", "type": "gate", "text": "Your Executioner is probably the most suitable for that item.",
       "target": "unit_picker_row:executioner", "advance_on": "item_equipped", "advance_match": {} },
 
-    { "id": "s46", "type": "narrate", "text": "Good job! Try to experiment with different items, units, and team combinations!",
+    { "id": "s46", "type": "narrate", "text": "Good job! Try to experiment with different items, units, and team combinations! Continue to play, and see how far you can get!",
       "target": "" }
   ]
 }

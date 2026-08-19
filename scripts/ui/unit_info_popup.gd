@@ -268,15 +268,15 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 
 	# 1. Map icons cleanly (No colors applied, per requirement)
 	var stat_icons := {
-		"HP": preload("res://sprites/UI/Icons/hp_icon.png"),     # Add your path here
-		"Mana": preload("res://sprites/UI/Icons/mana_icon.png"), # Add your path here
-		"ATK": preload("res://sprites/UI/Icons/atk_icon.png"),
-		"MATK": preload("res://sprites/UI/Icons/matk_icon.png"),
-		"DEF": preload("res://sprites/UI/Icons/def_icon.png"),
-		"MDEF": preload("res://sprites/UI/Icons/mdef_icon.png"),
-		"Crit %": preload("res://sprites/UI/Icons/crit_icon.png"),
-		"Crit DMG": preload("res://sprites/UI/Icons/critdmg_icon.png"),
-		"MOV": preload("res://sprites/UI/Icons/mov_icon.png")
+		"HP": load("res://sprites/UI/Icons/hp_icon.png"),
+		"Mana": load("res://sprites/UI/Icons/mana_icon.png"),
+		"ATK": load("res://sprites/UI/Icons/atk_icon.png"),
+		"MATK": load("res://sprites/UI/Icons/matk_icon.png"),
+		"DEF": load("res://sprites/UI/Icons/def_icon.png"),
+		"MDEF": load("res://sprites/UI/Icons/mdef_icon.png"),
+		"Crit %": load("res://sprites/UI/Icons/crit_icon.png"),
+		"Crit DMG": load("res://sprites/UI/Icons/critdmg_icon.png"),
+		"MOV": load("res://sprites/UI/Icons/mov_icon.png")
 	}
 
 	for line in stat_lines:

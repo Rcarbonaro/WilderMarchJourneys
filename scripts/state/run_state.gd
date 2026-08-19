@@ -21,7 +21,8 @@ extends Resource
 @export var player_seed: int = 0
 @export var draft_or_random_mode: String = "random"   # "random" | "draft"
 @export var difficulty: String = "easy"               # "easy" | "normal" | "hard" | "nightmare"
-@export var is_tutorial: bool = false   # ADDED -- true only for the guided tutorial run (see run_manager.gd's start_tutorial_run())
+@export var is_tutorial: bool = false
+@export var tutorial_shop_used: bool = false 
 
 # ---- PROGRESSION ----------------------------------------------------------------
 @export var stage_index: int = 1

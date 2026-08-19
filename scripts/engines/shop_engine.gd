@@ -38,17 +38,20 @@ const BASE_SHOP_SLOTS: int = 5
 const MAX_SHOP_SLOTS: int = 7
 const REFRESH_BASE_COST: int = 3
 
-const TUTORIAL_SHOP_ENTRY_IDS := ["blade", "talisman_of_health", "dreadknight", "plaguebringer", "vial_of_might"]
+const TUTORIAL_SHOP_ENTRY_IDS := [
+	"shop_entry_blade_1", "shop_entry_talisman_of_health_7",
+	"shop_dreadknight", "shop_plaguebringer", "shop_entry_vial_of_strength",
+]
 # content/shop/*.json files) if these guesses are wrong -- order matters,
 # it's the order the tutorial's callouts point at them in.
 
 
 func generate_shop(run_state: RunState) -> Array:
-	# Only the FIRST shop visit (right after the tutorial's scripted stage 1
-	# battle -- stage_index is already 2 by the time this shop opens, since
-	# advance_stage() already ran) gets the guaranteed lineup. Every later
-	# shop visit rolls normally.
-	if run_state.is_tutorial and run_state.stage_index == 2:
+	# Only the FIRST shop visit gets the guaranteed lineup -- tracked with
+	# its own explicit flag rather than inferring "is this the first visit"
+	# from stage_index, which depended on exact timing assumptions.
+	if run_state.is_tutorial and not run_state.tutorial_shop_used:
+		run_state.tutorial_shop_used = true
 		return _generate_tutorial_shop(run_state)
 	var slot_count: int = clamp(BASE_SHOP_SLOTS + run_state.shop_slot_modifier, 1, MAX_SHOP_SLOTS)
 	var offer := _roll_offer(slot_count, run_state)
@@ -64,9 +67,10 @@ func _generate_tutorial_shop(run_state: RunState) -> Array:
 	for shop_entry_id in TUTORIAL_SHOP_ENTRY_IDS:
 		var entry := ContentLoader.get_shop_entry(shop_entry_id)
 		if entry.is_empty():
-			push_warning("ShopEngine: tutorial shop entry '" + shop_entry_id + "' not found -- check TUTORIAL_SHOP_ENTRY_IDS.")
+			printerr("❌ ShopEngine: tutorial shop entry '" + shop_entry_id + "' not found in ContentLoader.shop_entries -- check TUTORIAL_SHOP_ENTRY_IDS.")   # CHANGED to printerr so it can't be missed in the console
 			continue
 		offer.append({"shop_entry_id": shop_entry_id, "final_price": _final_price(entry, run_state)})
+	print("🧪 Tutorial shop generated ", offer.size(), "/", TUTORIAL_SHOP_ENTRY_IDS.size(), " entries.")   # ADDED
 	run_state.shop_inventory = offer
 	EventBus.publish(EventBus.ON_SHOP_OPEN, {"offer": offer})
 	return offer

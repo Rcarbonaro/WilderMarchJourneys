@@ -648,7 +648,7 @@ func _equip_worldroot_staff(unit) -> void:
 func _worldroot_staff_after_ability(caster, ability, target_cells: Array, origin_cell: Vector2i, executor, unit) -> void:
 	if caster != unit or ability.ability_type != "spell" or ability.mana_cost <= 0:
 		return
-	if randf() < 0.5:
+	if randf() < 50:
 		unit.restore_mana(ability.mana_cost)
 
 # ==============================================================================
@@ -756,7 +756,7 @@ func _equip_ethereal_shroud(unit) -> void:
 func _ethereal_shroud_modify_damage(attacker, target, damage: int, is_crit: bool, damage_type: String, unit) -> int:
 	if target != unit or damage_type != "magical":
 		return damage
-	if randf() < 0.25:
+	if randf() < 0.33:
 		if unit.grid_ref != null:
 			unit.grid_ref.apply_shield(unit, 10, 2)
 		return 0

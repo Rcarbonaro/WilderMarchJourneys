@@ -196,8 +196,10 @@ func _run_system_action(step: Dictionary) -> void:
 			if run_state == null:
 				return
 			for item_id in step.get("item_ids", []):
+				if ContentLoader.get_equipment(item_id).is_empty():   # ADDED
+					printerr("❌ TutorialManager: grant_items item_id '" + item_id + "' doesn't match any real equipment -- check content ids.")
 				run_state.equipment_inventory.append(item_id)
-			inventory_granted.emit()   # ADDED
+			inventory_granted.emit()   
 		"grant_item_if_missing":
 			var run_state = RunManager.current_run
 			if run_state == null:
@@ -205,7 +207,7 @@ func _run_system_action(step: Dictionary) -> void:
 			var item_id: String = step.get("item_id", "")
 			if item_id != "" and not run_state.equipment_inventory.has(item_id):
 				run_state.equipment_inventory.append(item_id)
-			inventory_granted.emit()   # ADDED
+			inventory_granted.emit()   
 		"grant_generic_scroll_if_missing":
 			var run_state = RunManager.current_run
 			if run_state == null:
