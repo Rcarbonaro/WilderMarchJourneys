@@ -66,6 +66,16 @@ extends Control
 
 signal closed
 
+@export var hp_icon_tex: Texture2D
+@export var mana_icon_tex: Texture2D
+@export var atk_icon_tex: Texture2D
+@export var matk_icon_tex: Texture2D
+@export var def_icon_tex: Texture2D
+@export var mdef_icon_tex: Texture2D
+@export var crit_icon_tex: Texture2D
+@export var critdmg_icon_tex: Texture2D
+@export var mov_icon_tex: Texture2D
+
 # ── POSITION & SIZE ────────────────────────────────────────────────────────────
 # Adjust these two constants to move or resize the card. The card is always
 # centered on whatever this popup is added as a child of (normally the full
@@ -268,15 +278,15 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 
 	# 1. Map icons cleanly (No colors applied, per requirement)
 	var stat_icons := {
-		"HP": load("res://sprites/UI/Icons/hp_icon.png"),
-		"Mana": load("res://sprites/UI/Icons/mana_icon.png"),
-		"ATK": load("res://sprites/UI/Icons/atk_icon.png"),
-		"MATK": load("res://sprites/UI/Icons/matk_icon.png"),
-		"DEF": load("res://sprites/UI/Icons/def_icon.png"),
-		"MDEF": load("res://sprites/UI/Icons/mdef_icon.png"),
-		"Crit %": load("res://sprites/UI/Icons/crit_icon.png"),
-		"Crit DMG": load("res://sprites/UI/Icons/critdmg_icon.png"),
-		"MOV": load("res://sprites/UI/Icons/mov_icon.png")
+		"HP": hp_icon_tex,
+		"Mana": mana_icon_tex,
+		"ATK": atk_icon_tex,
+		"MATK": matk_icon_tex,
+		"DEF": def_icon_tex,
+		"MDEF": mdef_icon_tex,
+		"Crit %": crit_icon_tex,
+		"Crit DMG": critdmg_icon_tex,
+		"MOV": mov_icon_tex
 	}
 
 	for line in stat_lines:

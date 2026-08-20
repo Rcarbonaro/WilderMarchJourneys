@@ -103,14 +103,34 @@
     { "id": "s30", "type": "narrate", "text": "There are also consumables, which are one-time use items that can heal, boost stats, restore mana, or give other boosts to increase your unit's effectiveness!",
       "target": "", "block_input": false },
 
+    { "id": "s31", "type": "narrate", "text": "Buy whatever you think will help give you the edge to defeat the enemies!",
+      "target": "" },
+
     { "id": "s32", "type": "narrate", "text": "You can also refresh the shop, but note that this costs gold! This cost can really add up if you keep refreshing, but refreshing can help you find that perfect item!",
       "target": "", "block_input": false },
+
+    { "id": "s33", "type": "gate", "text": "Click 'Back' to return to the Deployment screen.",
+      "target": "shop_back_button", "advance_on": "shop_closed", "advance_match": {} },
+
+    { "id": "s33a2", "type": "wait_for", "text": "", "condition": "deployment_scene_ready" },
+
+    { "id": "s34", "type": "system_action", "action": "grant_items", "item_ids": ["blade", "blade"] },
+
+    { "id": "s33b", "type": "system_action", "action": "grant_item_if_missing", "item_id": "vial_of_strength" },
 
     { "id": "s33c", "type": "narrate", "text": "You can also equip one-time use consumables to restore health or stamina, or boost stats. Be sure to experiment with them!",
       "target": "", "block_input": false },
 
-    { "id": "s33e", "type": "narrate", "text": "Skill Scrolls let you customize and enhance skills. Experiment by using it on your favorite units!",
+    { "id": "s33d", "type": "system_action", "action": "grant_generic_scroll_if_missing" },
+
+    { "id": "s33e", "type": "narrate", "text": "Experiment with skill scrolls to customize your favorite abilities!.",
       "target": "", "block_input": false },
+
+    { "id": "s35", "type": "gate", "text": "In the inventory, you can select on an item to equip or combine them. Try clicking on the Blade item.",
+      "target": "inventory_item:blade", "advance_on": "inventory_item_selected", "advance_match": { "item_id": "blade" } },
+
+    { "id": "s36", "type": "gate", "text": "Combining them allows you to create an even stronger item! Let's try.",
+      "target": "inventory_combine_button", "advance_on": "combine_pressed", "advance_match": { "item_id": "blade" } },
 
     { "id": "s37", "type": "narrate", "text": "Pressing combine adds it to the forge. Let's add the other Blade!",
       "target": "", "block_input": false },
@@ -139,7 +159,7 @@
     { "id": "s45", "type": "gate", "text": "Your Executioner is probably the most suitable for that item.",
       "target": "unit_picker_row:executioner", "advance_on": "item_equipped", "advance_match": {} },
 
-    { "id": "s46", "type": "narrate", "text": "Good job! Try to experiment with different items, units, and team combinations! Continue to play, and see how far you can get!",
+    { "id": "s46", "type": "narrate", "text": "Good job! Try to experiment with different items, units, and team combinations!",
       "target": "" }
   ]
 }

@@ -1,16 +1,30 @@
 [gd_scene format=3 uid="uid://cex0ecyqllq4k"]
 
 [ext_resource type="Script" uid="uid://bbil00pq8wpri" path="res://scripts/ui/ui_manager.gd" id="1_o3edr"]
+[ext_resource type="Texture2D" uid="uid://dw256wvqg3ogk" path="res://sprites/UI/icons/atk_icon.png" id="2_dcosx"]
 [ext_resource type="Texture2D" uid="uid://ciq0wc8arhnye" path="res://sprites/UI/Health & Mana Bars/HPBar_Background.png" id="2_v1sni"]
+[ext_resource type="Texture2D" uid="uid://djx5lu67nhqeh" path="res://sprites/UI/icons/matk_icon.png" id="3_00jfr"]
 [ext_resource type="Texture2D" uid="uid://b681ekra18dmx" path="res://sprites/UI/Health & Mana Bars/hpbar_inside.png" id="3_h6rtp"]
+[ext_resource type="Texture2D" uid="uid://cqlvsrinlhs2f" path="res://sprites/UI/icons/crit_icon.png" id="4_ij8di"]
 [ext_resource type="Texture2D" uid="uid://cr8pylcnadxxm" path="res://sprites/UI/Health & Mana Bars/ManaBar_Background.png" id="4_trk6y"]
+[ext_resource type="Texture2D" uid="uid://dmufgj30nsnjc" path="res://sprites/UI/icons/critDMG_icon.png" id="5_h2225"]
 [ext_resource type="Texture2D" uid="uid://dsxpkt4c2lkkd" path="res://sprites/UI/Health & Mana Bars/manabar_inside.png" id="5_trk6y"]
+[ext_resource type="Texture2D" uid="uid://b2hmtgfpro1dd" path="res://sprites/UI/icons/def_icon.png" id="6_cby0n"]
+[ext_resource type="Texture2D" uid="uid://dpktu2n30niar" path="res://sprites/UI/icons/mdef_icon.png" id="7_hqmnl"]
+[ext_resource type="Texture2D" uid="uid://d2w1rs7x1xjh2" path="res://sprites/UI/icons/mov_icon.png" id="8_jmm57"]
 
 [node name="UIManager" type="CanvasLayer" unique_id=493660787]
 script = ExtResource("1_o3edr")
 hp_bar_pixel_width = 369.0
 mana_bar_pixel_width = 219.0
 turn_announcement_duration = 1.0
+atk_icon_tex = ExtResource("2_dcosx")
+matk_icon_tex = ExtResource("3_00jfr")
+crit_chance_icon_tex = ExtResource("4_ij8di")
+crit_damage_icon_tex = ExtResource("5_h2225")
+def_icon_tex = ExtResource("6_cby0n")
+mdef_icon_tex = ExtResource("7_hqmnl")
+mov_icon_tex = ExtResource("8_jmm57")
 
 [node name="BottomBar" type="PanelContainer" parent="." unique_id=1813424329]
 clip_contents = true

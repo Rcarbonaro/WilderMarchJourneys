@@ -262,21 +262,25 @@ offset_bottom = 1032.0
 text = "Continue"
 
 [node name="ScoutButton" type="Button" parent="." unique_id=1050116355]
+visible = false
 offset_left = 1457.0
 offset_top = 741.0
 offset_right = 1612.0
 offset_bottom = 845.0
 
 [node name="ScoutPanel" type="PanelContainer" parent="." unique_id=1057363677]
+visible = false
 offset_left = 1457.0
 offset_top = 51.0
 offset_right = 1897.0
 offset_bottom = 725.0
 
 [node name="ScoutMargin" type="MarginContainer" parent="ScoutPanel" unique_id=233937037]
+visible = false
 layout_mode = 2
 
 [node name="ScoutVBox" type="VBoxContainer" parent="ScoutPanel/ScoutMargin" unique_id=517428427]
+visible = false
 layout_mode = 2
 
 [node name="ScoutText" type="RichTextLabel" parent="ScoutPanel/ScoutMargin/ScoutVBox" unique_id=1699465534]
@@ -285,14 +289,17 @@ layout_mode = 2
 fit_content = true
 
 [node name="ScoutMapView" type="Control" parent="ScoutPanel/ScoutMargin/ScoutVBox" unique_id=828811251]
+visible = false
 layout_mode = 2
 script = ExtResource("2_l7df5")
 
 [node name="ScoutCloseButton" type="Button" parent="ScoutPanel/ScoutMargin/ScoutVBox" unique_id=1380070234]
+visible = false
 layout_mode = 2
 text = "Close"
 
 [node name="ScoutEnterCombatButton" type="Button" parent="ScoutPanel/ScoutMargin/ScoutVBox" unique_id=1999785376]
+visible = false
 layout_mode = 2
 
 [node name="PreviewLayer" type="Node2D" parent="." unique_id=1948338457]

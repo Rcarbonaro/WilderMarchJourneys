@@ -407,24 +407,23 @@ func _scan_features_recursive(path: String, biome: String, result: Array[MapFeat
 	var dir := DirAccess.open(path)
 	if dir == null:
 		return
-
 	dir.list_dir_begin()
 	var entry_name := dir.get_next()
-
 	while entry_name != "":
 		var full_path := path + entry_name
-
 		if dir.current_is_dir() and entry_name != "." and entry_name != "..":
 			_scan_features_recursive(full_path + "/", biome, result)
-
-		elif entry_name.ends_with(".tres"):
-			var feature := ResourceLoader.load(full_path) as MapFeatureData
-
+		# In an EXPORTED build with "Convert Text Resources to Binary" enabled,
+		# .tres files are physically renamed to "<name>.tres.remap" in the
+		# packed PCK -- load() still resolves the ORIGINAL "res://...tres" path
+		# fine, but a raw folder scan only sees the ".remap" filename on disk.
+		# Match both extensions, and strip ".remap" back off before load()'ing.
+		elif entry_name.ends_with(".tres") or entry_name.ends_with(".tres.remap"):
+			var clean_path := full_path.trim_suffix(".remap")
+			var feature := load(clean_path) as MapFeatureData
 			if feature != null and (feature.biomes.is_empty() or feature.biomes.has(biome)):
 				result.append(feature)
-
 		entry_name = dir.get_next()
-
 	dir.list_dir_end()
 
 

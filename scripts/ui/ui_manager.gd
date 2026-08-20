@@ -71,6 +71,15 @@ extends CanvasLayer
 @onready var music_volume_slider: HSlider = $PauseMenu/VBoxContainer/MusicVolumeSlider
 @onready var sfx_volume_slider:   HSlider = $PauseMenu/VBoxContainer/SFXVolumeSlider
 
+@export var atk_icon_tex: Texture2D
+@export var matk_icon_tex: Texture2D
+@export var crit_chance_icon_tex: Texture2D
+@export var crit_damage_icon_tex: Texture2D
+@export var def_icon_tex: Texture2D
+@export var mdef_icon_tex: Texture2D
+@export var mov_icon_tex: Texture2D
+
+
 # ── SCENE NODE REFERENCES ─────────────────────────────────────────────────────
 # These are populated in _ready() by searching the scene tree for each name.
 # If a node is missing, the variable stays null and that piece is skipped
@@ -363,14 +372,14 @@ func _build_stat_rows() -> void:
 	stats_grid.add_theme_constant_override("h_separation", 13)
 	stats_grid.add_theme_constant_override("v_separation", 6)
 
-	var icon_paths: Dictionary = {
-		"atk":         "res://sprites/UI/Icons/atk_icon.png",
-		"matk":        "res://sprites/UI/Icons/matk_icon.png",
-		"crit_chance": "res://sprites/UI/Icons/crit_icon.png",
-		"crit_damage": "res://sprites/UI/Icons/critdmg_icon.png",
-		"def":         "res://sprites/UI/Icons/def_icon.png",
-		"mdef":        "res://sprites/UI/Icons/mdef_icon.png",
-		"mov":         "res://sprites/UI/Icons/mov_icon.png",
+	var icon_textures: Dictionary = {
+		"atk":         atk_icon_tex,
+		"matk":        matk_icon_tex,
+		"crit_chance": crit_chance_icon_tex,
+		"crit_damage": crit_damage_icon_tex,
+		"def":         def_icon_tex,
+		"mdef":        mdef_icon_tex,
+		"mov":         mov_icon_tex,
 	}
 
 	_stat_labels = {}
@@ -382,8 +391,8 @@ func _build_stat_rows() -> void:
 		icon.custom_minimum_size = Vector2(45, 45)
 		icon.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		if ResourceLoader.exists(icon_paths[key]):
-			icon.texture = load(icon_paths[key]) as Texture2D
+		if icon_textures[key] != null:
+			icon.texture = icon_textures[key]
 		row.add_child(icon)
 
 		var lbl := Label.new()
