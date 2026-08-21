@@ -31,6 +31,7 @@ var _arrow: Polygon2D
 var _textbox: PanelContainer
 var _textbox_label: RichTextLabel
 var _continue_button: Button
+var _back_button: Button
 
 var _current_step: Dictionary = {}
 var _current_target_key: String = ""
@@ -80,10 +81,22 @@ func _build_shell() -> void:
 	_textbox_label.custom_minimum_size = Vector2(TEXTBOX_MAX_WIDTH - 24, 0)
 	box_v.add_child(_textbox_label)
 
+	# ADDED: Back sits next to Continue in its own row, rather than its own
+	# line, so a step with both visible doesn't grow any taller than one
+	# with just Continue.
+	var button_row := HBoxContainer.new()
+	button_row.add_theme_constant_override("separation", 10)
+	box_v.add_child(button_row)
+
+	_back_button = Button.new()
+	_back_button.text = "◀ Back"
+	_back_button.pressed.connect(func(): TutorialManager.rewind_step())
+	button_row.add_child(_back_button)
+
 	_continue_button = Button.new()
 	_continue_button.text = "Continue ▶"
 	_continue_button.pressed.connect(func(): TutorialManager.advance())
-	box_v.add_child(_continue_button)
+	button_row.add_child(_continue_button)
 
 
 func _make_scrim_rect() -> ColorRect:
@@ -109,7 +122,15 @@ func _on_step_started(step: Dictionary) -> void:
 	_textbox_label.text = step.get("text", "")
 	var is_gate: bool = step.get("type", "gate") == "gate"
 	_continue_button.visible = not is_gate   # gate steps advance from the real action, not a button
-	
+
+	# ADDED: failsafe "Back" button -- visible on gate AND narrate steps
+	# alike (unlike Continue, which is narrate-only), so a player who's
+	# stuck on a gate or clicked the wrong thing always has a way to back
+	# up and re-orient. Hidden during wait_for (same as the rest of the
+	# textbox -- there's nothing to show) and on the very first step, where
+	# there's nothing earlier to rewind to.
+	_back_button.visible = not is_wait_for and TutorialManager.current_step_index > 0
+
 	var should_block: bool = step.get("block_input", true) and step.get("type", "") != "wait_for"
 	_scrim_top.visible = should_block
 	_scrim_bottom.visible = should_block

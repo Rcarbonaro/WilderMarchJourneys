@@ -91,13 +91,29 @@ region = Rect2(384, 0, 192, 232)
 atlas = ExtResource("4_kfvwb")
 region = Rect2(192, 232, 192, 232)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_rvsib"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_pmk6k"]
 atlas = ExtResource("7_7eol0")
 region = Rect2(192, 0, 192, 232)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_8actv"]
+[sub_resource type="AtlasTexture" id="AtlasTexture_iiqe3"]
 atlas = ExtResource("7_7eol0")
 region = Rect2(0, 0, 192, 232)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_kfvwb"]
+atlas = ExtResource("7_7eol0")
+region = Rect2(576, 232, 192, 232)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7eol0"]
+atlas = ExtResource("7_7eol0")
+region = Rect2(384, 232, 192, 232)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rvsib"]
+atlas = ExtResource("7_7eol0")
+region = Rect2(192, 232, 192, 232)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8actv"]
+atlas = ExtResource("7_7eol0")
+region = Rect2(0, 232, 192, 232)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_h6iky"]
 atlas = ExtResource("7_7eol0")
@@ -306,6 +322,18 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_pmk6k")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_iiqe3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_kfvwb")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7eol0")
+}, {
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_rvsib")
 }, {
 "duration": 1.0,
@@ -390,10 +418,9 @@ script = ExtResource("1_65bim")
 position = Vector2(-1.2500005, 4.7683716e-07)
 scale = Vector2(0.41122395, 0.39642242)
 sprite_frames = SubResource("SpriteFrames_grxbi")
-animation = &"die"
+animation = &"idle"
 autoplay = "idle"
-frame = 7
-frame_progress = 1.0
+frame_progress = 0.37873843
 
 [node name="HPLabel" type="Label" parent="." unique_id=1793699435]
 offset_left = -33.0

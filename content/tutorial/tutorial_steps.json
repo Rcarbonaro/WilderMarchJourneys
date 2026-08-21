@@ -94,7 +94,7 @@
 
     { "id": "s27", "type": "narrate", "text": "The blade is a basic item that increases ATK. You can click 'More Info' to see more information about any item.",
       "target": "", "block_input": false,
-      "textbox_offset_percent": { "x": 0.0, "y": -0.10 } },
+      "textbox_offset_percent": { "x": -0.10, "y": -0.10 } },
 
     { "id": "s28", "type": "narrate", "text": "Purchasing a second copy of a unit will level up that unit.",
       "target": "", "block_input": false,
@@ -123,8 +123,6 @@
 
     { "id": "s34", "type": "system_action", "action": "grant_items", "item_ids": ["blade", "blade"] },
 
-    { "id": "s33b", "type": "system_action", "action": "grant_item_if_missing", "item_id": "vial_of_strength" },
-
     { "id": "s33c", "type": "narrate", "text": "You can also equip one-time use consumables to restore health or stamina, or boost stats. Be sure to experiment with them!",
       "target": "", "block_input": false },
 
@@ -139,7 +137,7 @@
     { "id": "s36", "type": "gate", "text": "Combining them allows you to create an even stronger item! Let's try.",
       "target": "inventory_combine_button", "advance_on": "combine_pressed", "advance_match": { "item_id": "blade" },
       "block_input": false,
-      "textbox_offset_percent": { "x": 0.20, "y": 0.0 } },
+      "textbox_offset_percent": { "x": 0.20, "y": -0.2 } },
 
     { "id": "s37", "type": "narrate", "text": "Pressing combine adds it to the forge. Let's add the other Blade!",
       "target": "", "block_input": false },
@@ -167,7 +165,8 @@
       "target": "", "advance_on": "forge_equip_clicked", "advance_match": {} },
 
     { "id": "s45", "type": "gate", "text": "Your Executioner is probably the most suitable for that item.",
-      "target": "unit_picker_row:executioner", "advance_on": "item_equipped", "advance_match": {} },
+      "target": "", "advance_on": "item_equipped", "advance_match": {},
+      "block_input": false },
 
     { "id": "s46", "type": "narrate", "text": "Good job! Try to experiment with different items, units, and team combinations!",
       "target": "" }

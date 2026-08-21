@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cihqvd236arcr"
-path="res://.godot/imported/Dryad_Portrait.png-1bc64ecddd2296ce097570e9bc2808d9.ctex"
+uid="uid://bjj8hxqgp1wyn"
+path="res://.godot/imported/dryad_portrait.png-18d65bbbe6c380f2c29b6c276114d6f3.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://sprites/dryad/Dryad_Portrait.png"
-dest_files=["res://.godot/imported/Dryad_Portrait.png-1bc64ecddd2296ce097570e9bc2808d9.ctex"]
+source_file="res://sprites/dryad/dryad_portrait.png"
+dest_files=["res://.godot/imported/dryad_portrait.png-18d65bbbe6c380f2c29b6c276114d6f3.ctex"]
 
 [params]
 

@@ -240,6 +240,44 @@ func _nudge() -> void:
 	# shake animation.
 	EventBus.publish("tutorial_nudge", {})
 
+func rewind_step(steps_back: int = 1) -> void:
+	# ADDED -- failsafe for the player: lets them back up to an earlier
+	# step, e.g. via the overlay's "◀ Back" button, if they've lost track
+	# of what a gate wants or want to re-read an earlier tip.
+	#
+	# SCOPE: this only rewinds WHICH STEP IS DISPLAYED -- it does NOT undo
+	# any real game action the player already took (gold already spent, an
+	# item already equipped, a unit that already moved, etc). Those live in
+	# battle_manager/shop_manager/deployment_manager, which this autoload
+	# has no authority over. Rewinding past a step whose real-world action
+	# already happened just re-shows that step's gate/spotlight again --
+	# advancing past it again still needs the same (or an equivalent) real
+	# action to actually happen.
+	#
+	# Deliberately skips OVER system_action and wait_for steps while
+	# counting how far back to go, for two reasons:
+	#   - system_action: never want to land here, since _advance_to_next_step()
+	#     would immediately re-run its side effect (e.g. grant_items) --
+	#     rewinding should never re-grant something a second time.
+	#   - wait_for: has no visible content of its own (see tutorial_overlay.gd's
+	#     is_wait_for handling), and its condition is almost always still
+	#     true (the real game state it's checking hasn't been undone), so
+	#     landing on one would just silently re-advance past it anyway.
+	# Neither type is a step the player actually experiences, so neither
+	# should "use up" a unit of steps_back.
+	if not is_active:
+		return
+	var target_index: int = current_step_index
+	var remaining: int = steps_back
+	while remaining > 0 and target_index > 0:
+		target_index -= 1
+		var step_type: String = steps[target_index].get("type", "")
+		if step_type != "system_action" and step_type != "wait_for":
+			remaining -= 1
+	current_step_index = target_index - 1   # _advance_to_next_step()'s += 1 lands exactly on target_index
+	_advance_to_next_step()
+
+
 func jump_to_step(step_id: String) -> void:
 	# Force-advances straight to a specific step by id, skipping everything
 	# in between WITHOUT requiring their gates to fire -- for when a real
