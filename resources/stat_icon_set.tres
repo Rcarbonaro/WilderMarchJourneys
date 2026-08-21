@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="StatIconSet" format=3 uid="uid://dwj16mhkeegbo"]
+
+[ext_resource type="Script" uid="uid://c55wqhabekquh" path="res://scripts/data/stat_icon_set.gd" id="1_npet4"]
+[ext_resource type="Texture2D" uid="uid://dw256wvqg3ogk" path="res://sprites/UI/icons/atk_icon.png" id="1_yfmm0"]
+[ext_resource type="Texture2D" uid="uid://cqlvsrinlhs2f" path="res://sprites/UI/icons/crit_icon.png" id="2_ndi7k"]
+[ext_resource type="Texture2D" uid="uid://dmufgj30nsnjc" path="res://sprites/UI/icons/critDMG_icon.png" id="3_bns50"]
+[ext_resource type="Texture2D" uid="uid://b2hmtgfpro1dd" path="res://sprites/UI/icons/def_icon.png" id="4_2gs3y"]
+[ext_resource type="Texture2D" uid="uid://dvlqn3bcmctaq" path="res://sprites/UI/icons/hp_icon.png" id="5_3losj"]
+[ext_resource type="Texture2D" uid="uid://0bwrqxgmjdsq" path="res://sprites/UI/icons/mana_icon.png" id="6_i0dk4"]
+[ext_resource type="Texture2D" uid="uid://djx5lu67nhqeh" path="res://sprites/UI/icons/matk_icon.png" id="7_n2fj5"]
+[ext_resource type="Texture2D" uid="uid://dpktu2n30niar" path="res://sprites/UI/icons/mdef_icon.png" id="8_fqhtg"]
+[ext_resource type="Texture2D" uid="uid://d2w1rs7x1xjh2" path="res://sprites/UI/icons/mov_icon.png" id="9_35hp5"]
+
+[resource]
+script = ExtResource("1_npet4")
+hp_icon = ExtResource("5_3losj")
+mana_icon = ExtResource("6_i0dk4")
+atk_icon = ExtResource("1_yfmm0")
+matk_icon = ExtResource("7_n2fj5")
+def_icon = ExtResource("4_2gs3y")
+mdef_icon = ExtResource("8_fqhtg")
+crit_icon = ExtResource("2_ndi7k")
+critdmg_icon = ExtResource("3_bns50")
+mov_icon = ExtResource("9_35hp5")
+metadata/_custom_type_script = "uid://c55wqhabekquh"

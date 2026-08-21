@@ -128,6 +128,25 @@ func _process(_delta: float) -> void:
 		_layout()   # target may be moving (a unit walking), not yet spawned, or the window may have resized
 
 
+func _get_textbox_offset_px(viewport_size: Vector2) -> Vector2:
+	# ADDED: optional per-step positioning nudge for the textbox, authored
+	# in tutorial_steps.json as a FRACTION of the viewport's width/height --
+	# e.g. "textbox_offset_percent": { "x": 0.2, "y": -0.1 } shifts the box
+	# right by 20% of the screen's width and up by 10% of its height,
+	# regardless of resolution/aspect ratio (matches the existing pattern
+	# of computing everything else in this file off viewport_size rather
+	# than fixed pixel values).
+	#
+	# This is a content-level knob, not a code change per step -- every
+	# step that doesn't set this field gets Vector2.ZERO here and behaves
+	# exactly as before. Negative y = up, positive x = right (standard
+	# Godot 2D screen space).
+	var offset_percent: Dictionary = _current_step.get("textbox_offset_percent", {})
+	var x_frac: float = offset_percent.get("x", 0.0)
+	var y_frac: float = offset_percent.get("y", 0.0)
+	return Vector2(x_frac * viewport_size.x, y_frac * viewport_size.y)
+
+
 func _layout() -> void:
 	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
 	var target_rect: Rect2 = _get_target_screen_rect()
@@ -141,8 +160,14 @@ func _layout() -> void:
 		_scrim_left.size = Vector2.ZERO
 		_scrim_right.size = Vector2.ZERO
 		_arrow.visible = false
-		_textbox.position = Vector2(
+		var box_pos: Vector2 = Vector2(
 			(viewport_size.x - _textbox.size.x) / 2.0, viewport_size.y - _textbox.size.y - 60)
+		# ADDED: apply + clamp the optional per-step offset, same as the
+		# hole-relative branch below.
+		box_pos += _get_textbox_offset_px(viewport_size)
+		box_pos.x = clamp(box_pos.x, 20, viewport_size.x - _textbox.size.x - 20)
+		box_pos.y = clamp(box_pos.y, 20, viewport_size.y - _textbox.size.y - 20)
+		_textbox.position = box_pos
 		return
 
 	var hole := target_rect.grow(SPOTLIGHT_PADDING)
@@ -174,6 +199,13 @@ func _layout() -> void:
 	var box_y: float = below_y if fits_below else max(20, hole.position.y - box_size.y - 40)
 	var box_x: float = clamp(hole.position.x + hole.size.x / 2.0 - box_size.x / 2.0,
 		20, viewport_size.x - box_size.x - 20)
+	# ADDED: apply the optional per-step offset (see _get_textbox_offset_px
+	# above), then re-clamp so an offset can never push the box off-screen --
+	# it can only move it as far as the edge, same spirit as the existing
+	# clamp on box_x above.
+	var offset: Vector2 = _get_textbox_offset_px(viewport_size)
+	box_x = clamp(box_x + offset.x, 20, viewport_size.x - box_size.x - 20)
+	box_y = clamp(box_y + offset.y, 20, viewport_size.y - box_size.y - 20)
 	_textbox.position = Vector2(box_x, box_y)
 
 func _get_target_screen_rect() -> Rect2:

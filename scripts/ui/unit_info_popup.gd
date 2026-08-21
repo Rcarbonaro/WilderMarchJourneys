@@ -277,17 +277,18 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 	stats_grid.add_theme_constant_override("v_separation", 22)
 
 	# 1. Map icons cleanly (No colors applied, per requirement)
+	var icon_set := load("res://resources/stat_icon_set.tres") as StatIconSet
 	var stat_icons := {
-		"HP": hp_icon_tex,
-		"Mana": mana_icon_tex,
-		"ATK": atk_icon_tex,
-		"MATK": matk_icon_tex,
-		"DEF": def_icon_tex,
-		"MDEF": mdef_icon_tex,
-		"Crit %": crit_icon_tex,
-		"Crit DMG": critdmg_icon_tex,
-		"MOV": mov_icon_tex
-	}
+	 	"HP": icon_set.hp_icon,
+		"Mana": icon_set.mana_icon,
+		"ATK": icon_set.atk_icon,
+		"MATK": icon_set.matk_icon,
+		"DEF": icon_set.def_icon,
+		"MDEF": icon_set.mdef_icon,
+		"Crit %": icon_set.crit_icon,
+		"Crit DMG": icon_set.critdmg_icon,
+		"MOV": icon_set.mov_icon
+		 }
 
 	for line in stat_lines:
 		var parts: PackedStringArray = line.split(": ")

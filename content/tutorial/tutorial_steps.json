@@ -23,7 +23,8 @@
       "target": "popup_scroll_area", "advance_on": "popup_scrolled", "advance_match": {}, "block_input": false },
 
     { "id": "s08", "type": "narrate", "text": "The Dreadknight's basic attack reduces enemy ATK and taunts the enemy, forcing them to attack him. This is helpful when trying to distract your enemies, so they don't attack your weaker units.",
-      "target": "ability_row:dreadknight_basic", "block_input": false },
+      "target": "ability_row:dreadknight_basic", "block_input": false,
+      "textbox_offset_percent": { "x": 0.0, "y": -0.20 } },
 
     { "id": "s09", "type": "narrate", "text": "These auras are permanent, but different auras may be better in different situations. Consider the best for the situation, then activate it before rushing into battle.",
       "target": "unique_ability_section", "block_input": false },
@@ -75,8 +76,8 @@
 
     { "id": "s22", "type": "wait_for", "text": "", "condition": "all_player_units_acted" },
 
-    { "id": "s23", "type": "gate", "text": "You can click the 'End Round' button to end your round after all your units have moved.",
-      "target": "end_round_button", "advance_on": "end_round_pressed", "advance_match": {} },
+    { "id": "s23", "type": "narrate", "text": "You can click the 'End Round' button to end your round after all your units have moved.",
+      "target": "end_round_button" },
 
     { "id": "s24", "type": "narrate", "text": "Now that you've got the basics, I think you can take care of these enemies. When in combat, remember to experiment with different types of abilities and combinations!",
       "target": "", "block_input": false, "allow_game_input": true },
@@ -92,22 +93,28 @@
     { "id": "s26b", "type": "wait_for", "text": "", "condition": "shop_scene_ready" },
 
     { "id": "s27", "type": "narrate", "text": "The blade is a basic item that increases ATK. You can click 'More Info' to see more information about any item.",
-      "target": "", "block_input": false },
+      "target": "", "block_input": false,
+      "textbox_offset_percent": { "x": 0.0, "y": -0.10 } },
 
     { "id": "s28", "type": "narrate", "text": "Purchasing a second copy of a unit will level up that unit.",
-      "target": "", "block_input": false },
+      "target": "", "block_input": false,
+      "textbox_offset_percent": { "x": 0.0, "y": -0.10 } },
 
     { "id": "s29", "type": "narrate", "text": "You can also encounter new units. Purchasing them will allow you to swap out characters to build a team with the right synergies!",
-      "target": "", "block_input": false },
+      "target": "", "block_input": false,
+      "textbox_offset_percent": { "x": 0.0, "y": -0.10 } },
 
     { "id": "s30", "type": "narrate", "text": "There are also consumables, which are one-time use items that can heal, boost stats, restore mana, or give other boosts to increase your unit's effectiveness!",
-      "target": "", "block_input": false },
+      "target": "", "block_input": false,
+      "textbox_offset_percent": { "x": 0.0, "y": -0.10 } },
 
     { "id": "s31", "type": "narrate", "text": "Buy whatever you think will help give you the edge to defeat the enemies!",
-      "target": "" },
+      "target": "", "block_input": false,
+      "textbox_offset_percent": { "x": 0.0, "y": -0.10 } },
 
     { "id": "s32", "type": "narrate", "text": "You can also refresh the shop, but note that this costs gold! This cost can really add up if you keep refreshing, but refreshing can help you find that perfect item!",
-      "target": "", "block_input": false },
+      "target": "shop_back_button", "block_input": false,
+      "textbox_offset_percent": { "x": 0.0, "y": -0.10 } },
 
     { "id": "s33", "type": "gate", "text": "Click 'Back' to return to the Deployment screen.",
       "target": "shop_back_button", "advance_on": "shop_closed", "advance_match": {} },
@@ -130,7 +137,9 @@
       "target": "inventory_item:blade", "advance_on": "inventory_item_selected", "advance_match": { "item_id": "blade" } },
 
     { "id": "s36", "type": "gate", "text": "Combining them allows you to create an even stronger item! Let's try.",
-      "target": "inventory_combine_button", "advance_on": "combine_pressed", "advance_match": { "item_id": "blade" } },
+      "target": "inventory_combine_button", "advance_on": "combine_pressed", "advance_match": { "item_id": "blade" },
+      "block_input": false,
+      "textbox_offset_percent": { "x": 0.20, "y": 0.0 } },
 
     { "id": "s37", "type": "narrate", "text": "Pressing combine adds it to the forge. Let's add the other Blade!",
       "target": "", "block_input": false },
@@ -142,7 +151,8 @@
       "target": "inventory_item:blade", "advance_on": "inventory_item_selected", "advance_match": { "item_id": "blade" } },
 
     { "id": "s40", "type": "gate", "text": "Add it to the forge too.",
-      "target": "inventory_combine_button", "advance_on": "combine_pressed", "advance_match": { "item_id": "blade" } },
+      "target": "", "advance_on": "combine_pressed", "advance_match": { "item_id": "blade" },
+      "block_input": false },
 
     { "id": "s41", "type": "gate", "text": "Click Preview to see what item you are about to forge.",
       "target": "forge_preview_button", "advance_on": "forge_preview_opened", "advance_match": {} },
