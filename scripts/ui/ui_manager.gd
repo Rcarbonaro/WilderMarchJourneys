@@ -488,6 +488,11 @@ func show_unit_abilities(unit) -> void:
 		return
 	if bottom_bar:
 		bottom_bar.visible = true
+
+	# Build the ability list first (instead of creating buttons directly)
+	# so we can decide below whether to lay them out individually or
+	# collapse them behind one "Skills" button.
+	var abilities: Array = []   # [{ "ability": AbilityData, "cooldown": int }, ...]
 	for raw_ability in unit.unit_data.starting_abilities:
 		if raw_ability == null:
 			continue
@@ -498,28 +503,76 @@ func show_unit_abilities(unit) -> void:
 		# build_enhanced_abilities()/get_ability_for_use() for the full
 		# explanation of why this ONE substitution point is enough.
 		var ability: AbilityData = unit.get_ability_for_use(raw_ability) if unit.has_method("get_ability_for_use") else raw_ability
-		var btn := Button.new()
-		btn.text                    = ability.display_name
-		btn.icon = ability.icon
-		btn.expand_icon = true             # Allows the icon to scale to fit
-		btn.add_theme_constant_override("icon_max_width", 64) # Sets the size (in pixels)
-		btn.custom_minimum_size     = Vector2(110, 40)
-		btn.size_flags_horizontal   = Control.SIZE_EXPAND_FILL
-		btn.mouse_filter            = Control.MOUSE_FILTER_STOP
-		
-		var cooldown: int = unit.ability_cooldowns.get(ability.id, 0)
-		if cooldown > 0:
-			btn.disabled = true
-			btn.text    += " (%d)" % cooldown
-		btn.pressed.connect(func():
-			if battle_manager and battle_manager.has_method("on_ability_selected"):
-				battle_manager.on_ability_selected(ability)
-		)
-		
-		btn.mouse_entered.connect(func(): _show_ability_tooltip(ability, btn))
-		btn.mouse_exited.connect(_hide_ability_tooltip)
-		AudioManager.wire_button_sfx(btn)   # ADDED
-		ability_bar.add_child(btn)
+		abilities.append({"ability": ability, "cooldown": unit.ability_cooldowns.get(ability.id, 0)})
+
+	# "Including usable items": the Items button counts as ONE button
+	# towards the total, same as it appears in the bar.
+	var will_show_items: bool = not _gather_usable_item_entries(unit).is_empty()
+	var total_buttons: int = abilities.size() + (1 if will_show_items else 0)
+	var use_skills_popup: bool = OS.has_feature("mobile") or total_buttons > 4
+
+	if use_skills_popup:
+		var skills_btn := Button.new()
+		skills_btn.text = "Skills"
+		skills_btn.custom_minimum_size = Vector2(90, 40)
+		skills_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		skills_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+		skills_btn.pressed.connect(func(): _open_skills_popup(skills_btn, unit, abilities))
+		AudioManager.wire_button_sfx(skills_btn)
+		ability_bar.add_child(skills_btn)
+	else:
+		for entry in abilities:
+			ability_bar.add_child(_build_ability_button(entry["ability"], entry["cooldown"]))
+
+
+func _build_ability_button(ability, cooldown: int) -> Button:
+	# Shared by the normal ability row AND the Skills popup, so the two
+	# layouts can never drift out of sync. This is the same button-building
+	# code that used to live directly inside show_unit_abilities() above.
+	var btn := Button.new()
+	btn.text                    = ability.display_name
+	btn.icon = ability.icon
+	btn.expand_icon = true
+	btn.add_theme_constant_override("icon_max_width", 64)
+	btn.custom_minimum_size     = Vector2(110, 40)
+	btn.size_flags_horizontal   = Control.SIZE_EXPAND_FILL
+	btn.mouse_filter            = Control.MOUSE_FILTER_STOP
+	if cooldown > 0:
+		btn.disabled = true
+		btn.text    += " (%d)" % cooldown
+	btn.pressed.connect(func():
+		if battle_manager and battle_manager.has_method("on_ability_selected"):
+			battle_manager.on_ability_selected(ability)
+	)
+	btn.mouse_entered.connect(func(): _show_ability_tooltip(ability, btn))
+	btn.mouse_exited.connect(_hide_ability_tooltip)
+	AudioManager.wire_button_sfx(btn)
+	return btn
+
+
+var _skills_popup: PopupPanel = null
+
+func _open_skills_popup(anchor_button: Button, unit, abilities: Array) -> void:
+	# Mirrors _open_items_popup() — one row per skill, same icon/name, and
+	# the same hover tooltip a normal ability-bar button shows.
+	if _skills_popup != null and is_instance_valid(_skills_popup):
+		_skills_popup.queue_free()
+
+	_skills_popup = PopupPanel.new()
+	var list := VBoxContainer.new()
+	list.add_theme_constant_override("separation", 4)
+	_skills_popup.add_child(list)
+
+	for entry in abilities:
+		var btn := _build_ability_button(entry["ability"], entry["cooldown"])
+		# On top of _build_ability_button()'s own on_ability_selected() call —
+		# just closes the popup once a skill is picked.
+		btn.pressed.connect(func(): _skills_popup.hide())
+		list.add_child(btn)
+
+	ability_bar.add_child(_skills_popup)
+	_skills_popup.position = Vector2(anchor_button.global_position.x, anchor_button.global_position.y - 200)
+	_skills_popup.popup()
 
 		
 func set_cancel_move_visible(visible_state: bool) -> void:
@@ -1392,14 +1445,7 @@ func show_usable_items(unit) -> void:
 	if ability_bar == null or unit == null or unit.has_used_item_this_turn:
 		return
 
-	var consumables: Array = []   # [{ "item_id": String, "slot_index": int, "data": Dictionary }, ...]
-	for i in range(unit.equipped_item_ids.size()):
-		var item_id = unit.equipped_item_ids[i]
-		if item_id == null or item_id == "":
-			continue
-		var data := ContentLoader.get_equipment(item_id)
-		if data.get("type", "") == "consumable":
-			consumables.append({"item_id": item_id, "slot_index": i, "data": data})
+	var consumables: Array = _gather_usable_item_entries(unit)
 
 	# THE FIX (your 3rd point): no consumables equipped -> no button, period.
 	if consumables.is_empty():
@@ -1415,6 +1461,31 @@ func show_usable_items(unit) -> void:
 	ability_bar.add_child(items_btn)
 
 
+func _gather_usable_item_entries(unit) -> Array:
+	# Real consumables (type == "consumable") PLUS equipped gear with an
+	# active-use custom effect that still has charges this battle (e.g.
+	# Lifebinder's Staff). Factored out of show_usable_items() so
+	# show_unit_abilities() can also ask "would Items show?" when deciding
+	# whether to collapse into the Skills button.
+	var entries: Array = []
+	for i in range(unit.equipped_item_ids.size()):
+		var item_id = unit.equipped_item_ids[i]
+		if item_id == null or item_id == "":
+			continue
+		var data := ContentLoader.get_equipment(item_id)
+		if data.get("type", "") == "consumable":
+			entries.append({"item_id": item_id, "slot_index": i, "data": data, "kind": "consumable"})
+			continue
+		for effect in data.get("effects", []):
+			if effect.get("type", "") != "custom":
+				continue
+			var custom_id: String = effect.get("custom_id", "")
+			if CustomEquipmentHandlers.has_active_use(custom_id) and CustomEquipmentHandlers.get_active_use_charges(custom_id, unit) > 0:
+				entries.append({"item_id": item_id, "slot_index": i, "data": data, "kind": "active_equipment", "custom_id": custom_id})
+			break
+	return entries
+
+
 func _open_items_popup(anchor_button: Button, unit, consumables: Array) -> void:
 	if _items_popup != null and is_instance_valid(_items_popup):
 		_items_popup.queue_free()
@@ -1428,6 +1499,8 @@ func _open_items_popup(anchor_button: Button, unit, consumables: Array) -> void:
 		var data: Dictionary = entry["data"]
 		var item_id: String = entry["item_id"]
 		var slot_index: int = entry["slot_index"]
+		var kind: String = entry.get("kind", "consumable")
+		var custom_id: String = entry.get("custom_id", "")
 
 		var btn := Button.new()
 		btn.text = data.get("name", item_id)
@@ -1439,7 +1512,10 @@ func _open_items_popup(anchor_button: Button, unit, consumables: Array) -> void:
 		btn.custom_minimum_size = Vector2(150, 36)
 		btn.pressed.connect(func():
 			_items_popup.hide()
-			if battle_manager and battle_manager.has_method("on_item_selected"):
+			if kind == "active_equipment":
+				if battle_manager and battle_manager.has_method("on_active_equipment_selected"):
+					battle_manager.on_active_equipment_selected(custom_id, unit)
+			elif battle_manager and battle_manager.has_method("on_item_selected"):
 				battle_manager.on_item_selected(item_id, slot_index, unit)
 		)
 		AudioManager.wire_button_sfx(btn)

@@ -1491,7 +1491,9 @@ func _show_scroll_ability_picker(scroll_item_id: String, instance_id: String) ->
 			ability_btn.text += "  (%d applied)" % applied_count
 		ability_btn.pressed.connect(func():
 			popup.queue_free()
-			_show_scroll_enhancement_picker(scroll_item_id, instance_id, ability)
+			# CHANGED: no more enhancement-choice popup — picking the skill
+			# now rolls a random eligible enhancement for it directly.
+			_apply_random_skill_scroll_enhancement(scroll_item_id, instance_id, ability)
 		)
 		vbox.add_child(ability_btn)
 
@@ -1510,6 +1512,40 @@ func _show_scroll_ability_picker(scroll_item_id: String, instance_id: String) ->
 
 	popup.popup_centered(Vector2(280, 340))
 
+const ENHANCEMENT_REVEAL_GOLD := Color(1.0, 0.84, 0.0)
+# Gold used for the "which enhancement did I get?" reveal popup below —
+# the SAME RewardPopup class already used for shop/encounter/forging
+# rewards (see reward_popup.gd), with thick_glitter = true for its densest
+# effect: a one-shot gold burst exploding outward from all 4 borders, an
+# ongoing sparkle tracing the border, and a slow breathing glow.
+
+func _apply_random_skill_scroll_enhancement(scroll_item_id: String, instance_id: String, ability: AbilityData) -> void:
+	# Rolls one random enhancement from this ability's eligible_enhancements
+	# and applies it exactly as if the player had picked it manually —
+	# reuses _apply_skill_scroll_enhancement() below unchanged, so the
+	# existing "max 3, offer to overwrite" logic still applies as-is.
+	if ability.eligible_enhancements.is_empty():
+		return
+	var roll: int = randi() % ability.eligible_enhancements.size()
+	var enhancement: AbilityEnhancementData = ability.eligible_enhancements[roll]
+	_apply_skill_scroll_enhancement(scroll_item_id, instance_id, ability.id, enhancement.id)
+	_show_enhancement_reveal_popup(ability, enhancement)
+
+
+func _show_enhancement_reveal_popup(ability: AbilityData, enhancement: AbilityEnhancementData) -> void:
+	# Announces which enhancement the scroll just rolled.
+	var popup := RewardPopup.new()
+	add_child(popup)
+	var description: String = (
+		ability.display_name + " — " + enhancement.display_name + "\n" + enhancement.description
+	)
+	popup.setup(
+		enhancement.icon,              # Texture2D, or null if this enhancement has none
+		description,
+		ENHANCEMENT_REVEAL_GOLD,
+		[{"text": "Close", "callback": Callable()}],
+		true   # thick_glitter — gold burst + border sparkle + breathing glow
+	)
 
 func _show_scroll_enhancement_picker(scroll_item_id: String, instance_id: String, ability: AbilityData) -> void:
 	var entry: Dictionary = {}

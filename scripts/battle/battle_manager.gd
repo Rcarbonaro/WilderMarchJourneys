@@ -51,7 +51,14 @@ var current_phase: TurnPhase = TurnPhase.PLAYER_TURN
 var round_number: int = 1
 var is_battle_over: bool = false
 var aoe_preview_cell: Vector2i = Vector2i(-1, -1)
-# Tracks which cell was last previewed for AOE so we can confirm on the second tap.
+
+var _last_round_end_ms: int = -1000000
+# Timestamp (Time.get_ticks_msec()) of the last time a round actually ended.
+# Used by end_player_turn() below to enforce a 5-second cooldown between End
+# Round activations — whether from a button double-click or an auto-end
+# firing right after a manual press. Starts far in the past so the very
+# first call of the battle always works.
+const ROUND_END_COOLDOWN_MS := 5000
 
 var player_units: Array = []   # All living player-side units.
 var enemy_units:  Array = []   # All living enemy-side units.
@@ -1562,25 +1569,20 @@ func end_player_turn() -> void:
 	# Called by the "End Turn" button, or automatically when all units have acted.
 	#
 	# BUGFIX ("Enemy Turn"/"Player Turn" popups overwriting the Victory
-	# popup): the "End Turn" button is never disabled or hidden (see
-	# ui_manager.gd's hide_unit_info() comment on that), so if the player's
-	# last action was the killing blow, _battle_victory() sets is_battle_over
-	# = true and starts awaiting the ~2s Victory banner — but a stray tap on
-	# "End Turn" during that window used to run this ENTIRE function anyway:
-	# ticking end-of-turn hazards/auras, then showing an "Enemy's Turn"
-	# banner that tears down and replaces the Victory banner (both reuse the
-	# same _announcement_instance slot — see show_turn_announcement()/
-	# show_battle_result_banner() in ui_manager.gd), followed by an actual AI
-	# turn and then a "Player's Turn" banner on top of THAT. Bailing out here
-	# the instant the battle is over closes the whole chain at the source.
-	# See the mirrored guard in _on_enemy_turn_complete() below.
+	# popup): ...
 	if is_battle_over or current_phase == TurnPhase.GAME_OVER:
 		return
+	# ── 5-SECOND COOLDOWN (ADDED) ────────────────────────────────────────
+	# Both the "End Turn" button and the auto-end-turn call in
+	# _check_end_player_turn() funnel through this one function, so
+	# guarding right here silently blocks anything that tries to end the
+	# round again within 5 seconds of the last time it actually happened.
+	# Nothing is queued or shown — the press/trigger is just ignored.
+	var now_ms := Time.get_ticks_msec()
+	if now_ms - _last_round_end_ms < ROUND_END_COOLDOWN_MS:
+		return
+	_last_round_end_ms = now_ms
 	# ── TUTORIAL GATE (ADDED) ────────────────────────────────────────────
-	# With the auto-end-turn skip in _check_end_player_turn() below, this
-	# is now the ONLY way end_player_turn() gets called during the
-	# tutorial -- so gating right here cleanly covers the real "End Round"
-	# button press, matching step s23.
 	if TutorialManager.is_active:
 		if not TutorialManager.try_consume("end_round_pressed", {}):
 			return
@@ -2531,3 +2533,16 @@ func refresh_ability_bar(unit) -> void:
 	# after using an item). _show_abilities_for() itself stays internal —
 	# every other caller of it lives inside this script.
 	_show_abilities_for(unit)
+	
+	
+	
+func on_active_equipment_selected(custom_id: String, unit) -> void:
+	# Mirrors on_item_selected() above, but for equipped gear that's used
+	# like a consumable and stays equipped (e.g. Lifebinder's Staff — see
+	# custom_equipment_handlers.gd). No slot is cleared.
+	CustomEquipmentHandlers.use_active_item(custom_id, unit)
+	unit.has_used_item_this_turn = true
+	ui_manager.clear_abilities()
+	ui_manager.show_unit_abilities(unit)
+	ui_manager.show_usable_items(unit)
+	ui_manager.show_cancelable_effects(unit)

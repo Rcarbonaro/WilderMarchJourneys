@@ -123,6 +123,7 @@ func on_unequip(custom_id: String, unit) -> void:
 		unit.remove_status("equip_custom_bloodthirster_buff")
 	_stoneheart_triggered.erase(unit)
 	_oracle_lens_used.erase(unit)
+	_lifebinders_charges.erase(unit)
 	_arcblade_pending.erase(unit)
 	_arcblade_active.erase(unit)
 	_archons_grimoire_used.erase(unit)
@@ -653,29 +654,60 @@ func _worldroot_staff_after_ability(caster, ability, target_cells: Array, origin
 
 # ==============================================================================
 # 22. LIFEBINDER'S STAFF (Staff + Talisman)
-# +2 MATK, +6 HP flat. Whenever the wearer spends mana to target an ally
-# with a spell, that ally gains 5 temporary HP for 1 round.
-# Now exact: resolves the REAL units hit via target_cells + grid_ref,
-# instead of guessing from adjacency.
+# CHANGED: no longer a passive after-ability trigger. Once per battle, grants
+# self + all allies within 2 squares 20 temporary HP (a Shield) for 1 round.
+# Works like a consumable in the battle UI but is never removed from its
+# slot — just limited to N uses per battle, where N = copies equipped.
 # ==============================================================================
 
+const LIFEBINDERS_STAFF_SHIELD_AMOUNT := 20
+var _lifebinders_charges: Dictionary = {}   # unit -> int (uses left this battle)
+
 func _equip_lifebinders_staff(unit) -> void:
-	_track("lifebinders_staff", unit, CombatHooks.after_ability_used,
-		Callable(self, "_lifebinders_staff_after_ability").bind(unit))
+	# Called once per equipped copy, so 2 staffs = 2 charges.
+	_lifebinders_charges[unit] = _lifebinders_charges.get(unit, 0) + 1
 
 
-func _lifebinders_staff_after_ability(caster, ability, target_cells: Array, origin_cell: Vector2i, executor, unit) -> void:
-	if caster != unit or ability.ability_type != "spell" or ability.mana_cost <= 0:
-		return
-	if ability.affects_team != "allies" and ability.affects_team != "all":
-		return
-	if unit.grid_ref == null:
-		return
-	for cell in target_cells:
-		var target = unit.grid_ref.get_unit_at(cell)
-		if target != null and is_instance_valid(target) and target.is_player_unit == unit.is_player_unit:
-			unit.grid_ref.apply_shield(target, 5, 1)
+func get_lifebinders_staff_charges(unit) -> int:
+	return _lifebinders_charges.get(unit, 0)
 
+
+func use_lifebinders_staff(unit) -> void:
+	if _lifebinders_charges.get(unit, 0) <= 0 or unit.grid_ref == null:
+		return
+	_lifebinders_charges[unit] -= 1
+	# 2-square Chebyshev radius (same "square" shape auras already use) —
+	# includes the caster's own cell, so self is covered automatically.
+	var origin: Vector2i = unit.grid_position
+	for dx in range(-2, 3):
+		for dy in range(-2, 3):
+			var cell: Vector2i = origin + Vector2i(dx, dy)
+			var target = unit.grid_ref.get_unit_at(cell)
+			if target != null and is_instance_valid(target) and target.is_player_unit == unit.is_player_unit:
+				# duration_rounds = 1 ticks down in tick_shields(), which
+				# runs at the END of the enemy's turn — so this lasts
+				# through the rest of THIS round and all of the enemy's
+				# next round, exactly as designed.
+				unit.grid_ref.apply_shield(target, LIFEBINDERS_STAFF_SHIELD_AMOUNT, 1)
+
+
+# ---- ACTIVE-USE EQUIPMENT (ADDED) --------------------------------------------
+# Small whitelist/dispatch pair for equipped items that behave like a
+# consumable in the UI without being consumed. Currently just Lifebinder's
+# Staff — add future items like it to all three of these together.
+
+func has_active_use(custom_id: String) -> bool:
+	return custom_id in ["lifebinders_staff"]
+
+func get_active_use_charges(custom_id: String, unit) -> int:
+	match custom_id:
+		"lifebinders_staff": return get_lifebinders_staff_charges(unit)
+	return 0
+
+func use_active_item(custom_id: String, unit) -> void:
+	match custom_id:
+		"lifebinders_staff": use_lifebinders_staff(unit)
+		
 # ==============================================================================
 # 23. WARDEN'S CLOAK (Armor + Mantle)
 # ==============================================================================
