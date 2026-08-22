@@ -672,10 +672,14 @@ func get_lifebinders_staff_charges(unit) -> int:
 	return _lifebinders_charges.get(unit, 0)
 
 
+const LIFEBINDERS_STAFF_RANGE_SQUARES := 2
+const RIPPLE_TEXTURE_SIZE := 128
+
 func use_lifebinders_staff(unit) -> void:
 	if _lifebinders_charges.get(unit, 0) <= 0 or unit.grid_ref == null:
 		return
 	_lifebinders_charges[unit] -= 1
+	_spawn_lifebinders_ripple(unit)
 	# 2-square Chebyshev radius (same "square" shape auras already use) —
 	# includes the caster's own cell, so self is covered automatically.
 	var origin: Vector2i = unit.grid_position
@@ -690,6 +694,61 @@ func use_lifebinders_staff(unit) -> void:
 				# next round, exactly as designed.
 				unit.grid_ref.apply_shield(target, LIFEBINDERS_STAFF_SHIELD_AMOUNT, 1)
 
+
+func _spawn_lifebinders_ripple(unit) -> void:
+	# A white "water ripple" ring that expands outward from the caster out
+	# to exactly the ability's 2-square range, then fades away. Drawn as a
+	# small ring texture built in code (see _get_ripple_ring_texture()
+	# below), then scaled up over time -- growing the sprite is what makes
+	# it read as an outward-moving wave.
+	if unit.grid_ref == null:
+		return
+	var ripple := Sprite2D.new()
+	ripple.texture = _get_ripple_ring_texture()
+	ripple.z_index = 10   # draw above tiles/units, not hidden behind them
+	# Parented under the SAME node units live under (see deployment code
+	# that does grid.get_node("UnitLayer").add_child(unit)), so this lines
+	# up with unit positions using the same coordinate space.
+	unit.get_parent().add_child(ripple)
+	ripple.position = unit.grid_ref.grid_to_world(unit.grid_position)
+	ripple.modulate = Color(1, 1, 1, 0.85)
+	ripple.scale = Vector2(0.05, 0.05)   # starts almost invisible-small
+
+	# The ring texture is RIPPLE_TEXTURE_SIZE pixels wide; the target scale
+	# stretches that out until the ring's diameter equals the ability's
+	# true range in pixels (2 squares * TILE_SIZE) -- so the ripple's edge
+	# always lines up with the actual tiles the heal reaches.
+	var target_radius_px: float = LIFEBINDERS_STAFF_RANGE_SQUARES * unit.grid_ref.TILE_SIZE
+	var target_scale: float = (target_radius_px * 2.0) / RIPPLE_TEXTURE_SIZE
+
+	var tween := ripple.create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(ripple, "scale", Vector2(target_scale, target_scale), 0.6) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tween.tween_property(ripple, "modulate:a", 0.0, 0.6) \
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	tween.chain().tween_callback(ripple.queue_free)
+
+
+func _get_ripple_ring_texture() -> ImageTexture:
+	# Procedurally draws a soft white ring (a "cross-section" of a water
+	# ripple) -- bright at the ring itself, fading to transparent on both
+	# its inner and outer edge, and fully transparent in the center.
+	# Same technique as reward_popup.gd's _get_soft_circle_texture(), just
+	# a ring shape instead of a filled dot.
+	var size := RIPPLE_TEXTURE_SIZE
+	var image := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	var center := Vector2(size / 2.0, size / 2.0)
+	var outer_radius := size / 2.0
+	var ring_radius := outer_radius * 0.8      # where the bright ring itself sits
+	var ring_thickness := outer_radius * 0.18  # how wide/soft that ring is
+	for x in size:
+		for y in size:
+			var dist: float = Vector2(x + 0.5, y + 0.5).distance_to(center)
+			var dist_from_ring: float = abs(dist - ring_radius)
+			var alpha: float = clamp(1.0 - (dist_from_ring / ring_thickness), 0.0, 1.0)
+			image.set_pixel(x, y, Color(1, 1, 1, alpha))
+	return ImageTexture.create_from_image(image)
 
 # ---- ACTIVE-USE EQUIPMENT (ADDED) --------------------------------------------
 # Small whitelist/dispatch pair for equipped items that behave like a

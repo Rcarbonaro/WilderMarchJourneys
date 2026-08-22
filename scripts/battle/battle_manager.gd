@@ -137,6 +137,12 @@ func _ready() -> void:
 				return false
 		return true
 	)
+	TutorialManager.register_wait_for_check("all_player_units_moved", func() -> bool:
+		for unit in player_units:
+			if is_instance_valid(unit) and not unit.has_moved:
+				return false
+		return true
+	)
 
 	# ADDED — stage announcement banner. Test mode has no real stage_index,
 	# so it's skipped there rather than showing a meaningless number.

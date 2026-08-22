@@ -15,6 +15,7 @@ extends Control
 
 const TAROT_PICK_SCENE_PATH := "res://scenes/meta/TarotPickScene.tscn"
 const DRAFT_SCENE_PATH := "res://scenes/meta/DraftScene.tscn"
+const TEXT_CRAWL_SCENE_PATH := "res://scenes/intro/TextCrawlScene.tscn"
 const MAIN_MENU_SCENE_PATH := "res://scenes/mainmenu/main_menu.tscn"
 const TEST_ENCOUNTER_SCENE_PATH := "res://scenes/meta/TestEncounterPickScene.tscn"
 const DIFFICULTY_POPUP_SCENE_PATH := "res://scenes/mainmenu/DifficultySelectPopup.tscn"   # ADDED
@@ -141,7 +142,9 @@ func _start_random_run(difficulty: String) -> void:   # CHANGED -- was _on_rando
 		})
 		print("Random party member added: ", unit_data.display_name)
 
-	SceneTransitions.change_scene(TAROT_PICK_SCENE_PATH)   # default style — task 5
+	RunManager.pending_next_scene_path = TAROT_PICK_SCENE_PATH
+	SceneTransitions.change_scene(TEXT_CRAWL_SCENE_PATH)   # shows the opening crawl first
+	
 
 
 func _on_draft_pressed() -> void:
@@ -155,9 +158,9 @@ func _start_draft_run(difficulty: String) -> void:   # CHANGED -- was _on_draft_
 	# reads current_run.difficulty if a run already exists, falling back to
 	# "normal" only when it doesn't. Without this, Draft mode would silently
 	# always be "normal" regardless of what was picked here.
-	RunManager.start_new_run(difficulty)   # ADDED
-	SceneTransitions.change_scene(DRAFT_SCENE_PATH)   # default style — task 5
-
+	RunManager.start_new_run(difficulty)  
+	RunManager.pending_next_scene_path = DRAFT_SCENE_PATH
+	SceneTransitions.change_scene(TEXT_CRAWL_SCENE_PATH)   # shows the opening crawl first
 
 func _on_back_pressed() -> void:
 	# "fade" — see the brief's example: main-menu transitions get their

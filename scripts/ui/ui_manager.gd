@@ -1150,13 +1150,25 @@ func _show_ability_tooltip(ability, anchor_btn: Control) -> void:
 	desc.add_theme_font_size_override("font_size", 13)
 	vbox.add_child(desc)
 
-	# Position above the button, clamped inside the viewport
+	# Position above the button, clamped inside the viewport.
+	# NOTE: anchor_btn may live inside the Skills popup, which is its own
+	# Window (PopupPanel extends Window) — plain global_position only
+	# measures position INSIDE that window, ignoring where the window
+	# itself sits on screen (that's what was sending the tooltip to the
+	# top-left). get_screen_transform() accounts for that; self's own
+	# inverse converts that screen position back into OUR local space,
+	# since _ability_tooltip is parented to this (normal, non-popup) node.
 	await get_tree().process_frame   # wait one frame so the tooltip measures itself
 	if not is_instance_valid(_ability_tooltip):
 		return
-	var vp:  Vector2 = get_viewport().get_visible_rect().size
-	var pos: Vector2 = anchor_btn.global_position
-	pos.y -= _ability_tooltip.size.y + 8.0   # 8px gap above the button
+	var vp: Vector2 = get_viewport().get_visible_rect().size
+ # self is a CanvasLayer here, not a Control -- it has no
+ # get_screen_transform() of its own. But this layer has no custom
+ # transform/offset, so children added to it (like _ability_tooltip)
+ # already use plain screen coordinates -- anchor_btn's screen position
+ # can be used directly with no conversion.
+	var pos: Vector2 = anchor_btn.get_screen_transform().origin
+	pos.y -= _ability_tooltip.size.y + 8.0 # 8px gap above the button
 	pos.x  = clamp(pos.x, 4.0, vp.x - _ability_tooltip.size.x - 4.0)
 	pos.y  = clamp(pos.y, 4.0, vp.y - _ability_tooltip.size.y - 4.0)
 	_ability_tooltip.position = pos

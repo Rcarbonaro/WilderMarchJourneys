@@ -74,7 +74,7 @@
     { "id": "s21", "type": "narrate", "text": "Ok, now you can move the rest of your team. Remember that you can always review the information and abilities of a unit if you ever forget or obtain a new unit!",
       "target": "", "allow_game_input": true },
 
-    { "id": "s22", "type": "wait_for", "text": "", "condition": "all_player_units_acted" },
+    { "id": "s22", "type": "wait_for", "text": "", "condition": "all_player_units_moved" },
 
     { "id": "s23", "type": "narrate", "text": "You can click the 'End Round' button to end your round after all your units have moved.",
       "target": "end_round_button" },
@@ -90,11 +90,11 @@
     { "id": "s26", "type": "gate", "text": "You can spend your gold in the shop to buy items to gain new units and make them stronger!",
       "target": "shop_button", "advance_on": "shop_button_pressed", "advance_match": {} },
 
-    { "id": "s26b", "type": "wait_for", "text": "", "condition": "shop_scene_ready" },
+    { "id": "s26b", "type": "wait_for", "text": "", "condition": "shop_scene_ready", "is_scene_boundary": true },
 
     { "id": "s27", "type": "narrate", "text": "The blade is a basic item that increases ATK. You can click 'More Info' to see more information about any item.",
       "target": "", "block_input": false,
-      "textbox_offset_percent": { "x": -0.10, "y": -0.10 } },
+      "textbox_offset_percent": { "x": 0.0, "y": -0.10 } },
 
     { "id": "s28", "type": "narrate", "text": "Purchasing a second copy of a unit will level up that unit.",
       "target": "", "block_input": false,
@@ -119,7 +119,7 @@
     { "id": "s33", "type": "gate", "text": "Click 'Back' to return to the Deployment screen.",
       "target": "shop_back_button", "advance_on": "shop_closed", "advance_match": {} },
 
-    { "id": "s33a2", "type": "wait_for", "text": "", "condition": "deployment_scene_ready" },
+    { "id": "s33a2", "type": "wait_for", "text": "", "condition": "deployment_scene_ready", "is_scene_boundary": true },
 
     { "id": "s34", "type": "system_action", "action": "grant_items", "item_ids": ["blade", "blade"] },
 
@@ -135,9 +135,9 @@
       "target": "inventory_item:blade", "advance_on": "inventory_item_selected", "advance_match": { "item_id": "blade" } },
 
     { "id": "s36", "type": "gate", "text": "Combining them allows you to create an even stronger item! Let's try.",
-      "target": "inventory_combine_button", "advance_on": "combine_pressed", "advance_match": { "item_id": "blade" },
-      "block_input": false,
-      "textbox_offset_percent": { "x": 0.20, "y": -0.2 } },
+  "target": "", "advance_on": "combine_pressed", "advance_match": { "item_id": "blade" },
+  "block_input": false,
+  "textbox_offset_percent": { "x": 0.20, "y": 0.0 } },
 
     { "id": "s37", "type": "narrate", "text": "Pressing combine adds it to the forge. Let's add the other Blade!",
       "target": "", "block_input": false },
@@ -168,7 +168,10 @@
       "target": "", "advance_on": "item_equipped", "advance_match": {},
       "block_input": false },
 
-    { "id": "s46", "type": "narrate", "text": "Good job! Try to experiment with different items, units, and team combinations!",
+    { "id": "s46", "type": "narrate", "text": "Good job! You can click on a character's name to remove them from the party, manage their inventory, and view more information about them.",
+      "target": "" },
+
+    { "id": "s47", "type": "narrate", "text": "Try to experiment with different items, units, and team combinations. Hope you enjoy the demo! Be sure to give feedback on your experience!",
       "target": "" }
   ]
 }

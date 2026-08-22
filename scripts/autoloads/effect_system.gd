@@ -86,6 +86,7 @@ func apply_effect(effect: Dictionary, context: Dictionary) -> void:
 		"grant_temp_hp":     _do_grant_temp_hp(effect, context)
 		"add_camp_recruit":  _do_add_camp_recruit(effect, context)   # ADDED (Mini-Encounters)
 		"add_skill_scroll":  _do_add_skill_scroll(effect, context)   # ADDED (Skill Scrolls)
+		"random_weighted_flag": _do_random_weighted_flag(effect, context)   # ADDED (weighted RNG outcomes)
 		"custom":
 			var custom_id: String = effect.get("custom_id", "")
 			if _custom_handlers.has(custom_id):
@@ -523,6 +524,16 @@ func evaluate_condition(condition: Dictionary, context: Dictionary) -> bool:
 			return run_state != null and run_state.equipment_inventory.has(condition.get("equipment_id", ""))
 		"difficulty_is":
 			return run_state != null and run_state.difficulty == condition.get("value", "")
+		"stage_modulo":
+			# True every Nth stage -- e.g. {"divisor": 2, "remainder": 0} is
+			# true on stage_index 0, 2, 4, 6... Lets a repeatable encounter
+			# gate its reward so it doesn't hand out a free item every visit.
+			if run_state == null:
+				return false
+			var divisor: int = int(condition.get("divisor", 1))
+			if divisor <= 0:
+				return false
+			return run_state.stage_index % divisor == int(condition.get("remainder", 0))
 		"stage_type_is":
 			# ADDED -- lets a reward rule target ("combat", "encounter",
 			# "subboss", "special_combat", "boss") specifically, e.g. the
@@ -547,3 +558,42 @@ func evaluate_condition(condition: Dictionary, context: Dictionary) -> bool:
 			push_warning("EffectSystem: unknown condition type '" + type + "' -- treated as false.")
 			return false
 			
+
+func _do_random_weighted_flag(effect: Dictionary, context: Dictionary) -> void:
+	# Rolls ONE outcome from a weighted list, then sets THAT outcome's flag --
+	# and only that one. Clears every flag named in "outcomes" first, so this
+	# works cleanly even on a repeatable encounter re-rolling the same
+	# outcome on a later visit (nothing lingers from last time).
+	#
+	# Combine with a choice's "next_node_id_branches" (see dialogue_engine.gd)
+	# to branch the dialogue graph on the result, and with a later effect's
+	# own "conditions" (see apply_effect() above -- every effect is already
+	# gated by its own conditions) to fire OTHER effects only on a specific
+	# outcome, e.g. a gold-loss effect that should only apply on "fail".
+	#
+	# effect = { "type": "random_weighted_flag", "outcomes": [
+	#              { "weight": 50, "flag_id": "my_fail_flag" },
+	#              { "weight": 50, "flag_id": "my_success_flag" } ] }
+	var run_state = context.get("run_state", null)
+	if run_state == null:
+		return
+	var outcomes: Array = effect.get("outcomes", [])
+	if outcomes.is_empty():
+		return
+
+	for outcome in outcomes:
+		run_state.flags.erase(outcome.get("flag_id", ""))
+
+	var total_weight: float = 0.0
+	for outcome in outcomes:
+		total_weight += float(outcome.get("weight", 1.0))
+
+	var roll: float = randf() * total_weight
+	var running: float = 0.0
+	for outcome in outcomes:
+		running += float(outcome.get("weight", 1.0))
+		if roll < running:
+			var flag_id: String = outcome.get("flag_id", "")
+			if flag_id != "" and not run_state.flags.has(flag_id):
+				run_state.flags.append(flag_id)
+			return

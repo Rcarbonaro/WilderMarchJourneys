@@ -306,8 +306,20 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 
 	# If the caster was invisible, attacking reveals them. remove_status()
 	# refreshes sprite transparency itself now, so no separate call needed here.
+		# If the caster was invisible, attacking reveals them. remove_status()
+	# refreshes sprite transparency itself now, so no separate call needed here.
 	var caster_was_invisible: bool = caster.has_status("invisible")
 	_on_kill_reapplied_invisible = false
+	# BUGFIX (Stealth-while-stealthed): if this cast is itself the thing
+	# (re-)granting "invisible" to the CASTER -- e.g. a self-targeted
+	# Stealth ability whose "invisible" status lives in applies_statuses
+	# rather than applies_statuses_to_self -- remember that here, below,
+	# right when it happens. Without this, the reveal-check further down
+	# only knew about the ON-KILL re-stealth case, so re-casting Stealth
+	# while already stealthed would apply invisible in THIS loop, then get
+	# it immediately stripped by the reveal-check that runs right after,
+	# leaving the Rogue visible.
+	var caster_regained_invisible_this_cast: bool = false
 
 	for cell in target_cells:
 		var target = grid_ref.get_unit_at(cell)
@@ -336,7 +348,9 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 		if target != null:
 			for status_data in ability.applies_statuses:
 				target.apply_status(status_data, 1, caster, ability.effect_is_cancelable)
-
+				# ADDED — see caster_regained_invisible_this_cast above.
+				if target == caster and status_data.id == "invisible":
+					caster_regained_invisible_this_cast = true
 		# ── TETHER APPLICATION ────────────────────────────────────────────────
 		# If this ability applies a tether, register the hit unit in the group.
 		# All tethered units share a portion of damage dealt to any one of them.
@@ -406,18 +420,25 @@ func execute_ability(caster, ability: AbilityData, target_cells: Array,
 				print("✨ Cleansed ", cleansed_count, " effect(s) from ",
 					  cleanse_target.unit_data.display_name)
 
-		# ── STEP 3.2b: REVEAL (invisibility breaks AFTER the attack) ──────────
+			# ── STEP 3.2b: REVEAL (invisibility breaks AFTER the attack) ──────────
 	# All hits, double-hits, and on-kill triggers for this cast have now
 	# resolved, so the stealth ATK/crit boost applied to every one of them.
 	# If a kill this cast re-applied invisibility via on_kill_apply_status,
 	# _on_kill_reapplied_invisible is set and we keep the fresh status --
-	# that's the "re-applying if they defeated the enemy" case. This also
-	# deliberately runs BEFORE STEP 3.4's applies_statuses_to_self, so an
-	# ability that re-stealths the caster on cast is never stripped either.
-	if caster_was_invisible and is_instance_valid(caster) and not _on_kill_reapplied_invisible:
+	# that's the "re-applying if they defeated the enemy" case. Likewise,
+	# if THIS cast itself just (re-)granted invisible straight to the
+	# caster via applies_statuses (caster_regained_invisible_this_cast,
+	# set in the loop above) -- e.g. re-casting Stealth while already
+	# stealthed -- we keep that fresh status too, instead of stripping the
+	# very invisibility the ability just gave them. This also deliberately
+	# runs BEFORE STEP 3.4's applies_statuses_to_self, so an ability that
+	# re-stealths the caster THAT way on cast is never stripped either.
+	if caster_was_invisible and is_instance_valid(caster) \
+			and not _on_kill_reapplied_invisible \
+			and not caster_regained_invisible_this_cast:
 		caster.remove_status("invisible")
 		print("👁️ ", caster.unit_data.display_name, " revealed by attacking!")
-	
+		
 	# ── STEP 3.3: RESOLVE DISPLACEMENT (PUSH/PULL/SCATTER) ────────────────────
 	# For displacement abilities: start the VFX at the same moment we begin
 # moving the pushed/pulled units so the tornado plays OVER the movement

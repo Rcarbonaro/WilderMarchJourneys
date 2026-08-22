@@ -1,0 +1,15 @@
+{
+  "id": "flame_in_the_wind",
+  "title": "A Flame in the Wind",
+  "description": "A fork in the road: fire to the north, a windstorm to the south.",
+  "biomes": ["forest", "plains"],
+  "stage_min": 1,
+  "stage_max": 30,
+  "spawn_weight": 1.0,
+  "flags_required": [],
+  "flags_blocked": [],
+  "flags_set_on_completion": [],
+  "dialogue_graph_id": "flame_in_the_wind_graph",
+  "once_per_run": true,
+  "notes": "Two independent side-paths (north/south), each with its own recruit-or-item outcome."
+}

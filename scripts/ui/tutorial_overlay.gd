@@ -127,9 +127,10 @@ func _on_step_started(step: Dictionary) -> void:
 	# alike (unlike Continue, which is narrate-only), so a player who's
 	# stuck on a gate or clicked the wrong thing always has a way to back
 	# up and re-orient. Hidden during wait_for (same as the rest of the
-	# textbox -- there's nothing to show) and on the very first step, where
-	# there's nothing earlier to rewind to.
-	_back_button.visible = not is_wait_for and TutorialManager.current_step_index > 0
+	# textbox -- there's nothing to show) and once there's nothing left to
+	# rewind to in the current scene (see can_rewind()'s scene-boundary
+	# floor in tutorial_manager.gd).
+	_back_button.visible = not is_wait_for and TutorialManager.can_rewind()
 
 	var should_block: bool = step.get("block_input", true) and step.get("type", "") != "wait_for"
 	_scrim_top.visible = should_block

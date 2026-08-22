@@ -1211,8 +1211,8 @@ func _rebuild_inventory() -> void:
 		row.add_child(info_btn)
 
 		inventory_list.add_child(row)
-		TutorialManager.register_target("inventory_item:" + item_id, row)   # ADDED
-
+		TutorialManager.register_target("inventory_item:" + item_id, btn)   # CHANGED -- was `row`, which spotlighted both buttons and centered the arrow between them instead of over the item itself
+		
 	AudioManager.wire_all_buttons_in(inventory_list)   # ADDED — covers item/info buttons just (re)built above (idempotent alongside the wire_all_buttons_in(self) call in _rebuild_roster())
 
 

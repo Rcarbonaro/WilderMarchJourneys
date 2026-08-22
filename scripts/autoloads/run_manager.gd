@@ -18,6 +18,12 @@ extends Node
 var current_run: RunState = null
 var meta: MetaState = null
 
+var pending_next_scene_path: String = ""
+# Set right before transitioning to TextCrawlScene (see game_mode_select.gd),
+# so the crawl knows where to send the player once it's done or skipped,
+# without TextCrawlScene needing to know about Random/Draft mode at all.
+
+
 var _unit_data_load_cache: Dictionary = {}   # unit_id -> UnitData (or null if missing)
 # Used by _guarantee_party_roles()/_load_unit_data_cached() below, purely to
 # avoid re-loading the same .tres several times within one Random-mode party

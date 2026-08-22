@@ -75,7 +75,20 @@ func choose(choice_id: String) -> Dictionary:
 	_pay_cost(chosen_choice.get("cost", null))
 	EffectSystem.apply_effects(chosen_choice.get("effects", []), context)
 
+	# ADDED: lets a choice branch to a DIFFERENT next node depending on
+	# something its own effects just decided a moment ago -- e.g. a
+	# random_weighted_flag effect (see effect_system.gd) rolling "success"
+	# vs "fail". Each branch's conditions are checked in order (same
+	# evaluate_conditions() used everywhere else); the first one that
+	# passes wins. No matching branch (or no "next_node_id_branches" at
+	# all) falls back to the plain "next_node_id", so every existing
+	# choice in the game keeps working completely unchanged.
 	var next_id = chosen_choice.get("next_node_id", null)
+	for branch in chosen_choice.get("next_node_id_branches", []):
+		if EffectSystem.evaluate_conditions(branch.get("conditions", []), context):
+			next_id = branch.get("node_id", next_id)
+			break
+
 	if next_id != null:
 		_current_node_id = next_id
 

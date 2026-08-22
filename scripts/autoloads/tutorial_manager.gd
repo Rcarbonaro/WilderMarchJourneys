@@ -205,6 +205,8 @@ func _run_system_action(step: Dictionary) -> void:
 			if run_state == null:
 				return
 			var item_id: String = step.get("item_id", "")
+			if item_id != "" and ContentLoader.get_equipment(item_id).is_empty():   # ADDED
+				printerr("❌ TutorialManager: grant_item_if_missing item_id '" + item_id + "' doesn't match any real equipment -- check content ids.")
 			if item_id != "" and not run_state.equipment_inventory.has(item_id):
 				run_state.equipment_inventory.append(item_id)
 			inventory_granted.emit()   
@@ -240,6 +242,36 @@ func _nudge() -> void:
 	# shake animation.
 	EventBus.publish("tutorial_nudge", {})
 
+func _min_rewind_index() -> int:
+	# ADDED -- earliest step rewind_step()/can_rewind() are allowed to reach:
+	# the step right after the most recent scene-transition wait_for (any
+	# step with "is_scene_boundary": true in tutorial_steps.json -- currently
+	# s26b's "shop_scene_ready" and s33a2's "deployment_scene_ready"), or 0 if
+	# we haven't crossed one yet.
+	#
+	# This is the fix for Back "getting broken by rewinding too far": once
+	# you've left a scene (e.g. shop -> deployment), that earlier scene's
+	# nodes are gone -- register_target() lookups for its targets will just
+	# return null from here on, so a gate step from that scene can never be
+	# satisfied again no matter what the player does. Capping Back at the
+	# last scene boundary means it can only ever land somewhere every
+	# target is still guaranteed to exist.
+	var min_index: int = 0
+	for i in range(current_step_index + 1):
+		if steps[i].get("is_scene_boundary", false):
+			min_index = i + 1
+	return min_index
+
+
+func can_rewind() -> bool:
+	# ADDED -- lets the overlay hide the Back button once there's truly
+	# nothing left to rewind to in the current scene, rather than leaving it
+	# visible but inert.
+	if not is_active:
+		return false
+	return current_step_index > _min_rewind_index()
+
+
 func rewind_step(steps_back: int = 1) -> void:
 	# ADDED -- failsafe for the player: lets them back up to an earlier
 	# step, e.g. via the overlay's "◀ Back" button, if they've lost track
@@ -254,6 +286,8 @@ func rewind_step(steps_back: int = 1) -> void:
 	# advancing past it again still needs the same (or an equivalent) real
 	# action to actually happen.
 	#
+	# Never crosses a scene boundary -- see _min_rewind_index() above.
+	#
 	# Deliberately skips OVER system_action and wait_for steps while
 	# counting how far back to go, for two reasons:
 	#   - system_action: never want to land here, since _advance_to_next_step()
@@ -267,13 +301,20 @@ func rewind_step(steps_back: int = 1) -> void:
 	# should "use up" a unit of steps_back.
 	if not is_active:
 		return
+	var min_index: int = _min_rewind_index()
 	var target_index: int = current_step_index
 	var remaining: int = steps_back
-	while remaining > 0 and target_index > 0:
+	while remaining > 0 and target_index > min_index:
 		target_index -= 1
 		var step_type: String = steps[target_index].get("type", "")
 		if step_type != "system_action" and step_type != "wait_for":
 			remaining -= 1
+	# The floor above can land target_index ON a system_action (if the very
+	# first step of a new scene grants something, e.g. right after
+	# "deployment_scene_ready"). Never let _advance_to_next_step() run that
+	# a second time -- nudge forward to the first real step instead.
+	while target_index < current_step_index and steps[target_index].get("type", "") == "system_action":
+		target_index += 1
 	current_step_index = target_index - 1   # _advance_to_next_step()'s += 1 lands exactly on target_index
 	_advance_to_next_step()
 

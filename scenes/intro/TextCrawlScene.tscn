@@ -1,0 +1,67 @@
+[gd_scene format=3 uid="uid://cpwlymkr52x1f"]
+
+[ext_resource type="Script" uid="uid://cxnrmumltc601" path="res://scripts/intro/text_crawl_scene.gd" id="1_0cfnr"]
+[ext_resource type="Texture2D" uid="uid://boyq8upfsbt1o" path="res://sprites/UI/tarot/tarot_pick_background.png" id="2_8h0jx"]
+
+[node name="TextCrawlScene" type="Control" unique_id=841652357]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_0cfnr")
+
+[node name="Background" type="ColorRect" parent="." unique_id=20955519]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0142752165, 0.014275218, 0.014275218, 1)
+
+[node name="BackgroundImage" type="TextureRect" parent="." unique_id=816736936]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_8h0jx")
+stretch_mode = 6
+
+[node name="ParagraphLabel" type="Label" parent="." unique_id=193077677]
+layout_mode = 0
+offset_left = 278.0
+offset_top = 147.0
+offset_right = 1668.0
+offset_bottom = 823.0
+theme_override_font_sizes/font_size = 30
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="ButtonRow" type="HBoxContainer" parent="." unique_id=495202865]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.92604166
+anchor_top = 0.97962964
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -76.0
+offset_top = -40.0
+grow_horizontal = 0
+grow_vertical = 0
+metadata/_edit_use_anchors_ = true
+
+[node name="NextButton" type="Button" parent="ButtonRow" unique_id=268055624]
+layout_mode = 2
+text = "Next➤"
+
+[node name="SkipButton" type="Button" parent="ButtonRow" unique_id=1588896071]
+layout_mode = 2
+text = "Skip➤➤"
+
+[node name="AdvanceTimer" type="Timer" parent="." unique_id=2019114602]
+one_shot = true
