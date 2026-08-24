@@ -1,72 +1,107 @@
 {
-  "id": "wild_witch_graph",
+  "id": "flame_in_the_wind_graph",
   "start_node": "start",
   "nodes": [
-    {
-      "id": "start",
-      "text": "The witch smiles warmly. \"Careful—some of these plants bite.\"",
-      "image": "res://content/dialogue/wild_witch/scene.png",
-      "conditions": [],
-      "choices": [
-        {
-          "id": "steal",
-          "text": "Attempt to steal from the witch",
-          "effects": [
-            { "type": "random_weighted_flag", "outcomes": [
-                { "weight": 50, "flag_id": "witch_theft_fail" },
-                { "weight": 50, "flag_id": "witch_theft_success" }
-              ]
-            },
-            { "type": "add_gold", "amount_min": -10, "amount_max": 0,
-              "conditions": [{ "type": "flag", "flag_id": "witch_theft_fail" }] }
-          ],
-          "next_node_id_branches": [
-            { "conditions": [{ "type": "flag", "flag_id": "witch_theft_fail" }], "node_id": "end_steal_fail" },
-            { "conditions": [{ "type": "flag", "flag_id": "witch_theft_success" }], "node_id": "steal_success_pick" }
-          ],
-          "next_node_id": "end_steal_fail"
-        },
-        {
-          "id": "help",
-          "text": "Offer to help with her gardening",
-          "effects": [
-            { "type": "set_flag", "flag_id": "witch_garden_help" },
-            { "type": "add_equipment", "equipment_id": "staff",
-              "conditions": [{ "type": "stage_modulo", "divisor": 2, "remainder": 0 }] },
-            { "type": "add_equipment", "equipment_id": "lesser_healing_potion",
-              "conditions": [{ "type": "stage_modulo", "divisor": 2, "remainder": 0 }] }
-          ],
-          "next_node_id": "end_help"
-        },
-        {
-          "id": "leave",
-          "text": "Leave",
-          "effects": [],
-          "next_node_id": "end_leave"
-        }
-      ]
-    },
-    {
-      "id": "steal_success_pick",
-      "text": "The witch is distracted, tending her garden. You spot two things worth taking, but only have time to grab one before she notices...",
-      "choices": [
-        {
-          "id": "take_veilstaff",
-          "text": "Take the Veilstaff",
-          "effects": [{ "type": "add_equipment", "equipment_id": "veilstaff" }],
-          "next_node_id": "end_steal_success"
-        },
-        {
-          "id": "take_shadowcloak",
-          "text": "Take the Shadowcloak",
-          "effects": [{ "type": "add_equipment", "equipment_id": "shadowcloak" }],
-          "next_node_id": "end_steal_success"
-        }
-      ]
-    },
-    { "id": "end_steal_fail", "text": "The witch catches you red-handed. \"Not in MY garden,\" she snaps, and banishes you from the clearing—lighter in the coin purse for your trouble.", "choices": [] },
-    { "id": "end_steal_success", "text": "You slip away with your prize before the witch ever notices you were there.", "choices": [] },
-    { "id": "end_help", "text": "You help her garden. She thanks you for your trouble.", "choices": [] },
-    { "id": "end_leave", "text": "You leave the witch to her garden.", "choices": [] }
+	{
+	  "id": "start",
+	  "text": "You reach a fork in the road. On the path to the north, you can see a fire in the distance. On the path to the south, you see the trees in the distance dancing in what seems to be a powerful localized windstorm. What would you like to do?",
+	  "choices": [
+		{ "id": "north", "text": "Travel North", "effects": [], "next_node_id": "north_arrive" },
+		{ "id": "south", "text": "Travel South", "effects": [], "next_node_id": "south_arrive" }
+	  ]
+	},
+
+	{
+	  "id": "north_arrive",
+	  "text": "While traveling the northern road, the scent of ash fills your nose and it grows warmer as you get closer to the fire. As you turn the corner and approach the fire itself, you find a dark elf in a once ornate robe, now charred, staring at the flame. \"Oh, hey\" he gives you a quick and dismissive wave before turning his attention back to the fire.\n\n\"Terrible thing, huh?\" he says, smiling as he looks at the fire, fighting to suppress his smile.\n\nDo you want to accuse him of starting the fire, ask him about the fire, or leave?",
+	  "choices": [
+		{ "id": "accuse", "text": "Accuse him of starting the fire", "effects": [], "next_node_id": "north_accuse" },
+		{ "id": "inquire", "text": "Ask him about the fire", "effects": [], "next_node_id": "north_inquire" },
+		{ "id": "leave", "text": "Leave", "effects": [], "next_node_id": "end_leave_initial" }
+	  ]
+	},
+
+	{
+	  "id": "north_accuse",
+	  "text": "\"What? No\" he turns to you \"I mean, don't get me wrong, it is beautiful, but even I wouldn't want to hurt everyone involved. I can create fire\" he smiles for just a moment before continuing \"I just wish my magic could calm this one…\" he frowns before turning his attention back to the flame.\n\nIs he actually the cause of the flame? He is distracted and could easily be taken out… But maybe his fire magic could help you on your journey…\n\nWould you like to invite him, or take him out while he is distracted?",
+	  "choices": [
+		{ "id": "invite", "text": "Invite to Join", "effects": [
+			{ "type": "add_equipment", "equipment_id": "spellbook" },
+			{ "type": "add_unit", "unit_id": "firemage" }
+		  ], "next_node_id": "end_north_join" },
+		{ "id": "kill", "text": "Kill him", "effects": [
+			{ "type": "add_equipment", "equipment_id": "spellbook" }
+		  ], "next_node_id": "end_north_kill" }
+	  ]
+	},
+
+	{
+	  "id": "north_inquire",
+	  "text": "\"I was traveling with a novice pyromancer who tried to show off some of his magic, but… it went poorly… He lit the tree above him on fire, and as we tried to put it out, a tree branch fell on him and pinned him down…. He didn't make it…\" he says with a sigh.\n\n\"I kept trying to put it out, but eventually I gave up, and decided to watch it from a safe distance… I always loved watching it burn… Back when I was a kid, I loved watching my father work at the forge…\" he says with a fond smile.\n\n\"But now that you're here, maybe we can put out the fire together\"\n\nIs he telling the truth? Did he start the fire or is he innocent?\n\nHe may be helpful for the journey, maybe we could invite him to join? However, if he caused the fire, should he pay for his crimes? He could easily be killed while he is distracted.",
+	  "choices": [
+		{ "id": "invite", "text": "Invite to Join", "effects": [
+			{ "type": "add_equipment", "equipment_id": "spellbook" },
+			{ "type": "add_unit", "unit_id": "firemage" }
+		  ], "next_node_id": "end_north_join" },
+		{ "id": "kill", "text": "Kill", "effects": [
+			{ "type": "add_equipment", "equipment_id": "spellbook" }
+		  ], "next_node_id": "end_north_kill" },
+		{ "id": "leave", "text": "Leave", "effects": [], "next_node_id": "end_leave_after_inquire" }
+	  ]
+	},
+
+	{ "id": "end_north_join", "text": "\"Yeah, that sounds good, but, could you help put this out first?\"\n\nTogether, you put out the flame and continue on your journey.", "choices": [] },
+	{ "id": "end_north_kill", "text": "In retribution for creating this fire, you kill the mage. You take his spellbook to aid you on your journey.", "choices": [] },
+	{ "id": "end_leave_initial", "text": "Not wanting to get involved, you turn around and leave.", "choices": [] },
+	{ "id": "end_leave_after_inquire", "text": "You leave without an issue.", "choices": [] },
+
+	{
+	  "id": "south_arrive",
+	  "text": "As you travel down the paths, the whistling of the wind grows louder, and you soon see a woman off the path to the north. She is wearing traveler's clothes wielding a staff, using wind magic to clear debris and fight back the encroaching fire.\n\nYou can safely continue on the path, or approach to help her.",
+	  "choices": [
+		{ "id": "continue", "text": "Continue on the path", "effects": [], "next_node_id": "end_south_continue" },
+		{ "id": "approach", "text": "Approach her", "effects": [], "next_node_id": "south_approach" }
+	  ]
+	},
+
+	{
+	  "id": "south_approach",
+	  "text": "As you approach her, she notices you approaching, but continues her spell, using magic to remove flammable debris from the path of the flame, redirecting it so it can only travel toward the lake. She must be intending to cut off the path of the fire so it cannot continue spreading southward.\n\n\"Sorry, but I really can't stop. Who knows how many critters and travelers could get caught in the flame if I don't stop its spread\" she says, straining under the casting of her spell.\n\nIt is clear that she cannot keep going much longer.\n\nDo you want to help her, or leave while it is still safe to do so?",
+	  "choices": [
+		{
+		  "id": "help",
+		  "text": "Help",
+		  "effects": [
+			{ "type": "random_weighted_flag", "outcomes": [
+				{ "weight": 10, "flag_id": "windstorm_help_fail" },
+				{ "weight": 60, "flag_id": "windstorm_help_success" },
+				{ "weight": 30, "flag_id": "windstorm_help_crit" }
+			  ]
+			},
+			{ "type": "add_unit", "unit_id": "windmage",
+			  "conditions": [{ "type": "flag", "flag_id": "windstorm_help_success" }] },
+			{ "type": "add_equipment", "equipment_id": "staff",
+			  "conditions": [{ "type": "flag", "flag_id": "windstorm_help_success" }] },
+			{ "type": "add_unit", "unit_id": "windmage",
+			  "conditions": [{ "type": "flag", "flag_id": "windstorm_help_crit" }] },
+			{ "type": "add_equipment", "equipment_id": "archons_grimoire",
+			  "conditions": [{ "type": "flag", "flag_id": "windstorm_help_crit" }] }
+		  ],
+		  "next_node_id_branches": [
+			{ "conditions": [{ "type": "flag", "flag_id": "windstorm_help_fail" }], "node_id": "south_help_fail" },
+			{ "conditions": [{ "type": "flag", "flag_id": "windstorm_help_success" }], "node_id": "south_help_success" },
+			{ "conditions": [{ "type": "flag", "flag_id": "windstorm_help_crit" }], "node_id": "south_help_crit" }
+		  ],
+		  "next_node_id": "south_help_fail"
+		},
+		{ "id": "leave", "text": "Leave", "effects": [], "next_node_id": "end_south_leave" }
+	  ]
+	},
+
+	{ "id": "south_help_fail", "text": "You try to bolster her magic, but it is still not enough. The flames continue spreading south. You flee back to the path and escape, but the stranger remains, fighting to her last breath.", "choices": [] },
+	{ "id": "south_help_success", "text": "You bolster her magic, giving her the strength she needs to cut off its path.\n\n\"Thank you\" she says, panting as she turns to you \"You have saved many lives today\" she looks at the flames and sighs. \"There is no way I am strong enough to put the rest of the flames out, but at least we finished curbing the spread. If you need me, I will join you on your journey… Tomorrow, that is…\" she falls to the ground, exhausted.", "choices": [] },
+	{ "id": "south_help_crit", "text": "With your help, she is able to not only cut off the fire, but fight it back, eventually cutting it off at its source.\n\n\"Wow, thank you so much!\" she proudly looks around, seeing that you managed to put out the flames. \"You have saved so many lives!\" she rushes up and gives you a big hug. \"If you ever need any help, I will be by your side! May we save many more on our travels!\"", "choices": [] },
+	{ "id": "end_south_continue", "text": "You easily continue safely on your path.", "choices": [] },
+	{ "id": "end_south_leave", "text": "Not wanting to risk getting caught in the flames, you leave her to her struggle and continue on your way.", "choices": [] }
   ]
 }

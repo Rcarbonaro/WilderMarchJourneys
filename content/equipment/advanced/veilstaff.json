@@ -1,13 +1,13 @@
 {
   "id": "veilstaff",
   "name": "Veilstaff",
-  "description": "+2 MATK, +3 MDEF. Whenever you take magic damage, restore mana equal to 50% of the attacker's MATK (rounded up).",
+  "description": "+3 MATK, +3 MDEF. Once per battle, the first time this unit would take damage, they instead take no damage and become untargetable until the end of the round. Their next ability deals +20% damage.",
   "icon": "res://sprites/UI/skill icons/veilstaff.png",
   "type": "advanced",
   "subtype": "staff_mantle",
   "tags": ["magic"],
   "effects": [
-    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "matk", "amount": 2, "value_mode": "flat", "scope": "permanent" },
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "matk", "amount": 3, "value_mode": "flat", "scope": "permanent" },
     { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "mdef", "amount": 3, "value_mode": "flat", "scope": "permanent" },
     { "type": "custom", "custom_id": "veilstaff" }
   ]

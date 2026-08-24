@@ -62,6 +62,10 @@ var _wardens_cloak_triggered: Dictionary = {} # unit -> bool (resets every round
 var _starcall_prism_used_this_round: Dictionary = {} # unit -> bool (resets every round tick)
 var _heavy_plate_stack_count: Dictionary = {}   # unit -> int (how many Heavy Plates currently equipped)
 
+var _veilstaff_triggered: Dictionary = {}       # unit -> bool (one-time per battle: has the ward already fired?)
+var _veilstaff_bonus_pending: Dictionary = {}   # unit -> bool (ward has fired, waiting for this unit's next ability)
+var _veilstaff_bonus_active: Dictionary = {}    # unit -> float (damage multiplier for the ability resolving RIGHT NOW; 1.0 = none)
+
 var _registered_callbacks: Dictionary = {}   # "<custom_id>:<unit instance id>" -> Array of {list, callback}
 
 
@@ -119,6 +123,9 @@ func on_unequip(custom_id: String, unit) -> void:
 	_bloodthirster_stacks.erase(unit)
 	_bloodthirster_acted.erase(unit)
 	_bloodthirster_last_shown_stacks.erase(unit)
+	_veilstaff_triggered.erase(unit)
+	_veilstaff_bonus_pending.erase(unit)
+	_veilstaff_bonus_active.erase(unit)
 	if is_instance_valid(unit):
 		unit.remove_status("equip_custom_bloodthirster_buff")
 	_stoneheart_triggered.erase(unit)
@@ -259,8 +266,8 @@ func _heartpiercer_round_tick(tick_unit, unit) -> void:
 
 func _heartpiercer_recalculate(unit) -> void:
 	var missing_hp: int = unit.get_stats().hp - unit.current_hp
-	var bonus: int = max(0, int(floor(missing_hp / 10.0)))
-	unit.momentum_bonuses["equip_custom_heartpiercer"] = {"atk": bonus, "matk": bonus}
+	var bonus: int = max(0, int(floor(missing_hp / 5.0)))
+	unit.momentum_bonuses["equip_custom_heartpiercer"] = {"atk": bonus}
 
 # ==============================================================================
 # 4. SPELLFORGED BLADE (Blade + Spellbook)
@@ -275,10 +282,10 @@ func _spellforged_blade_modify_damage(attacker, target, damage: int, is_crit: bo
 	if attacker != unit:
 		return damage
 	var missing_mana: int = unit.get_stats().mana - unit.current_mana
-	var chunks: int = max(0, int(floor(missing_mana / 20.0)))
+	var chunks: int = max(0, int(floor(missing_mana / 5.0)))
 	if chunks <= 0:
 		return damage
-	return int(damage * (1.0 + chunks * 0.10))
+	return int(damage * (1.0 + chunks * 0.2))
 
 # ==============================================================================
 # 5. BARBED ARROW (Blade + Monocle) -- no handler, plain add_stat effects only.
@@ -363,7 +370,7 @@ func _mirrorplate_on_damage_applied(attacker, target, actual_damage: int, is_cri
 	if randf() * 100.0 >= unit.get_effective_crit_chance():
 		return
 	var crit_mult: float = unit.get_effective_crit_damage() / 100.0
-	var reflect := int(actual_damage * 0.10 * crit_mult)
+	var reflect := int(actual_damage * 0.20 * crit_mult)
 	reflect = min(reflect, attacker.current_hp - 1)
 	if reflect > 0:
 		attacker.take_damage(reflect, "true")
@@ -394,8 +401,8 @@ func _equip_soulweaver_charm(unit) -> void:
 func _soulweaver_charm_on_mana_spent(spender, amount: int, unit) -> void:
 	if spender != unit or amount <= 0:
 		return
-	var chunks: int = int(ceil(amount / 10.0))
-	unit.heal(chunks * int(ceil(unit.get_stats().hp * 0.02)))
+	var chunks: int = int(ceil(amount / 5.0))
+	unit.heal(chunks * int(ceil(unit.get_stats().hp * 0.03)))
 
 # ==============================================================================
 # 12. BLOODY VIAL (Talisman + Monocle) -- renamed from "Bloody Mantle".
@@ -530,23 +537,94 @@ func _arcblade_focus_modify_damage(attacker, target, damage: int, is_crit: bool,
 
 # ==============================================================================
 # 18. VEILSTAFF (Staff + Mantle)
-# +2 MATK, +3 MDEF flat. Whenever the wearer takes MAGIC damage, restore
-# mana equal to 50% of the attacker's MATK (rounded up).
-# Now exact: damage_type is checked directly instead of firing on any hit.
+# +2 MATK, +3 MDEF flat. Once per battle, the first time this unit would take
+# damage, they instead take no damage and become untargetable until the end
+# of the round. Their next ability deals +20% damage.
+#
+# CHANGED: completely replaced the old "restore mana on taking magic damage"
+# effect with this once-per-battle damage-prevention + counter-punch setup.
+#
+# IMPLEMENTATION NOTES:
+#   - Uses outgoing_damage_modifiers (fires BEFORE damage is applied) instead
+#     of on_damage_applied_reactions, since we need to cancel the damage
+#     itself rather than react to it afterward -- same hook Ethereal Shroud
+#     and Guardian Mantle use for the same reason.
+#   - "Untargetable" reuses the "invisible" status id / is_invisible flag the
+#     Rogue's Stealth ability already grants (see ai_system.gd's
+#     target-pool filtering), so enemy AI treats the wearer like a stealthed
+#     unit for the rest of the round. duration_rounds = 1 matches the
+#     "lasts 1 round" convention this file already uses for other self-buffs
+#     (Aegis Codex, Warden's Cloak) -- bump it if your round-tick timing
+#     needs a different number to truly reach "end of round."
+#   - The "+20% damage" bonus is queued the instant the ward fires, then
+#     consumed by whichever ability this unit casts next (basic attack,
+#     ability, or spell) -- the exact same pending-flag-consumed-on-next-cast
+#     pattern Arcblade Focus uses below, just without a type filter.
+#   - Like Guardian Mantle's redirected damage, this only ever sees damage
+#     that actually goes through AbilityExecutor's hooks -- hazard/aura
+#     damage applied straight through take_damage() bypasses
+#     outgoing_damage_modifiers entirely and can't trigger the ward.
 # ==============================================================================
 
 func _equip_veilstaff(unit) -> void:
-	_track("veilstaff", unit, CombatHooks.on_damage_applied_reactions,
-		Callable(self, "_veilstaff_on_damage_applied").bind(unit))
+	_veilstaff_triggered[unit] = false
+	_veilstaff_bonus_pending[unit] = false
+	_veilstaff_bonus_active[unit] = 1.0
+	_track("veilstaff", unit, CombatHooks.outgoing_damage_modifiers,
+		Callable(self, "_veilstaff_intercept_damage").bind(unit))
+	_track("veilstaff", unit, CombatHooks.before_ability_used,
+		Callable(self, "_veilstaff_before_ability").bind(unit))
+	_track("veilstaff", unit, CombatHooks.after_ability_used,
+		Callable(self, "_veilstaff_after_ability").bind(unit))
+	_track("veilstaff", unit, CombatHooks.outgoing_damage_modifiers,
+		Callable(self, "_veilstaff_modify_damage").bind(unit))
 
 
-func _veilstaff_on_damage_applied(attacker, target, actual_damage: int, is_crit: bool, damage_type: String, unit) -> void:
-	if target != unit or attacker == null or not is_instance_valid(attacker):
+func _veilstaff_intercept_damage(attacker, target, damage: int, is_crit: bool, damage_type: String, unit) -> int:
+	# Only cares about the WEARER being hit, and only the very first time
+	# this battle -- every hit after that just passes damage through
+	# completely untouched.
+	if target != unit or _veilstaff_triggered.get(unit, false):
+		return damage
+	_veilstaff_triggered[unit] = true
+
+	# Grant "untargetable until end of round" by reusing the same status
+	# the Rogue's Stealth ability uses.
+	var status := StatusEffectData.new()
+	status.id = "invisible"
+	status.display_name = "Veilstaff Ward"
+	status.description = "Untargetable until the end of the round, courtesy of the Veilstaff."
+	status.duration_rounds = 1
+	status.can_stack = false
+	status.is_invisible = true
+	unit.apply_status(status)
+
+	# Queue the +20% damage bonus for whichever ability this unit uses next.
+	_veilstaff_bonus_pending[unit] = true
+
+	return 0   # Take no damage at all.
+
+
+func _veilstaff_before_ability(caster, ability, unit) -> void:
+	if caster != unit or not _veilstaff_bonus_pending.get(unit, false):
 		return
-	if damage_type != "magical":
-		return
-	unit.restore_mana(int(ceil(attacker.get_effective_matk() * 0.5)))
+	_veilstaff_bonus_pending[unit] = false
+	_veilstaff_bonus_active[unit] = 1.2
 
+
+func _veilstaff_after_ability(caster, ability, target_cells: Array, origin_cell: Vector2i, executor, unit) -> void:
+	if caster != unit:
+		return
+	_veilstaff_bonus_active[unit] = 1.0   # Bonus is spent whether or not the ability actually dealt damage.
+
+
+func _veilstaff_modify_damage(attacker, target, damage: int, is_crit: bool, damage_type: String, unit) -> int:
+	if attacker != unit:
+		return damage
+	var mult: float = _veilstaff_bonus_active.get(unit, 1.0)
+	if mult == 1.0:
+		return damage
+	return int(damage * mult)
 # ==============================================================================
 # 19. STARCALL PRISM (Staff + Monocle)
 # +2 MATK, +15% crit chance flat. When casting a spell or ability, a chance
@@ -919,9 +997,9 @@ func _phantom_veil_on_damage_applied(attacker, target, actual_damage: int, is_cr
 	var status := StatusEffectData.new()
 	status.id = "phantom_veil_debuff"
 	status.display_name = "Phantom Veil"
-	status.duration_rounds = 1
+	status.duration_rounds = 2
 	status.can_stack = false
-	status.damage_dealt_modifier = -0.20
+	status.damage_dealt_modifier = -0.25
 	target.apply_status(status)
 
 # ==============================================================================
@@ -950,7 +1028,7 @@ func _whispercloak_after_ability(caster, ability, target_cells: Array, origin_ce
 			var status := StatusEffectData.new()
 			status.id = "whispercloak_debuff"
 			status.display_name = "Whispercloak"
-			status.duration_rounds = 3
+			status.duration_rounds = 2
 			status.can_stack = false
-			status.damage_dealt_modifier = -0.20
+			status.damage_dealt_modifier = -0.25
 			other.apply_status(status)

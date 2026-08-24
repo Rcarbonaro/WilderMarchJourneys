@@ -27,6 +27,14 @@ const REWARD_GLITTER_BLUE := Color(0.3, 0.6, 1.0)
 # player an item or a unit -- see _on_choice_pressed below.
 
 
+const FALLBACK_ENCOUNTER_ID := "the_thief_in_the_night"
+# If the randomly-picked encounter's dialogue graph fails to load for any
+# reason (missing file, JSON parse error, an id typo between an encounter's
+# "dialogue_graph_id" and its graph's own "id", etc.), fall back to this
+# always-known-good encounter instead of leaving the player stuck on a
+# broken screen with no way to proceed.
+
+
 func _ready() -> void:
 	if RunManager.current_run == null:
 		printerr("❌ EncounterScene: RunManager.current_run is null.")
@@ -42,6 +50,24 @@ func _ready() -> void:
 	_set_background(_encounter_id)
 
 	var first_node := EncounterEngine.start_encounter(_encounter_id, RunManager.current_run)
+
+	if first_node.is_empty():
+		# ADDED: the picked encounter's dialogue graph failed to load. Check
+		# the Output panel for DialogueEngine's warning -- it names the
+		# exact graph id that failed -- but rather than leave the player
+		# stuck, fall back to a known-good encounter here.
+		printerr("❌ EncounterScene: '", _encounter_id, "' failed to load its dialogue graph -- ",
+				 "falling back to '", FALLBACK_ENCOUNTER_ID, "'.")
+		_encounter_id = FALLBACK_ENCOUNTER_ID
+		_set_background(_encounter_id)
+		first_node = EncounterEngine.start_encounter(_encounter_id, RunManager.current_run)
+		if first_node.is_empty():
+			# Even the fallback failed to load (e.g. its own file got moved
+			# or renamed) -- bail out to the shop rather than get stuck.
+			printerr("❌ EncounterScene: fallback encounter also failed to load.")
+			StageDirector.enter_current_stage()
+			return
+
 	_display_node(first_node)
 
 
@@ -115,17 +141,30 @@ func _on_choice_pressed(choice_id: String) -> void:
 
 	var result: Dictionary = DialogueEngine.choose(choice_id)
 
+	# BUGFIX: some effects carry their own "conditions" (e.g. random_weighted_
+	# flag picks ONE outcome and gates the real reward effects behind flag
+	# checks -- see effect_system.gd). EffectSystem already respects those
+	# when actually granting things, but this loop used to announce EVERY
+	# add_equipment/add_unit entry unconditionally -- so a roll that landed
+	# on "success" could still pop up a popup for a "crit-only" reward that
+	# was correctly never added to the inventory. Re-checking each effect's
+	# own conditions here, with the same context choose() just used, keeps
+	# the popups honest about what was actually granted.
+	var context := {"run_state": RunManager.current_run, "source": "dialogue:" + choice_id}
+
 	# ADDED: pop up a glittering reward popup for anything this choice just
 	# granted the player. A single choice can grant more than one thing
 	# (e.g. gold AND an item) -- every add_equipment/add_unit entry gets its
 	# own popup, shown one after another.
 	for effect in granted_effects:
+		if not EffectSystem.evaluate_conditions(effect.get("conditions", []), context):
+			continue
 		match effect.get("type", ""):
 			"add_equipment":
 				_show_encounter_item_reward(effect.get("equipment_id", ""))
 			"add_unit":
 				_show_encounter_unit_reward(effect.get("unit_id", ""))
-
+				
 	if result.get("leads_to_combat", false):
 		# KNOWN GAP -- see the README. Nothing in this backend currently
 		# defines what a dialogue choice's "combat_request" dictionary

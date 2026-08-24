@@ -89,6 +89,20 @@ func choose(choice_id: String) -> Dictionary:
 			next_id = branch.get("node_id", next_id)
 			break
 
+	# ADDED: a next_node_id that doesn't actually exist in this graph (a typo
+	# in some encounter's JSON) used to jump to it anyway -- get_current_node()
+	# would then find nothing, encounter_scene.gd's _display_node() would bail
+	# out silently, and the player was stuck staring at the PREVIOUS node's
+	# text/buttons forever with no way to proceed. Validating here catches a
+	# broken id immediately, with a warning naming exactly which graph/choice/
+	# id is wrong, and treats it the same as "no next node" (ends the
+	# encounter normally) instead of softlocking the player.
+	if next_id != null and not _node_exists(next_id):
+		push_warning("DialogueEngine: choice '" + choice_id + "' in graph '" +
+			str(_graph.get("id", "?")) + "' points to next_node_id '" + str(next_id) +
+			"', which doesn't exist in this graph. Ending the encounter instead of softlocking.")
+		next_id = null
+
 	if next_id != null:
 		_current_node_id = next_id
 
@@ -97,6 +111,13 @@ func choose(choice_id: String) -> Dictionary:
 		"leads_to_combat": chosen_choice.get("leads_to_combat", false),
 		"combat_request": chosen_choice.get("combat_request", null),
 	}
+
+
+func _node_exists(node_id: String) -> bool:
+	for node in _graph.get("nodes", []):
+		if node.get("id", "") == node_id:
+			return true
+	return false
 
 
 func _can_afford(cost) -> bool:

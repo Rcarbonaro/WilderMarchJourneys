@@ -3,7 +3,6 @@
 [ext_resource type="Resource" uid="uid://b7lqjktayfc4f" path="res://resources/stats/barkskinelk_stats.tres" id="1_k6qyd"]
 [ext_resource type="Texture2D" uid="uid://cvyi3pft2lyh4" path="res://sprites/barkskinelk/barkskin_elk_sprite.png" id="2_21b2m"]
 [ext_resource type="Script" uid="uid://c0wi65swh4rnn" path="res://scripts/data/boss_phase_data.gd" id="3_bnyys"]
-[ext_resource type="Resource" uid="uid://1vwsjhmjwmyh" path="res://resources/bossdata/barkskinelk_phase1.tres" id="4_jl2ba"]
 [ext_resource type="Resource" uid="uid://pakcjr51mst" path="res://resources/bossdata/barkskinelk_phase2.tres" id="5_62kjh"]
 [ext_resource type="Resource" uid="uid://dfxlmpwf8tnyh" path="res://resources/bossdata/barkskinelk_phase3.tres" id="6_67ac7"]
 [ext_resource type="Resource" uid="uid://d0l7oqg170y2" path="res://resources/bossdata/barkskinelk_phase4.tres" id="7_v6v75"]
@@ -31,7 +30,7 @@ stats_by_level = Array[ExtResource("15_1gnuj")]([ExtResource("1_k6qyd")])
 rarity = "rare"
 tier = "boss"
 hp_segment_count = 4
-boss_phases = Array[ExtResource("3_bnyys")]([ExtResource("4_jl2ba"), ExtResource("5_62kjh"), ExtResource("6_67ac7"), ExtResource("7_v6v75")])
+boss_phases = Array[ExtResource("3_bnyys")]([ExtResource("5_62kjh"), ExtResource("6_67ac7"), ExtResource("7_v6v75"), ExtResource("7_v6v75")])
 ends_battle_on_death = true
 base_stats = ExtResource("1_k6qyd")
 starting_abilities = Array[ExtResource("12_4q87t")]([ExtResource("13_mu7rn"), ExtResource("14_edkxm")])

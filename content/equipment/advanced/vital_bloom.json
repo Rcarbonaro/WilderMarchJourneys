@@ -1,12 +1,13 @@
 {
   "id": "vital_bloom",
   "name": "Vital Bloom",
-  "description": "Gain temporary HP equal to 10% of max HP each round. Temporary HP cannot stack.",
+  "description": "+10 HP. Gain temporary HP equal to 10% of max HP each round. Temporary HP cannot stack.",
   "icon": "res://sprites/UI/skill icons/vital bloom.png",
   "type": "advanced",
   "subtype": "talisman_talisman",
   "tags": ["support"],
   "effects": [
+    { "type": "add_stat", "target": "unit", "target_selector": "self", "stat": "hp",   "amount": 10, "value_mode": "flat", "scope": "permanent" },
     { "type": "custom", "custom_id": "vital_bloom" }
   ]
 }
