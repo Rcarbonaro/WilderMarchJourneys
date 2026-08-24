@@ -160,10 +160,24 @@ func _track(custom_id: String, unit, list: Array, callback: Callable) -> void:
 		_registered_callbacks[key] = []
 	_registered_callbacks[key].append({"list": list, "callback": callback})
 
+
+func _apply_equip_status_flavor(status: StatusEffectData, custom_id: String) -> void:
+	# Item-granted statuses should look and read like they came from the
+	# item that granted them. Fills in description/icon from the item's own
+	# equipment JSON -- but ONLY for whichever field wasn't already set
+	# explicitly, so handlers like Bloodthirster that build their own
+	# dynamic description (e.g. a live stack count) keep it untouched.
+	var data := ContentLoader.get_equipment(custom_id)
+	if data.is_empty():
+		return
+	if status.description == "":
+		status.description = data.get("description", "")
+	if status.icon == null:
+		status.icon = UnitInfoPopup._resolve_icon(data.get("icon"))
+
 # ==============================================================================
 # 1. BLOODTHIRSTER (Blade + Blade)
 # ==============================================================================
-
 func _equip_bloodthirster(unit) -> void:
 	_bloodthirster_stacks[unit] = 0
 	_bloodthirster_acted[unit] = false
@@ -353,6 +367,7 @@ func _aegis_codex_after_ability(caster, ability, target_cells: Array, origin_cel
 	status.can_stack = false
 	status.def_modifier = 2
 	status.mdef_modifier = 2
+	_apply_equip_status_flavor(status, "aegis_codex")
 	unit.apply_status(status)
 
 # ==============================================================================
@@ -597,6 +612,7 @@ func _veilstaff_intercept_damage(attacker, target, damage: int, is_crit: bool, d
 	status.duration_rounds = 1
 	status.can_stack = false
 	status.is_invisible = true
+	_apply_equip_status_flavor(status, "veilstaff")   # only fills in the icon -- description is already set above
 	unit.apply_status(status)
 
 	# Queue the +20% damage bonus for whichever ability this unit uses next.
@@ -727,7 +743,7 @@ func _equip_worldroot_staff(unit) -> void:
 func _worldroot_staff_after_ability(caster, ability, target_cells: Array, origin_cell: Vector2i, executor, unit) -> void:
 	if caster != unit or ability.ability_type != "spell" or ability.mana_cost <= 0:
 		return
-	if randf() < 50:
+	if randf() < 0.5:
 		unit.restore_mana(ability.mana_cost)
 
 # ==============================================================================
@@ -878,6 +894,7 @@ func _wardens_cloak_on_damage_applied(attacker, target, actual_damage: int, is_c
 	status.can_stack = false
 	status.def_modifier = 3
 	status.mdef_modifier = 3
+	_apply_equip_status_flavor(status, "wardens_cloak")
 	unit.apply_status(status)
 
 # ==============================================================================
@@ -908,6 +925,7 @@ func _shadowcloak_modify_damage(attacker, target, damage: int, is_crit: bool, da
 		status.can_stack = false
 		status.damage_dealt_modifier = 0.33
 		status.mov_modifier = 1
+		_apply_equip_status_flavor(status, "shadowcloak")
 		unit.apply_status(status)
 	return damage
 
@@ -1000,6 +1018,7 @@ func _phantom_veil_on_damage_applied(attacker, target, actual_damage: int, is_cr
 	status.duration_rounds = 2
 	status.can_stack = false
 	status.damage_dealt_modifier = -0.25
+	_apply_equip_status_flavor(status, "phantom_veil")
 	target.apply_status(status)
 
 # ==============================================================================
@@ -1031,4 +1050,5 @@ func _whispercloak_after_ability(caster, ability, target_cells: Array, origin_ce
 			status.duration_rounds = 2
 			status.can_stack = false
 			status.damage_dealt_modifier = -0.25
+			_apply_equip_status_flavor(status, "whispercloak")
 			other.apply_status(status)

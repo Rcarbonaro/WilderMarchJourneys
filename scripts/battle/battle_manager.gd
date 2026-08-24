@@ -2458,6 +2458,9 @@ func on_item_selected(item_id: String, slot_index: int, unit) -> void:
 		"stat_buff":
 			var status := StatusEffectData.new()
 			status.id = "consumable_" + item_id
+			status.display_name = data.get("name", "")
+			status.description = data.get("description", "")
+			status.icon = UnitInfoPopup._resolve_icon(data.get("icon"))
 			status.duration_rounds = int(data.get("buff_duration_rounds", 3))
 			match data.get("buff_stat", "atk"):
 				"atk": status.atk_modifier = int(data.get("buff_amount", 0))
@@ -2469,7 +2472,6 @@ func on_item_selected(item_id: String, slot_index: int, unit) -> void:
 			var reduction: int = int(data.get("cooldown_reduction", 1))
 			for ability_id in unit.ability_cooldowns.keys():
 				unit.ability_cooldowns[ability_id] = max(0, unit.ability_cooldowns[ability_id] - reduction)
-
 	# THE FIX: clear the SLOT it was actually equipped in -- it was never
 	# sitting in the shared unequipped bag.
 	if slot_index >= 0 and slot_index < unit.equipped_item_ids.size():

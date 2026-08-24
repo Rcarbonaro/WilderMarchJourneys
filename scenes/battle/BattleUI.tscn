@@ -116,19 +116,19 @@ expand_mode = 1
 custom_minimum_size = Vector2(200, 10)
 layout_mode = 0
 offset_left = 56.832153
-offset_top = 14.236341
+offset_top = 17.350843
 offset_right = 276.581
-offset_bottom = 30.990797
+offset_bottom = 30.142591
 texture = ExtResource("5_trk6y")
 expand_mode = 1
 
 [node name="ManaLabel" type="Label" parent="BottomBar/HBoxContainer/UnitInfoColumn/ManaBarHolder" unique_id=1438872432]
 custom_minimum_size = Vector2(50, 20)
 layout_mode = 0
-offset_left = 132.80766
-offset_top = 16.34526
-offset_right = 183.04175
-offset_bottom = 44.34526
+offset_left = 132.80623
+offset_top = 17.34526
+offset_right = 183.04031
+offset_bottom = 45.34526
 theme_override_font_sizes/font_size = 13
 text = "min/max"
 

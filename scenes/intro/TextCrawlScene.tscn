@@ -57,11 +57,11 @@ metadata/_edit_use_anchors_ = true
 
 [node name="NextButton" type="Button" parent="ButtonRow" unique_id=268055624]
 layout_mode = 2
-text = "Next➤"
+text = "Next▶"
 
 [node name="SkipButton" type="Button" parent="ButtonRow" unique_id=1588896071]
 layout_mode = 2
-text = "Skip➤➤"
+text = "Skip▶▶"
 
 [node name="AdvanceTimer" type="Timer" parent="." unique_id=2019114602]
 one_shot = true

@@ -561,6 +561,12 @@ func _open_skills_popup(anchor_button: Button, unit, abilities: Array) -> void:
 	_skills_popup = PopupPanel.new()
 	var list := VBoxContainer.new()
 	list.add_theme_constant_override("separation", 4)
+	# 2x _build_ability_button()'s own 110px width. That width is shared
+	# with the normal ability bar, so we widen it here on the container
+	# instead of touching the button itself -- the bar stays as-is, and
+	# each row's button (SIZE_EXPAND_FILL) just stretches to fill this
+	# wider popup, giving long skill names room to breathe.
+	list.custom_minimum_size.x = 220
 	_skills_popup.add_child(list)
 
 	for entry in abilities:
@@ -823,14 +829,25 @@ func _refresh_live_values() -> void:
 
 	if fingerprint != _last_status_fingerprint:
 		_last_status_fingerprint = fingerprint
+
+		# Statuses with neither a description nor an icon have nothing
+		# useful to show the player -- just a gray placeholder box that
+		# opens an empty tooltip -- so skip them entirely instead of
+		# listing them.
+		var visible_statuses: Array = []
+		for entry in unit.active_statuses:
+			var data = entry["data"]
+			if data.description == "" and data.icon == null:
+				continue
+			visible_statuses.append(entry)
+
 		if status_count_label:
-			status_count_label.text = "Status Effects: %d" % unit.active_statuses.size()
+			status_count_label.text = "Status Effects: %d" % visible_statuses.size()
 		if status_icon_row:
 			for child in status_icon_row.get_children():
 				child.queue_free()
-			for entry in unit.active_statuses:
+			for entry in visible_statuses:
 				_add_status_icon(entry["data"], entry["stacks"], entry["remaining_rounds"])
-
 
 func _apply_stat_modifier_color(lbl: Label, unit, stat_key: String) -> void:
 	# Bug 7: figure out whether the currently active buffs or debuffs are
