@@ -101,8 +101,7 @@ const PARAGRAPHS: Array[Dictionary] = [
 	{ "text": "It was a day like any other in the port city of Epissis. Still recovering from fighting off the Rodescians siege four months prior, the city was caught off guard when a massive creature arose from the depths. The city's bells rang within moments of its arrival, but emergency responses were accustomed to siege warfare, not something of this magnitude…",},
 	{ "text": "Its steps alone shook the earth beneath us, the tremors collapsing buildings before the beast even reached them. Its devastating roar ravaged the citizens, masses collapsing in the streets, the swipe of its tail topping our defenses with a single swing. The only survivors were those whose first instinct was to flee the walls…"},
 	{ "text": "You soon found yourself among a small group of survivors, who formed a small caravan to travel east, hoping to make their way to the desert fortress-city Saulimar, where you hoped to make refuge. They look to you for guidance, for refuge. Their protection has fallen onto your shoulders. You must lead the few fighters who remain, and carve a safe path until we can arrive at Saulimar, the city that will save us."},
-	{ "text": "Traveler, I trust in you. I believe that you can lead us to safety. Together, we will bend the will of fate.",  "background": "res://sprites/UI/tarot/tarot_pick_background.png" },
-
+	{ "text": "Traveler, you carry the last hope of the refugees. Together, we will bend the will of fate.",  "background": "res://sprites/UI/tarot/tarot_pick_background.png", "fog": false },
 ]
 
 

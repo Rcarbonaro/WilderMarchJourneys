@@ -57,16 +57,69 @@ func _on_new_game_pressed() -> void:
 	_change_scene_to(GAME_MODE_SELECT_SCENE_PATH, "fade")
 
 func _on_achievements_pressed() -> void:
-	print("Opening Achievements panel...")
-	# _change_scene_to(ACHIEVEMENTS_SCENE_PATH)
+	_show_message_popup("Not Available in Demo")
 
 func _on_upgrades_pressed() -> void:
-	print("Opening Meta-Progression Upgrades screen...")
-	# _change_scene_to(UPGRADES_SCENE_PATH)
+	_show_message_popup("Not Available in Demo")
 
 func _on_settings_pressed() -> void:
-	print("Opening Configuration Options...")
-	# _change_scene_to(SETTINGS_SCENE_PATH)
+	_open_settings_popup()
+
+# ADDED — same Music/SFX sliders as the battle pause menu (see ui_manager.gd's
+# music_volume_slider/sfx_volume_slider), wired to the same SettingsManager
+# autoload, so moving either slider here has the identical effect as moving
+# it in the pause menu (and vice versa) -- they just aren't the same NODE,
+# since the pause menu's sliders live inside BattleUI.tscn, a completely
+# different scene tree.
+func _open_settings_popup() -> void:
+	var popup := PopupPanel.new()
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 8)
+	popup.add_child(box)
+
+	var music_label := Label.new()
+	music_label.text = "Music Volume"
+	box.add_child(music_label)
+
+	var music_slider := HSlider.new()
+	music_slider.min_value = 0
+	music_slider.max_value = 100
+	music_slider.step      = 10
+	music_slider.value     = SettingsManager.music_volume
+	music_slider.custom_minimum_size = Vector2(220, 0)
+	music_slider.value_changed.connect(func(v): SettingsManager.set_music_volume(v))
+	box.add_child(music_slider)
+
+	var sfx_label := Label.new()
+	sfx_label.text = "SFX Volume"
+	box.add_child(sfx_label)
+
+	var sfx_slider := HSlider.new()
+	sfx_slider.min_value = 0
+	sfx_slider.max_value = 100
+	sfx_slider.step      = 10
+	sfx_slider.value     = SettingsManager.sfx_volume
+	sfx_slider.custom_minimum_size = Vector2(220, 0)
+	sfx_slider.value_changed.connect(func(v): SettingsManager.set_sfx_volume(v))
+	box.add_child(sfx_slider)
+
+	var close_button := Button.new()
+	close_button.text = "Close"
+	close_button.pressed.connect(func(): popup.queue_free())
+	box.add_child(close_button)
+
+	add_child(popup)
+	popup.popup_centered()
+
+# ADDED — same small reusable "OK" message popup pattern already used in
+# deployment_manager.gd (e.g. "No Equip Slot Available").
+func _show_message_popup(message: String) -> void:
+	var popup := AcceptDialog.new()
+	popup.dialog_text = message
+	add_child(popup)
+	popup.popup_centered()
+	popup.confirmed.connect(func(): popup.queue_free())
+	popup.canceled.connect(func(): popup.queue_free())
 
 # Helper wrapper function to safely execute scene handoffs
 func _change_scene_to(target_scene_path: String, style: String = "") -> void:

@@ -547,13 +547,23 @@ func _build_ability_button(ability, cooldown: int, popup_ref: Popup = null) -> B
 			battle_manager.on_ability_selected(ability)
 	)
 	btn.mouse_entered.connect(func():
-		# Read popup_ref.size.x live, at hover time, rather than baking in a
-		# fixed number when the button was built -- the popup isn't done
-		# laying itself out yet at that point, so its size wasn't final.
 		var offset: float = popup_ref.size.x if popup_ref != null else 0.0
 		_show_ability_tooltip(ability, btn, offset)
 	)
 	btn.mouse_exited.connect(_hide_ability_tooltip)
+	# ADDED (mobile): a long press on Android, with "Enable Long Press as
+	# Right Click" turned on (Project Settings > Input Devices > Pointing >
+	# Android), arrives here as a right-click. Also works for an actual
+	# right-click on desktop, as a bonus. Shows the tooltip while held,
+	# hides it on release -- same as hover.
+	btn.gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
+			if event.pressed:
+				var offset: float = popup_ref.size.x if popup_ref != null else 0.0
+				_show_ability_tooltip(ability, btn, offset)
+			else:
+				_hide_ability_tooltip()
+	)
 	AudioManager.wire_button_sfx(btn)
 	return btn
 
