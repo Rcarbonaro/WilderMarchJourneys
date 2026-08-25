@@ -402,7 +402,7 @@ func _equip_vital_bloom(unit) -> void:
 func _vital_bloom_round_tick(tick_unit, unit) -> void:
 	if tick_unit != unit or unit.grid_ref == null:
 		return
-	unit.grid_ref.apply_shield(unit, int(ceil(unit.get_stats().hp * 0.02)), 1)
+	unit.grid_ref.apply_shield(unit, int(ceil(unit.get_stats().hp * 0.10)), 1)
 
 # ==============================================================================
 # 11. SOULWEAVER CHARM (Talisman + Spellbook)

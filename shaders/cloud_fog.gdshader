@@ -63,36 +63,42 @@ uniform float top_fade : hint_range(0.0, 1.0) = 0.6;
 // fog blends softly into the scene above it instead of ending in a hard
 // horizontal line. 0 = no fade (solid all the way to the top edge).
 
-float hash(vec2 p) {
-	// Turns a 2D coordinate into a pseudo-random number between 0 and 1.
-	// The specific formula has no special meaning -- it's just a cheap,
-	// well-known way to get noisy-but-repeatable output from a coordinate.
-	p = fract(p * vec2(123.34, 456.21));
-	p += dot(p, p + 45.32);
-	return fract(p.x * p.y);
+highp float hash(highp vec2 p) {
+	// Turns a 2D grid coordinate into a pseudo-random number between 0 and 1.
+	// This version does its randomizing with WHOLE NUMBER (integer) math
+	// instead of multiplying big decimal numbers together. Integer math
+	// doesn't lose fine detail the way decimal ("float") math can -- and on
+	// some web/mobile GPUs, decimal math silently runs at reduced precision
+	// no matter what we ask for, which is what was causing the chopped,
+	// blocky look. Working in integers sidesteps that entirely.
+	// (+1000.0 just shifts everything positive first, so this still works
+	// correctly even if a coordinate happens to be negative.)
+	highp uvec2 q = uvec2(floor(p) + 1000.0) * uvec2(1597334677u, 3812015801u);
+	highp uint n = (q.x ^ q.y) * 1597334677u;
+	return float(n) * (1.0 / 4294967296.0);
 }
 
-float noise(vec2 p) {
+highp float noise(highp vec2 p) {
 	// Smoothly interpolates between hash() values at the 4 corners of the
 	// grid cell containing 'p', so nearby points return similar numbers.
 	// This turns random static into smooth, blobby noise.
-	vec2 i = floor(p);
-	vec2 f = fract(p);
-	float a = hash(i);
-	float b = hash(i + vec2(1.0, 0.0));
-	float c = hash(i + vec2(0.0, 1.0));
-	float d = hash(i + vec2(1.0, 1.0));
-	vec2 u = f * f * (3.0 - 2.0 * f);   // eases the blend so it's curved, not linear
+	highp vec2 i = floor(p);
+	highp vec2 f = fract(p);
+	highp float a = hash(i);
+	highp float b = hash(i + vec2(1.0, 0.0));
+	highp float c = hash(i + vec2(0.0, 1.0));
+	highp float d = hash(i + vec2(1.0, 1.0));
+	highp vec2 u = f * f * (3.0 - 2.0 * f);   // eases the blend so it's curved, not linear
 	return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
 }
 
-float fbm(vec2 p) {
+highp float fbm(highp vec2 p) {
 	// Layers several "octaves" of noise() at increasing frequency and
 	// decreasing strength -- the standard technique for making noise look
 	// organic (clouds, smoke, terrain) instead of one smooth, featureless
 	// blur.
-	float value = 0.0;
-	float amplitude = 0.5;
+	highp float value = 0.0;
+	highp float amplitude = 0.5;
 	for (int i = 0; i < 4; i++) {
 		value += amplitude * noise(p);
 		p *= 2.0;
@@ -108,10 +114,10 @@ void fragment() {
 	// (like real low-lying fog) rather than round dots, then slowly drift
 	// the sampling coordinate sideways over time for a gentle, ever-
 	// shifting billow.
-	vec2 noise_uv = vec2(uv.x * cloud_scale, uv.y * cloud_scale * vertical_squash);
+	highp vec2 noise_uv = vec2(uv.x * cloud_scale, uv.y * cloud_scale * vertical_squash);
 	noise_uv.x += TIME * drift_speed;
 
-	float n = fbm(noise_uv);
+	highp float n = fbm(noise_uv);
 
 	// The soft-edged mask: fully transparent below the threshold, fully
 	// "on" above it, with a smooth feathered transition of width

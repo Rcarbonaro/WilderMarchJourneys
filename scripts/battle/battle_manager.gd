@@ -1644,32 +1644,34 @@ func end_player_turn() -> void:
 			grid.apply_hazard_to_unit(unit, unit.grid_position, "start_of_turn")
 			unit.tick_dot("start_of_enemy_turn")
 
+	# ── APPLY HAZARD DAMAGE AT START OF EACH ENEMY TURN ──────────────────────
+	# Every enemy unit standing on a hazard tile at the start of the enemy turn
+	# takes damage from that hazard.
+	for unit in enemy_units:
+		if is_instance_valid(unit):
+			grid.apply_hazard_to_unit(unit, unit.grid_position, "start_of_turn")
+			unit.tick_dot("start_of_enemy_turn")
+			# BUGFIX: on_unit_round_tick is documented as firing "at the
+			# start of every round" (see combat_hooks.gd), but this call
+			# used to live down in the player-units loop below, which
+			# actually runs at the END of the player's round. Moved here
+			# so it fires where it always should have — Bloodthirster,
+			# Heartpiercer, Vital Bloom, and Heavy Plate now tick for
+			# enemy units at the true start of the enemy's turn.
+			CombatHooks.run_round_tick(unit)
+
 	# ── TICK PLAYER STATUSES AND RESET TURN FLAGS ─────────────────────────────
 	# Count down player status durations and reset movement/action flags so
 	# every player unit can act again on the next player turn.
 	for unit in player_units:
 		if is_instance_valid(unit):
-			# Task 11 safety-net: catches any plagued player unit that moved
-			# but never actually used an ability this turn (_finish_ability()
-			# above only fires for units that DID act) — on_unit_turn_ended()
-			# internally no-ops if this exact unit was already checked this
-			# round via _finish_ability(). IMPORTANT: this must run BEFORE
-			# plague_system.clear_round_tracking() below, or that dedup check
-			# would always miss (the tracking dict would already be empty).
 			if plague_system != null:
 				plague_system.on_unit_turn_ended(unit)
 			unit.has_moved       = false
 			unit.has_acted       = false
 			unit.can_cancel_move = false
 			unit.has_used_item_this_turn  = false 
-			# Snapshot each unit's position now — this IS "the start of its
-			# next turn" from a movement standpoint, since no player unit
-			# moves again until their own next turn actually begins. See
-			# turn_start_position's declaration in unit_node.gd and the
-			# movement-cancel bugfix in on_tile_tapped()/cancel_unit_move()
-			# above (task 2).
 			unit.turn_start_position = unit.grid_position
-			CombatHooks.run_round_tick(unit)
 
 	# Task 11: NOW it's safe to reset PlagueSystem's per-round "already
 	# checked" tracking (the sweep above needed it intact) — clears it so
@@ -1741,13 +1743,20 @@ func _on_enemy_turn_complete() -> void:
 			unit.tick_statuses_end_of_round("player")
 
 	# ── TICK SHIELDS / THORNS / GUARDIANS (moved from end_player_turn) ────────
-	# Same reasoning as hazard ticking above: an effect applied during the
-	# player's turn should survive the enemy's full response to it before
-	# its duration counts down, instead of losing a round of usefulness by
-	# ticking immediately at the end of the same turn it was cast on.
 	grid.tick_shields()
 	grid.tick_thorns()
 	grid.tick_guardians()
+
+	# BUGFIX: on_unit_round_tick is documented as firing "at the start of
+	# every round" (see combat_hooks.gd), but this used to live down in the
+	# enemy-units loop below, which actually runs at the END of the enemy's
+	# round. Moved here, AFTER tick_shields() above -- a shield granted by
+	# this tick (e.g. Vital Bloom) must not be immediately decremented by
+	# the SAME tick_shields() call that just ran, or it would expire
+	# instantly instead of lasting the intended duration.
+	for unit in player_units:
+		if is_instance_valid(unit):
+			CombatHooks.run_round_tick(unit)
 
 	# Reset enemy turn flags and count down their cooldowns.
 	for unit in enemy_units:
@@ -1756,14 +1765,10 @@ func _on_enemy_turn_complete() -> void:
 			unit.has_moved       = false
 			unit.has_acted       = false
 			unit.can_cancel_move = false
-			# See the identical player-side comment in end_player_turn() above
-			# (task 2 movement-cancel fix) — this is "the start of this
-			# enemy's next turn" from a movement standpoint.
 			unit.turn_start_position = unit.grid_position
-			CombatHooks.run_round_tick(unit)
 			for key in unit.ability_cooldowns:
 				unit.ability_cooldowns[key] = max(0, unit.ability_cooldowns[key] - 1)
-
+				
 	# Task 11: clears PlagueSystem's per-round tracking for the enemy entries
 	# added during the turn that just ended (the player-side entries were
 	# already cleared in end_player_turn() above, before the enemy turn even
