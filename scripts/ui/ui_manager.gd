@@ -525,10 +525,12 @@ func show_unit_abilities(unit) -> void:
 			ability_bar.add_child(_build_ability_button(entry["ability"], entry["cooldown"]))
 
 
-func _build_ability_button(ability, cooldown: int) -> Button:
+func _build_ability_button(ability, cooldown: int, popup_ref: Popup = null) -> Button:
 	# Shared by the normal ability row AND the Skills popup, so the two
 	# layouts can never drift out of sync. This is the same button-building
 	# code that used to live directly inside show_unit_abilities() above.
+	# popup_ref is only passed when this button lives inside the Skills
+	# popup -- see _open_skills_popup() below.
 	var btn := Button.new()
 	btn.text                    = ability.display_name
 	btn.icon = ability.icon
@@ -544,7 +546,13 @@ func _build_ability_button(ability, cooldown: int) -> Button:
 		if battle_manager and battle_manager.has_method("on_ability_selected"):
 			battle_manager.on_ability_selected(ability)
 	)
-	btn.mouse_entered.connect(func(): _show_ability_tooltip(ability, btn))
+	btn.mouse_entered.connect(func():
+		# Read popup_ref.size.x live, at hover time, rather than baking in a
+		# fixed number when the button was built -- the popup isn't done
+		# laying itself out yet at that point, so its size wasn't final.
+		var offset: float = popup_ref.size.x if popup_ref != null else 0.0
+		_show_ability_tooltip(ability, btn, offset)
+	)
 	btn.mouse_exited.connect(_hide_ability_tooltip)
 	AudioManager.wire_button_sfx(btn)
 	return btn
@@ -570,10 +578,8 @@ func _open_skills_popup(anchor_button: Button, unit, abilities: Array) -> void:
 	_skills_popup.add_child(list)
 
 	for entry in abilities:
-		var btn := _build_ability_button(entry["ability"], entry["cooldown"])
-		# On top of _build_ability_button()'s own on_ability_selected() call —
-		# just closes the popup once a skill is picked.
-		btn.pressed.connect(func(): _skills_popup.hide())
+		var btn := _build_ability_button(entry["ability"], entry["cooldown"], _skills_popup)
+		btn.pressed.connect(func(): _skills_popup.hide())   # on top of on_ability_selected() above
 		list.add_child(btn)
 
 	ability_bar.add_child(_skills_popup)
@@ -1119,7 +1125,7 @@ func _set_unit_content_visible(show: bool) -> void:
 		if node != null:
 			node.modulate.a = alpha
 
-func _show_ability_tooltip(ability, anchor_btn: Control) -> void:
+func _show_ability_tooltip(ability, anchor_btn: Control, extra_x_offset: float = 0.0) -> void:
 	_hide_ability_tooltip()
 
 	_ability_tooltip              = PanelContainer.new()
@@ -1178,14 +1184,20 @@ func _show_ability_tooltip(ability, anchor_btn: Control) -> void:
 	await get_tree().process_frame   # wait one frame so the tooltip measures itself
 	if not is_instance_valid(_ability_tooltip):
 		return
-	var vp: Vector2 = get_viewport().get_visible_rect().size
- # self is a CanvasLayer here, not a Control -- it has no
- # get_screen_transform() of its own. But this layer has no custom
- # transform/offset, so children added to it (like _ability_tooltip)
- # already use plain screen coordinates -- anchor_btn's screen position
- # can be used directly with no conversion.
+	var vp:  Vector2 = get_viewport().get_visible_rect().size
+	# self is a CanvasLayer here, not a Control -- it has no
+	# get_screen_transform() of its own. But this layer has no custom
+	# transform/offset, so children added to it (like _ability_tooltip)
+	# already use plain screen coordinates -- anchor_btn's screen position
+	# can be used directly with no conversion.
 	var pos: Vector2 = anchor_btn.get_screen_transform().origin
-	pos.y -= _ability_tooltip.size.y + 8.0 # 8px gap above the button
+	# ADDED: for a button inside the Skills popup, the caller passes the
+	# popup's own width here so the tooltip lands clear to the RIGHT of the
+	# whole skill list instead of appearing right on top of it. Normal
+	# ability-bar buttons pass 0 (the default), so their position is
+	# unchanged.
+	pos.x += extra_x_offset
+	pos.y -= _ability_tooltip.size.y + 8.0   # 8px gap above the button
 	pos.x  = clamp(pos.x, 4.0, vp.x - _ability_tooltip.size.x - 4.0)
 	pos.y  = clamp(pos.y, 4.0, vp.y - _ability_tooltip.size.y - 4.0)
 	_ability_tooltip.position = pos
