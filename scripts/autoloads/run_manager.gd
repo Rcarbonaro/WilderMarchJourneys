@@ -44,6 +44,13 @@ const META_SAVE_PATH := "user://meta_state.json"
 @export var is_test_mode: bool = false
 @export var test_encounter_index: int = 0
 
+@export var sim_fast_mode: bool = false
+# ADDED for headless ML/balance-testing runs (see res://scripts/sim/).
+# Skips battle_manager.gd's 5-second real-world "End Turn" double-click
+# cooldown, so an automated harness can advance rounds as fast as the AI
+# can act instead of being throttled to one round per 5 real seconds.
+# Leave false for any real human play session.
+
 
 func _ready() -> void:
 	_ensure_save_dir()

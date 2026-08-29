@@ -1,0 +1,12 @@
+{
+  "args_summary": "create_script(path=res://scripts/sim/sim_economy.gd)",
+  "files": [
+    {
+      "kind": "created",
+      "path": "res://scripts/sim/sim_economy.gd"
+    }
+  ],
+  "id": "000001",
+  "timestamp": 1787952889.0,
+  "tool": "create_script"
+}

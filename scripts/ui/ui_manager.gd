@@ -237,7 +237,7 @@ func _ready() -> void:
 	if more_info_button:
 		if not more_info_button.pressed.is_connected(_on_more_info_pressed):
 			more_info_button.pressed.connect(_on_more_info_pressed)
-		TutorialManager.register_target("more_info_button", more_info_button)   # ADDED
+		TutorialManager.register_target("more_info_button", more_info_button)   
 
 	if ability_bar:   # ADDED
 		TutorialManager.register_target("ability_bar", ability_bar)
@@ -458,7 +458,7 @@ func show_unit_info(unit) -> void:
 
 	# Name
 	if name_label:
-		var tag := "🛡 " if unit.is_player_unit else "⚔ "
+		var tag := "" if unit.is_player_unit else ""
 		name_label.text = tag + unit.unit_data.display_name
 
 	# HP, mana, stats, status icons

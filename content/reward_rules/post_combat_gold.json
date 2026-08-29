@@ -9,7 +9,7 @@
     ]}
   ],
   "effects": [
-    { "type": "add_gold", "amount": 10 }
+    { "type": "add_gold", "amount": 2 }
   ],
   "notes": "Replaces the old hardcoded 'RunManager.add_gold(5)' that used to live directly in battle_scene.gd -- same effect, now data instead of code. Fires on every combat-shaped stage type, not encounters (those have their own gold/item rewards through dialogue choices)."
 }

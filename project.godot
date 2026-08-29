@@ -45,6 +45,7 @@ BiomeThemeManager="*uid://b71k6ex8hwk0w"
 SceneTransitions="*uid://f17eigk2ea1m"
 LevelUpEngine="*uid://b43l88500o857"
 TutorialManager="*uid://dylyvdslibagm"
+MCPRuntime="*uid://cmk1xcsd0k736"
 
 [display]
 
@@ -55,7 +56,7 @@ window/stretch/mode="canvas_items"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/godot-ai-helper/plugin.cfg")
+enabled=PackedStringArray("res://addons/godot-ai-helper/plugin.cfg", "res://addons/godot_mcp/plugin.cfg")
 
 [gui]
 

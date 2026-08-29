@@ -463,7 +463,7 @@ func _rebuild_roster() -> void:
 		var btn := Button.new()
 		var unit_data := _load_unit_data(entry.get("unit_id", ""))
 		var label : String = unit_data.display_name if unit_data != null else entry.get("unit_id", "?")
-		btn.text = ("▶ " if i == _selected_party_index else "") + label + " (Lv " + str(entry.get("level", 1)) + ")"
+		btn.text = ("> " if i == _selected_party_index else "") + label + " (Lv " + str(entry.get("level", 1)) + ")"
 		btn.pressed.connect(func(): _on_roster_entry_pressed(i))
 		roster_list.add_child(btn)
 

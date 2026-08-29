@@ -182,7 +182,7 @@ func setup(unit_data: UnitData, stat_lines: Array, equipped_item_entries: Array 
 
 	# ── CLOSE BUTTON ─────────────────────────────────────────────────────────
 	var close_button := Button.new()
-	close_button.text = "✖ Close"
+	close_button.text = "X Close"
 	close_button.pressed.connect(_close)
 	content.add_child(close_button)
 	TutorialManager.register_target("popup_close_button", close_button)   # ADDED

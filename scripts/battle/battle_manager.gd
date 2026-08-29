@@ -508,7 +508,7 @@ func spawn_unit(unit_data: UnitData, cell: Vector2i, is_player: bool, level: int
 		# ADDED — see unit_node.gd's build_enhanced_abilities() for the full
 		# explanation of why this duplicates rather than edits abilities in place.
 		unit.build_enhanced_abilities(ability_enhancements)
-		print("🛡️ Ally spawned: ", unit_data.display_name)
+		print(" Ally spawned: ", unit_data.display_name)
 	else:
 		enemy_units.append(unit)
 		print("⚔️ Enemy spawned: ", unit_data.display_name)

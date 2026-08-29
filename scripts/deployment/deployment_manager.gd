@@ -371,7 +371,7 @@ func _rebuild_roster() -> void:
 		row.add_child(toggle_btn)
 
 		var equip_btn := Button.new()
-		equip_btn.text = ("▶ " if i == _selected_party_index else "") + "Manage Equipment"
+		equip_btn.text = ("> " if i == _selected_party_index else "") + "Manage Equipment"
 		equip_btn.pressed.connect(func(): _on_roster_entry_pressed(i))
 		row.add_child(equip_btn)
 

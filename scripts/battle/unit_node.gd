@@ -1509,7 +1509,7 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster 
 	# If the unit has an immunity status, block all incoming status applications.
 	for s in active_statuses:
 		if s["data"].grants_immunity:
-			print("🛡️ ", unit_data.display_name, " is immune! Status '",
+			print(" ", unit_data.display_name, " is immune! Status '",
 				  status_data.display_name, "' blocked.")
 			_apply_status_depth -= 1
 			return
@@ -1528,7 +1528,7 @@ func apply_status(status_data: StatusEffectData, stacks: int = 1, source_caster 
 	# movement number itself never actually drops.
 	if unit_data != null and unit_data.immune_to_displacement_and_cc and \
 			(status_data.is_stun or status_data.is_root):
-		print("🛡️ ", unit_data.display_name, " is immune to stun/root! '",
+		print(" ", unit_data.display_name, " is immune to stun/root! '",
 			  status_data.display_name, "' blocked.")
 		_apply_status_depth -= 1
 		return

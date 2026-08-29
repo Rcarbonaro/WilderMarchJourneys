@@ -571,7 +571,7 @@ func _apply_damage_with_effects(caster, target, ability: AbilityData, damage: in
 		# number via CombatFeedback.show_hit() — this extra call was
 		# spawning a SECOND number for the same hit. Same bug as Thorns and
 		# Tether below.
-		print("🛡️ Guardian intercepted ", guard_dmg, " damage for ", target.unit_data.display_name)
+		print(" Guardian intercepted ", guard_dmg, " damage for ", target.unit_data.display_name)
 		
 		damage = remaining_dmg
 		if damage <= 0:
@@ -591,7 +591,7 @@ func _apply_damage_with_effects(caster, target, ability: AbilityData, damage: in
 			_spawn_damage_number(blocked_amount, target.position, Color.WHITE)
 
 		if damage <= 0:
-			print("🛡️ Shield absorbed all damage for ", target.unit_data.display_name)
+			print(" Shield absorbed all damage for ", target.unit_data.display_name)
 			_last_hit_was_crit = false   # Reset the flag even if we abort early.
 			return
 

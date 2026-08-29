@@ -39,6 +39,7 @@ layout_mode = 2
 text = "Tutorial"
 
 [node name="TestModeButton" type="Button" parent="CenterContainer/VBoxContainer" unique_id=200319857]
+visible = false
 layout_mode = 2
 text = "Test Mode"
 

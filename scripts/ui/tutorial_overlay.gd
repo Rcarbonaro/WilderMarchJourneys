@@ -89,12 +89,12 @@ func _build_shell() -> void:
 	box_v.add_child(button_row)
 
 	_back_button = Button.new()
-	_back_button.text = "◀ Back"
+	_back_button.text = "< Back"
 	_back_button.pressed.connect(func(): TutorialManager.rewind_step())
 	button_row.add_child(_back_button)
 
 	_continue_button = Button.new()
-	_continue_button.text = "Continue ▶"
+	_continue_button.text = "Continue >"
 	_continue_button.pressed.connect(func(): TutorialManager.advance())
 	button_row.add_child(_continue_button)
 
@@ -115,7 +115,7 @@ func _on_step_started(step: Dictionary) -> void:
 	# ADDED: a wait_for step is meant to be fully silent -- no scrim, no
 	# arrow, and (this was the missing piece) no floating textbox/button
 	# either. Without this, an empty-text wait_for step still showed a bare
-	# "Continue ▶" button sitting on screen for as long as it was waiting.
+	# "Continue >" button sitting on screen for as long as it was waiting.
 	var is_wait_for: bool = step.get("type", "") == "wait_for"
 	_textbox.visible = not is_wait_for
 

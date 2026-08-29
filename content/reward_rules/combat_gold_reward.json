@@ -4,6 +4,6 @@
     { "type": "stage_type_is", "value": "combat" }
   ],
   "effects": [
-    { "type": "add_gold", "amount_min": 3, "amount_max": 8 }
+    { "type": "add_gold", "amount_min": 8, "amount_max": 17 }
   ]
 }

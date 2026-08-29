@@ -1,177 +1,171 @@
 {
   "id": "tutorial_intro",
   "steps": [
-    { "id": "s01", "type": "gate", "text": "Let's start by clicking on the Dreadknight.",
-      "target": "unit:dreadknight", "advance_on": "unit_selected", "advance_match": { "unit_id": "dreadknight" } },
+	{ "id": "s01", "type": "gate", "text": "Let's start by clicking on the Dreadknight.",
+	  "target": "unit:dreadknight", "advance_on": "unit_selected", "advance_match": { "unit_id": "dreadknight" } },
 
-    { "id": "s02", "type": "gate", "text": "Click on the 'More Information' button to view stats, abilities, and equipment.",
-      "target": "more_info_button", "advance_on": "more_info_opened", "advance_match": { "unit_id": "dreadknight" } },
+	{ "id": "s02", "type": "gate", "text": "Click on the 'More Information' button to view stats, abilities, and equipment.",
+	  "target": "more_info_button", "advance_on": "more_info_opened", "advance_match": { "unit_id": "dreadknight" } },
 
-    { "id": "s03", "type": "narrate", "text": "The 'Unique Ability' information contains a short summary of that character's mechanics.",
-      "target": "unique_ability_section", "block_input": false },
+	{ "id": "s03", "type": "narrate", "text": "The 'Unique Ability' information contains a short summary of that character's mechanics.",
+	  "target": "unique_ability_section", "block_input": false },
 
-    { "id": "s04", "type": "narrate", "text": "In this case, the Dreadknight can set up permanent auras that damage or debuff nearby enemies.",
-      "target": "unique_ability_section", "block_input": false },
+	{ "id": "s04", "type": "narrate", "text": "In this case, the Dreadknight can set up permanent auras that damage or debuff nearby enemies.",
+	  "target": "unique_ability_section", "block_input": false },
 
-    { "id": "s05", "type": "narrate", "text": "This character is overall tough, and can take a hit.",
-      "target": "stat_row:hp", "block_input": false },
+	{ "id": "s05", "type": "narrate", "text": "This character is overall tough, and can take a hit.",
+	  "target": "stat_row:hp", "block_input": false },
 
-    { "id": "s06", "type": "narrate", "text": "Note that this character moves only 2 squares, so it is slower than most other units. Make sure your other units don't rush too far ahead.",
-      "target": "stat_row:mov", "block_input": false },
+	{ "id": "s06", "type": "narrate", "text": "Note that this character moves only 2 squares, so it is slower than most other units. Make sure your other units don't rush too far ahead.",
+	  "target": "stat_row:mov", "block_input": false },
 
-    { "id": "s07", "type": "gate", "text": "Scroll down to see more.",
-      "target": "popup_scroll_area", "advance_on": "popup_scrolled", "advance_match": {}, "block_input": false },
+	{ "id": "s07", "type": "gate", "text": "Scroll down to see more.",
+	  "target": "popup_scroll_area", "advance_on": "popup_scrolled", "advance_match": {}, "block_input": false },
 
-    { "id": "s08", "type": "narrate", "text": "The Dreadknight's basic attack reduces enemy ATK and taunts the enemy, forcing them to attack him. This is helpful when trying to distract your enemies, so they don't attack your weaker units.",
-      "target": "ability_row:dreadknight_basic", "block_input": false,
-      "textbox_offset_percent": { "x": 0.0, "y": -0.20 } },
+	{ "id": "s08", "type": "narrate", "text": "The Dreadknight's basic attack reduces enemy ATK and taunts the enemy, forcing them to attack him. This is helpful when trying to distract your enemies, so they don't attack your weaker units.",
+	  "target": "ability_row:dreadknight_basic", "block_input": false,
+	  "textbox_offset_percent": { "x": 0.0, "y": -0.20 } },
 
-    { "id": "s09", "type": "narrate", "text": "These auras are permanent, but different auras may be better in different situations. Consider the best for the situation, then activate it before rushing into battle.",
-      "target": "unique_ability_section", "block_input": false },
+	{ "id": "s09", "type": "narrate", "text": "These auras are permanent, but different auras may be better in different situations. Consider the best for the situation, then activate it before rushing into battle.",
+	  "target": "unique_ability_section", "block_input": false },
 
-    { "id": "s10", "type": "gate", "text": "Now you can scroll up and close the window.",
-      "target": "popup_close_button", "advance_on": "popup_closed", "advance_match": {}, "block_input": false },
+	{ "id": "s10", "type": "gate", "text": "Now you can scroll up and close the window.",
+	  "target": "popup_close_button", "advance_on": "popup_closed", "advance_match": {}, "block_input": false },
 
-    { "id": "s11", "type": "narrate", "text": "When your unit is selected, the green squares indicate where the unit can move. Units must complete their movement before completing their action. If you do not wish to move the unit, you can select the same square it is currently occupying to stay put. But for now, we should probably move the unit forward to move toward the enemy.",
-      "target": "unit:dreadknight" },
+	{ "id": "s11", "type": "narrate", "text": "When your unit is selected, the green squares indicate where the unit can move. Units must complete their movement before completing their action. If you do not wish to move the unit, you can select the same square it is currently occupying to stay put. But for now, we should probably move the unit forward to move toward the enemy.",
+	  "target": "unit:dreadknight" },
 
-    { "id": "s12", "type": "gate", "text": "Move the Dreadknight toward the enemy.",
-      "target": "cell_offset:dreadknight:2:0", "advance_on": "unit_moved",
-      "advance_match": { "unit_id": "dreadknight", "is_real_move": true } },
+	{ "id": "s12", "type": "gate", "text": "Move the Dreadknight toward the enemy.",
+	  "target": "cell_offset:dreadknight:2:0", "advance_on": "unit_moved",
+	  "advance_match": { "unit_id": "dreadknight", "is_real_move": true } },
 
-    { "id": "s13", "type": "gate", "text": "After moving, you can select your action. Since the enemies are far away, it would be a good idea to set up an aura.",
-      "target": "ability_bar", "advance_on": "ability_selected", "advance_match": { "unit_id": "dreadknight", "is_aura": true } },
+	{ "id": "s13", "type": "gate", "text": "After moving, you can select your action. Since the enemies are far away, it would be a good idea to set up an aura.",
+	  "target": "ability_bar", "advance_on": "ability_selected", "advance_match": { "unit_id": "dreadknight", "is_aura": true } },
 
-    { "id": "s13b", "type": "gate", "text": "Now tap the Dreadknight to cast the aura.",
-      "target": "unit:dreadknight", "advance_on": "ability_target_selected",
-      "advance_match": { "unit_id": "dreadknight" } },
+	{ "id": "s13b", "type": "gate", "text": "Now tap the Dreadknight to cast the aura.",
+	  "target": "unit:dreadknight", "advance_on": "ability_target_selected",
+	  "advance_match": { "unit_id": "dreadknight" } },
 
-    { "id": "s14", "type": "gate", "text": "Next, let's move the Icemage.",
-      "target": "unit:icemage", "advance_on": "unit_selected", "advance_match": { "unit_id": "icemage" } },
+	{ "id": "s14", "type": "gate", "text": "Next, let's move the Icemage.",
+	  "target": "unit:icemage", "advance_on": "unit_selected", "advance_match": { "unit_id": "icemage" } },
 
-    { "id": "s15", "type": "gate", "text": "The Icemage is a support character, who can deal damage to enemies, slow them down, and use their Ice Shell spell to bolster ally defenses. To see their abilities, you can select 'More Information' again.",
-      "target": "more_info_button", "advance_on": "more_info_opened", "advance_match": { "unit_id": "icemage" } },
+	{ "id": "s15", "type": "gate", "text": "The Icemage is a support character, who can deal damage to enemies, slow them down, and use their Ice Shell spell to bolster ally defenses. To see their abilities, you can select 'More Information' again.",
+	  "target": "more_info_button", "advance_on": "more_info_opened", "advance_match": { "unit_id": "icemage" } },
 
-    { "id": "s16", "type": "narrate", "text": "Some abilities consume mana. If you run out of mana, you won't be able to cast abilities with a mana cost.",
-      "target": "stat_row:mana", "block_input": false },
+	{ "id": "s16", "type": "narrate", "text": "Some abilities consume mana. If you run out of mana, you won't be able to cast abilities with a mana cost.",
+	  "target": "stat_row:mana", "block_input": false },
 
-    { "id": "s17", "type": "gate", "text": "Scroll down to see the list of her abilities.",
-      "target": "popup_scroll_area", "advance_on": "popup_scrolled", "advance_match": {}, "block_input": false },
+	{ "id": "s17", "type": "gate", "text": "Scroll down to see the list of her abilities.",
+	  "target": "popup_scroll_area", "advance_on": "popup_scrolled", "advance_match": {}, "block_input": false },
 
-    { "id": "s18", "type": "narrate", "text": "Ice Shell is useful to keep your tank allies alive and punish attackers. When enemies are close, be sure to use this ability!",
-      "target": "ability_row:ice_shell", "block_input": false },
+	{ "id": "s18", "type": "narrate", "text": "Ice Shell is useful to keep your tank allies alive and punish attackers. When enemies are close, be sure to use this ability!",
+	  "target": "ability_row:ice_shell", "block_input": false },
 
-    { "id": "s19", "type": "gate", "text": "Ok, we can now close this window and return.",
-      "target": "popup_close_button", "advance_on": "popup_closed", "advance_match": {}, "block_input": false },
+	{ "id": "s19", "type": "gate", "text": "Ok, we can now close this window and return.",
+	  "target": "popup_close_button", "advance_on": "popup_closed", "advance_match": {}, "block_input": false },
 
-    { "id": "s19b", "type": "narrate", "text": "Ok, now let's move the Icemage. Remember, if you ever accidentally put your unit into the wrong spot, as long as you have not yet used your action, you can click 'Cancel Movement' to return them to their original spot and try to move them again.",
-      "target": "unit:icemage" },
+	{ "id": "s19b", "type": "narrate", "text": "Ok, now let's move the Icemage. Remember, if you ever accidentally put your unit into the wrong spot, as long as you have not yet used your action, you can click 'Cancel Movement' to return them to their original spot and try to move them again.",
+	  "target": "unit:icemage" },
 
-    { "id": "s20", "type": "gate", "text": "Move the Icemage toward the enemy.",
-      "target": "cell_offset:icemage:2:0", "advance_on": "unit_moved",
-      "advance_match": { "unit_id": "icemage", "is_real_move": true } },
+	{ "id": "s20", "type": "gate", "text": "Move the Icemage toward the enemy.",
+	  "target": "cell_offset:icemage:2:0", "advance_on": "unit_moved",
+	  "advance_match": { "unit_id": "icemage", "is_real_move": true } },
 
-    { "id": "s21", "type": "narrate", "text": "Ok, now you can move the rest of your team. Remember that you can always review the information and abilities of a unit if you ever forget or obtain a new unit!",
-      "target": "", "allow_game_input": true },
+	{ "id": "s21", "type": "narrate", "text": "Ok, now you can move the rest of your team. Remember that you can always review the information and abilities of a unit if you ever forget or obtain a new unit!",
+	  "target": "", "allow_game_input": true },
 
-    { "id": "s22", "type": "wait_for", "text": "", "condition": "all_player_units_moved" },
+	{ "id": "s22", "type": "wait_for", "text": "", "condition": "all_player_units_moved" },
 
-    { "id": "s23", "type": "narrate", "text": "You can click the 'End Round' button to end your round after all your units have moved.",
-      "target": "end_round_button" },
+	{ "id": "s23", "type": "narrate", "text": "You can click the 'End Round' button to end your round after all your units have moved.",
+	  "target": "end_round_button" },
 
-    { "id": "s24", "type": "narrate", "text": "Now that you've got the basics, I think you can take care of these enemies. When in combat, remember to experiment with different types of abilities and combinations!",
-      "target": "", "block_input": false, "allow_game_input": true },
+	{ "id": "s24", "type": "narrate", "text": "Now that you've got the basics, I think you can take care of these enemies. When in combat, remember to experiment with different types of abilities and combinations!",
+	  "target": "", "block_input": false, "allow_game_input": true },
 
-    { "id": "s24b", "type": "wait_for", "text": "", "condition": "gold_popup_exists" },
+	{ "id": "s24b", "type": "wait_for", "text": "", "condition": "gold_popup_exists" },
 
-    { "id": "s25", "type": "gate", "text": "After you complete stages, you will obtain rewards! You can spend these rewards in the shop.",
-      "target": "gold_popup", "advance_on": "gold_popup_closed", "advance_match": {} },
+	{ "id": "s25", "type": "gate", "text": "After you complete stages, you will obtain rewards! You can spend these rewards in the shop.",
+	  "target": "gold_popup", "advance_on": "gold_popup_closed", "advance_match": {} },
 
-    { "id": "s26", "type": "gate", "text": "You can spend your gold in the shop to buy items to gain new units and make them stronger!",
-      "target": "shop_button", "advance_on": "shop_button_pressed", "advance_match": {} },
+	{ "id": "s26", "type": "gate", "text": "You can spend your gold in the shop to buy items to gain new units and make them stronger!",
+	  "target": "shop_button", "advance_on": "shop_button_pressed", "advance_match": {} },
 
-    { "id": "s26b", "type": "wait_for", "text": "", "condition": "shop_scene_ready", "is_scene_boundary": true },
+	{ "id": "s26b", "type": "wait_for", "text": "", "condition": "shop_scene_ready", "is_scene_boundary": true },
 
-    { "id": "s27", "type": "narrate", "text": "The blade is a basic item that increases ATK. You can click 'More Info' to see more information about any item.",
-      "target": "", "block_input": false,
-      "textbox_offset_percent": { "x": 0.0, "y": -0.10 } },
+	{ "id": "s27", "type": "narrate", "text": "The blade is a basic item that increases ATK. You can click 'More Info' to see more information about any item.",
+	  "target": "", "block_input": false,
+	  "textbox_offset_percent": { "x": 0.0, "y": -0.10 } },
 
-    { "id": "s28", "type": "narrate", "text": "Purchasing a second copy of a unit will level up that unit.",
-      "target": "", "block_input": false,
-      "textbox_offset_percent": { "x": 0.0, "y": -0.10 } },
+	{ "id": "s28", "type": "narrate", "text": "Purchasing a second copy of a unit will level up that unit.",
+	  "target": "", "block_input": false,
+	  "textbox_offset_percent": { "x": 0.0, "y": -0.10 } },
 
-    { "id": "s29", "type": "narrate", "text": "You can also encounter new units. Purchasing them will allow you to swap out characters to build a team with the right synergies!",
-      "target": "", "block_input": false,
-      "textbox_offset_percent": { "x": 0.0, "y": -0.10 } },
+	{ "id": "s29", "type": "narrate", "text": "You can also encounter new units. Purchasing them will allow you to swap out characters to build a team with the right synergies!",
+	  "target": "", "block_input": false,
+	  "textbox_offset_percent": { "x": 0.0, "y": -0.10 } },
 
-    { "id": "s30", "type": "narrate", "text": "There are also consumables, which are one-time use items that can heal, boost stats, restore mana, or give other boosts to increase your unit's effectiveness!",
-      "target": "", "block_input": false,
-      "textbox_offset_percent": { "x": 0.0, "y": -0.10 } },
+	{ "id": "s30", "type": "narrate", "text": "There are also consumables, which are one-time use items that can heal, boost stats, restore mana, or give other boosts to increase your unit's effectiveness!",
+	  "target": "", "block_input": false,
+	  "textbox_offset_percent": { "x": 0.0, "y": -0.10 } },
 
-    { "id": "s31", "type": "narrate", "text": "Buy whatever you think will help give you the edge to defeat the enemies!",
-      "target": "", "block_input": false,
-      "textbox_offset_percent": { "x": 0.0, "y": -0.10 } },
+	{ "id": "s31", "type": "narrate", "text": "Buy whatever you think will help give you the edge to defeat the enemies!",
+	  "target": "", "block_input": false,
+	  "textbox_offset_percent": { "x": 0.0, "y": -0.10 } },
 
-    { "id": "s32", "type": "narrate", "text": "You can also refresh the shop, but note that this costs gold! This cost can really add up if you keep refreshing, but refreshing can help you find that perfect item!",
-      "target": "shop_back_button", "block_input": false,
-      "textbox_offset_percent": { "x": 0.0, "y": -0.10 } },
+	{ "id": "s32", "type": "narrate", "text": "You can also refresh the shop, but note that this costs gold! This cost can really add up if you keep refreshing, but refreshing can help you find that perfect item!",
+	  "target": "shop_back_button", "block_input": false,
+	  "textbox_offset_percent": { "x": 0.0, "y": -0.10 } },
 
-    { "id": "s33", "type": "gate", "text": "Click 'Back' to return to the Deployment screen.",
-      "target": "shop_back_button", "advance_on": "shop_closed", "advance_match": {} },
+	{ "id": "s33", "type": "gate", "text": "Click 'Back' to return to the Deployment screen.",
+	  "target": "shop_back_button", "advance_on": "shop_closed", "advance_match": {} },
 
-    { "id": "s33a2", "type": "wait_for", "text": "", "condition": "deployment_scene_ready", "is_scene_boundary": true },
+	{ "id": "s33a2", "type": "wait_for", "text": "", "condition": "deployment_scene_ready", "is_scene_boundary": true },
 
-    { "id": "s34", "type": "system_action", "action": "grant_items", "item_ids": ["blade", "blade"] },
+	{ "id": "s34", "type": "system_action", "action": "grant_items", "item_ids": ["blade", "blade"] },
 
-    { "id": "s33c", "type": "narrate", "text": "You can also equip one-time use consumables to restore health or stamina, or boost stats. Be sure to experiment with them!",
-      "target": "", "block_input": false },
+	{ "id": "s33c", "type": "narrate", "text": "You can also equip one-time use consumables to restore health or stamina, or boost stats. Be sure to experiment with them!",
+	  "target": "", "block_input": false },
 
-    { "id": "s33d", "type": "system_action", "action": "grant_generic_scroll_if_missing" },
+	{ "id": "s33d", "type": "system_action", "action": "grant_generic_scroll_if_missing" },
 
-    { "id": "s33e", "type": "narrate", "text": "Experiment with skill scrolls to customize your favorite abilities!.",
-      "target": "", "block_input": false },
+	{ "id": "s33e", "type": "narrate", "text": "Experiment with skill scrolls to customize your favorite abilities!.",
+	  "target": "", "block_input": false },
 
-    { "id": "s35", "type": "gate", "text": "In the inventory, you can select on an item to equip or combine them. Try clicking on the Blade item.",
-      "target": "inventory_item:blade", "advance_on": "inventory_item_selected", "advance_match": { "item_id": "blade" } },
+	{ "id": "s35", "type": "gate", "text": "In the inventory, you can select on an item to equip or combine them. Try clicking on the Blade item.",
+	  "target": "inventory_item:blade", "advance_on": "inventory_item_selected", "advance_match": { "item_id": "blade" } },
 
-    { "id": "s36", "type": "gate", "text": "Combining them allows you to create an even stronger item! Let's try.",
+	{ "id": "s36", "type": "gate", "text": "Combining them allows you to create an even stronger item! Let's try.",
   "target": "", "advance_on": "combine_pressed", "advance_match": { "item_id": "blade" },
   "block_input": false,
   "textbox_offset_percent": { "x": 0.20, "y": 0.0 } },
 
-    { "id": "s37", "type": "narrate", "text": "Pressing combine adds it to the forge. Let's add the other Blade!",
-      "target": "", "block_input": false },
+	{ "id": "s39", "type": "gate", "text": "Pressing combine adds it to the forge. Let's add the other Blade! Click here to add it.",
+	  "target": "inventory_item:blade", "advance_on": "inventory_item_selected", "advance_match": { "item_id": "blade" } },
 
-    { "id": "s38", "type": "narrate", "text": "Clicking here can let you quickly add a second item.",
-      "target": "", "block_input": false },
+	{ "id": "s40", "type": "gate", "text": "Add it to the forge too.",
+	  "target": "", "advance_on": "combine_pressed", "advance_match": { "item_id": "blade" },
+	  "block_input": false },
 
-    { "id": "s39", "type": "gate", "text": "Click here to add it.",
-      "target": "inventory_item:blade", "advance_on": "inventory_item_selected", "advance_match": { "item_id": "blade" } },
+	{ "id": "s41", "type": "gate", "text": "Click Preview to see what item you are about to forge.",
+	  "target": "forge_preview_button", "advance_on": "forge_preview_opened", "advance_match": {} },
 
-    { "id": "s40", "type": "gate", "text": "Add it to the forge too.",
-      "target": "", "advance_on": "combine_pressed", "advance_match": { "item_id": "blade" },
-      "block_input": false },
+	{ "id": "s42", "type": "gate", "text": "This will create a powerful offensive weapon that is great for a damage dealer who consistently attacks!",
+	  "target": "", "advance_on": "preview_closed", "advance_match": {}, "block_input": false },
 
-    { "id": "s41", "type": "gate", "text": "Click Preview to see what item you are about to forge.",
-      "target": "forge_preview_button", "advance_on": "forge_preview_opened", "advance_match": {} },
+	{ "id": "s43", "type": "gate", "text": "Go ahead and forge it!",
+	  "target": "forge_button", "advance_on": "item_forged", "advance_match": {} },
 
-    { "id": "s42", "type": "gate", "text": "This will create a powerful offensive weapon that is great for a damage dealer who consistently attacks!",
-      "target": "", "advance_on": "preview_closed", "advance_match": {}, "block_input": false },
+	{ "id": "s44", "type": "gate", "text": "Go ahead and equip it to your main damage dealer!",
+	  "target": "", "advance_on": "forge_equip_clicked", "advance_match": {} },
 
-    { "id": "s43", "type": "gate", "text": "Go ahead and forge it!",
-      "target": "forge_button", "advance_on": "item_forged", "advance_match": {} },
+	{ "id": "s45", "type": "gate", "text": "Your Executioner is probably the most suitable for that item.",
+	  "target": "", "advance_on": "item_equipped", "advance_match": {},
+	  "block_input": false },
 
-    { "id": "s44", "type": "gate", "text": "Go ahead and equip it to your main damage dealer!",
-      "target": "", "advance_on": "forge_equip_clicked", "advance_match": {} },
+	{ "id": "s46", "type": "narrate", "text": "Good job! You can click on a character's name to remove them from the party, manage their inventory, and view more information about them.",
+	  "target": "" },
 
-    { "id": "s45", "type": "gate", "text": "Your Executioner is probably the most suitable for that item.",
-      "target": "", "advance_on": "item_equipped", "advance_match": {},
-      "block_input": false },
-
-    { "id": "s46", "type": "narrate", "text": "Good job! You can click on a character's name to remove them from the party, manage their inventory, and view more information about them.",
-      "target": "" },
-
-    { "id": "s47", "type": "narrate", "text": "Try to experiment with different items, units, and team combinations. Hope you enjoy the demo! Be sure to give feedback on your experience!",
-      "target": "" }
+	{ "id": "s47", "type": "narrate", "text": "Try to experiment with different items, units, and team combinations. Hope you enjoy the demo! Be sure to give feedback on your experience!",
+	  "target": "" }
   ]
 }
